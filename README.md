@@ -117,19 +117,33 @@ git pull --ff-only
 5. 刷新模型目录，使用实际可用的模型 ID；测活会消耗真实额度。
 6. 在「API 密钥」中创建客户端专用密钥，按需设置预算。
 
-源码运行的初始凭据文件：
+### 管理员登录密码在哪里？
+
+首次启动会生成管理员密码。打开下面的初始凭据文件，使用 **`admin_password` 字段的值**登录管理面板；`api_key` 是客户端调用接口的密钥，不用于管理员登录。
+
+**源码 / start.sh 部署**：在项目目录查看 `data/state.json.access.json`：
 
 ```bash
 cat data/state.json.access.json
 ```
 
-Docker 部署的初始凭据文件：
+**Docker Compose 部署**：查看容器内 `/data/codearts2api-data.json.access.json`：
 
 ```bash
 docker compose exec codearts2api cat /data/codearts2api-data.json.access.json
 ```
 
-初始凭据文件不随之后的改密同步更新。忘记管理员密码时，可通过 `CODEARTS_ADMIN_PASSWORD` 启动环境重设。详细登录流程、凭据续期和恢复说明见 [管理文档](docs/MANAGEMENT.md) 与 [面板文档](docs/PANEL.md)。
+如果启动时已指定 `CODEARTS_ADMIN_PASSWORD`，请使用自己设置的密码。初始凭据文件不会随之后的改密同步更新；`state.json` 中保存的是密码哈希，不能用它作为登录密码。
+
+忘记密码时，在服务的启动环境中设置新的 `CODEARTS_ADMIN_PASSWORD` 并重启。使用 `start.sh` 时，先停止原服务，再执行：
+
+```bash
+CODEARTS_ADMIN_PASSWORD='替换为你的新密码' ./start.sh
+```
+
+Docker Compose 部署可在 `.env` 中设置 `CODEARTS_ADMIN_PASSWORD`，然后执行 `docker compose up -d` 让新环境变量生效。初始凭据文件包含真实密码和调用密钥，请妥善保管，不要公开上传。
+
+详细登录流程、凭据续期和恢复说明见 [管理文档](docs/MANAGEMENT.md) 与 [面板文档](docs/PANEL.md)。
 
 ## API 接口
 

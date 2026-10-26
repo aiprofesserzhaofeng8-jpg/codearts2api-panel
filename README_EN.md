@@ -117,19 +117,33 @@ Backups contain account credentials and need protection. Check the corresponding
 5. Refresh the model catalog and use an available model ID. Model probes consume real upstream quota.
 6. Under API keys (API 密钥), create a separate key for each client and configure budgets as needed.
 
-Initial credentials for a source deployment:
+### Where is the administrator login password?
+
+The first startup generates an administrator password. Open the initial credentials file below and use the **value of `admin_password`** to sign in to the panel. The `api_key` field is for client API calls, not administrator login.
+
+**Source / start.sh deployment**: run this from the project directory to view `data/state.json.access.json`:
 
 ```bash
 cat data/state.json.access.json
 ```
 
-Initial credentials for Docker:
+**Docker Compose deployment**: view `/data/codearts2api-data.json.access.json` inside the container:
 
 ```bash
 docker compose exec codearts2api cat /data/codearts2api-data.json.access.json
 ```
 
-The initial credentials file is not updated when you later change the password. To reset a forgotten administrator password, set `CODEARTS_ADMIN_PASSWORD` in the service's startup environment. See [Management](docs/MANAGEMENT.md) and [Panel](docs/PANEL.md) for login, credential refresh, and recovery details.
+If you supplied `CODEARTS_ADMIN_PASSWORD` at startup, use that password. The initial credentials file is not updated after later password changes. The value stored in `state.json` is a password hash and cannot be used as the login password.
+
+To reset a forgotten password, set a new `CODEARTS_ADMIN_PASSWORD` in the service's startup environment and restart it. When using `start.sh`, stop the existing service first, then run:
+
+```bash
+CODEARTS_ADMIN_PASSWORD='replace-with-your-new-password' ./start.sh
+```
+
+For Docker Compose, set `CODEARTS_ADMIN_PASSWORD` in `.env`, then run `docker compose up -d` to apply the new environment variable. The initial credentials file contains a real password and API key; keep it private and do not upload it publicly.
+
+See [Management](docs/MANAGEMENT.md) and [Panel](docs/PANEL.md) for login, credential refresh, and recovery details.
 
 ## API endpoints
 
