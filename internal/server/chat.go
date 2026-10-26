@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,9 +35,10 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusMethodNotAllowed, "仅支持 POST", "invalid_request_error")
 		return
 	}
+	r = beginInference(w, r, "chat")
 	start := time.Now()
 
-	body, err := io.ReadAll(io.LimitReader(r.Body, 32<<20))
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, "读取请求体失败: "+err.Error(), "invalid_request_error")
 		return
@@ -72,6 +74,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := extractKey(r)
+	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))
 	timeout := time.Duration(settings.RequestTimeout) * time.Second
 	if timeout <= 0 {
 		timeout = 300 * time.Second
@@ -102,13 +105,13 @@ func (s *Server) blockingChat(w http.ResponseWriter, r *http.Request, body []byt
 	})
 	if err != nil {
 		e := apierr.From(err)
-		s.record(key, acct, model.ID, false, e.Status, start, promptLen, 0, err)
+		s.record(r.Context(), key, acct, model.ID, false, e.Status, start, promptLen, 0, err)
 		writeErr(w, e.Status, err.Error(), e.OpenAI)
 		return
 	}
 
 	outLen = completionLen(raw)
-	s.record(key, acct, model.ID, false, http.StatusOK, start, promptLen, outLen, nil)
+	s.record(r.Context(), key, acct, model.ID, false, http.StatusOK, start, promptLen, outLen, nil)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -131,7 +134,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 	)
 
 	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
-		return s.streamOnce(ctx, acct, model, body, func(chunk []byte) error {
+		err := s.streamOnce(ctx, acct, model, body, func(chunk []byte) error {
 			if !started {
 				h := w.Header()
 				h.Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -149,6 +152,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 			flusher.Flush()
 			return nil
 		})
+		return stopAfterOutput(err, started)
 	})
 	streamErr = err
 
@@ -159,7 +163,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 		if err != nil {
 			msg = err.Error()
 		}
-		s.record(key, acct, model.ID, true, e.Status, start, promptLen, outLen, err)
+		s.record(r.Context(), key, acct, model.ID, true, e.Status, start, promptLen, outLen, err)
 		writeErr(w, e.Status, msg, e.OpenAI)
 		return
 	}
@@ -179,7 +183,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 	_, _ = io.WriteString(w, "data: [DONE]\n\n")
 	flusher.Flush()
 
-	s.record(key, acct, model.ID, true, apierr.From(streamErr).Status, start, promptLen, outLen, streamErr)
+	s.record(r.Context(), key, acct, model.ID, true, apierr.From(streamErr).Status, start, promptLen, outLen, streamErr)
 }
 
 // chatOnce 用指定账号发一次非流式请求。
@@ -187,11 +191,19 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 // 上游对个别模型（实测 glm-5.3）的非流式接口只回一个空 body 的 400，
 // 这里检测到该特征后自动改用「流式 + 本地聚合」，对客户端保持非流式语义。
 func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte) ([]byte, error) {
+	startAttempt(ctx, acct, model.ID)
 	sess, err := s.Cred.Session(ctx, acct, s.resolveOptions())
 	if err != nil {
 		return nil, err
 	}
 
+	if policy, ok := s.summaryPolicy(ctx, body, model.ID); ok {
+		chunks, err := s.summaryChunks(ctx, sess, model, body, policy)
+		if err != nil {
+			return nil, err
+		}
+		return codearts.AggregateSSE(chunks)
+	}
 	if model.StreamOnly {
 		return s.aggregateViaStream(ctx, sess, model, body)
 	}
@@ -211,12 +223,16 @@ func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model reg
 	if msg, status, bad := codearts.IsUpstreamBusinessError(raw); bad {
 		return nil, codearts.UpstreamBusinessError(status, msg)
 	}
+	captureUsage(ctx, raw)
 	return raw, nil
 }
 
 // aggregateViaStream 用流式请求取回分片，再在本地聚合成一次性响应。
 func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte) ([]byte, error) {
 	streamBody, err := rewriteStream(body, true)
+	if err == nil {
+		streamBody, err = requestStreamUsage(streamBody)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -225,6 +241,7 @@ func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session,
 		if msg, status, bad := codearts.IsUpstreamBusinessError(chunk); bad {
 			return codearts.UpstreamBusinessError(status, msg)
 		}
+		captureUsage(ctx, chunk)
 		chunks = append(chunks, append([]byte(nil), chunk...))
 		return nil
 	})
@@ -236,14 +253,32 @@ func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session,
 
 // streamOnce 用指定账号发一次流式请求，逐块回调。
 func (s *Server) streamOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
+	body, err := requestStreamUsage(body)
+	if err != nil {
+		return err
+	}
+	startAttempt(ctx, acct, model.ID)
 	sess, err := s.Cred.Session(ctx, acct, s.resolveOptions())
 	if err != nil {
 		return err
+	}
+	if policy, ok := s.summaryPolicy(ctx, body, model.ID); ok {
+		chunks, err := s.summaryChunks(ctx, sess, model, body, policy)
+		if err != nil {
+			return err
+		}
+		for _, chunk := range chunks {
+			if err := onChunk(chunk); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	return s.Up.ChatStream(ctx, sess, model.ID, body, func(chunk []byte) error {
 		if msg, status, bad := codearts.IsUpstreamBusinessError(chunk); bad {
 			return codearts.UpstreamBusinessError(status, msg)
 		}
+		captureUsage(ctx, chunk)
 		return onChunk(chunk)
 	})
 }
@@ -302,31 +337,61 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 	if attempts > maxAttemptsCap {
 		attempts = maxAttemptsCap
 	}
+	// One deadline covers acquisition, retries, credential refresh and the entire stream.
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	session, _ := ctx.Value(routingSessionKey{}).(string)
+	model, _ := ctx.Value(routingModelKey{}).(string)
+	tried := make(map[string]bool)
 
 	var lastErr error
 	var used *codearts.Account
 	transientWaits := 0
 	for i := 0; i < attempts; i++ {
-		acct := s.Store.NextAccount()
+		if err := s.checkRequestBudget(ctx, model); err != nil {
+			return used, err
+		}
+		if ctx.Err() != nil {
+			return used, ctx.Err()
+		}
+		acct, release := s.Store.AcquireAccountForModel(session, model, tried)
 		if acct == nil {
 			break
 		}
 		used = acct
-		cctx, cancel := context.WithTimeout(ctx, timeout)
-		err := fn(cctx, acct)
-		cancel()
+		err := func() error { defer release(); return fn(ctx, acct) }()
 
 		if err == nil {
+			s.Store.MarkModelResult(acct.ID, model, true, "", 0)
 			s.Store.MarkAccountResult(acct.ID, true, "")
 			return acct, nil
 		}
+		var terminal interface{ NonRetryableRequest() bool }
+		if errors.As(err, &terminal) && terminal.NonRetryableRequest() {
+			return used, err
+		}
 		lastErr = err
+		s.Store.ForgetSession(session, acct.ID)
 		// 客户端主动断开（curl/浏览器提前关连接）不是账号故障，不应计入失败
 		if ctx.Err() != nil {
 			break
 		}
 		// 临时性故障（并发上限 / 429 / 5xx）：账号本身没问题，退避后重试
 		if codearts.IsTransientUpstream(err) {
+			cooldown := s.Store.Settings().Pool.RateCooldownSec
+			if apierr.From(err).Status >= 500 {
+				cooldown = min(cooldown, 5)
+			}
+			if model == "" {
+				s.Store.CooldownAccount(acct.ID, "上游限流或暂时不可用", cooldown)
+			} else {
+				s.Store.MarkModelResult(acct.ID, model, false, "上游限流或暂时不可用", cooldown)
+			}
+			s.persist()
+			var committed *committedStreamError
+			if errors.As(err, &committed) {
+				return used, err
+			}
 			if i == attempts-1 {
 				break
 			}
@@ -339,13 +404,32 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		// 请求本身非法（参数越界 / 模型未注册 / tools 超长）：换哪个账号都一样，
 		// 不是账号故障。计入失败会让任意客户端发错一次参数就把健康账号标成 error，
 		// 还会累加 failures 触发熔断。直接返回，让客户端去改请求。
+		if model != "" && modelUnavailable(err) {
+			s.Store.MarkModelResult(acct.ID, model, false, "上游模型暂不可用", s.Store.Settings().Pool.BreakerCooldownSec)
+			s.persist()
+			tried[acct.ID] = true
+			var committed *committedStreamError
+			if errors.As(err, &committed) {
+				return used, err
+			}
+			continue
+		}
 		if codearts.IsClientRequestError(err) {
 			return used, lastErr
 		}
 		s.Store.MarkAccountResult(acct.ID, false, err.Error())
+		if codearts.IsCredentialsError(err) {
+			s.Store.CooldownAccount(acct.ID, "凭据失效，请重新登录", s.Store.Settings().Pool.BreakerCooldownSec)
+		}
+		s.persist()
+		tried[acct.ID] = true
+		var committed *committedStreamError
+		if errors.As(err, &committed) {
+			return used, err
+		}
 	}
 	if lastErr == nil {
-		lastErr = fmt.Errorf("全部账号均不可用")
+		lastErr = apierr.NoAccount
 	}
 	return used, lastErr
 }
@@ -386,16 +470,25 @@ func rewriteStream(body []byte, stream bool) ([]byte, error) {
 }
 
 // record 记录一次请求结果。
-func (s *Server) record(key string, acct *codearts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) {
+func (s *Server) record(ctx context.Context, key string, acct *codearts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) {
 	e := store.LogEntry{
-		Time:      time.Now().Unix(),
-		Key:       codearts.Mask(key),
-		Model:     model,
-		Stream:    stream,
-		Status:    status,
-		LatencyMS: time.Since(start).Milliseconds(),
-		PromptLen: inLen,
-		OutputLen: outLen,
+		AttemptDetails:  requestAttemptDetails(ctx),
+		UsageIncomplete: requestUsageIncomplete(ctx),
+		RequestID:       requestID(ctx),
+		FinishReason:    requestFinish(ctx),
+		RequestKind:     requestKind(ctx),
+		Attempts:        requestAttempts(ctx),
+		SummaryAttempts: summaryAttempts(ctx),
+		Usage:           requestUsage(ctx),
+		Protocol:        requestProtocol(ctx),
+		Time:            time.Now().Unix(),
+		Key:             codearts.Mask(key),
+		Model:           model,
+		Stream:          stream,
+		Status:          status,
+		LatencyMS:       time.Since(start).Milliseconds(),
+		PromptLen:       inLen,
+		OutputLen:       outLen,
 	}
 	if acct != nil {
 		e.Account = acct.DisplayName()
@@ -403,7 +496,7 @@ func (s *Server) record(key string, acct *codearts.Account, model string, stream
 	if err != nil {
 		e.Err = err.Error()
 	}
-	s.Store.Record(e, outLen)
+	s.Store.Record(e, outLen, key)
 }
 
 // completionLen 统计非流式响应里的输出字符数。

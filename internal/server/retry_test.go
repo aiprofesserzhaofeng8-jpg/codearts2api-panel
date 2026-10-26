@@ -27,6 +27,9 @@ func newTestServer(t *testing.T, accounts int, retries int) *Server {
 		// 这个 helper 的用例关心的是重试序列，不是限流；默认关掉以免
 		// 「连发多个请求」的用例被 429 干扰。限流自己的测试单独建服务。
 		s.RateLimitEnabled = false
+		// These inherited tests exercise backoff with cooldown explicitly disabled.
+		// Production cooldown and lease behavior are covered by pool integration tests.
+		s.Pool.RateCooldownSec = 0
 	})
 	for i := 0; i < accounts; i++ {
 		// AccessKey 必须唯一：UpsertAccount 按 AK 去重，全用 "ak" 会被合并成一个账号。
@@ -39,7 +42,7 @@ func newTestServer(t *testing.T, accounts int, retries int) *Server {
 			Session: &codearts.Session{AccessKey: "ak-" + id, SecretKey: "sk-" + id},
 		})
 	}
-	return &Server{Store: st, Up: codearts.NewClient(), Reg: registry.New(),
+	return &Server{AllowLocalAdmin: true, Store: st, Up: codearts.NewClient(), Reg: registry.New(),
 		Limits: ratelimit.New(rateLimitConfig(st.Settings()), nil)}
 }
 

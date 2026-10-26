@@ -37,18 +37,18 @@ func TestAdminPasswordEmptyDoesNotClear(t *testing.T) {
 	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "keepme" })
 
 	postSettings(t, s, `{"admin_password":""}`)
-	if got := s.Store.Settings().AdminPassword; got != "keepme" {
+	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("空字符串清除了管理密码: %q", got)
 	}
 
 	postSettings(t, s, `{"admin_password":"   "}`)
-	if got := s.Store.Settings().AdminPassword; got != "keepme" {
+	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("空白字符串清除了管理密码: %q", got)
 	}
 
 	// 不带该字段（null）也不应改动
 	postSettings(t, s, `{"default_model":"GLM-5.2"}`)
-	if got := s.Store.Settings().AdminPassword; got != "keepme" {
+	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("未携带该字段却改动了管理密码: %q", got)
 	}
 }
@@ -58,13 +58,13 @@ func TestAdminPasswordSetAndClear(t *testing.T) {
 	s := newTestServer(t, 0, 1)
 
 	postSettings(t, s, `{"admin_password":"  s3cret  "}`)
-	if got := s.Store.Settings().AdminPassword; got != "s3cret" {
+	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "s3cret") {
 		t.Errorf("设置管理密码失败（应去掉两端空白）: %q", got)
 	}
 
 	// 不带 clear 标志的 false 不应清除
 	postSettings(t, s, `{"clear_admin_password":false}`)
-	if got := s.Store.Settings().AdminPassword; got != "s3cret" {
+	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "s3cret") {
 		t.Errorf("clear_admin_password=false 却清除了密码: %q", got)
 	}
 

@@ -1,0 +1,8 @@
+{
+  "profile": "scripts/apparmor/bwrap-userns-restrict",
+  "sha256": "11d39094f044f0cda0febb3ad517b830301da6b2ce929664af09ee9e4dd264f9",
+  "source": "Ubuntu noble-updates/main; signed apt package verified",
+  "official_documentation": "https://learn.chatgpt.com/docs/sandboxing",
+  "acceptance_run": "artifacts/acceptance/20261026T082200Z",
+  "preflight_report": "artifacts/acceptance/20261026T082200Z/fixes-20261026T093722Z/codex-sandbox-after.json"
+}

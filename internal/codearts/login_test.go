@@ -329,50 +329,6 @@ func TestHostnameOf(t *testing.T) {
 	}
 }
 
-// TestLoginCallbackTwoHops 验证回调服务器的两跳行为与 IDE 一致：
-//
-//	?secret=&redirect=  → 307 到 redirect
-//	?code=              → 307 到门户 login 页
-func TestLoginCallbackTwoHops(t *testing.T) {
-	flow := &LoginFlow{
-		ID:      "test",
-		Status:  LoginPending,
-		done:    make(chan struct{}),
-		Started: time.Now(),
-		client:  NewClient(),
-	}
-	opt := LoginOptions{PortalHost: DefaultPortalHost, Locale: "zh-cn"}
-	handler := flow.handleCallback(opt)
-
-	// 第一跳
-	rec := newRecorder()
-	handler(rec, mustRequest(t, "http://127.0.0.1:1"+AuthRedirectPath+"?secret=abc&redirect=https://example.com/next"))
-	if rec.code != http.StatusTemporaryRedirect {
-		t.Fatalf("第一跳状态码 = %d，应为 307", rec.code)
-	}
-	if loc := rec.header.Get("Location"); loc != "https://example.com/next" {
-		t.Errorf("第一跳 Location = %q", loc)
-	}
-
-	// 第二跳（code 会异步触发 exchange，这里只验证响应与状态记录）
-	rec = newRecorder()
-	handler(rec, mustRequest(t, "http://127.0.0.1:1"+AuthRedirectPath+"?code=THECODE"))
-	if rec.code != http.StatusTemporaryRedirect {
-		t.Fatalf("第二跳状态码 = %d，应为 307", rec.code)
-	}
-	loc := rec.header.Get("Location")
-	if !strings.Contains(loc, "/portal/login?login_succeed=true") ||
-		!strings.Contains(loc, "uri_scheme="+ClientID) {
-		t.Errorf("第二跳 Location = %q", loc)
-	}
-	flow.mu.Lock()
-	got := flow.code
-	flow.mu.Unlock()
-	if got != "THECODE" {
-		t.Errorf("授权码未记录: %q", got)
-	}
-}
-
 // TestLoginCallbackFailureRedirect 没有 code 时也要跳到失败页，而不是挂住。
 func TestLoginCallbackFailureRedirect(t *testing.T) {
 	flow := &LoginFlow{ID: "t", done: make(chan struct{}), client: NewClient()}

@@ -146,7 +146,7 @@ func (c *Client) Refresh(ctx context.Context, sess *Session) (*RefreshResult, er
 
 	var env refreshEnvelope
 	if err := json.Unmarshal(raw, &env); err != nil {
-		return nil, fmt.Errorf("续期响应解析失败 HTTP %d: %s", resp.StatusCode, truncate(string(raw), 300))
+		return nil, fmt.Errorf("续期响应解析失败 HTTP %d: %s", resp.StatusCode, truncate(sessionErrorText(string(raw), sess), 300))
 	}
 	creds := env.Credentials
 	refreshToken := env.RefreshToken
@@ -162,9 +162,9 @@ func (c *Client) Refresh(ctx context.Context, sess *Session) (*RefreshResult, er
 			msg = env.Error
 		}
 		if msg == "" {
-			msg = truncate(string(raw), 300)
+			msg = truncate(sessionErrorText(string(raw), sess), 300)
 		}
-		return nil, fmt.Errorf("续期失败 HTTP %d: %s", resp.StatusCode, msg)
+		return nil, fmt.Errorf("续期失败 HTTP %d: %s", resp.StatusCode, sessionErrorText(msg, sess))
 	}
 
 	out := &RefreshResult{

@@ -4,17 +4,17 @@ services:
     build:
       context: .
       args:
-        VERSION: ${VERSION:-dev}
-    image: codearts2api:latest
-    container_name: codearts2api
+        VERSION: ${VERSION:-0.1.0-panel}
+    image: codearts2api-panel:local
+    container_name: codearts2api-panel
     restart: unless-stopped
     ports:
       - "127.0.0.1:10087:10087"
     volumes:
-      - ./data:/data
+      - codearts_data:/data
     environment:
       # 管理密码：容器内网关看到的来源是 docker 网桥地址（不是环回），
-      # 因此通过端口映射使用控制台时**必须设置密码**，否则管理接口会返回 403。
+      # 新实例会自动生成管理员密码；此变量可显式指定或覆盖。
       CODEARTS_ADMIN_PASSWORD: ${CODEARTS_ADMIN_PASSWORD:-}
       # 未签发密钥时是否允许非本机匿名调用 /v1/*（默认 false，仅本机直连）。
       # 容器里“本机”是网桥地址，所以想让宿主机客户端免密钥调用才需打开它。
@@ -30,3 +30,5 @@ services:
       # 容器里没有 DPAPI，无法自动读取桌面端凭据；
       # 请在控制台用「手工录入」或「从 session JSON 导入」提供凭据。
       - -no-import
+volumes:
+  codearts_data:

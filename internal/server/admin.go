@@ -19,9 +19,14 @@ import (
 func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	today := time.Now().Format("2006-01-02")
 	accts := s.Store.Accounts()
+	poolState := s.Store.PoolSnapshot()
+	modelHealth := s.Store.ModelHealthSnapshot()
 	safe := make([]map[string]any, 0, len(accts))
 	for _, a := range accts {
 		row := map[string]any{
+			"model_health": modelHealth[a.ID],
+			"paused":       a.Paused, "pool": poolState[a.ID],
+			"cooldown_until": a.CooldownUntil, "cooldown_reason": a.CooldownReason,
 			"id": a.ID, "name": a.DisplayName(), "source": a.Source,
 			"user_data": a.UserData, "enabled": a.Enabled,
 			"status": a.Status, "note": a.Note, "last_err": a.LastErr,
@@ -47,8 +52,8 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	safeKeys := make([]map[string]any, 0, len(keys))
 	for _, k := range keys {
 		safeKeys = append(safeKeys, map[string]any{
-			"key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
-			"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests,
+			"ref": keyReference(k.Key), "key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
+			"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests, "budget": k.Budget, "budget_usage": k.BudgetUsage,
 		})
 	}
 
@@ -166,9 +171,24 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "new": isNew, "id": acct.ID})
 
 	case "remove":
-		ok := s.Store.RemoveAccount(body.ID)
-		s.persist()
-		writeJSON(w, http.StatusOK, map[string]any{"ok": ok})
+		if strings.TrimSpace(body.ID) == "" {
+			writeErr(w, 400, "缺少账号 ID", "invalid_request_error")
+			return
+		}
+		ok, err := s.Store.RemoveAccountAndSave(body.ID)
+		if err != nil {
+			writeErr(w, 500, "删除未完成：无法保存状态文件，请检查目录权限", "server_error")
+			return
+		}
+		if !ok {
+			writeErr(w, 404, "账号已不存在，请刷新列表", "invalid_request_error")
+			return
+		}
+		s.Cred.Invalidate(body.ID)
+		s.creditMu.Lock()
+		delete(s.creditCache, body.ID)
+		s.creditMu.Unlock()
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "removed_id": body.ID})
 
 	case "toggle":
 		a := s.Store.Account(body.ID)
@@ -181,9 +201,17 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 
 	case "clear-errors":
+		s.Store.ClearModelHealth(body.ID)
 		if s.Store.ClearAccountErrors(body.ID) {
 			s.persist()
 		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case "pause", "resume":
+		if !s.Store.SetAccountPaused(body.ID, body.Action == "pause") {
+			writeErr(w, http.StatusNotFound, "账号不存在", "invalid_request_error")
+			return
+		}
+		s.persist()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 
 	case "export":
@@ -245,8 +273,8 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 		safe := make([]map[string]any, 0, len(keys))
 		for _, k := range keys {
 			safe = append(safe, map[string]any{
-				"key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
-				"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests,
+				"ref": keyReference(k.Key), "key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
+				"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests, "budget": k.Budget, "budget_usage": k.BudgetUsage,
 			})
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"keys": safe})
@@ -301,6 +329,10 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		ModelAliases      map[string]string `json:"model_aliases"`
+		Pool              json.RawMessage   `json:"pool"`
+		AutoClaim         *bool             `json:"auto_claim"`
+		ClaimAfterHour    *int              `json:"claim_after_hour"`
+		ClaimAfterMinute  *int              `json:"claim_after_minute"`
 		DefaultModel      *string           `json:"default_model"`
 		ForceModel        *string           `json:"force_model"`
 		RequestTimeout    *int              `json:"request_timeout_sec"`
@@ -330,7 +362,32 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "请求体解析失败", "invalid_request_error")
 		return
 	}
+	poolConfig := s.Store.Settings().Pool
+	if len(body.Pool) > 0 {
+		if err := json.Unmarshal(body.Pool, &poolConfig); err != nil {
+			writeErr(w, http.StatusBadRequest, "账号池配置格式错误", "invalid_request_error")
+			return
+		}
+		if err := poolConfig.Validate(); err != nil {
+			writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
+			return
+		}
+	}
+	if body.ClearPassword != nil && *body.ClearPassword && !s.AllowLocalAdmin {
+		writeErr(w, 400, "默认登录模式不允许清空密码；可设置新密码，或由启动参数重设", "invalid_request_error")
+		return
+	}
+	if body.AdminPassword != nil && len(*body.AdminPassword) > 4096 {
+		writeErr(w, 400, "管理员密码不能超过 4096 字节", "invalid_request_error")
+		return
+	}
 	s.Store.UpdateSettings(func(st *store.Settings) {
+		if len(body.Pool) > 0 {
+			st.Pool = poolConfig
+		}
+		setIf(&st.AutoClaim, body.AutoClaim)
+		setIf(&st.ClaimAfterHour, body.ClaimAfterHour)
+		setIf(&st.ClaimAfterMinute, body.ClaimAfterMinute)
 		if body.ModelAliases != nil {
 			st.ModelAliases = body.ModelAliases
 		}
@@ -393,7 +450,7 @@ func (s *Server) ApplyIdentity() {
 	if st.Language != "" {
 		id.Language = st.Language
 	}
-	s.Up.Identity = id
+	s.Up.SetIdentity(id)
 }
 
 // handleAdminCheckin 对全部（或指定）账号做一次连通性探测。

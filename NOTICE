@@ -1,0 +1,31 @@
+CodeArts2API Panel
+
+Based on CodeArts2API by 2951461586 and its contributors:
+https://github.com/2951461586/CodeArts2API
+Base revision: c11aa7bba77d148ed04dec2c6a67b74cb8732293
+The inherited implementation is licensed under Apache License 2.0 (see LICENSE).
+
+Panel modifications, 2026-10-25:
+- Inference account leases, configurable scheduling, cooldowns and circuit breaking.
+- Session affinity, account pause/resume, pool controls and status in the console.
+- Stream replay prevention, request-wide deadlines and concurrent settings fixes.
+- First-run separate admin/API credentials and local startup scripts.
+
+The account-pool product design was inspired by linguo2625469/workbuddy2api-panel:
+https://github.com/linguo2625469/workbuddy2api-panel
+The panel color tokens and compact visual presentation also adapt this project's
+design. Its MIT license and copyright notices are in LICENSE.workbuddy.
+
+This is an independent community project, not a Huawei product.
+
+Responses compatibility library:
+Derived from Wei-Shaw/sub2api, revision ba81c7fd758e425d67f856d601147ef0c5263d3f.
+Copyright Wei-Shaw and Sub2API contributors.
+The files under internal/responsescompat are licensed under LGPL-3.0.
+License texts: internal/responsescompat/LICENSE and internal/responsescompat/COPYING.
+Selected converter sources are unmodified; helpers.go extracts shared helpers.
+This source tree and build.sh support rebuilding with a modified library.
+
+Ubuntu AppArmor profile for local Codex sandbox troubleshooting:
+Unmodified bwrap-userns-restrict from Ubuntu apparmor-profiles, GPL-2.0-or-later.
+See scripts/apparmor/COPYRIGHT and scripts/apparmor/LICENSE.

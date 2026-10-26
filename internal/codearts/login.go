@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -30,9 +31,9 @@ import (
 //        &client_id=codearts-agent&port=<port>
 //        &code_challenge=<S256>&code_challenge_method=SHA-256
 //        &ticket_id=<hex>&plugin-name=snap_AIIDE&plugin-version=<ver>
-//  3. 浏览器登录后回调两次：
-//       GET /oauth/callback?secret=<..>&redirect=<..>   → 307 跟随 redirect
-//       GET /oauth/callback?code=<authorizationCode>    → 拿到授权码
+//  3. 浏览器根据登录方式回调其中一种：
+//       GET /oauth/callback?secret=<..>&redirect=<..> → 按 ticket_id + secret 查询临时凭据
+//       GET /oauth/callback?code=<authorizationCode> → 用授权码换取可续期凭据
 //  4. 用授权码换凭据：
 //       POST https://sts.cn-north-4.myhuaweicloud.com/v1/oauth2/tokens
 //       DPoP: <ES256 JWS>
@@ -48,6 +49,8 @@ const (
 	DefaultPortalHost = "https://codearts.huaweicloud.com/portal"
 	// LoginPluginName 是登录请求里携带的插件名（与 IDE 一致）。
 	LoginPluginName = "snap_AIIDE"
+	// Authentication extension version, distinct from the IDE/model client version.
+	LoginPluginVersion = "5.4.2"
 	// AuthRedirectPath 是回调路径。
 	AuthRedirectPath = "/oauth/callback"
 	// loginTimeout 是一次登录流程的最长等待时间。
@@ -116,7 +119,11 @@ type LoginFlow struct {
 	listener       net.Listener
 	code           string
 	secret         string
+	ticketID       string
+	pluginVersion  string
+	exchanging     bool
 	saved          bool
+	savedAccountID string
 
 	mu     sync.Mutex
 	done   chan struct{}
@@ -162,7 +169,7 @@ func (m *LoginManager) Start(opt LoginOptions) (*LoginFlow, error) {
 		opt.Theme = 2 // 深色
 	}
 	if opt.PluginVersion == "" {
-		opt.PluginVersion = PluginVersion
+		opt.PluginVersion = LoginPluginVersion
 	}
 	if opt.Timeout <= 0 {
 		opt.Timeout = loginTimeout
@@ -201,6 +208,9 @@ func (m *LoginManager) Start(opt LoginOptions) (*LoginFlow, error) {
 		done:           make(chan struct{}),
 	}
 	flow.AuthURL = buildAuthorizeURL(opt, port, pkce)
+	authURL, _ := url.Parse(flow.AuthURL)
+	flow.ticketID = authURL.Query().Get("ticket_id")
+	flow.pluginVersion = opt.PluginVersion
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(AuthRedirectPath, flow.handleCallback(opt))
@@ -216,12 +226,16 @@ func (m *LoginManager) Start(opt LoginOptions) (*LoginFlow, error) {
 	m.mu.Lock()
 	// 顺手清理过期的流程，避免内存里堆积
 	for id, f := range m.flows {
-		if !f.Finished.IsZero() && time.Since(f.Finished) > 10*time.Minute {
+		f.mu.Lock()
+		expired := !f.Finished.IsZero() && time.Since(f.Finished) > 10*time.Minute
+		f.mu.Unlock()
+		if expired {
 			delete(m.flows, id)
 		}
 	}
 	m.flows[flow.ID] = flow
 	m.mu.Unlock()
+	log.Printf("login: flow=%s phase=waiting callback_port=%d", flow.ID, flow.Port)
 
 	return flow, nil
 }
@@ -239,6 +253,19 @@ func (m *LoginManager) Cancel(id string) bool {
 	if f == nil {
 		return false
 	}
+	f.mu.Lock()
+	if f.saved {
+		f.mu.Unlock()
+		return false
+	}
+	if f.closed {
+		f.Status = LoginCanceled
+		f.Message = "已取消"
+		f.Session = nil
+		f.mu.Unlock()
+		return true
+	}
+	f.mu.Unlock()
 	f.finish(LoginCanceled, "已取消", nil)
 	return true
 }
@@ -261,25 +288,37 @@ func buildAuthorizeURL(opt LoginOptions, port int, pkce *pkcePair) string {
 
 // handleCallback 处理门户的回调。
 //
-// 与 IDE 一致：先收 ?secret=&redirect= 这一跳（307 跟随），再收 ?code=。
+// 与 IDE 一致：secret 走旧版票据查询，code 走 OAuth 换取凭据。
 func (f *LoginFlow) handleCallback(opt LoginOptions) http.HandlerFunc {
-	loginOK := strings.TrimRight(opt.PortalHost, "/") +
-		"/login?login_succeed=true&uri_scheme=" + ClientID + "&locale=" + url.QueryEscape(opt.Locale)
 	loginFail := strings.TrimRight(opt.PortalHost, "/") +
 		"/login?login_succeed=false&uri_scheme=" + ClientID + "&locale=" + url.QueryEscape(opt.Locale)
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 		q := r.URL.Query()
-		// 第一跳：门户带 secret + redirect，我们只负责跳到 redirect
-		if secret := q.Get("secret"); secret != "" {
-			f.mu.Lock()
-			f.secret = secret
-			f.mu.Unlock()
+		// The official client treats secret as a legacy ticket flow, not merely
+		// a redirect preceding an OAuth code. Start polling the matching ticket.
+		if secret := q.Get("secret"); secret != "" && q.Get("code") == "" {
 			target := q.Get("redirect")
-			if target == "" {
-				target = loginFail
+			if target != "" {
+				u, err := url.Parse(target)
+				if err != nil || !f.allowedHop(u) {
+					http.Error(w, "不支持的登录跳转地址", http.StatusBadRequest)
+					return
+				}
 			}
-			http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+			if err := f.beginExchange("", secret); err != nil {
+				http.Error(w, err.Error(), http.StatusConflict)
+				return
+			}
+			if target != "" {
+				http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+			} else {
+				writeCallbackReceived(w)
+			}
 			return
 		}
 		// 第二跳：拿到授权码
@@ -288,13 +327,11 @@ func (f *LoginFlow) handleCallback(opt LoginOptions) http.HandlerFunc {
 			http.Redirect(w, r, loginFail, http.StatusTemporaryRedirect)
 			return
 		}
-		f.mu.Lock()
-		f.code = code
-		f.mu.Unlock()
-		http.Redirect(w, r, loginOK, http.StatusTemporaryRedirect)
-
-		// 回调线程里完成换取凭据，避免用户浏览器长时间等待
-		go f.exchange(code)
+		if err := f.beginExchange(code, ""); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		writeCallbackReceived(w)
 	}
 }
 
@@ -313,13 +350,77 @@ func (f *LoginFlow) watchdog(timeout time.Duration) {
 func (f *LoginFlow) exchange(code string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
+	go func() {
+		select {
+		case <-f.done:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
 
-	sess, err := f.client.ExchangeAuthorizationCode(ctx, code, f.pkce, f.dpop, f.Port)
+	var sess *Session
+	var err error
+	if code != "" {
+		sess, err = f.client.ExchangeAuthorizationCode(ctx, code, f.pkce, f.dpop, f.Port)
+	} else {
+		sess, err = f.client.ExchangeLoginTicket(ctx, f.ticketID, f.secret, f.pluginVersion, 2*time.Second)
+	}
 	if err != nil {
 		f.finish(LoginFailed, "换取凭据失败: "+err.Error(), nil)
 		return
 	}
-	f.finish(LoginConfirmed, "登录成功", sess)
+	message := "登录成功"
+	if !sess.HasRefresh() {
+		message = "登录成功；当前为临时票据凭据，到期后需要重新登录"
+	}
+	f.finish(LoginConfirmed, message, sess)
+}
+
+func (f *LoginFlow) beginExchange(code, secret string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.closed {
+		// A browser on this machine may deliver the callback before the user
+		// pastes it into the panel. Reuse that verified result, never exchange
+		// a single-use authorization code again or implicitly save an account.
+		if f.Status == LoginConfirmed {
+			if f.code != code || f.secret != secret || (code == "" && secret == "") {
+				return fmt.Errorf("本次登录已收到另一份授权，请检查已验证的账号；登录其他账号请重新生成链接")
+			}
+			if f.Session == nil || !f.Session.Valid(0) {
+				return fmt.Errorf("本次授权凭据已过期，请重新生成登录链接")
+			}
+			return nil
+		}
+		if f.Message != "" {
+			return fmt.Errorf("%s；请重新生成登录链接", f.Message)
+		}
+		return fmt.Errorf("本次登录已取消或过期，请重新生成登录链接")
+	}
+	if f.exchanging {
+		if f.code == code && f.secret == secret {
+			return nil
+		}
+		return fmt.Errorf("正在处理本次登录，请回到面板等待结果")
+	}
+	f.exchanging, f.code, f.secret = true, code, secret
+	if code != "" {
+		f.Message = "已收到授权码，正在换取凭据…"
+		log.Printf("login: flow=%s phase=exchanging method=oauth", f.ID)
+	} else {
+		f.Message = "已收到登录票据，正在等待华为确认授权…"
+		log.Printf("login: flow=%s phase=exchanging method=ticket", f.ID)
+	}
+	go f.exchange(code)
+	return nil
+}
+
+func writeCallbackReceived(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+	_, _ = io.WriteString(w, `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>码道登录处理中</title><h1>已收到登录授权</h1><p>网关正在换取凭据，请返回管理面板查看最终结果。现在可以关闭此页。</p></html>`)
 }
 
 // CallbackHint 描述「浏览器打不开回调地址」时该怎么办。
@@ -336,6 +437,13 @@ func (f *LoginFlow) CallbackHint() string {
 // 浏览器会报「无法访问此网站」，但**地址栏里的 URL 是完整的**。
 // 把它粘过来，网关会自己把剩下的重定向链走完并取出授权码。
 func (f *LoginFlow) SubmitCallbackURL(raw string) (string, error) {
+	u, parseErr := url.Parse(strings.TrimSpace(raw))
+	if parseErr != nil || !f.isOwnCallback(u) {
+		return "", fmt.Errorf("请粘贴本次登录的本机回调地址（端口 %d），不要粘贴华为登录页地址", f.Port)
+	}
+	if secret := u.Query().Get("secret"); secret != "" && u.Query().Get("code") == "" {
+		return "", f.beginExchange("", secret)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -343,8 +451,7 @@ func (f *LoginFlow) SubmitCallbackURL(raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	go f.exchange(code)
-	return code, nil
+	return code, f.beginExchange(code, "")
 }
 
 // chaseCallback 从给定 URL 出发沿重定向链走到本机回调，取出授权码。
@@ -490,6 +597,9 @@ func hostnameOf(rawURL string) string {
 
 // isOwnCallback 判断 URL 是否指向本流程的回调服务器。
 func (f *LoginFlow) isOwnCallback(u *url.URL) bool {
+	if u == nil || u.Scheme != "http" || u.User != nil {
+		return false
+	}
 	host := u.Hostname()
 	if host != "127.0.0.1" && host != "localhost" && host != "::1" {
 		return false
@@ -498,7 +608,7 @@ func (f *LoginFlow) isOwnCallback(u *url.URL) bool {
 		return false
 	}
 	port := u.Port()
-	return port == "" || port == strconv.Itoa(f.Port)
+	return port == strconv.Itoa(f.Port)
 }
 
 // MarkSaved 原子地标记「已把账号写入账号池」，返回本次调用是否是第一次。
@@ -538,6 +648,7 @@ func (f *LoginFlow) finish(status LoginStatus, msg string, sess *Session) {
 	}
 	f.mu.Unlock()
 
+	log.Printf("login: flow=%s phase=%s", f.ID, status)
 	close(f.done)
 	if f.server != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -582,7 +693,7 @@ func (c *Client) ExchangeAuthorizationCode(ctx context.Context, code string, pkc
 
 	var env refreshEnvelope
 	if err := json.Unmarshal(raw, &env); err != nil {
-		return nil, fmt.Errorf("换取凭据响应解析失败 HTTP %d: %s", resp.StatusCode, truncate(string(raw), 300))
+		return nil, fmt.Errorf("换取凭据响应解析失败 HTTP %d: %s", resp.StatusCode, truncate(RedactSecrets(string(raw), code, pkce.CodeVerifier), 300))
 	}
 	creds := env.Credentials
 	refreshToken := env.RefreshToken
@@ -598,9 +709,9 @@ func (c *Client) ExchangeAuthorizationCode(ctx context.Context, code string, pkc
 			msg = env.Error
 		}
 		if msg == "" {
-			msg = truncate(string(raw), 300)
+			msg = truncate(RedactSecrets(string(raw), code, pkce.CodeVerifier), 300)
 		}
-		return nil, fmt.Errorf("换取凭据失败 HTTP %d: %s", resp.StatusCode, msg)
+		return nil, fmt.Errorf("换取凭据失败 HTTP %d: %s", resp.StatusCode, RedactSecrets(msg, code, pkce.CodeVerifier))
 	}
 
 	sess := &Session{
@@ -648,7 +759,10 @@ func (c *Client) CallerIdentity(ctx context.Context, sess *Session) (id, name, d
 		return "", "", "", &UpstreamError{Status: resp.StatusCode, Message: truncate(string(raw), 200)}
 	}
 	var out struct {
-		User struct {
+		PrincipalID  string `json:"principal_id"`
+		PrincipalURN string `json:"principal_urn"`
+		AccountID    string `json:"account_id"`
+		User         struct {
 			ID       string `json:"id"`
 			Name     string `json:"name"`
 			DomainID string `json:"domain_id"`
@@ -656,6 +770,16 @@ func (c *Client) CallerIdentity(ctx context.Context, sess *Session) (id, name, d
 	}
 	if err := json.Unmarshal(raw, &out); err != nil {
 		return "", "", "", err
+	}
+	if out.AccountID != "" {
+		name = out.PrincipalURN
+		if i := strings.LastIndex(name, ":"); i >= 0 {
+			name = name[i+1:]
+		}
+		if i := strings.Index(name, "/"); i >= 0 {
+			name = name[i+1:]
+		}
+		return out.PrincipalID, name, out.AccountID, nil
 	}
 	return out.User.ID, out.User.Name, out.User.DomainID, nil
 }

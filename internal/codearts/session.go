@@ -276,16 +276,19 @@ func parseTime(v string) (time.Time, error) {
 
 // Account 是网关侧的一个 CodeArts 账号。
 type Account struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Source   string `json:"source"`    // desktop | manual
-	UserData string `json:"user_data"` // %APPDATA%\codearts-agent
-	Enabled  bool   `json:"enabled"`
-	Status   string `json:"status"`
-	Failures int    `json:"failures"`
-	LastErr  string `json:"last_err,omitempty"`
-	LastUsed int64  `json:"last_used"`
-	Note     string `json:"note,omitempty"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Source         string `json:"source"`    // desktop | manual
+	UserData       string `json:"user_data"` // %APPDATA%\codearts-agent
+	Enabled        bool   `json:"enabled"`
+	Paused         bool   `json:"paused"`
+	CooldownUntil  int64  `json:"cooldown_until,omitempty"`
+	CooldownReason string `json:"cooldown_reason,omitempty"`
+	Status         string `json:"status"`
+	Failures       int    `json:"failures"`
+	LastErr        string `json:"last_err,omitempty"`
+	LastUsed       int64  `json:"last_used"`
+	Note           string `json:"note,omitempty"`
 	// 每日运营活动福利的领取记录（按本地日期去重）
 	LastClaimDate string `json:"last_claim_date,omitempty"`
 	LastClaimAt   int64  `json:"last_claim_at,omitempty"`

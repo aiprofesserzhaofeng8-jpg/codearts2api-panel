@@ -34,6 +34,7 @@ func TestMetricsExposesStats(t *testing.T) {
 	s.Store.Record(store.LogEntry{Model: "m", Status: 500, Err: "boom"}, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	req.Host = "127.0.0.1:10087"
 	req.RemoteAddr = "127.0.0.1:12345" // 本机直连（未设管理密码时允许）
 	rec := httptest.NewRecorder()
 	s.withAdminAuth(s.handleMetrics)(rec, req)

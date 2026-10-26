@@ -50,7 +50,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 		s.MaxRetries = 1
 	})
 	up := codearts.NewClient()
-	s := &Server{Store: st, Up: up, Reg: registry.New(), cache: newModelCache()}
+	s := &Server{AllowLocalAdmin: true, Store: st, Up: up, Reg: registry.New(), cache: newModelCache()}
 	s.Cred = codearts.NewManager(up)
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
 	for _, id := range ids {
@@ -73,6 +73,7 @@ func adminProbeRequest(t *testing.T, s *Server, method, target, body string) *ht
 		rdr = strings.NewReader(body)
 	}
 	req := httptest.NewRequest(method, target, rdr)
+	req.Host = "127.0.0.1:10087"
 	req.RemoteAddr = "127.0.0.1:12345"
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")

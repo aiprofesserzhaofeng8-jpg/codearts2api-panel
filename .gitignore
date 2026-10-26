@@ -1,6 +1,12 @@
 # 构建产物
 /codearts2api
 /codearts2api.exe
+/bin/
+/data/
+/.env
+*.access.json
+*.admin-recovery.json
+/artifacts/
 *.exe
 
 # 运行期状态（含 STS 凭据与 refresh_token，绝不入库）
@@ -25,3 +31,6 @@ __pycache__/
 .ruff_cache/
 .pytest_cache/
 .mypy_cache/
+
+# Continuous local acceptance status; publish reviewed snapshots instead.
+/docs/acceptance/QUALITY-REPORT.md

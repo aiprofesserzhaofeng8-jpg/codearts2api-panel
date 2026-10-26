@@ -2,6 +2,7 @@ package codearts
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -38,6 +39,9 @@ func DefaultResolveOptions() ResolveOptions {
 //  3. 用 refresh_token 自行续期（DPoP + PKCE verifier）
 type Manager struct {
 	Client *Client
+	// Latest and Commit prevent an in-flight refresh overwriting a newer login.
+	Latest func(id string) *Account
+	Commit func(id string, expected, updated *Session) error
 	// Persist 在凭据发生变化时回调，用于把新会话写进状态文件。
 	Persist func(acct *Account) error
 	// Logf 是可选的日志回调。
@@ -51,6 +55,8 @@ type Manager struct {
 	// 锁的粒度写在这里而不是用一把全局锁，理由见 Session 的注释。
 	acctMu map[string]*sync.Mutex
 }
+
+var ErrSessionChanged = errors.New("账号凭据已更新或账号已删除，请重新发起请求")
 
 // NewManager 构造凭据管理器。
 func NewManager(c *Client) *Manager {
@@ -90,6 +96,16 @@ func (m *Manager) Session(ctx context.Context, acct *Account, opt ResolveOptions
 	lock := m.accountLock(acct.ID)
 	lock.Lock()
 	defer lock.Unlock()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if m.Latest != nil {
+		latest := m.Latest(acct.ID)
+		if latest == nil {
+			return nil, ErrSessionChanged
+		}
+		*acct = *latest
+	}
 
 	return m.resolve(ctx, acct, opt)
 }
@@ -98,6 +114,9 @@ func (m *Manager) Session(ctx context.Context, acct *Account, opt ResolveOptions
 func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions) (*Session, error) {
 	// 1) 实时会话（带短缓存）
 	live := m.cachedLive(acct.ID, opt.LiveTTL)
+	if m.Latest != nil && live != nil && live != acct.Session {
+		live = nil
+	}
 	if live == nil && acct.UserData != "" {
 		if s, err := ReadSession(acct.UserData); err == nil {
 			m.setLive(acct.ID, s)
@@ -107,7 +126,9 @@ func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions
 		}
 	}
 	if live != nil && live.Valid(opt.Margin) {
-		m.adopt(acct, live)
+		if err := m.adopt(acct, live); err != nil {
+			return nil, err
+		}
 		return live, nil
 	}
 
@@ -150,7 +171,9 @@ func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions
 	updated.Source = "refresh"
 	m.logf("账号 %s 续期成功，新凭据有效期至 %s", acct.DisplayName(), res.ExpiresAt.Local().Format("2006-01-02 15:04:05"))
 
-	m.adopt(acct, &updated)
+	if err := m.adopt(acct, &updated); err != nil {
+		return nil, err
+	}
 	m.setLive(acct.ID, &updated)
 
 	if opt.WriteBack && acct.UserData != "" {
@@ -215,21 +238,30 @@ func (m *Manager) accountLock(id string) *sync.Mutex {
 //
 // 凭据轮换（IDE 自行续期、网关自行续期）大约每 2 小时一次，changed 为假时
 // 不会触发落盘，因此这里不会造成写盘风暴。
-func (m *Manager) adopt(acct *Account, s *Session) {
+func (m *Manager) adopt(acct *Account, s *Session) error {
 	changed := acct.Session == nil ||
 		acct.Session.AccessKey != s.AccessKey ||
 		acct.Session.SecurityToken != s.SecurityToken ||
 		acct.Session.RefreshToken != s.RefreshToken
+	if changed && m.Commit != nil {
+		if err := m.Commit(acct.ID, acct.Session, s); err != nil {
+			return err
+		}
+	}
 	acct.Session = s
 	if changed && m.Persist != nil {
 		if err := m.Persist(acct); err != nil {
 			m.logf("账号 %s 状态保存失败: %v", acct.DisplayName(), err)
 		}
 	}
+	return nil
 }
 
 // Invalidate 清掉某账号的实时会话缓存（例如用户点了「探活」或刚改过凭据）。
 func (m *Manager) Invalidate(id string) {
+	lock := m.accountLock(id)
+	lock.Lock()
+	defer lock.Unlock()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.liveAt, id)

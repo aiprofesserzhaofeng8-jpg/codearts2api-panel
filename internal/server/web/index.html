@@ -1,15 +1,44 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>CodeArts2API 控制台</title>
+<meta name="local-panel-session" content="">
+<title>CodeArts2API Panel · 码道账号网关</title>
+<script src="/theme.js"></script>
 <link rel="stylesheet" href="/console.css">
 </head>
 <body>
 <a class="skip" href="#main">跳到主要内容</a>
 
+<dialog id="adminLoginDialog" class="modal" aria-labelledby="adminLoginTitle">
+  <div id="passwordGroup"><div id="pwPanel">
+    <h2 id="adminLoginTitle">管理员登录</h2>
+    <p class="hint">登录后管理账号、密钥与用量。会话有效期 8 小时，退出或修改密码后失效。</p>
+    <div class="field"><label for="pw">管理密码</label><input id="pw" type="password" autocomplete="current-password" placeholder="输入管理密码"></div>
+    <p class="hint" id="adminLoginError" role="alert"></p>
+    <button class="btn primary" id="savePw">登录</button>
+    <p class="hint">首次启动的密码见服务器 data 目录中的 .access.json；旧部署未设密码时会生成 state.json.admin-recovery.json。也可用 CODEARTS_ADMIN_PASSWORD 重设。</p>
+  </div></div>
+</dialog>
+<dialog id="keyBudgetDialog" class="modal" aria-labelledby="keyBudgetTitle">
+  <div class="card-head"><h2 id="keyBudgetTitle">密钥预算</h2><button class="btn xs" id="keyBudgetClose">关闭</button></div>
+  <p id="keyBudgetUsage" class="hint"></p>
+  <div class="field-grid">
+    <div class="field"><label for="budgetRequests">请求次数上限</label><input id="budgetRequests" type="number" min="0" step="1" required></div>
+    <div class="field"><label for="budgetTokens">Token 上限（输入 + 输出）</label><input id="budgetTokens" type="number" min="0" step="1" required></div>
+    <div class="field"><label for="budgetUSD">参考费用上限（USD）</label><input id="budgetUSD" type="number" min="0" step="any" required></div>
+  </div>
+  <p class="hint">0 表示不限。请求次数在调用前预留；Token / USD 按上游用量结算，单次请求可能超额，有这两项限额时每个密钥只允许一个在途请求。摘要重试分别计入 Token 和费用。USD 使用价格表估算，不等于华为积分账单。</p>
+  <label><input id="budgetReset" type="checkbox">重置已用预算（保留历史用量记录）</label>
+  <p id="keyBudgetError" class="hint" role="alert"></p><button class="btn primary" id="keyBudgetSave">保存预算</button>
+</dialog>
+<dialog id="modelHealthDialog" class="modal" aria-labelledby="modelHealthTitle">
+  <div class="card-head"><h2 id="modelHealthTitle">账号模型健康</h2><button class="btn xs" id="modelHealthClose">关闭</button></div>
+  <p class="hint">某个模型限流或暂不可用时单独冷却。账号凭据失效仍对整个账号生效。</p>
+  <div class="table-wrap"><table><thead><tr><th>模型</th><th>连续失败</th><th>状态</th><th>最近检查</th><th>原因</th></tr></thead><tbody id="modelHealthRows"></tbody></table></div>
+</dialog>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
@@ -18,35 +47,41 @@
       </span>
       <span class="brand-text">
         <span class="brand-name">CodeArts2API</span>
-        <span class="brand-sub">控制台</span>
+        <span class="brand-sub">华为云码道 · 控制台</span>
       </span>
     </div>
 
     <nav class="tabs" role="tablist" aria-label="控制台分区">
-      <button role="tab" id="nav-overview" data-tab="overview" class="on" aria-selected="true" aria-controls="tab-overview">
-        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
-        <span>概览</span>
-      </button>
       <button role="tab" id="nav-accounts" data-tab="accounts" aria-selected="false" aria-controls="tab-accounts">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.6 5.5-5.6s5.5 2.4 5.5 5.6"/><path d="M16 5.4a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.6c2 .6 3.5 2.5 3.5 4.9"/></svg>
-        <span>账号</span>
+        <span>账号池</span><span class="nav-count" id="navAccountCount">0</span>
+      </button>
+      <button role="tab" id="nav-overview" data-tab="overview" class="on" aria-selected="true" aria-controls="tab-overview">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+        <span>用量</span>
+      </button>
+      <button role="tab" id="nav-models" data-tab="models" aria-selected="false" aria-controls="tab-models">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"/></svg>
+        <span>模型</span>
       </button>
       <button role="tab" id="nav-keys" data-tab="keys" aria-selected="false" aria-controls="tab-keys">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="3.6"/><path d="M11.6 12H21"/><path d="M17.5 12v3"/><path d="M20.5 12v2"/></svg>
-        <span>密钥</span>
+        <span>API 密钥</span>
       </button>
       <button role="tab" id="nav-logs" data-tab="logs" aria-selected="false" aria-controls="tab-logs">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
-        <span>日志</span>
+        <span>运行日志</span>
       </button>
+      <button role="tab" id="nav-audit" data-tab="audit" aria-selected="false" aria-controls="tab-audit"><span>管理审计</span></button>
       <button role="tab" id="nav-settings" data-tab="settings" aria-selected="false" aria-controls="tab-settings">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h8"/><path d="M16 8h4"/><path d="M4 16h4"/><path d="M12 16h8"/><circle cx="14" cy="8" r="2.2"/><circle cx="10" cy="16" r="2.2"/></svg>
-        <span>设置</span>
+        <span>配置</span>
       </button>
     </nav>
 
     <div class="sidebar-foot">
       <span id="health" class="badge"><i class="dot"></i><span>检测中…</span></span>
+      <span class="sidebar-note">CodeArts2API Panel <span class="mono">v0.1</span></span>
     </div>
   </aside>
 
@@ -57,24 +92,14 @@
         <p class="page-hint" id="pageHint">运行状态与用量</p>
       </div>
       <div class="topbar-actions">
+        <button class="btn ghost" id="themeToggle" aria-label="切换明暗主题" title="切换明暗主题">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg>
+          <span id="themeLabel">浅色</span>
+        </button>
         <span class="sync" id="lastSync" aria-live="polite"></span>
-        <div class="pw-group">
-          <button class="pw-toggle" id="pwToggle" aria-expanded="false" aria-controls="pwPanel"
-                  title="管理密码：解锁账号、密钥等管理接口">
-            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg>
-            <span id="pwToggleText">未解锁</span>
-          </button>
-          <div class="pw-panel" id="pwPanel">
-            <label for="pw">管理密码</label>
-            <input id="pw" type="password" placeholder="输入管理密码" autocomplete="current-password"
-                   aria-label="管理密码">
-            <div class="row">
-              <button class="btn primary xs" id="savePw">记住</button>
-              <button class="btn ghost xs" id="forgetPw">忘记</button>
-            </div>
-            <span class="hint">只在本标签页记住，关闭标签页即失效。密码等价于「导出完整登录态」的权限。</span>
-          </div>
-        </div>
+        <span id="localPanelStatus" class="badge ok hidden">本机已解锁</span>
+        <button class="btn" id="pwToggle"><span id="pwToggleText">管理员登录</span></button>
+        <button class="btn ghost hidden" id="forgetPw">退出登录</button>
         <button class="btn primary" id="refresh">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg>
           刷新
@@ -82,51 +107,75 @@
       </div>
     </header>
 
+    <dialog id="priceEditDialog" class="modal" aria-labelledby="priceEditTitle">
+      <div class="card-head"><div><h2 id="priceEditTitle">编辑模型价格</h2><p class="card-sub" id="priceEditModel"></p></div><button class="btn xs" id="priceEditClose" aria-label="关闭价格编辑">关闭</button></div>
+      <p class="hint">USD / 百万 Token。保存后只对新请求生效，历史费用不会变化。</p>
+      <div class="field-grid">
+        <div class="field"><label for="priceEditInput">输入（未缓存）</label><input id="priceEditInput" type="number" min="0" max="1000000" step="any" placeholder="未配置" required></div>
+        <div class="field"><label for="priceEditOutput">输出</label><input id="priceEditOutput" type="number" min="0" max="1000000" step="any" placeholder="未配置" required></div>
+        <div class="field"><label for="priceEditCached">缓存命中</label><input id="priceEditCached" type="number" min="0" max="1000000" step="any" placeholder="未配置" required></div>
+      </div>
+      <p class="hint" id="priceEditError" role="alert"></p>
+      <div class="row"><button class="btn" id="priceEditCancel">取消</button><button class="btn primary" id="priceEditSave">保存价格</button></div>
+    </dialog>
+
+    <dialog id="policyDialog" class="modal" aria-labelledby="policyTitle">
+      <div class="card-head"><div><h2 id="policyTitle">模型兼容策略</h2><p class="card-sub" id="policyModel"></p></div><button class="btn xs" id="policyClose">关闭</button></div>
+      <div class="field-grid">
+        <div class="field"><label for="policyContext">推荐上下文</label><input id="policyContext" type="number" min="8192" max="2097152" required></div>
+        <div class="field"><label for="policyOutput">最大输出</label><input id="policyOutput" type="number" min="256" required></div>
+        <div class="field"><label for="policyReserve">压缩预留</label><input id="policyReserve" type="number" min="4352" required></div>
+        <div class="field"><label for="policyKeep">保留近期历史</label><input id="policyKeep" type="number" min="512" required></div>
+        <div class="field"><label for="policyTrigger">压缩触发值</label><input id="policyTrigger" type="number" min="1024" required></div>
+        <div class="field"><label for="policySummaryMax">摘要输出预算</label><input id="policySummaryMax" type="number" min="256" required></div>
+      </div>
+      <div class="field"><label for="policyFallback">摘要备用模型（留空关闭）</label><select id="policyFallback"></select><p class="hint">主模型摘要截断后，最多切换一次；须启用重试。备用模型应能容纳同一段历史，会按其价格计费。</p></div>
+      <div class="policy-options"><label><input id="policySummary" type="checkbox">启用摘要完整性保护</label><label><input id="policyRetry" type="checkbox">截断后最多重试一次</label><label><input id="policyThinking" type="checkbox">摘要时关闭思考（须确认模型支持）</label></div>
+      <p class="hint">只匹配 Pi 摘要系统提示，或客户端显式发送 X-CodeArts-Request-Kind: summary；不自动改写普通编程请求。工具调用请求不按摘要处理。</p>
+      <p class="hint" id="policyError" role="alert"></p><div class="row"><button class="btn" id="policyCancel">取消</button><button class="btn primary" id="policySave">保存策略</button></div>
+    </dialog>
+
     <main id="main">
       <section id="tab-overview" class="on" role="tabpanel" aria-labelledby="nav-overview">
-        <div class="kpis" id="kpis"></div>
-
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2>活动福利</h2>
-              <p class="card-sub">运营活动与可领取奖励（按账号查询，每个账号的可领项不同）</p>
-            </div>
-            <div class="card-actions">
-              <label class="inline-field">
-                <span>账号</span>
-                <select id="welfareAccount" aria-label="选择要查看活动福利的账号"></select>
-              </label>
-              <button class="btn" id="loadWelfare">刷新列表</button>
-              <button class="btn" id="claimWelfareNow">领取可领奖励</button>
-              <button class="btn" id="genInvite">生成邀请链接</button>
-              <span class="hint m-0" id="welfareHint"></span>
-            </div>
+        <div class="usage-toolbar">
+          <div><h2>用量统计</h2><p class="card-sub" id="usagePeriod">全部时间 · 累计模型请求</p></div>
+          <button class="btn" id="reloadUsage">刷新数据</button>
+        </div>
+        <div class="usage-filters">
+          <label>时间范围<select id="usagePreset"><option value="all">全部记录</option><option value="today">今天</option><option value="yesterday">昨天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="month">本月</option><option value="lastMonth">上月</option><option value="custom">自定义</option></select></label>
+          <label>开始日期<input id="usageStart" type="date"></label>
+          <span class="muted">至</span>
+          <label>结束日期<input id="usageEnd" type="date"></label>
+          <button class="btn primary" id="applyUsageDates">查询</button>
+          <span class="hint m-0" id="usageTimezone"></span>
+        </div>
+        <div class="usage-kpis" id="kpis" aria-label="用量汇总"></div>
+        <p class="usage-coverage" id="usageCoverage"></p>
+        <div class="usage-detail-grid">
+          <div class="card">
+            <div class="card-head"><div><h2>Token 构成</h2><p class="card-sub">输入、输出与缓存分别统计，避免重复计数</p></div></div>
+            <div id="usageBreakdown"></div>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>活动</th><th>类型</th><th>奖励</th><th>状态</th><th>可自动领取</th><th>触发方式</th><th>有效期</th></tr></thead>
-              <tbody id="welfare"></tbody>
-            </table>
-          </div>
-          <p class="hint">
-            只有<b>靠时间推进</b>的活动（如「每日签到领 1000 积分」）可以自动领取；
-            <b>邀请</b>与<b>学生认证</b>类必须由真实事件触发，服务端会直接拒绝直接领取。
-          </p>
-          <div class="card hidden mt-12 subpanel" id="invitePanel">
-            <div class="card-head">
-              <div>
-                <h2>我的邀请链接</h2>
-                <p class="card-sub" id="inviteStat"></p>
-              </div>
-              <div class="card-actions">
-                <button class="btn" id="copyInvite">复制</button>
-              </div>
-            </div>
-            <input class="w-full" id="inviteURL" readonly data-select-on-click="1" aria-label="邀请链接">
+          <div class="card">
+            <div class="card-head"><div><h2>请求概况</h2><p class="card-sub">所选时间范围内的请求结果</p></div></div>
+            <div id="usageHealth"></div>
           </div>
         </div>
+        <div class="card">
+          <div class="card-head"><div><h2>请求用量明细</h2><p class="card-sub" id="usageHistoryHint">所选时间范围内的请求，按时间倒序展示</p></div></div>
+          <div class="table-wrap"><table class="usage-table">
+            <thead><tr><th>时间</th><th>模型</th><th>接口 / 用途</th><th>状态 / 结束原因</th><th>输入（未缓存）</th><th>输出</th><th>缓存</th><th>总 Token</th><th>估算费用</th><th>耗时</th></tr></thead>
+            <tbody id="usageLogs"><tr><td colspan="10" class="muted">加载后显示请求用量</td></tr></tbody>
+          </table></div>
+          <div class="usage-pagination" id="usagePagination">
+            <div class="pagination-info"><span id="usagePageInfo">共 0 条</span><label>每页<select id="usagePageSize"><option value="20">20 条</option><option value="50">50 条</option><option value="100">100 条</option></select></label></div>
+            <div class="pagination-buttons" id="usagePageButtons" role="group" aria-label="用量分页"></div>
+            <div class="pagination-jump"><label>跳至<input id="usagePageJump" type="number" min="1" value="1" aria-label="跳转页码"></label><button class="btn xs" id="usageJump">跳转</button></div>
+          </div>
+        </div>
+      </section>
 
+      <section id="tab-models" role="tabpanel" aria-labelledby="nav-models">
         <div class="card">
           <div class="card-head">
             <div>
@@ -152,18 +201,37 @@
             上游是不是真的给你用。
           </p>
         </div>
+        <div class="card">
+          <div class="card-head"><div><h2>Token 价格表</h2><p class="card-sub">单价单位：USD / 百万 Token。用于 API 费用估算，不代表华为实际扣款。</p></div><button class="btn" id="reloadPricing">刷新价格</button></div>
+          <div class="table-wrap"><table class="pricing-table">
+            <thead><tr><th>模型</th><th>币种</th><th>输入（未缓存）</th><th>输出</th><th>缓存命中</th><th>来源 / 更新时间</th><th>操作</th></tr></thead>
+            <tbody id="pricingRows"></tbody>
+          </table></div>
+          <p class="hint">未核实型号保持未配置；三项单价均需填写，0 表示免费。保存后只影响新请求，历史费用保留当时价格。DeepSeek 默认采用固定高峰参考价，空闲时段参考价可手动设置为其一半。</p>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h2>客户端兼容与压缩策略</h2><p class="card-sub">一份配置供 Pi、Codex 和 Claude Code 启动器读取；推荐值不是上游最大能力声明。</p></div><button class="btn" id="reloadModelPolicies">刷新策略</button></div>
+          <p class="hint">码道上游：Chat Completions。Responses / Messages 由网关转换。原生 Responses compact、WebSocket 和响应存储暂不支持。</p>
+          <div class="table-wrap"><table><thead><tr><th>模型</th><th>推荐上下文 / 输出</th><th>压缩触发 / 保留</th><th>摘要处理</th><th>来源</th><th>操作</th></tr></thead><tbody id="modelPolicies"></tbody></table></div>
+          <p class="hint">摘要先完整生成，再返回客户端；截断最多重试一次。重试使用同一账号和模型，可能额外消耗积分，真实用量会累计。修改后重新运行客户端启动器读取新配置。</p>
+        </div>
       </section>
 
       <section id="tab-accounts" role="tabpanel" aria-labelledby="nav-accounts">
+        <div class="pool-stats" id="poolStats" aria-label="账号池状态概览"></div>
+        <div class="connection-strip">
+          <div class="connection-info"><span class="connection-dot"></span><span>API 接入地址</span><code id="apiBaseURL"></code></div>
+          <button class="btn xs ghost" id="copyBaseURL">复制地址</button>
+        </div>
         <div class="card">
           <div class="card-head">
             <div>
-              <h2>账号池</h2>
-              <p class="card-sub">凭据只存于本机状态文件（0600），页面仅展示脱敏后的 AK</p>
+              <h2>账号管理 <span class="heading-count" id="accountCount">0 个账号</span></h2>
+              <p class="card-sub">统一管理登录状态、积分额度与请求调度</p>
             </div>
             <div class="card-actions">
-              <button class="btn primary" id="importLocal">导入本机登录态</button>
-              <button class="btn" id="browserLogin">浏览器登录</button>
+              <button class="btn primary" id="browserLogin">浏览器登录</button>
+              <button class="btn" id="importLocal">导入登录态</button>
               <button class="btn" id="checkinAll">全部探活</button>
               <button class="btn" id="refreshCredits">刷新额度</button>
               <button class="btn" id="claimAll">领取活动福利</button>
@@ -190,55 +258,19 @@
             </div>
           </div>
 
-          <div class="card hidden subpanel" id="loginPanel">
-            <div class="card-head">
-              <div>
-                <h2>浏览器登录</h2>
-                <p class="card-sub">回调地址在本机回环，浏览器必须与网关在同一台机器上</p>
-              </div>
-              <div class="card-actions">
-                <!-- 用真实链接而不是 window.open：弹窗拦截器不会拦，也没有 open-redirect 面 -->
-                <a class="btn primary hidden" id="loginLink" href="#" target="_blank"
-                   rel="noopener noreferrer">打开授权页</a>
-                <button class="btn" id="loginCopy">复制地址</button>
-                <button class="btn danger" id="loginCancel">取消</button>
-              </div>
+          <div class="account-toolbar">
+            <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" placeholder="搜索账号名称或来源" aria-label="搜索账号"></label>
+            <div class="account-filters" role="group" aria-label="账号状态筛选">
+              <button class="filter-chip on" data-account-filter="all" aria-pressed="true">全部</button>
+              <button class="filter-chip" data-account-filter="ready" aria-pressed="false">可调度</button>
+              <button class="filter-chip" data-account-filter="cooling" aria-pressed="false">冷却中</button>
+              <button class="filter-chip" data-account-filter="paused" aria-pressed="false">已暂停</button>
+              <button class="filter-chip" data-account-filter="disabled" aria-pressed="false">已停用</button>
             </div>
-            <div id="loginStatus" class="muted">等待打开授权页…</div>
-            <div class="field mt-12">
-              <label for="loginURL">授权地址（点链接打开，或复制到浏览器）</label>
-              <input class="w-full" id="loginURL" readonly data-select-on-click="1">
-            </div>
-
-            <div class="settings-group">
-              <h3>远端部署（服务器上的网关 + 本地浏览器）</h3>
-              <p class="group-hint">
-                回调地址固定是 <code id="loginCallback">—</code> —— 浏览器会把它解析到<b>你自己这台机器</b>，
-                所以远端部署时下面两条路任选一条。
-              </p>
-
-              <div class="field">
-                <label for="loginTunnel">方案 A：SSH 本地端口转发（推荐，之后浏览器会自动跳回）</label>
-                <div class="row">
-                  <input class="grow-320" id="loginTunnel" readonly data-select-on-click="1">
-                  <button class="btn" id="copyTunnel">复制</button>
-                </div>
-                <span class="field-hint">在<b>你本机</b>执行这条命令并保持不断，然后点「打开授权页」即可。</span>
-              </div>
-
-              <div class="field mt-14">
-                <label for="loginPasted">方案 B：无隧道 —— 把浏览器最终停在的地址粘回来</label>
-                <div class="row">
-                  <input class="grow-320" id="loginPasted" placeholder="http://127.0.0.1:xxxxx/oauth/callback?code=...">
-                  <button class="btn primary" id="loginSubmit">提交回调 URL</button>
-                </div>
-                <span class="field-hint">登录后浏览器会停在「无法访问此网站」，<b>但地址栏里的 URL 是完整的</b> —— 整条复制粘到上面。</span>
-              </div>
-            </div>
+            <span class="filter-count" id="accountFilterCount" aria-live="polite"></span>
           </div>
-
-          <div class="table-wrap">
-            <table>
+          <div class="table-wrap account-table-wrap">
+            <table class="account-table">
               <thead><tr><th>名称</th><th>来源</th><th>AK</th><th>凭据有效期</th><th>积分额度</th><th>状态</th><th>今日领取</th><th>失败</th><th>最近使用</th><th>操作</th></tr></thead>
               <tbody id="accounts"></tbody>
             </table>
@@ -304,6 +336,47 @@
             </div>
           </div>
         </div>
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>活动福利</h2>
+              <p class="card-sub">运营活动与可领取奖励（按账号查询，每个账号的可领项不同）</p>
+            </div>
+            <div class="card-actions">
+              <label class="inline-field">
+                <span>账号</span>
+                <select id="welfareAccount" aria-label="选择要查看活动福利的账号"></select>
+              </label>
+              <button class="btn" id="loadWelfare">刷新列表</button>
+              <button class="btn" id="claimWelfareNow">领取可领奖励</button>
+              <button class="btn" id="genInvite">生成邀请链接</button>
+              <span class="hint m-0" id="welfareHint"></span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>活动</th><th>类型</th><th>奖励</th><th>状态</th><th>可自动领取</th><th>触发方式</th><th>有效期</th></tr></thead>
+              <tbody id="welfare"></tbody>
+            </table>
+          </div>
+          <p class="hint">
+            只有<b>靠时间推进</b>的活动（如「每日签到领 1000 积分」）可以自动领取；
+            <b>邀请</b>与<b>学生认证</b>类必须由真实事件触发，服务端会直接拒绝直接领取。
+          </p>
+          <div class="card hidden mt-12 subpanel" id="invitePanel">
+            <div class="card-head">
+              <div>
+                <h2>我的邀请链接</h2>
+                <p class="card-sub" id="inviteStat"></p>
+              </div>
+              <div class="card-actions">
+                <button class="btn" id="copyInvite">复制</button>
+              </div>
+            </div>
+            <input class="w-full" id="inviteURL" readonly data-select-on-click="1" aria-label="邀请链接">
+          </div>
+        </div>
+
       </section>
 
       <section id="tab-keys" role="tabpanel" aria-labelledby="nav-keys">
@@ -311,7 +384,7 @@
           <div class="card-head">
             <div>
               <h2>API 密钥</h2>
-              <p class="card-sub">完整密钥只在创建时返回一次，之后仅显示脱敏值</p>
+              <p class="card-sub">密钥保存在本机，可随时显示或一键复制，刷新页面后仍可使用</p>
             </div>
             <div class="card-actions">
               <input class="w-200" id="keyName" placeholder="密钥备注（可选）" aria-label="密钥备注">
@@ -325,7 +398,7 @@
             </table>
           </div>
           <p class="hint">
-            密钥已脱敏。完整密钥只在创建时返回一次，请立即保存。<br>
+            点击「复制」获取完整密钥；点击「显示」可查看或手动选中复制。<br>
             未签发任何密钥时，<code>/v1/*</code> 仅允许<b>本机直连</b>（可在「设置 → 访问控制」里放开）。
           </p>
         </div>
@@ -357,6 +430,11 @@
         </div>
       </section>
 
+      <section id="tab-audit" role="tabpanel" aria-labelledby="nav-audit">
+        <div class="card"><div class="card-head"><div><h2>管理操作审计</h2><p class="card-sub">保留最近 5000 条；记录操作与结果，不记录密码、凭据或请求正文</p></div><button class="btn" id="reloadAudit">刷新</button></div>
+        <div class="table-wrap"><table><thead><tr><th>时间</th><th>身份</th><th>操作</th><th>接口</th><th>来源</th><th>结果</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+        <div class="row"><button class="btn xs" id="auditPrev">上一页</button><span id="auditPage" class="hint"></span><button class="btn xs" id="auditNext">下一页</button></div></div>
+      </section>
       <section id="tab-settings" role="tabpanel" aria-labelledby="nav-settings">
         <div class="card">
           <div class="card-head">
@@ -390,6 +468,18 @@
             </div>
           </div>
 
+          <div class="settings-group">
+            <h3>账号池调度</h3>
+            <p class="group-hint">会话优先复用同一账号；账号暂停、冷却或并发已满时自动改选。修改后立即生效。</p>
+            <div class="field-grid">
+              <div class="field"><label for="sPoolStrategy">选号策略</label><select id="sPoolStrategy"><option value="least_inflight">最少在途请求</option><option value="round_robin">轮询</option><option value="sequential_exhaust">顺序耗尽</option></select></div>
+              <div class="field"><label for="sPoolConcurrency">单账号并发上限</label><input id="sPoolConcurrency" type="number" min="1" max="32"></div>
+              <div class="field"><label for="sPoolSticky">会话绑定时长（秒）</label><input id="sPoolSticky" type="number" min="0" max="86400"><span class="field-hint">0 表示关闭会话粘性。</span></div>
+              <div class="field"><label for="sPoolCooldown">限流冷却（秒）</label><input id="sPoolCooldown" type="number" min="0" max="86400"></div>
+              <div class="field"><label for="sPoolThreshold">连续失败熔断次数</label><input id="sPoolThreshold" type="number" min="1" max="100"></div>
+              <div class="field"><label for="sPoolBreaker">熔断恢复等待（秒）</label><input id="sPoolBreaker" type="number" min="1" max="86400"></div>
+            </div>
+          </div>
           <div class="settings-group">
             <h3>存储与刷新</h3>
             <div class="field-grid">
@@ -531,7 +621,7 @@
 
           <div class="settings-group">
             <h3>模型别名</h3>
-            <p class="group-hint">JSON 对象，例如 <code>{"gpt-4o":"glm-5.3-flash"}</code>。</p>
+            <p class="group-hint">JSON 对象，例如 <code>{"my-model":"glm-5.3"}</code>。别名只改变名称，不改变实际调用的模型。</p>
             <textarea id="sAliases" spellcheck="false" aria-label="模型别名 JSON"></textarea>
           </div>
 
@@ -558,6 +648,31 @@
     </main>
   </div>
 </div>
+
+<dialog id="loginPanel" class="modal" aria-labelledby="loginTitle">
+  <div class="modal-head"><div><h2 id="loginTitle">添加码道账号</h2><p class="muted">复制链接到另一个浏览器授权，再返回此处提交并确认。</p></div><button class="btn ghost" id="loginClose" aria-label="关闭添加账号窗口">关闭</button></div>
+  <div class="modal-body">
+    <div class="login-stepper" aria-label="登录步骤"><span id="loginStep1" class="active">1 获取链接</span><span id="loginStep2">2 提交授权信息</span><span id="loginStep3">3 确认保存</span></div>
+    <div id="loginInitial"><h3>准备登录链接</h3><p class="hint">点击下方按钮生成一次性链接。可以复制到其他浏览器或无痕窗口登录，避免沿用当前浏览器的账号。</p><button class="btn primary" id="loginGenerate">生成登录链接</button></div>
+    <div id="loginDetails" class="hidden">
+      <label class="field" for="loginURL">登录链接<input id="loginURL" readonly data-select-on-click="1"></label>
+      <div class="row mt-12"><button class="btn primary" id="loginCopy">复制登录链接</button><a class="btn hidden" id="loginLink" href="#" target="_blank" rel="noopener noreferrer">在当前浏览器打开</a></div>
+      <p class="hint">在另一浏览器完成授权后，复制最后的回调地址并粘贴到下方。如果本机已自动收到回调，留空点击「检查授权信息」。此时不会自动添加账号。</p>
+      <label class="field mt-14" for="loginPasted">回调 URL / OAuth 授权码 / 完整 session JSON<textarea id="loginPasted" rows="4" spellcheck="false" autocomplete="off" placeholder="粘贴 http://127.0.0.1:端口/oauth/callback?...，或完整的登录凭据 JSON"></textarea></label>
+      <div class="row mt-12"><button class="btn primary" id="loginSubmit">提交授权信息</button><button class="btn" id="loginCheck">检查授权信息</button></div>
+      <details class="login-advanced mt-14"><summary>远程部署与回调地址</summary><p class="hint">本次回调地址：<code id="loginCallback">—</code></p><label class="field" for="loginTunnel">可选 SSH 转发命令<input id="loginTunnel" readonly></label><button class="btn xs mt-8" id="copyTunnel">复制命令</button></details>
+    </div>
+    <div id="loginStatus" class="modal-status" role="status" aria-live="polite">先生成链接，再到另一浏览器完成授权。</div>
+    <div id="loginPreview" class="login-preview hidden"><h3>确认将要保存的账号</h3><strong id="loginAccountName"></strong><p id="loginAccountInfo" class="hint"></p><label id="loginReplaceLabel" class="check hidden"><input id="loginReplace" type="checkbox">此账号已存在，确认更新它的登录凭据</label></div>
+    <p id="loginError" class="err-text hidden" role="alert"></p>
+  </div>
+  <div class="modal-actions"><button class="btn danger hidden" id="loginCancel">取消本次授权</button><button class="btn hidden" id="loginRestart">重新生成链接</button><button class="btn primary hidden" id="loginComplete">确认完成登录</button></div>
+</dialog>
+<dialog id="deleteAccountDialog" class="modal modal-small" aria-labelledby="deleteAccountTitle">
+  <div class="modal-head"><h2 id="deleteAccountTitle">删除账号</h2></div>
+  <div class="modal-body"><p>确定从账号池删除 <strong id="deleteAccountName"></strong>？</p><p class="hint">将移除网关保存的登录凭据；华为账号本身不会被注销。需要时可重新添加。</p><p id="deleteAccountError" class="err-text hidden" role="alert"></p></div>
+  <div class="modal-actions"><button class="btn" id="deleteAccountCancel" autofocus>取消</button><button class="btn danger" id="deleteAccountConfirm">确认删除</button></div>
+</dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite" title="点击关闭"></div>
 

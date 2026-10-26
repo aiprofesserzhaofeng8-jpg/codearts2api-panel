@@ -18,6 +18,9 @@ var (
 	consoleCSS []byte
 	//go:embed web/console.js
 	consoleJS []byte
+
+	//go:embed web/theme.js
+	themeJS []byte
 )
 
 // consoleCSP 是控制台页面与静态资源共用的 CSP。
@@ -60,4 +63,9 @@ func serveConsoleCSS(w http.ResponseWriter, _ *http.Request) {
 func serveConsoleJS(w http.ResponseWriter, _ *http.Request) {
 	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
 	_, _ = w.Write(consoleJS)
+}
+
+func serveThemeJS(w http.ResponseWriter, _ *http.Request) {
+	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
+	_, _ = w.Write(themeJS)
 }

@@ -93,6 +93,14 @@ func From(err error) Error {
 	if err == nil {
 		return Error{Status: http.StatusOK}
 	}
+	var budget interface{ BudgetExceeded() bool }
+	if errors.As(err, &budget) && budget.BudgetExceeded() {
+		return Error{Status: http.StatusPaymentRequired, OpenAI: "budget_exceeded", Anthropic: "permission_error"}
+	}
+	var terminal interface{ NonRetryableRequest() bool }
+	if errors.As(err, &terminal) && terminal.NonRetryableRequest() {
+		return Error{Status: http.StatusUnprocessableEntity, OpenAI: "invalid_request_error", Anthropic: "invalid_request_error"}
+	}
 	if errors.Is(err, NoAccount) {
 		return Error{Status: http.StatusServiceUnavailable, OpenAI: "server_error", Anthropic: "overloaded_error"}
 	}

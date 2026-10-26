@@ -15,16 +15,19 @@ import (
 
 // APIKey 是网关对外签发的调用密钥。
 type APIKey struct {
-	Key       string `json:"key"`
-	Name      string `json:"name"`
-	Enabled   bool   `json:"enabled"`
-	CreatedAt int64  `json:"created_at"`
-	LastUsed  int64  `json:"last_used"`
-	Requests  int64  `json:"requests"`
+	Budget      KeyBudget   `json:"budget"`
+	BudgetUsage BudgetUsage `json:"budget_usage"`
+	Key         string      `json:"key"`
+	Name        string      `json:"name"`
+	Enabled     bool        `json:"enabled"`
+	CreatedAt   int64       `json:"created_at"`
+	LastUsed    int64       `json:"last_used"`
+	Requests    int64       `json:"requests"`
 }
 
 // Settings 是运行期可调参数。
 type Settings struct {
+	Pool           PoolSettings      `json:"pool"`
 	ModelAliases   map[string]string `json:"model_aliases"`
 	DefaultModel   string            `json:"default_model"`
 	ForceModel     string            `json:"force_model"`
@@ -83,26 +86,73 @@ type Settings struct {
 	Language      string `json:"language"`
 }
 
+// TokenUsage holds measured upstream usage. Input includes cached tokens;
+// output includes reasoning tokens. Known distinguishes missing data from zero.
+type TokenUsage struct {
+	Known           bool  `json:"known"`
+	InputTokens     int64 `json:"input_tokens"`
+	OutputTokens    int64 `json:"output_tokens"`
+	CachedTokens    int64 `json:"cached_tokens"`
+	ReasoningTokens int64 `json:"reasoning_tokens"`
+}
+
 // LogEntry 是一条请求日志（只记元信息，不落对话内容）。
+type RequestAttempt struct {
+	EstimatedCost *RequestCost `json:"estimated_cost,omitempty"`
+	Number        int          `json:"number"`
+	Account       string       `json:"account"`
+	Model         string       `json:"model"`
+	FinishReason  string       `json:"finish_reason,omitempty"`
+	Usage         TokenUsage   `json:"usage"`
+}
+
 type LogEntry struct {
-	Time      int64  `json:"time"`
-	Key       string `json:"key"`
-	Account   string `json:"account"`
-	Model     string `json:"model"`
-	Stream    bool   `json:"stream"`
-	Status    int    `json:"status"`
-	LatencyMS int64  `json:"latency_ms"`
-	PromptLen int    `json:"prompt_len"`
-	OutputLen int    `json:"output_len"`
-	Err       string `json:"err,omitempty"`
+	UsageIncomplete bool             `json:"usage_incomplete,omitempty"`
+	AttemptDetails  []RequestAttempt `json:"attempt_details,omitempty"`
+	RequestID       string           `json:"request_id,omitempty"`
+	RequestKind     string           `json:"request_kind,omitempty"`
+	FinishReason    string           `json:"finish_reason,omitempty"`
+	Attempts        int              `json:"attempts,omitempty"`
+	SummaryAttempts int              `json:"summary_attempts,omitempty"`
+	EstimatedCost   *RequestCost     `json:"estimated_cost,omitempty"`
+	Protocol        string           `json:"protocol,omitempty"`
+	Usage           TokenUsage       `json:"usage"`
+	Time            int64            `json:"time"`
+	Key             string           `json:"key"`
+	Account         string           `json:"account"`
+	Model           string           `json:"model"`
+	Stream          bool             `json:"stream"`
+	Status          int              `json:"status"`
+	LatencyMS       int64            `json:"latency_ms"`
+	PromptLen       int              `json:"prompt_len"`
+	OutputLen       int              `json:"output_len"`
+	Err             string           `json:"err,omitempty"`
 }
 
 // Stats 是累计统计。
 type Stats struct {
-	TotalRequests  int64 `json:"total_requests"`
-	FailedRequests int64 `json:"failed_requests"`
-	TotalCharsOut  int64 `json:"total_chars_out"`
-	StartedAt      int64 `json:"started_at"`
+	PartialUsageRequests int64   `json:"partial_usage_requests"`
+	SummaryRequests      int64   `json:"summary_requests"`
+	SummaryFailures      int64   `json:"summary_failures"`
+	SummaryRetries       int64   `json:"summary_retries"`
+	TruncatedRequests    int64   `json:"truncated_requests"`
+	EstimatedCNY         float64 `json:"estimated_cny,omitempty"`
+	EstimatedUSD         float64 `json:"estimated_usd"`
+	PricedRequests       int64   `json:"priced_requests"`
+	PricedCNYRequests    int64   `json:"priced_cny_requests,omitempty"`
+	PricedUSDRequests    int64   `json:"priced_usd_requests"`
+	InputTokens          int64   `json:"input_tokens"`
+	OutputTokens         int64   `json:"output_tokens"`
+	CachedTokens         int64   `json:"cached_tokens"`
+	ReasoningTokens      int64   `json:"reasoning_tokens"`
+	UsageRequests        int64   `json:"usage_requests"`
+	TotalLatencyMS       int64   `json:"total_latency_ms"`
+	LatencySamples       int64   `json:"latency_samples"`
+	UsageStartedAt       int64   `json:"usage_started_at"`
+	TotalRequests        int64   `json:"total_requests"`
+	FailedRequests       int64   `json:"failed_requests"`
+	TotalCharsOut        int64   `json:"total_chars_out"`
+	StartedAt            int64   `json:"started_at"`
 }
 
 // StateVersion 是状态文件当前的 schema 版本。
@@ -110,10 +160,16 @@ type Stats struct {
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 1
+const StateVersion = 2
 
 // State 是全部持久化状态。
 type State struct {
+	ModelHealth             map[string]map[string]ModelHealth `json:"model_health,omitempty"`
+	Audit                   []AuditEvent                      `json:"audit,omitempty"`
+	ModelPolicies           map[string]ModelPolicy            `json:"model_policies,omitempty"`
+	UsageRecords            []LogEntry                        `json:"usage_records,omitempty"`
+	UsageHistoryInitialized bool                              `json:"usage_history_initialized,omitempty"`
+	Prices                  map[string]ModelPrice             `json:"model_prices,omitempty"`
 	// Version 是 schema 版本（见 StateVersion）。
 	Version  int                 `json:"version"`
 	Accounts []*codearts.Account `json:"accounts"`
@@ -133,15 +189,18 @@ type Store struct {
 	// 而失败（调用方多半忽略错误 → 状态静默不落盘），Linux 上则可能把写了一半
 	// 的临时文件 rename 成正式状态文件（含 refresh_token 的账号全部丢失）。
 	// 因此落盘必须串行，并且临时文件名要唯一。
-	saveMu sync.Mutex
-	path   string
-	st     *State
-	rotate int
+	saveMu       sync.Mutex
+	path         string
+	st           *State
+	rotate       int
+	pool         poolRuntime
+	budgetActive map[string]int
 }
 
 // DefaultSettings 返回默认设置。
 func DefaultSettings() Settings {
 	return Settings{
+		Pool:           DefaultPoolSettings(),
 		ModelAliases:   map[string]string{},
 		DefaultModel:   codearts.DefaultModel,
 		RequestTimeout: 300,
@@ -186,6 +245,11 @@ func Open(path string) (*Store, error) {
 		// 收紧已存在状态文件的权限：里面是 STS 凭据与 refresh_token。
 		// 旧版本或手工拷贝来的文件可能是 0644，这里纠正一次（Windows 上只影响只读属性）。
 		_ = os.Chmod(path, 0o600)
+		if s.st.Settings.AdminPassword != "" {
+			if err := s.Save(); err != nil {
+				return nil, err
+			}
+		}
 	case errors.Is(err, os.ErrNotExist):
 		s.st.Version = StateVersion
 		s.st.Stats.StartedAt = time.Now().Unix()
@@ -208,6 +272,10 @@ func (s *Store) migrate() error {
 		switch s.st.Version {
 		case 0:
 			s.st.Version = 1
+		case 1:
+			// Password hashes and budgets must not be silently discarded by an
+			// older binary. Plaintext passwords are hashed by Open's Save below.
+			s.st.Version = 2
 		default:
 			return fmt.Errorf("状态文件版本 %d 无法迁移", s.st.Version)
 		}
@@ -228,6 +296,9 @@ var legacyDefaultModels = map[string]bool{
 func (s *Store) applyDefaults() {
 	def := DefaultSettings()
 	st := &s.st.Settings
+	if st.Pool.Validate() != nil {
+		st.Pool = DefaultPoolSettings()
+	}
 	if st.ModelAliases == nil {
 		st.ModelAliases = def.ModelAliases
 	}
@@ -311,12 +382,21 @@ func (s *Store) Save() error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 
-	s.mu.RLock()
+	s.mu.Lock()
+	if err := s.hashPasswordLocked(); err != nil {
+		s.mu.Unlock()
+		return err
+	}
 	raw, err := json.MarshalIndent(s.st, "", "  ")
-	s.mu.RUnlock()
+	s.mu.Unlock()
 	if err != nil {
 		return err
 	}
+	return s.writeState(raw)
+}
+
+// writeState requires saveMu. Callers may additionally hold mu for a transaction.
+func (s *Store) writeState(raw []byte) error {
 	dir := filepath.Dir(s.path)
 	// 目录只给本人：状态文件里是 STS 凭据与 refresh_token，别让同机其他用户
 	// 通过目录遍历拿到文件名与备份。
@@ -400,12 +480,19 @@ func (s *Store) UpsertAccount(a *codearts.Account) bool {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.upsertAccountLocked(a)
+}
+
+func (s *Store) upsertAccountLocked(a *codearts.Account) bool {
 	for i, ex := range s.st.Accounts {
 		sameDir := ex.UserData != "" && ex.UserData == a.UserData
 		sameAK := ex.Session != nil && a.Session != nil &&
 			ex.Session.AccessKey != "" && ex.Session.AccessKey == a.Session.AccessKey
-		if sameDir || sameAK {
+		sameDomain := ex.Session != nil && a.Session != nil &&
+			ex.Session.DomainID != "" && ex.Session.DomainID == a.Session.DomainID
+		if sameDir || sameAK || sameDomain {
 			a.ID = ex.ID
+			a.Enabled, a.Paused = ex.Enabled, ex.Paused
 			s.st.Accounts[i] = cloneAccount(a)
 			return false
 		}
@@ -479,6 +566,8 @@ func (s *Store) ClearAccountErrors(id string) bool {
 			a.Failures = 0
 			a.Status = "ok"
 			a.LastErr = ""
+			a.CooldownUntil = 0
+			a.CooldownReason = ""
 			return true
 		}
 	}
@@ -524,6 +613,13 @@ func (s *Store) MarkAccountResult(id string, ok bool, note string) {
 			a.Failures++
 			a.Status = "error"
 			a.LastErr = note
+			if a.Failures >= s.st.Settings.Pool.BreakerThreshold {
+				until := s.poolNow().Add(time.Duration(s.st.Settings.Pool.BreakerCooldownSec) * time.Second).Unix()
+				if until > a.CooldownUntil {
+					a.CooldownUntil = until
+					a.CooldownReason = "连续失败熔断"
+				}
+			}
 		}
 		return
 	}
@@ -559,7 +655,10 @@ func (s *Store) Keys() []*APIKey {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	out := make([]*APIKey, len(s.st.Keys))
-	copy(out, s.st.Keys)
+	for i, k := range s.st.Keys {
+		snapshot := *k
+		out[i] = &snapshot
+	}
 	return out
 }
 
@@ -574,7 +673,8 @@ func (s *Store) AddKey(name string) *APIKey {
 		CreatedAt: time.Now().Unix(),
 	}
 	s.st.Keys = append(s.st.Keys, k)
-	return k
+	snapshot := *k
+	return &snapshot
 }
 
 // DeleteKey 删除密钥。
@@ -666,14 +766,71 @@ func (s *Store) Logs(limit int) []LogEntry {
 }
 
 // Record 记录一次请求结果并更新统计。
-func (s *Store) Record(e LogEntry, outChars int) {
+func (s *Store) Record(e LogEntry, outChars int, keys ...string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.initUsageHistoryLocked()
+	// Snapshot the exact price at completion; future edits never reprice history.
+	if e.Usage.Known {
+		e.EstimatedCost = s.costForEntryLocked(&e)
+		if e.EstimatedCost != nil {
+			s.st.Stats.PricedRequests++
+			s.st.Stats.EstimatedUSD += e.EstimatedCost.Amount
+			s.st.Stats.PricedUSDRequests++
+		}
+	}
+	if len(keys) > 0 && e.Attempts > 0 {
+		for _, k := range s.st.Keys {
+			if k.Key == keys[0] {
+				k.BudgetUsage.Requests++
+				k.BudgetUsage.Tokens += e.Usage.InputTokens + e.Usage.OutputTokens
+				if e.EstimatedCost != nil {
+					k.BudgetUsage.USD += e.EstimatedCost.Amount
+				}
+				if e.Usage.Known && (e.EstimatedCost == nil || e.EstimatedCost.Partial) {
+					k.BudgetUsage.Unpriced = true
+				}
+				if e.UsageIncomplete || !e.Usage.Known {
+					k.BudgetUsage.Incomplete = true
+				}
+				break
+			}
+		}
+	}
+	if e.RequestKind == "summary" {
+		s.st.Stats.SummaryRequests++
+		s.st.Stats.SummaryRetries += int64(max(0, e.SummaryAttempts-1))
+		if e.Status >= 400 {
+			s.st.Stats.SummaryFailures++
+		}
+	}
+	if e.FinishReason == "length" {
+		s.st.Stats.TruncatedRequests++
+	}
+	if e.UsageIncomplete {
+		s.st.Stats.PartialUsageRequests++
+	}
 	s.st.Stats.TotalRequests++
+	s.st.Stats.TotalLatencyMS += max(0, e.LatencyMS)
+	s.st.Stats.LatencySamples++
+	if s.st.Stats.UsageStartedAt == 0 {
+		s.st.Stats.UsageStartedAt = e.Time
+	}
+	if e.Usage.Known {
+		s.st.Stats.UsageRequests++
+		s.st.Stats.InputTokens += e.Usage.InputTokens
+		s.st.Stats.OutputTokens += e.Usage.OutputTokens
+		s.st.Stats.CachedTokens += e.Usage.CachedTokens
+		s.st.Stats.ReasoningTokens += e.Usage.ReasoningTokens
+	}
 	if e.Status >= 400 || e.Err != "" {
 		s.st.Stats.FailedRequests++
 	}
 	s.st.Stats.TotalCharsOut += int64(outChars)
+	s.st.UsageRecords = append(s.st.UsageRecords, e)
+	if len(s.st.UsageRecords) > MaxUsageRecords {
+		s.st.UsageRecords = s.st.UsageRecords[len(s.st.UsageRecords)-MaxUsageRecords:]
+	}
 	s.st.Logs = append(s.st.Logs, e)
 	if keep := s.st.Settings.LogKeep; keep > 0 && len(s.st.Logs) > keep {
 		s.st.Logs = s.st.Logs[len(s.st.Logs)-keep:]
@@ -684,6 +841,7 @@ func (s *Store) Record(e LogEntry, outChars int) {
 func (s *Store) ClearLogs() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.initUsageHistoryLocked()
 	s.st.Logs = nil
 }
 

@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -28,7 +29,7 @@ import (
 )
 
 // version 由构建时注入：-ldflags "-X main.version=1.0.0"
-var version = "dev"
+var version = "0.1.0-panel"
 
 func main() {
 	var (
@@ -42,6 +43,7 @@ func main() {
 		noRefresh  = flag.Bool("no-refresh", false, "禁止网关自行续期（只读 IDE 会话）")
 		adminPw    = flag.String("admin-password", envOr("CODEARTS_ADMIN_PASSWORD", ""), "管理密码（非空时覆盖状态文件中的设置）")
 		anon       = flag.Bool("allow-anonymous", envBool("CODEARTS_ALLOW_ANONYMOUS"), "未签发密钥时允许非本机来源匿名调用 /v1/*（默认仅本机直连）")
+		localAuto  = flag.Bool("local-auto-unlock", envBool("CODEARTS_LOCAL_AUTO_UNLOCK"), "兼容模式：信任本机进程并自动解锁管理面（默认关闭）")
 		showVer    = flag.Bool("version", false, "打印版本后退出")
 	)
 	flag.Parse()
@@ -68,6 +70,13 @@ func main() {
 	if *exportPath != "" {
 		runExportSession(*userData, *exportPath)
 		return
+	}
+	if _, err := os.Stat(st.Path()); errors.Is(err, os.ErrNotExist) {
+		accessPath, err := bootstrapAccess(st, *adminPw)
+		if err != nil {
+			log.Fatalf("初始化访问密钥失败: %v", err)
+		}
+		log.Printf("首次启动：管理员密码和 API 密钥已保存至 %s（仅文件所有者可读）", accessPath)
 	}
 
 	// 命令行 / 环境变量优先级高于状态文件；设置后立即落盘。
@@ -98,13 +107,43 @@ func main() {
 		autoImport(st, *userData)
 	}
 
+	if st.Settings().AdminPassword == "" && !*localAuto {
+		password := codearts.RandomHex(24)
+		st.UpdateSettings(func(settings *store.Settings) { settings.AdminPassword = password })
+		if err := st.Save(); err != nil {
+			log.Fatalf("保存管理密码失败: %v", err)
+		}
+		recovery := st.Path() + ".admin-recovery.json"
+		if err := os.WriteFile(recovery, []byte("{\"admin_password\":"+strconv.Quote(password)+"}\n"), 0600); err != nil {
+			log.Fatalf("保存管理恢复文件失败: %v", err)
+		}
+		if err := os.Chmod(recovery, 0600); err != nil {
+			log.Fatalf("设置恢复文件权限失败: %v", err)
+		}
+		log.Printf("已创建管理员密码，恢复文件: %s", recovery)
+	}
 	srv := server.New(st)
+	srv.AllowLocalAdmin = *localAuto
 	srv.ApplyIdentity()
 
 	// 后台每日自动领取运营活动福利
 	claimCtx, stopClaim := context.WithCancel(context.Background())
 	defer stopClaim()
 	srv.StartClaimLoop(claimCtx)
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-claimCtx.Done():
+				return
+			case <-ticker.C:
+				if err := st.Save(); err != nil {
+					log.Printf("定期保存用量失败: %v", err)
+				}
+			}
+		}
+	}()
 
 	// 后台刷新一次模型清单（不阻塞启动）
 	go func() {
@@ -126,7 +165,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("CodeArts2API %s 已启动: http://%s/", version, addr)
+		log.Printf("CodeArts2API Panel %s 已启动: http://%s/", version, addr)
 		if st.HasKeys() {
 			log.Printf("已签发 API 密钥，调用需携带 Authorization: Bearer sk-ca-...")
 		} else if st.Settings().AllowAnonymous {
@@ -136,7 +175,7 @@ func main() {
 		}
 		switch {
 		case st.Settings().AdminPassword != "":
-			log.Printf("管理接口已启用密码校验（X-Admin-Password / Bearer）")
+			log.Printf("管理面板需要登录（8 小时会话；兼容 X-Admin-Password / Bearer）")
 		case server.IsLoopbackHost(*host):
 			log.Printf("未设置管理密码，管理接口仅允许本机直连访问（可用 -admin-password 设置）")
 		default:

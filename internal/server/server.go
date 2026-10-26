@@ -2,6 +2,7 @@
 package server
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
@@ -24,11 +25,16 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
-	Store  *store.Store
-	Up     *codearts.Client
-	Cred   *codearts.Manager
-	Reg    *registry.Registry
-	Logins *codearts.LoginManager
+	AllowLocalAdmin    bool
+	adminSessions      adminSessions
+	adminFailures      adminAttempts
+	responsesReasoning responsesReasoningCache
+	localPanelToken    string
+	Store              *store.Store
+	Up                 *codearts.Client
+	Cred               *codearts.Manager
+	Reg                *registry.Registry
+	Logins             *codearts.LoginManager
 	// Limits 是按 API 密钥的自我保护限流（QPS + 在飞并发）。
 	Limits *ratelimit.Limiter
 
@@ -50,13 +56,12 @@ type Server struct {
 func New(st *store.Store) *Server {
 	up := codearts.NewClient()
 	s := &Server{Store: st, Up: up, Reg: registry.New(), cache: newModelCache()}
+	s.localPanelToken = rand.Text()
 	s.Cred = codearts.NewManager(up)
 	// 凭据解析拿到的是账号快照，所以续期 / 跟随 IDE 得到的新会话必须显式写回 store，
 	// 否则只对那一次请求生效（IDE 关闭后就再也拿不到）。
-	s.Cred.Persist = func(a *codearts.Account) error {
-		st.SetAccountSession(a.ID, a.Session)
-		return st.Save()
-	}
+	s.Cred.Latest = st.Account
+	s.Cred.Commit = st.CommitAccountSession
 	s.Cred.Logf = log.Printf
 	s.Logins = codearts.NewLoginManager(up)
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
@@ -66,6 +71,10 @@ func New(st *store.Store) *Server {
 // Handler 返回完整路由。
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/admin/auth/login", s.handleAdminLogin)
+	mux.HandleFunc("/admin/auth/logout", s.handleAdminLogout)
+	mux.HandleFunc("/admin/auth/session", s.handleAdminSession)
+	mux.HandleFunc("/admin/api/audit", s.withAdminAuth(s.handleAudit))
 
 	// 探活
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -76,15 +85,26 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/healthz", s.handleHealth)
 
 	// 推理（鉴权在前，限流在后：限流器只看到已通过鉴权的密钥）
+	mux.HandleFunc("/v1/capabilities", s.withAuth(s.handleCapabilities))
+	mux.HandleFunc("/v1/responses/", s.withAuth(unsupportedCapability))
+	mux.HandleFunc("/responses/", s.withAuth(unsupportedCapability))
+	mux.HandleFunc("/v1/client-profile", s.withAuth(s.withRateLimit(errOpenAI, s.handleClientProfile)))
 	mux.HandleFunc("/v1/models", s.withAuth(s.withRateLimit(errOpenAI, s.handleModels)))
-	mux.HandleFunc("/v1/chat/completions", s.withAuth(s.withRateLimit(errOpenAI, s.handleChatCompletions)))
-	mux.HandleFunc("/v1/messages", s.withAuth(s.withRateLimit(errAnthropic, s.handleAnthropicMessages)))
+	mux.HandleFunc("/v1/chat/completions", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleChatCompletions))))
+	mux.HandleFunc("/v1/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
+	mux.HandleFunc("/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
+	mux.HandleFunc("/v1/messages", s.withAuth(s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleAnthropicMessages))))
 
 	// 控制台 API（统一走管理鉴权 + 同源校验）
+	mux.HandleFunc("/admin/api/model-policies", s.withAdminAuth(s.handleAdminModelPolicies))
 	mux.HandleFunc("/admin/api/state", s.withAdminAuth(s.handleAdminState))
 	mux.HandleFunc("/admin/api/accounts", s.withAdminAuth(s.handleAdminAccounts))
+	mux.HandleFunc("/admin/api/keys/budget", s.withAdminAuth(s.handleKeyBudget))
+	mux.HandleFunc("/admin/api/keys/reveal", s.withAdminAuth(s.handleAdminKeyReveal))
 	mux.HandleFunc("/admin/api/keys", s.withAdminAuth(s.handleAdminKeys))
 	mux.HandleFunc("/admin/api/logs", s.withAdminAuth(s.handleAdminLogs))
+	mux.HandleFunc("/admin/api/usage", s.withAdminAuth(s.handleAdminUsage))
+	mux.HandleFunc("/admin/api/pricing", s.withAdminAuth(s.handleAdminPricing))
 	mux.HandleFunc("/admin/api/stats", s.withAdminAuth(s.handleAdminStats))
 	mux.HandleFunc("/admin/api/settings", s.withAdminAuth(s.handleAdminSettings))
 	mux.HandleFunc("/admin/api/checkin", s.withAdminAuth(s.handleAdminCheckin))
@@ -96,6 +116,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/invite", s.withAdminAuth(s.handleAdminInvite))
 	mux.HandleFunc("/admin/api/login/start", s.withAdminAuth(s.handleAdminLoginStart))
 	mux.HandleFunc("/admin/api/login/poll", s.withAdminAuth(s.handleAdminLoginPoll))
+	mux.HandleFunc("/admin/api/login/complete", s.withAdminAuth(s.handleAdminLoginComplete))
 	mux.HandleFunc("/admin/api/login/callback", s.withAdminAuth(s.handleAdminLoginCallback))
 	mux.HandleFunc("/admin/api/login/cancel", s.withAdminAuth(s.handleAdminLoginCancel))
 
@@ -105,6 +126,7 @@ func (s *Server) Handler() http.Handler {
 	// 控制台静态资源（内嵌，同源）
 	mux.HandleFunc("/console.css", serveConsoleCSS)
 	mux.HandleFunc("/console.js", serveConsoleJS)
+	mux.HandleFunc("/theme.js", serveThemeJS)
 
 	mux.HandleFunc("/", s.handleRoot)
 
@@ -135,7 +157,7 @@ func writeCORSHeaders(w http.ResponseWriter, allowed string) {
 	h := w.Header()
 	h.Set("Access-Control-Allow-Origin", allowed)
 	h.Set("Vary", "Origin")
-	h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type, x-api-key, anthropic-version, x-admin-password")
+	h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type, x-api-key, anthropic-version, x-admin-password, x-session-id, X-CodeArts-Request-Kind")
 	h.Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 }
 
@@ -294,34 +316,43 @@ func (s *Server) ApplyRateLimit() {
 // withAdminAuth 保护控制台接口。
 //
 // 鉴权策略：
-//   - 已设置管理密码：必须通过 X-Admin-Password 或 Authorization: Bearer 提供；
-//   - 未设置管理密码：仅允许**本机直连**（环回地址且未经代理转发）。
+//   - 默认使用 HttpOnly 会话；兼容脚本可发送 X-Admin-Password / Bearer。
+//   - 未配置密码时拒绝访问；只有显式 AllowLocalAdmin 才启用本机兼容方式。
 //
 // 另外对写操作做同源校验，阻断跨站请求伪造。
 func (s *Server) withAdminAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if pw := s.Store.Settings().AdminPassword; pw != "" {
-			if !secureEqual(adminPasswordFrom(r), pw) {
-				writeErr(w, http.StatusUnauthorized, "管理密码缺失或错误", "invalid_request_error")
+		w.Header().Set("Cache-Control", "no-store")
+		actor := "admin_password"
+		if s.validAdminSession(r) {
+			actor = "admin_session"
+		} else if s.AllowLocalAdmin && s.validLocalPanelSession(r) {
+			actor = "local_compatibility"
+		} else if password := s.Store.Settings().AdminPassword; password != "" {
+			if s.adminFailures.blocked(r.RemoteAddr) {
+				w.Header().Set("Retry-After", "60")
+				writeErr(w, 429, "认证失败次数过多，请稍后重试", "rate_limit_error")
 				return
 			}
-		} else if !s.localDirect(r) {
-			writeErr(w, http.StatusForbidden,
-				"未设置管理密码，管理接口仅允许本机直连访问（检测到代理转发或非环回地址）。"+
-					"如通过反向代理 / 容器暴露，请在设置里配置管理密码。",
-				"invalid_request_error")
+			if !store.VerifyAdminPassword(password, adminPasswordFrom(r)) {
+				s.adminFailures.failure(r.RemoteAddr)
+				writeErr(w, 401, "请登录管理员账号", "authentication_error")
+				return
+			}
+			s.adminFailures.success(r.RemoteAddr)
+		} else if !(s.AllowLocalAdmin && s.localDirect(r)) {
+			writeErr(w, 403, "尚未配置管理员密码，请使用启动参数重设", "authentication_error")
 			return
 		}
-
-		switch r.Method {
-		case http.MethodGet, http.MethodHead, http.MethodOptions:
-		default:
-			if !s.adminSameOrigin(r) {
-				writeErr(w, http.StatusForbidden, "跨站请求被拒绝", "invalid_request_error")
-				return
-			}
+		if r.Header.Get("Sec-Fetch-Site") == "cross-site" {
+			writeErr(w, 403, "跨站管理请求被拒绝", "invalid_request_error")
+			return
 		}
-		next(w, r)
+		if r.Method != "GET" && r.Method != "HEAD" && r.Method != "OPTIONS" && !s.adminSameOrigin(r) {
+			writeErr(w, 403, "跨站管理请求被拒绝", "invalid_request_error")
+			return
+		}
+		s.serveAudited(w, r, actor, next)
 	}
 }
 
@@ -400,7 +431,11 @@ func viaProxy(r *http.Request) bool {
 // 会把**所有**公网请求的 RemoteAddr 变成 127.0.0.1，从而把管理接口
 // （含导出完整登录态）暴露给公网。
 func (s *Server) localDirect(r *http.Request) bool {
-	return !viaProxy(r) && isLoopbackAddr(r.RemoteAddr)
+	if viaProxy(r) || !isLoopbackAddr(r.RemoteAddr) {
+		return false
+	}
+	u, err := url.Parse("http://" + r.Host)
+	return err == nil && u.User == nil && u.Path == "" && u.RawQuery == "" && u.Fragment == "" && isLoopbackHost(u.Hostname())
 }
 
 // isLoopbackAddr 判断 TCP 远端地址是否为本机环回。
@@ -442,6 +477,7 @@ func (s *Server) resolveOptions() codearts.ResolveOptions {
 // sanitizedSettings 返回可下发给前端的设置（管理密码不外泄）。
 func sanitizedSettings(st store.Settings) map[string]any {
 	return map[string]any{
+		"pool":                   st.Pool,
 		"model_aliases":          st.ModelAliases,
 		"default_model":          st.DefaultModel,
 		"force_model":            st.ForceModel,
@@ -475,7 +511,7 @@ func sanitizedSettings(st store.Settings) map[string]any {
 // resolveKeyRef 把完整密钥或脱敏密钥解析为完整密钥。
 func (s *Server) resolveKeyRef(ref string) string {
 	for _, k := range s.Store.Keys() {
-		if k.Key == ref || codearts.Mask(k.Key) == ref {
+		if keyReference(k.Key) == ref || k.Key == ref || codearts.Mask(k.Key) == ref {
 			return k.Key
 		}
 	}
@@ -500,12 +536,13 @@ func extractKey(r *http.Request) string {
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	accts := s.Store.Accounts()
 	ok := 0
-	for _, a := range accts {
-		if a.Enabled && a.Status == "ok" {
+	for _, a := range s.Store.PoolSnapshot() {
+		if a.State == "ready" {
 			ok++
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
+		"service":  "codearts2api-panel",
 		"status":   "ok",
 		"accounts": len(accts),
 		"ready":    ok,
@@ -519,7 +556,7 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusNotFound, "未找到该路径", "invalid_request_error")
 		return
 	}
-	serveConsole(w, r)
+	s.servePanel(w, r)
 }
 
 // --- 工具函数 ---

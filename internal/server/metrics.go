@@ -41,6 +41,10 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var b strings.Builder
+	writeMetric(&b, "codearts2api_summary_requests_total", "counter", "摘要请求数", stats.SummaryRequests)
+	writeMetric(&b, "codearts2api_summary_failures_total", "counter", "摘要失败数", stats.SummaryFailures)
+	writeMetric(&b, "codearts2api_summary_retries_total", "counter", "摘要截断重试数", stats.SummaryRetries)
+	writeMetric(&b, "codearts2api_truncated_requests_total", "counter", "最终输出截断数", stats.TruncatedRequests)
 	writeMetric(&b, "codearts2api_requests_total", "counter", "累计请求数", stats.TotalRequests)
 	writeMetric(&b, "codearts2api_requests_failed_total", "counter", "累计失败请求数", stats.FailedRequests)
 	writeMetric(&b, "codearts2api_output_chars_total", "counter", "累计输出字符数", stats.TotalCharsOut)

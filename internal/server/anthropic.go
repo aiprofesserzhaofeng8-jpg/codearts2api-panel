@@ -29,9 +29,10 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		writeAnthropicErr(w, http.StatusMethodNotAllowed, "invalid_request_error", "仅支持 POST")
 		return
 	}
+	r = beginInference(w, r, "messages")
 	start := time.Now()
 
-	body, err := io.ReadAll(io.LimitReader(r.Body, 32<<20))
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
 	if err != nil {
 		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", "读取请求体失败: "+err.Error())
 		return
@@ -70,6 +71,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	}
 
 	key := extractKey(r)
+	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))
 	timeout := time.Duration(settings.RequestTimeout) * time.Second
 	if timeout <= 0 {
 		timeout = 300 * time.Second
@@ -99,14 +101,14 @@ func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body 
 	})
 	if err != nil {
 		e := apierr.From(err)
-		s.record(key, acct, model.ID, false, e.Status, start, promptLen, 0, err)
+		s.record(r.Context(), key, acct, model.ID, false, e.Status, start, promptLen, 0, err)
 		writeAnthropicErr(w, e.Status, e.Anthropic, err.Error())
 		return
 	}
 
 	out := protocol.FromOpenAI(raw, model.ID)
 	outLen = len([]rune(out.Text)) + len([]rune(out.Thinking))
-	s.record(key, acct, model.ID, false, http.StatusOK, start, promptLen, outLen, nil)
+	s.record(r.Context(), key, acct, model.ID, false, http.StatusOK, start, promptLen, outLen, nil)
 	writeJSON(w, http.StatusOK, out.Payload)
 }
 
@@ -144,9 +146,18 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 			return err
 		})
 		if err == nil {
-			st.finish("")
+			reason := ""
+			if requestFinish(ctx) == "length" {
+				reason = "max_tokens"
+			}
+			if u := currentAttemptUsage(ctx); u.Known {
+				st.inTok = int(u.InputTokens - u.CachedTokens)
+				st.outTok = int(u.OutputTokens)
+				st.cachedTok = int(u.CachedTokens)
+			}
+			st.finish(reason)
 		}
-		return err
+		return stopAfterOutput(err, started)
 	})
 	streamErr = err
 
@@ -156,7 +167,7 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 		if err != nil {
 			msg = err.Error()
 		}
-		s.record(key, acct, model.ID, true, e.Status, start, promptLen, outLen, err)
+		s.record(r.Context(), key, acct, model.ID, true, e.Status, start, promptLen, outLen, err)
 		writeAnthropicErr(w, e.Status, e.Anthropic, msg)
 		return
 	}
@@ -166,18 +177,19 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 			"error": map[string]any{"type": apierr.From(streamErr).Anthropic, "message": streamErr.Error()},
 		})
 	}
-	s.record(key, acct, model.ID, true, apierr.From(streamErr).Status, start, promptLen, outLen, streamErr)
+	s.record(r.Context(), key, acct, model.ID, true, apierr.From(streamErr).Status, start, promptLen, outLen, streamErr)
 }
 
 // --- OpenAI SSE → Anthropic SSE ---
 
 // anthropicStream 把上游 OpenAI SSE 分片转换为 Anthropic SSE 事件。
 type anthropicStream struct {
-	w       http.ResponseWriter
-	flusher http.Flusher
-	msgID   string
-	model   string
-	inTok   int
+	cachedTok int
+	w         http.ResponseWriter
+	flusher   http.Flusher
+	msgID     string
+	model     string
+	inTok     int
 
 	index    int
 	kind     string // "" / "thinking" / "text" / "tool_use"
@@ -308,7 +320,7 @@ func (a *anthropicStream) finish(stopReason string) {
 	a.send("message_delta", map[string]any{
 		"type":  "message_delta",
 		"delta": map[string]any{"stop_reason": stopReason, "stop_sequence": nil},
-		"usage": map[string]any{"output_tokens": a.outTok},
+		"usage": map[string]any{"input_tokens": a.inTok, "cache_read_input_tokens": a.cachedTok, "output_tokens": a.outTok},
 	})
 	a.send("message_stop", map[string]any{"type": "message_stop"})
 }

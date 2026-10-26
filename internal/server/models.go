@@ -85,11 +85,18 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 
 	data := make([]map[string]any, 0, len(models))
 	for _, m := range models {
+		var recommendation map[string]any
+		if resolved, ok := s.Reg.Resolve(m.ID, settings.ModelAliases); ok {
+			if p, ok := s.Store.ModelPolicy(resolved.ID); ok {
+				recommendation = profileFromPolicy(resolved.ID, p)
+			}
+		}
 		data = append(data, map[string]any{
-			"id":       m.ID,
-			"object":   "model",
-			"created":  now,
-			"owned_by": "codearts",
+			"client_profile": recommendation,
+			"id":             m.ID,
+			"object":         "model",
+			"created":        now,
+			"owned_by":       "codearts",
 			"codearts": map[string]any{
 				"name":       m.Name,
 				"context":    m.Context,

@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
       - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: gofmt
         run: |
@@ -48,6 +48,12 @@ jobs:
 
       - name: 控制台 JS/CSS 检查
         run: python tools/check_html_js.py
+
+      - name: 客户端启动器测试
+        run: python3 -m unittest discover -s scripts -p test_connect_client.py
+
+      - name: Pi 摘要恢复测试（模拟上游）
+        run: node scripts/pi/codearts-compaction.test.mjs
 
       - name: 构建
         run: go build -trimpath -ldflags "-s -w -X main.version=ci" -o /tmp/codearts2api .

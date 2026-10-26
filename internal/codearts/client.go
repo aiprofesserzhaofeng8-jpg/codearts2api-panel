@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -62,7 +63,8 @@ const (
 
 // Client 是 CodeArts 上游 HTTP 客户端。
 type Client struct {
-	HTTP *http.Client
+	identityMu sync.RWMutex
+	HTTP       *http.Client
 	// Identity 是可覆盖的上游身份头（为空时用内置缺省值）。
 	Identity Identity
 	// TokenURL 可覆盖令牌端点（为空时用 IAMTokenURL）。
@@ -120,7 +122,8 @@ func NewClient() *Client {
 	}
 	return &Client{
 		HTTP: &http.Client{
-			Transport: transport,
+			Transport:     transport,
+			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 			// 流式响应可能持续数分钟，不设总超时；由 context 控制
 		},
 		Identity: DefaultIdentity(),
@@ -132,7 +135,9 @@ func NewClient() *Client {
 // sess 用于推导**稳定的**上游会话 ID：上游按 x-ot-session-id 统计并发会话
 // （每账号上限 3 个），每个请求都换新 ID 会迅速打满上限。
 func (c *Client) baseHeaders(sess *Session, model string) map[string]string {
+	c.identityMu.RLock()
 	id := c.Identity
+	c.identityMu.RUnlock()
 	if id.PluginName == "" {
 		id = DefaultIdentity()
 	}
@@ -275,7 +280,7 @@ func (c *Client) FetchBuiltinModels(ctx context.Context, sess *Session) ([]Built
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("获取内置模型失败 HTTP %d: %s", resp.StatusCode, truncate(string(raw), 300))
+		return nil, fmt.Errorf("获取内置模型失败 HTTP %d: %s", resp.StatusCode, truncate(sessionErrorText(string(raw), sess), 300))
 	}
 	var out struct {
 		Count         int            `json:"count"`
@@ -301,9 +306,21 @@ func (c *Client) ChatStream(ctx context.Context, sess *Session, model string, bo
 
 	if resp.StatusCode != http.StatusOK {
 		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-		return &UpstreamError{Status: resp.StatusCode, Message: truncate(string(raw), 600)}
+		return &UpstreamError{Status: resp.StatusCode, Message: truncate(sessionErrorText(string(raw), sess), 600)}
 	}
 
+	finished := map[int]bool{}
+	validateEnd := func() error {
+		if len(finished) == 0 {
+			return &UpstreamError{Status: 502, Message: "上游流未包含有效回答或结束原因"}
+		}
+		for _, done := range finished {
+			if !done {
+				return &UpstreamError{Status: 502, Message: "上游流提前中断，缺少 finish_reason"}
+			}
+		}
+		return nil
+	}
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64*1024), 4<<20)
 	for scanner.Scan() {
@@ -319,13 +336,32 @@ func (c *Client) ChatStream(ctx context.Context, sess *Session, model string, bo
 			continue
 		}
 		if bytes.Equal(payload, []byte("[DONE]")) {
-			return nil
+			return validateEnd()
+		}
+		var frame struct {
+			Choices []struct {
+				Index  int    `json:"index"`
+				Finish string `json:"finish_reason"`
+			} `json:"choices"`
+		}
+		if json.Unmarshal(payload, &frame) != nil {
+			return &UpstreamError{Status: 502, Message: "上游流包含无效 JSON"}
+		}
+		for _, choice := range frame.Choices {
+			if choice.Finish != "" {
+				finished[choice.Index] = true
+			} else if _, seen := finished[choice.Index]; !seen {
+				finished[choice.Index] = false
+			}
 		}
 		if err := onChunk(payload); err != nil {
 			return err
 		}
 	}
-	return scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return validateEnd()
 }
 
 // Chat 向 inferhub 发起非流式对话，返回原始响应体。
@@ -341,7 +377,7 @@ func (c *Client) Chat(ctx context.Context, sess *Session, model string, body []b
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, &UpstreamError{Status: resp.StatusCode, Message: truncate(string(raw), 600)}
+		return nil, &UpstreamError{Status: resp.StatusCode, Message: truncate(sessionErrorText(string(raw), sess), 600)}
 	}
 	return raw, nil
 }
@@ -354,7 +390,7 @@ type UpstreamError struct {
 
 // Error 实现 error。
 func (e *UpstreamError) Error() string {
-	return fmt.Sprintf("上游 HTTP %d: %s", e.Status, e.Message)
+	return fmt.Sprintf("上游 HTTP %d: %s", e.Status, RedactSecrets(e.Message))
 }
 
 // Probe 用一个最小请求探测凭据是否可用。

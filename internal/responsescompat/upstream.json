@@ -1,0 +1,23 @@
+{
+  "revision": "ba81c7fd758e425d67f856d601147ef0c5263d3f",
+  "source_files": {
+    "responses_tool_search_discoveries.go": "f42c74bc5f1686710590761501419e7f36b82d5dda8e1745cd4b71b899c2b04e",
+    "responses_client_tools.go": "3017206885d49ff886b7369914b21e54d9bdacd645fe9f49ce0c21e205db3e4c",
+    "responses_tool_output_media.go": "116b956f0c9fb6454ae96c6e093e15a94793d07b3631b0deb621a586c8b22e3e",
+    "responses_namespace.go": "36136e47c58cb206abef2084f829cbaa756f15d2b998440d783b056c23cc3a03",
+    "responses_stream_event_wire.go": "45fdb28fa71d2db569b6102debcad66ccda9626b16c130d3f61ec1384ebd02ae",
+    "chatcompletions_responses_bridge.go": "6867beba396842f6f0ce72a07a1fc7b4ef6078b42d6bbaef9bfd939bd4eb34a7",
+    "types.go": "11e681b396c611b3bffeb32390e6d5ba673d644581c154946f985c5832322450",
+    "response_format.go": "9857340bb0538c214c07ded1ee89817d0973dcbb1ac45bb1828e5693ed7463f5"
+  },
+  "tests": {
+    "chatcompletions_responses_bridge_test.go": "77d05e20f994645814aabd8a07aa5fde67144d167e4374cc75ae3d711c4d4df0",
+    "chatcompletions_responses_bridge_custom_tools_test.go": "7972f5932e27a49d05bddcbf5c7df87a1352527dbd9460a4d555d338dac5ed96",
+    "chatcompletions_responses_bridge_additional_tools_test.go": "65cabddaee544b9547add84f51674696d655cb586ee62c1884dda4b27856b402",
+    "chatcompletions_responses_bridge_agent_message_test.go": "990b99926523972b0f0d25933f6f115b0dd47a67f8b8bf7682071913226dd4d9",
+    "chatcompletions_responses_reasoning_cache_test.go": "517ebbf7ba18fb48195e8f6526d8bae2ac2f5abdd816d5b474433c22a50b2b45",
+    "chatcompletions_responses_request_invariants_test.go": "2227000c237ec6cbe6284c458609caf42edf5dee943969741cc379f4c55b270e",
+    "chatcompletions_responses_stream_lifecycle_test.go": "6f7e3f3d7709401190cb4c8b85cfae01c949cdd2d9b82ddccc507b47f643e066",
+    "chatcompletions_responses_tool_output_media_test.go": "37f034147e0ba7cc2f8e6331584785d6d3f49f169db3f6a72c8964278bbe3ec4"
+  }
+}
