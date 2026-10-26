@@ -5,11 +5,13 @@ https://github.com/2951461586/CodeArts2API
 Base revision: c11aa7bba77d148ed04dec2c6a67b74cb8732293
 The inherited implementation is licensed under Apache License 2.0 (see LICENSE).
 
-Panel modifications, 2026-10-25:
-- Inference account leases, configurable scheduling, cooldowns and circuit breaking.
-- Session affinity, account pause/resume, pool controls and status in the console.
-- Stream replay prevention, request-wide deadlines and concurrent settings fixes.
-- First-run separate admin/API credentials and local startup scripts.
+This distribution modifies the base project's panel, account routing,
+authentication, usage accounting, protocol adapters and client integration.
+Detailed changes and validation are recorded in the corresponding Git commits.
+
+AI-assisted development: OpenAI ChatGPT / Codex was used for implementation,
+debugging, testing and documentation. This attribution does not imply OpenAI
+company maintenance, sponsorship or endorsement. See CONTRIBUTORS.md.
 
 The account-pool product design was inspired by linguo2625469/workbuddy2api-panel:
 https://github.com/linguo2625469/workbuddy2api-panel
