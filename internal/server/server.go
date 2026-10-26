@@ -127,6 +127,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/console.css", serveConsoleCSS)
 	mux.HandleFunc("/console.js", serveConsoleJS)
 	mux.HandleFunc("/theme.js", serveThemeJS)
+	mux.HandleFunc("/favicon.svg", serveFaviconSVG)
+	mux.HandleFunc("/favicon.ico", serveFaviconICO)
 
 	mux.HandleFunc("/", s.handleRoot)
 

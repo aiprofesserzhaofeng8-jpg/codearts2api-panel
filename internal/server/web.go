@@ -5,12 +5,12 @@ import (
 	"net/http"
 )
 
-// 控制台由三个内嵌文件组成：单页 HTML + 一个样式表 + 一个脚本。
+// 控制台页面、脚本、样式和站点图标均内嵌在二进制中。
 //
 // 拆开（而不是全部内联）是为了让 CSP 能收紧到 script-src 'self' /
 // style-src 'self'：内联 <script> 与内联 style 属性会迫使 CSP 放开
 // 'unsafe-inline'，等于放弃对注入点的最后一道防线。
-// 三个文件仍由本程序内嵌提供，不依赖任何外部 CDN，可离线使用。
+// 所有资源由本程序同源提供，不依赖外部 CDN，可离线使用。
 var (
 	//go:embed web/index.html
 	consoleHTML []byte
@@ -21,6 +21,11 @@ var (
 
 	//go:embed web/theme.js
 	themeJS []byte
+
+	//go:embed web/favicon.svg
+	faviconSVG []byte
+	//go:embed web/favicon.ico
+	faviconICO []byte
 )
 
 // consoleCSP 是控制台页面与静态资源共用的 CSP。
@@ -32,7 +37,7 @@ var (
 const consoleCSP = "default-src 'none'; " +
 	"script-src 'self'; " +
 	"style-src 'self'; " +
-	"img-src 'none'; " +
+	"img-src 'self'; " +
 	"connect-src 'self'; " +
 	"base-uri 'none'; " +
 	"form-action 'none'; " +
@@ -68,4 +73,13 @@ func serveConsoleJS(w http.ResponseWriter, _ *http.Request) {
 func serveThemeJS(w http.ResponseWriter, _ *http.Request) {
 	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
 	_, _ = w.Write(themeJS)
+}
+
+func serveFaviconSVG(w http.ResponseWriter, _ *http.Request) {
+	consoleHeaders(w.Header(), "image/svg+xml")
+	_, _ = w.Write(faviconSVG)
+}
+func serveFaviconICO(w http.ResponseWriter, _ *http.Request) {
+	consoleHeaders(w.Header(), "image/x-icon")
+	_, _ = w.Write(faviconICO)
 }
