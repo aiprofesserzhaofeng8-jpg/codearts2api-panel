@@ -6,6 +6,8 @@
 
 将码道账号接入 Chat Completions、Responses 和 Anthropic Messages 兼容接口。
 
+**中文** · [English](README_EN.md)
+
 [![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](go.mod)
 
