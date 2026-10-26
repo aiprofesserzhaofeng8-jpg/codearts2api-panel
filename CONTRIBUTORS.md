@@ -17,7 +17,7 @@
 Assisted-by: OpenAI ChatGPT / Codex
 ```
 
-此说明为文档署名，不会将 OpenAI 官方账号自动加入 GitHub 的 Contributors 统计。
+README 使用头像展示项目维护者和 AI 辅助工具署名。右侧 Contributors 是 GitHub 根据实际提交作者生成的独立统计，不读取文档名单。OpenAI 在 GitHub 上是组织，当前没有由本项目控制、代表 AI 辅助开发的独立提交账号。
 
 ## 上游项目
 

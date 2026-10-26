@@ -34,6 +34,18 @@ git config --local commit.template .gitmessage
 
 AI 尾注仅在实际使用相关工具辅助时添加；贡献说明见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。无需重写已发布的历史提交。
 
+## GitHub 提交身份
+
+GitHub 根据提交作者邮箱关联账号；仓库所有者、推送者与提交作者可能不同。提交前检查本机身份，必要时仅为当前仓库设置自己的 GitHub 用户名及已关联邮箱：
+
+```bash
+git config --local user.name "你的 GitHub 用户名"
+git config --local user.email "GitHub Settings → Emails 中提供的提交邮箱"
+git var GIT_AUTHOR_IDENT
+```
+
+保留 README 中的 AI 工具署名和 `Assisted-by` 尾注。它们是辅助开发记录，不用于模拟 OpenAI 官方账号提交。GitHub 右侧贡献者统计由平台生成；不要为改变名单创建空提交或冒用其他账号的邮箱。
+
 ## 验证
 
 按修改范围执行检查：Go 逻辑使用 `go test ./...`、必要时 `go test -race ./...` 和 `go vet ./...`；客户端配置使用 Python 单元测试；Pi 恢复使用 `node scripts/pi/codearts-compaction.test.mjs`。纯文档修改检查命令、链接和说明与当前实现是否一致。

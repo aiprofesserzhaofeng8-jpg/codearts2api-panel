@@ -193,6 +193,21 @@ Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查
 
 ## 贡献者与致谢
 
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/aiprofesserzhaofeng8-jpg"><img src="https://github.com/aiprofesserzhaofeng8-jpg.png?size=80" width="64" height="64" alt="项目维护者头像"></a><br>
+      <a href="https://github.com/aiprofesserzhaofeng8-jpg">aiprofesserzhaofeng8-jpg</a><br>
+      项目维护
+    </td>
+    <td align="center">
+      <a href="CONTRIBUTORS.md#ai-辅助开发贡献"><img src="https://github.com/openai.png?size=80" width="64" height="64" alt="OpenAI 工具标识"></a><br>
+      OpenAI ChatGPT / Codex<br>
+      AI 辅助开发工具署名
+    </td>
+  </tr>
+</table>
+
 | 贡献者 / 项目 | 贡献方式 |
 | --- | --- |
 | [aiprofesserzhaofeng8-jpg](https://github.com/aiprofesserzhaofeng8-jpg) | 项目需求、使用反馈、仓库维护与发布 |
