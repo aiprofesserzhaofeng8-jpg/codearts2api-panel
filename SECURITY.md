@@ -39,7 +39,7 @@
 | STS 临时凭据（AK/SK/security token） | 状态文件、内存 | 可冒用账号调用上游 |
 | `refresh_token` + DPoP 私钥 | 状态文件、导出的 session JSON | **长期**接管账号登录态（约 30 天，可轮转续命） |
 | 网关 API 密钥（`sk-ca-...`） | 状态文件（**明文**存储，展示时掩码） | 可消耗账号额度 |
-| 管理密码 | 状态文件、浏览器 `sessionStorage` | 可读取/导出完整登录态 |
+| 管理密码 / 会话 | 状态文件保存 PBKDF2 哈希；浏览器使用 HttpOnly 会话 Cookie | 密码或有效会话泄露可读取/导出登录态 |
 | 请求日志 | 状态文件 | 仅元信息（模型、耗时、长度），不含对话内容 |
 
 ### 对手
@@ -56,15 +56,15 @@
 | --- | --- | --- |
 | 默认暴露面 | 只监听 `127.0.0.1` | `main.go` |
 | 本机直连判定 | `RemoteAddr` 是环回 **且** 无任何代理头；带代理头一律按非本机 | `server.go: localDirect/viaProxy` |
-| 管理接口 | 设了密码则必须携带（常量时间比较）；未设则仅本机直连 | `server.go: withAdminAuth/secureEqual` |
+| 管理接口 | 默认必须登录；8 小时会话、改密/退出撤销、密码慢哈希；本机免登录仅显式兼容模式 | `server.go: withAdminAuth/secureEqual` |
 | 推理接口 | 已签发密钥则必须携带；未签发则仅本机直连（匿名需显式开启） | `server.go: withAuth` |
-| CSRF | 写操作做同源校验；鉴权走自定义头（跨站表单无法携带） | `server.go: adminSameOrigin` |
+| CSRF | 管理写操作检查同源；会话 Cookie 使用 SameSite=Strict；兼容密码自定义头 | `server.go: adminSameOrigin` |
 | CORS | 默认仅同源，不接受通配符 | `server.go: withCORS` |
 | XSS | 控制台全程 `textContent` 渲染；CSP `default-src 'none'` + `script-src 'self'` + `style-src 'self'`（无 `unsafe-inline`） | `web.go`、`web/console.js` |
 | 开放重定向 | 浏览器登录的授权 URL 走华为云域名白名单 | `web/console.js: isTrustedAuthURL` |
 | SSRF | 回调 URL 只接受本机回调地址；拒绝内网/任意主机 | `codearts/login.go` |
 | 凭据落盘 | 状态文件 `0600`、目录 `0700`、原子替换（唯一临时文件 + 串行落盘）；打开时纠正历史文件的过宽权限 | `store.go: Open/Save` |
-| 凭据展示 | AK / 域 ID / APIKey 一律脱敏 | `codearts/util.go: Mask` |
+| 凭据展示 | 默认脱敏；完整 API Key 仅通过鉴权后的显式复制/显示接口获取 | `codearts/util.go: Mask` |
 | 日志 | 只记元信息；`Authorization` / `X-Security-token` 从不写入 | `server/chat.go: record` |
 | 错误语义 | 凭据失效单独成类型，明确提示重新登录，不诱导重试 | `codearts/errors.go`、`internal/apierr` |
 | IDE 数据库回写 | 仅在长度一致时定长原地写，写前备份 `.bak` | `session_windows.go` |
@@ -74,7 +74,7 @@
 
 - **状态文件是明文凭据**。`0600` 在 Windows 上不映射到 ACL，保护依赖目录 ACL
   与「只有你自己能登录这台机器」这一前提。
-- **同用户的任意本机进程**都能读状态文件与浏览器存储 —— 本机恶意软件不在防御范围内。
+- **同用户的任意本机进程**通常可以读取可逆凭据文件；本机恶意软件不在防御范围内。管理密码不再保存到浏览器 Web Storage。
 - **导出的 session JSON 等同于账号登录态**。一旦外传，等于交出账号。
 - **管理密码以明文 HTTP 传输**。本机/内网回环可接受；跨网段请务必在反向代理层加 TLS。
 - **回写 `state.vscdb` 属于修改第三方应用数据**。虽有备份，仍建议只在需要时开启。
@@ -105,3 +105,7 @@
 - 上游服务条款与账号风控问题；
 - 已获得本机同用户代码执行权限后的进一步提权；
 - 物理访问攻击。
+
+## Windows 文件权限验证边界
+
+Windows 的 Go `FileMode` 不代表 NTFS ACL，`os.Chmod(0600)` 不能证明只允许当前用户访问。CI 在 Windows 上验证初始化、密码哈希和数据保存；0600 模式断言仅在 Unix 平台执行。Windows 用户应将数据保存在仅本人可访问的目录，并用系统 ACL 检查实际访问权限；当前没有自动创建专用 NTFS ACL，也没有把跨平台构建测试等同于权限验收通过。

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"codearts2api/internal/store"
@@ -32,8 +33,13 @@ func TestBootstrapAccess(t *testing.T) {
 	if !st.ValidKey(access["api_key"]) || st.ValidKey(access["admin_password"]) {
 		t.Fatal("API and admin permissions must be separated")
 	}
-	info, _ := os.Stat(path)
-	if info.Mode().Perm() != 0600 {
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Windows permission bits do not express NTFS ACLs. Keep the Unix mode
+	// assertion on systems where chmod enforces it; ACL verification is separate.
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Fatal("bootstrap secrets must be private")
 	}
 	loaded, err := store.Open(st.Path())
