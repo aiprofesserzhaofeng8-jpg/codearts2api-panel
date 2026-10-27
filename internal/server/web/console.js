@@ -551,8 +551,9 @@
     }
     var info = st.credit || {};
     if (!info.available) {
-      var none = mk("span", "muted", "无积分套餐");
-      none.title = info.reason || "";
+      var accessDenied = a.status === "error" && String(a.last_err || "").indexOf("TM.00001005") >= 0;
+      var none = mk("span", "muted", accessDenied ? "需开通码道权限" : (info.is_token_package ? "Token 套餐" : "额度未返回"));
+      none.title = accessDenied ? "最近一次模型调用被上游拒绝：尚未获得此功能的访问权限。请使用该账号到码道官方页面核对开通状态。" : (info.reason || "上游未提供积分数据，不能据此判定没有套餐或余额");
       c.appendChild(none);
       return c;
     }

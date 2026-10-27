@@ -186,3 +186,29 @@ func TestFetchCreditInfoUpstreamError(t *testing.T) {
 		t.Errorf("状态码 = %d，期望 401", ue.Status)
 	}
 }
+
+// Missing metrics alone are not evidence of an empty/nonexistent package.
+func TestCreditInfoMissingMetricsDoesNotAssertNoPackage(t *testing.T) {
+	info, err := parseCreditInfo([]byte(`{"show":"none","is_teadmin":false,"is_white_list":false}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Available || !strings.Contains(info.Reason, "不能据此判定") {
+		t.Fatalf("unknown quota misrepresented: %+v", info)
+	}
+}
+func TestCreditInfoBusinessErrorIsNotMissingPackage(t *testing.T) {
+	_, err := parseCreditInfo([]byte(`{"error_code":"TM.00001005","error_msg":"access denied"}`))
+	if err == nil {
+		t.Fatal("business rejection was treated as a missing package")
+	}
+}
+func TestCreditInfoTokenPackageRetainsUsage(t *testing.T) {
+	info, err := parseCreditInfo([]byte(`{"package":{"is_token_package":true},"metrics":[{"name":"usageTokenChatMessages","usage_token_num":123,"package_token_amount":1000}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Available || info.TokenUsed != 123 || info.TokenLimit != 1000 {
+		t.Fatalf("token-only usage lost: %+v", info)
+	}
+}

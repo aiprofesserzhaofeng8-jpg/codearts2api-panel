@@ -54,8 +54,8 @@ type CreditCategory struct {
 
 // CreditInfo 是一个账号的积分额度快照。
 //
-// Available=false 表示上游没有返回积分套餐（token 套餐、白名单或未开通积分）——
-// 这不是错误，控制台应显示原因而不是「0 积分」。
+// Available=false 仅表示响应缺少可用的积分指标，不足以证明没有套餐或没有余额。
+// 查询失败另以 error 返回；前端应展示原因，不把未知额度当作零余额。
 type CreditInfo struct {
 	Available bool   `json:"available"`
 	Reason    string `json:"reason,omitempty"`
@@ -107,6 +107,9 @@ func (c *Client) FetchCreditInfo(ctx context.Context, sess *Session) (*CreditInf
 
 // parseCreditInfo 把统计插件的响应解析成对外的稳定形状。
 func parseCreditInfo(raw []byte) (*CreditInfo, error) {
+	if err := detectUpstreamError(raw); err != nil {
+		return nil, err
+	}
 	var payload struct {
 		Package creditPackage  `json:"package"`
 		Metrics []creditMetric `json:"metrics"`
@@ -126,9 +129,17 @@ func parseCreditInfo(raw []byte) (*CreditInfo, error) {
 		IsTokenPackage:  payload.Package.IsTokenPackage,
 	}
 
+	if tok := findCreditMetric(payload.Metrics, "usageTokenChatMessages"); tok != nil {
+		info.TokenUsed = tok.UsageTokens
+		info.TokenLimit = tok.TotalTokens
+	}
+
 	total := findCreditMetric(payload.Metrics, "usageTotalPackageCredit")
 	if total == nil {
-		info.Reason = "上游未返回积分套餐（可能是 token 套餐、白名单或未开通积分）"
+		info.Reason = "上游未返回积分额度，不能据此判定没有套餐或余额；请到码道官方页面核对账号权益与开通状态"
+		if info.IsTokenPackage {
+			info.Reason = "上游返回 Token 套餐，未提供积分额度"
+		}
 		return info, nil
 	}
 
@@ -152,10 +163,6 @@ func parseCreditInfo(raw []byte) (*CreditInfo, error) {
 	info.Basic = creditCategory(findCreditMetric(payload.Metrics, "usageBasicPackageCredit"))
 	info.OnDemand = creditCategory(findCreditMetric(payload.Metrics, "usageOnDemandPackageCredit"))
 	info.Bonus = creditCategory(findCreditMetric(payload.Metrics, "usageBonusPackageCredit"))
-	if tok := findCreditMetric(payload.Metrics, "usageTokenChatMessages"); tok != nil {
-		info.TokenUsed = tok.UsageTokens
-		info.TokenLimit = tok.TotalTokens
-	}
 	return info, nil
 }
 
