@@ -5,6 +5,7 @@ import "sort"
 const MaxUsageRecords = 100000
 
 type UsageQuery struct {
+	Provider       string
 	Start, End     int64
 	Page, PageSize int
 }
@@ -53,6 +54,13 @@ func (s *Store) QueryUsage(q UsageQuery) UsagePage {
 			result.Oldest = e.Time
 		}
 		if q.Start != 0 && e.Time < q.Start || q.End != 0 && e.Time >= q.End {
+			continue
+		}
+		name := e.Provider
+		if name == "" {
+			name = "codearts"
+		}
+		if q.Provider != "" && name != q.Provider {
 			continue
 		}
 		matched = append(matched, e)

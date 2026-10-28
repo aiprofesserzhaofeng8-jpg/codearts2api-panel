@@ -86,6 +86,9 @@ func (m *Manager) logf(format string, args ...any) {
 // 拿到锁之后才解析：排在后面的 goroutine 会看到前一个刚写入缓存的会话
 // （resolve 的第 1 步），直接复用，不会拿已轮转的 refresh_token 再续一次。
 func (m *Manager) Session(ctx context.Context, acct *Account, opt ResolveOptions) (*Session, error) {
+	if acct == nil || acct.ProviderID() != "codearts" {
+		return nil, fmt.Errorf("该操作仅支持码道账号")
+	}
 	if opt.LiveTTL <= 0 {
 		opt.LiveTTL = 10 * time.Second
 	}

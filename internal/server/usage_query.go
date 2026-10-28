@@ -11,7 +11,7 @@ func (s *Server) handleAdminUsage(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
 		return
 	}
-	q := store.UsageQuery{Page: 1, PageSize: 20}
+	q := store.UsageQuery{Page: 1, PageSize: 20, Provider: r.URL.Query().Get("provider")}
 	for name, target := range map[string]*int64{"start": &q.Start, "end": &q.End} {
 		if v := r.URL.Query().Get(name); v != "" {
 			n, err := strconv.ParseInt(v, 10, 64)

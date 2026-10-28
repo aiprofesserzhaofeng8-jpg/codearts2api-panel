@@ -165,7 +165,7 @@ func (s *Server) serveAudited(w http.ResponseWriter, r *http.Request, actor stri
 		}
 		_ = json.Unmarshal(raw, &action)
 		switch action.Action {
-		case "export", "remove", "pause", "resume", "manual", "session-json", "import", "toggle", "clear-errors", "reimport", "probe":
+		case "start", "check", "complete", "cancel", "export", "remove", "pause", "resume", "manual", "session-json", "import", "toggle", "clear-errors", "reimport", "probe":
 			operation = action.Action
 		}
 	}

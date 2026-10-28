@@ -276,6 +276,11 @@ func parseTime(v string) (time.Time, error) {
 
 // Account 是网关侧的一个 CodeArts 账号。
 type Account struct {
+	Provider    string          `json:"provider,omitempty"`
+	Scope       string          `json:"scope,omitempty"`
+	ExternalID  string          `json:"external_id,omitempty"`
+	Credentials json.RawMessage `json:"provider_credentials,omitempty"`
+
 	ID             string `json:"id"`
 	Name           string `json:"name"`
 	Source         string `json:"source"`    // desktop | manual
@@ -313,4 +318,12 @@ type ImportResult struct {
 	Profile string
 	AK      string
 	Expires time.Time
+}
+
+// ProviderID preserves old state files: omitted provider means CodeArts.
+func (a *Account) ProviderID() string {
+	if a.Provider == "" {
+		return "codearts"
+	}
+	return a.Provider
 }

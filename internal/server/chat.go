@@ -12,6 +12,7 @@ import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/protocol"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 )
@@ -191,6 +192,23 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 // 上游对个别模型（实测 glm-5.3）的非流式接口只回一个空 body 的 400，
 // 这里检测到该特征后自动改用「流式 + 本地聚合」，对客户端保持非流式语义。
 func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte) ([]byte, error) {
+	if acct.ProviderID() != provider.CodeArts {
+		var chunks [][]byte
+		size := 0
+		err := s.streamProvider(ctx, acct, model, body, func(b []byte) error {
+			size += len(b)
+			if size > 32<<20 {
+				return fmt.Errorf("上游响应超过 32 MiB")
+			}
+			chunks = append(chunks, append([]byte(nil), b...))
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		return codearts.AggregateSSE(chunks)
+	}
+
 	startAttempt(ctx, acct, model.ID)
 	sess, err := s.Cred.Session(ctx, acct, s.resolveOptions())
 	if err != nil {
@@ -253,6 +271,9 @@ func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session,
 
 // streamOnce 用指定账号发一次流式请求，逐块回调。
 func (s *Server) streamOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
+	if acct.ProviderID() != provider.CodeArts {
+		return s.streamProvider(ctx, acct, model, body, onChunk)
+	}
 	body, err := requestStreamUsage(body)
 	if err != nil {
 		return err
@@ -369,6 +390,23 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		var terminal interface{ NonRetryableRequest() bool }
 		if errors.As(err, &terminal) && terminal.NonRetryableRequest() {
 			return used, err
+		}
+		if errors.Is(err, codearts.ErrSessionChanged) {
+			return used, err
+		}
+		var external *provider.Error
+		if errors.As(err, &external) {
+			s.providerAccountError(ctx, acct, model, err)
+			if !external.AccountFault && (external.Status == 400 || external.Status == 422 || external.Status == 403) {
+				return used, err
+			}
+			lastErr = err
+			tried[acct.ID] = true
+			var committed *committedStreamError
+			if errors.As(err, &committed) {
+				return used, err
+			}
+			continue
 		}
 		lastErr = err
 		s.Store.ForgetSession(session, acct.ID)
@@ -492,6 +530,8 @@ func (s *Server) record(ctx context.Context, key string, acct *codearts.Account,
 	}
 	if acct != nil {
 		e.Account = acct.DisplayName()
+		e.Provider = acct.ProviderID()
+		e.Scope = acct.Scope
 	}
 	if err != nil {
 		e.Err = err.Error()

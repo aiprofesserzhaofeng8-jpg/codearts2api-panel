@@ -11,6 +11,7 @@ import (
 
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 )
@@ -25,7 +26,8 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	for _, a := range accts {
 		row := map[string]any{
 			"model_health": modelHealth[a.ID],
-			"paused":       a.Paused, "pool": poolState[a.ID],
+			"provider":     a.ProviderID(), "scope": a.Scope,
+			"paused": a.Paused, "pool": poolState[a.ID],
 			"cooldown_until": a.CooldownUntil, "cooldown_reason": a.CooldownReason,
 			"id": a.ID, "name": a.DisplayName(), "source": a.Source,
 			"user_data": a.UserData, "enabled": a.Enabled,
@@ -45,6 +47,16 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 			// 永久 AK/SK 没有过期时间，控制台据此显示「永不过期」而不是 1970。
 			row["permanent"] = a.Session.IsPermanent()
 		}
+		if a.ProviderID() != provider.CodeArts && s.Providers != nil {
+			if adapter, ok := s.Providers.Get(a.ProviderID()); ok {
+				if _, identity, err := adapter.Normalize(a.Credentials); err == nil {
+					row["expires_at"] = identity.ExpiresAt
+					row["expires_in"] = identity.ExpiresAt - time.Now().Unix()
+					row["has_refresh"] = identity.HasRefresh
+					row["access_key"] = "已保存"
+				}
+			}
+		}
 		safe = append(safe, row)
 	}
 
@@ -62,13 +74,15 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	s.cache.mu.RUnlock()
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"today":          today,
-		"accounts":       safe,
-		"keys":           safeKeys,
-		"models":         s.Reg.List(s.Store.Settings().ModelAliases),
-		"settings":       sanitizedSettings(s.Store.Settings()),
-		"stats":          s.Store.Stats(),
-		"upstream_error": cacheErr,
+		"today":           today,
+		"accounts":        safe,
+		"providers":       s.providerDescriptors(),
+		"provider_errors": s.providerModelErrors(),
+		"keys":            safeKeys,
+		"models":          s.Reg.List(s.Store.Settings().ModelAliases),
+		"settings":        sanitizedSettings(s.Store.Settings()),
+		"stats":           s.Store.Stats(),
+		"upstream_error":  cacheErr,
 	})
 }
 
@@ -218,6 +232,10 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		a := s.Store.Account(body.ID)
 		if a == nil {
 			writeErr(w, http.StatusBadRequest, "账号不存在", "invalid_request_error")
+			return
+		}
+		if a.ProviderID() != provider.CodeArts {
+			writeJSON(w, 200, map[string]any{"ok": true, "name": a.DisplayName(), "session_json": string(a.Credentials), "warning": "此内容含完整上游凭据，请勿公开"})
 			return
 		}
 		s.Cred.Invalidate(a.ID)
@@ -469,6 +487,25 @@ func (s *Server) handleAdminCheckin(w http.ResponseWriter, r *http.Request) {
 	}
 	results := make([]map[string]any, 0, len(targets))
 	for _, a := range targets {
+		if a.ProviderID() != provider.CodeArts {
+			ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+			adapter, raw, err := s.providerCredentials(ctx, a)
+			if err == nil {
+				var models []provider.Model
+				models, err = adapter.Models(ctx, raw)
+				if err == nil {
+					s.Reg.ReplaceProvider(a.ProviderID(), a.Scope, models)
+				}
+			}
+			cancel()
+			note := ""
+			if err != nil {
+				note = err.Error()
+			}
+			s.Store.MarkAccountResult(a.ID, err == nil, note)
+			results = append(results, map[string]any{"id": a.ID, "name": a.DisplayName(), "ok": err == nil, "err": note})
+			continue
+		}
 		s.Cred.Invalidate(a.ID)
 		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 		sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
@@ -594,6 +631,29 @@ func (s *Server) handleAdminModelProbe(w http.ResponseWriter, r *http.Request) {
 			row := map[string]any{"model": modelID}
 			// 依次尝试账号，任一账号能用即判定该模型可用。
 			for _, a := range targets {
+				upstream, scope, _ := provider.ParseModel(modelID)
+				if a.ProviderID() != upstream || (upstream != provider.CodeArts && a.Scope != scope) {
+					continue
+				}
+				if upstream != provider.CodeArts {
+					ctx, cancel := context.WithTimeout(r.Context(), probeAttemptTimeout)
+					model, ok := s.Reg.Resolve(modelID, nil)
+					var err error
+					if !ok {
+						err = fmt.Errorf("模型不存在")
+					} else {
+						body, _ := json.Marshal(map[string]any{"model": modelID, "messages": []map[string]string{{"role": "user", "content": "Reply OK."}}, "max_tokens": 64})
+						_, err = s.chatOnce(ctx, a, model, body)
+					}
+					cancel()
+					row["ok"] = err == nil
+					row["account"] = a.DisplayName()
+					if err != nil {
+						row["error"] = err.Error()
+						continue
+					}
+					break
+				}
 				// 客户端断开后不必再花积分试下一个账号。
 				if r.Context().Err() != nil {
 					row["ok"] = false
@@ -730,6 +790,31 @@ func (s *Server) handleAdminCredits(w http.ResponseWriter, r *http.Request) {
 
 // creditFor 解析凭据并查询积分额度，带短缓存。
 func (s *Server) creditFor(ctx context.Context, a *codearts.Account, fresh bool) (*codearts.CreditInfo, error) {
+	if a.ProviderID() != provider.CodeArts {
+		if !fresh {
+			if info, err, ok := s.cachedCredit(a.ID); ok {
+				return info, err
+			}
+		}
+		ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		adapter, raw, err := s.providerCredentials(ctx, a)
+		if err != nil {
+			return nil, err
+		}
+		data, err := adapter.Credit(ctx, raw)
+		if err != nil {
+			s.storeCredit(a.ID, nil, err)
+			return nil, err
+		}
+		var info codearts.CreditInfo
+		if err = json.Unmarshal(data, &info); err != nil {
+			return nil, err
+		}
+		s.storeCredit(a.ID, &info, nil)
+		return &info, nil
+	}
+
 	if !fresh {
 		if info, err, ok := s.cachedCredit(a.ID); ok {
 			return info, err

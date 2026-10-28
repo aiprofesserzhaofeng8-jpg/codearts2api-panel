@@ -34,7 +34,7 @@ func (s *Store) UpsertAccountAndSave(a *codearts.Account, replace bool) (bool, e
 	}
 	if !replace {
 		for _, ex := range s.st.Accounts {
-			if sameAccountSession(ex.Session, a.Session) {
+			if ex.ProviderID() == a.ProviderID() && ex.Scope == a.Scope && (sameAccountSession(ex.Session, a.Session) || (a.ExternalID != "" && a.ExternalID == ex.ExternalID)) {
 				return false, ErrAccountExists
 			}
 		}
@@ -85,4 +85,15 @@ func (s *Store) RemoveAccountAndSave(id string) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+func (s *Store) FindProviderAccount(name, scope, id string) *codearts.Account {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, a := range s.st.Accounts {
+		if a.ProviderID() == name && a.Scope == scope && a.ExternalID == id {
+			return cloneAccount(a)
+		}
+	}
+	return nil
 }

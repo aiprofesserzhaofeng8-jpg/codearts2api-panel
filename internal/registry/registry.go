@@ -8,23 +8,11 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 )
 
 // Model 是一个对外可用的模型。
-type Model struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Context   int    `json:"context"`
-	MaxOutput int    `json:"max_output"`
-	Desc      string `json:"description"`
-	// Source 标记来源：upstream=上游清单，alias=别名。
-	Source string `json:"source"`
-	// Credit 是积分消耗倍率（如 "0.79x"）；上游未公布计费档时为空。
-	Credit string `json:"credit,omitempty"`
-	// StreamOnly 标记上游只支持流式：非流式会返回一个空 body 的 400。
-	// 网关会自动降级为「流式 + 本地聚合」，这里只是避免每次多打一次空枪。
-	StreamOnly bool `json:"stream_only,omitempty"`
-}
+type Model = provider.Model
 
 // Fallback 是上游模型接口不可达时使用的兜底清单。
 //
@@ -170,6 +158,9 @@ func (r *Registry) Resolve(name string, custom map[string]string) (Model, bool) 
 	r.mu.RUnlock()
 
 	n := strings.TrimSpace(name)
+	if strings.HasPrefix(n, "codearts/") {
+		n = strings.TrimPrefix(n, "codearts/")
+	}
 	if n == "" {
 		return defaultModel(base)
 	}
@@ -249,4 +240,31 @@ func FromBuiltin(models []codearts.BuiltinModel) []Model {
 		})
 	}
 	return out
+}
+
+// ReplaceProvider updates one upstream partition without deleting other catalogs.
+func (r *Registry) ReplaceProvider(name, scope string, models []Model) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := make([]Model, 0, len(r.models)+len(models))
+	for _, m := range r.models {
+		p := m.Provider
+		if p == "" {
+			p = provider.CodeArts
+		}
+		if p != name || m.Scope != scope {
+			out = append(out, m)
+		}
+	}
+	for _, m := range models {
+		m.Provider = name
+		m.Scope = scope
+		if m.UpstreamID == "" {
+			m.UpstreamID = m.ID
+		}
+		m.ID = provider.ModelID(name, scope, m.UpstreamID)
+		out = append(out, m)
+	}
+	r.models = out
+	r.updated = time.Now()
 }

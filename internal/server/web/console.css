@@ -1166,3 +1166,10 @@ body.admin-locked .app { visibility: hidden; }
 #adminLoginError,#keyBudgetError{color:var(--err)}
 #keyBudgetSave{margin-top:16px}
 @media(max-width:600px){#adminLoginDialog,#keyBudgetDialog,#modelHealthDialog{padding:18px}}
+#providerLoginDialog{padding:24px;width:min(700px,calc(100vw - 32px))}
+#providerLoginDialog .card-head{margin:0 0 18px;padding:0 0 16px;justify-content:space-between}
+#providerLoginDialog textarea{min-height:110px;width:100%}
+#providerLoginDialog .row{margin-top:14px;flex-wrap:wrap}
+#providerLoginDialog .field{margin:12px 0}
+#providerLoginError{color:var(--err)}
+@media(max-width:600px){#providerLoginDialog{padding:18px}}

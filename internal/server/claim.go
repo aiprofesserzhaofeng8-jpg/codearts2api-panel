@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -67,7 +68,7 @@ func (s *Server) RunDailyClaim(ctx context.Context) {
 	}
 	today := now.Format("2006-01-02")
 	for _, a := range s.Store.Accounts() {
-		if !a.Enabled || a.LastClaimDate == today {
+		if a.ProviderID() != "codearts" || !a.Enabled || a.LastClaimDate == today {
 			continue
 		}
 		if _, err := s.ClaimForAccount(ctx, a, today); err != nil {
@@ -86,6 +87,9 @@ func claimWindowOpen(now time.Time, hour, minute int) bool {
 //
 // 返回给控制台展示的一句话。today 为空时按当前本地日期计算。
 func (s *Server) ClaimForAccount(ctx context.Context, a *codearts.Account, today string) (string, error) {
+	if a.ProviderID() != "codearts" {
+		return "", fmt.Errorf("此上游的活动领取尚未接入")
+	}
 	if today == "" {
 		today = time.Now().Format("2006-01-02")
 	}
@@ -202,6 +206,9 @@ func (s *Server) welfareAccountOptions() []map[string]any {
 	accts := s.Store.Accounts()
 	out := make([]map[string]any, 0, len(accts))
 	for _, a := range accts {
+		if a.ProviderID() != "codearts" {
+			continue
+		}
 		out = append(out, map[string]any{
 			"id": a.ID, "name": a.DisplayName(),
 			"enabled": a.Enabled, "status": a.Status,

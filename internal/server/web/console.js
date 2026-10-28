@@ -305,6 +305,7 @@
     var seq=++usageView.seq;usageView.busy=true;renderUsagePagination();
     $("#usageLogs").setAttribute("aria-busy","true");
     var query=new URLSearchParams({page:String(usageView.page),page_size:String(usageView.pageSize)});
+    if($("#usageProvider").value)query.set("provider",$("#usageProvider").value);
     if(usageView.start)query.set("start",String(usageView.start));if(usageView.end)query.set("end",String(usageView.end));
     return api("/admin/api/usage?"+query.toString()).then(function(d){
       if(seq!==usageView.seq)return;
@@ -615,8 +616,8 @@
     });
     var query = $("#accountSearch").value.trim().toLowerCase();
     var visible = accts.filter(function(a){
-      return (accountFilter === "all" || accountState(a) === accountFilter) &&
-        (!query || [a.name, a.source, sourceName(a.source)].join(" ").toLowerCase().indexOf(query) !== -1);
+      return (!$("#accountProvider").value || (a.provider || "codearts") === $("#accountProvider").value) && (accountFilter === "all" || accountState(a) === accountFilter) &&
+        (!query || [a.name, a.source, sourceName(a.source),a.provider,a.scope].join(" ").toLowerCase().indexOf(query) !== -1);
     });
     $("#accountFilterCount").textContent = visible.length + " / " + accts.length + " 个账号";
     if (!accts.length) {
@@ -656,7 +657,7 @@
       }
 
       var claimCell = cell("");
-      if (a.claimed_today) {
+      if (a.provider && a.provider !== "codearts") {claimCell.appendChild(mk("span","muted","未接入"));} else if (a.claimed_today) {
         claimCell.appendChild(pill("已领", "ok"));
       } else {
         claimCell.appendChild(pill("未领", "warn"));
@@ -667,7 +668,7 @@
       var ops = cell("", "actions-cell");
       ops.appendChild(btn("模型健康", "xs", function(){openModelHealth(a);}));
       ops.appendChild(btn("探活", "xs", function(){ checkin(a.id); }));
-      ops.appendChild(btn("领福利", "xs", function(){ claim(a.id); }));
+      if(!a.provider || a.provider==="codearts")ops.appendChild(btn("领福利", "xs", function(){ claim(a.id); }));
       if (a.source === "desktop") ops.appendChild(btn("重读", "xs", function(){ accountOp("reimport", {id:a.id}); }));
       ops.appendChild(btn("导出", "xs", function(){ exportSession(a.id); }));
       ops.appendChild(btn(a.enabled ? "停用" : "启用", "xs", function(){ accountOp("toggle", {id:a.id}); }));
@@ -684,6 +685,7 @@
       who.appendChild(mk("span", "account-avatar", Array.from(a.name || "码")[0].toUpperCase()));
       var info = mk("div", "account-name");
       info.appendChild(mk("strong", "account-title", a.name || "未命名账号"));
+      info.appendChild(pill(a.provider === "workbuddy" ? "WorkBuddy · "+(a.scope === "global" ? "国际" : "国内") : "华为云码道"));
       info.appendChild(mk("span", "account-caption", a.has_refresh ? "自动续期已就绪" : "临时凭据"));
       who.appendChild(info);
       identity.appendChild(who);
@@ -1094,6 +1096,14 @@
     return ok;
   }
 
+  var providerSession="",providerPreviewID="",providerBusy=false;
+  function providerError(e){$("#providerLoginError").textContent=e.message || String(e);}
+  function resetProviderLogin(){providerSession="";providerPreviewID="";$("#providerLoginURL").value="";$("#providerLoginCallback").value="";$("#providerPreview").classList.add("hidden");$("#providerLoginOpen").classList.add("hidden");$("#providerLoginOpen").removeAttribute("href");$("#providerLoginCopy").disabled=true;$("#providerLoginCheck").disabled=true;$("#providerScope").disabled=false;$("#providerLoginStatus").textContent="";$("#providerLoginError").textContent="";$("#providerReplace").checked=false;}
+  function providerJob(fn){if(providerBusy)return Promise.resolve();providerBusy=true;$("#providerLoginError").textContent="";return Promise.resolve().then(fn).catch(providerError).finally(function(){providerBusy=false;});}
+  function providerCall(action,extra){return api("/admin/api/provider-login",{method:"POST",body:Object.assign({action:action,session_id:providerSession},extra || {})});}
+  function refreshAfterProviderSave(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();toast("WorkBuddy 账号已保存，正在刷新模型目录","ok");return api("/admin/api/models/refresh",{method:"POST"}).catch(function(e){toast("账号已保存，模型目录刷新失败："+e.message,"err");}).then(refresh);}
+  function closeProviderLogin(){if(providerBusy)return;return providerJob(function(){var cancel=providerSession?providerCall("cancel"):Promise.resolve();return cancel.then(function(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();});});}
+  function trustedWorkBuddyURL(raw){try{var u=new URL(raw);return u.protocol==="https:"&&!u.username&&!u.password&&["workbuddy.cn","workbuddy.ai","codebuddy.cn","codebuddy.ai","tencent.com","qq.com"].some(function(h){return u.hostname===h||u.hostname.endsWith("."+h);});}catch(e){return false;}}
   // --- events ---
   var TAB_IDS = { accounts:1, overview:1, models:1, keys:1, logs:1, audit:1, settings:1 };
   var TAB_META = {
@@ -1151,6 +1161,16 @@
     activateTab(location.hash.slice(1), false);
   });
 
+  on("#workbuddyLogin",function(){if(!adminAuthenticated&&!localPanelSession){showAdminLogin();return;}$("#providerLoginDialog").showModal();});
+  on("#providerLoginClose",closeProviderLogin);
+  $("#providerLoginDialog").addEventListener("cancel",function(e){e.preventDefault();closeProviderLogin();});
+  on("#providerLoginStart",function(){return providerJob(function(){var previous=providerSession?providerCall("cancel"):Promise.resolve();return previous.then(function(){resetProviderLogin();return providerCall("start",{provider:"workbuddy",scope:$("#providerScope").value});}).then(function(d){if(!trustedWorkBuddyURL(d.url))throw new Error("授权链接不在 WorkBuddy 官方域名范围");providerSession=d.session_id;$("#providerLoginURL").value=d.url;$("#providerLoginOpen").href=d.url;$("#providerLoginOpen").classList.remove("hidden");$("#providerScope").disabled=true;$("#providerLoginCopy").disabled=false;$("#providerLoginCheck").disabled=false;$("#providerLoginStatus").textContent="链接已生成。请复制到另一浏览器完成授权，再点击检查。";});});});
+  on("#providerLoginCopy",function(){return copyText($("#providerLoginURL").value,"WorkBuddy 授权链接已复制");});
+  on("#providerLoginCheck",function(){return providerJob(function(){return providerCall("check",{input:$("#providerLoginCallback").value.trim()}).then(function(d){if(!d.ready){$("#providerLoginStatus").textContent=d.message || "尚未完成授权";return;}providerPreviewID=d.preview_id;$("#providerPreviewText").textContent=(d.name || "WorkBuddy 账号")+" · "+d.uid+" · "+(d.scope==="global"?"国际版":"国内版")+(d.existing?" · 已存在，保存将更新凭据":" · 新账号");$("#providerPreview").classList.remove("hidden");$("#providerLoginStatus").textContent="账号已验证，点击确认保存才会加入账号池。";$("#providerLoginCallback").value="";});});});
+  on("#providerLoginComplete",function(){return providerJob(function(){return providerCall("complete",{preview_id:providerPreviewID,replace_existing:$("#providerReplace").checked,name:$("#providerAccountName").value.trim()}).then(refreshAfterProviderSave);});});
+  on("#providerImport",function(){return providerJob(function(){var credentials;try{credentials=JSON.parse($("#providerImportJSON").value);}catch(e){throw new Error("请粘贴有效的 WorkBuddy JSON 凭据");}return api("/admin/api/provider-import",{method:"POST",body:{provider:"workbuddy",credentials:credentials,replace_existing:$("#providerImportReplace").checked,name:$("#providerAccountName").value.trim()}}).then(refreshAfterProviderSave);});});
+  $("#accountProvider").addEventListener("change",function(){if(state.data)renderAccounts(state.data);});
+  $("#usageProvider").addEventListener("change",function(){usageView.page=1;refreshUsageLogs();});
   on("#savePw", function(){
     return adminLogin(pw()).then(function(){ resumeLogin(); return refresh(); }).catch(function(e){$("#adminLoginError").textContent=e.message;});
   });
@@ -1349,7 +1369,7 @@
   on("#refreshModels", function(){
     toast("正在从上游刷新模型清单…");
     api("/admin/api/models/refresh", {method:"POST"}).then(function(r){
-      toast("已刷新，共 " + (r.models||[]).length + " 个模型", "ok");
+      toast("已刷新，共 " + (r.models||[]).length + " 个模型"+(Object.keys(r.provider_errors || {}).length?"；部分上游刷新失败，请查看状态":""), Object.keys(r.provider_errors || {}).length?"err":"ok");
       return refresh();
     }).catch(function(e){ toast("刷新失败：" + e.message, "err"); });
   });

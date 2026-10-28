@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 )
 
 // NoAccount 表示账号池为空（需要用户先去控制台导入 / 登录）。
@@ -96,6 +97,19 @@ func From(err error) Error {
 	var budget interface{ BudgetExceeded() bool }
 	if errors.As(err, &budget) && budget.BudgetExceeded() {
 		return Error{Status: http.StatusPaymentRequired, OpenAI: "budget_exceeded", Anthropic: "permission_error"}
+	}
+	var upstream *provider.Error
+	if errors.As(err, &upstream) {
+		if upstream.Status == 429 {
+			return Error{Status: 429, OpenAI: "rate_limit_error", Anthropic: "rate_limit_error"}
+		}
+		if upstream.AccountFault {
+			return Error{Status: 502, OpenAI: "credentials_error", Anthropic: "authentication_error"}
+		}
+		if upstream.Status >= 400 && upstream.Status < 500 {
+			return Error{Status: upstream.Status, OpenAI: "invalid_request_error", Anthropic: "invalid_request_error"}
+		}
+		return Error{Status: 502, OpenAI: "upstream_error", Anthropic: "overloaded_error"}
 	}
 	var terminal interface{ NonRetryableRequest() bool }
 	if errors.As(err, &terminal) && terminal.NonRetryableRequest() {

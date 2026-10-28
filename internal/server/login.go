@@ -35,6 +35,9 @@ func (s *Server) handleAdminClaim(w http.ResponseWriter, r *http.Request) {
 	results := make([]map[string]any, 0, len(targets))
 	okCount := 0
 	for _, a := range targets {
+		if a.ProviderID() != "codearts" && body.ID == "" {
+			continue
+		}
 		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 		msg, err := s.ClaimForAccount(ctx, a, today)
 		cancel()

@@ -2,18 +2,20 @@
 
 # CodeArts2API Panel
 
-**A multi-account API gateway and management panel for Huawei Cloud CodeArts**
+**A multi-account API gateway and management panel for CodeArts and WorkBuddy**
 
-Access CodeArts accounts through Chat Completions, Responses, and Anthropic Messages compatible endpoints.
+Access CodeArts and WorkBuddy accounts through Chat Completions, Responses, and Anthropic Messages compatible endpoints.
 
 [中文](README.md) · **English**
 
-[![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
+[![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](go.mod)
 
-[Deployment](#deployment) · [Client setup](#client-setup) · [Documentation](#documentation) · [Commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/) · [Contributors](#contributors-and-acknowledgments)
+[Deployment](#deployment) · [Client setup](#client-setup) · [Documentation](#documentation) · [Commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/develop/) · [Contributors](#contributors-and-acknowledgments)
 
 </div>
+
+> This is the `develop` version with a native WorkBuddy adapter. Trae is reserved but not implemented. The original CodeArts baseline is pinned at [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0). See [multi-provider setup and verification limits](docs/MULTI-PROVIDER.md). Real WorkBuddy model generation has not yet been validated with an account in this environment.
 
 ## Overview
 
@@ -44,7 +46,7 @@ Upstream charges depend on the account's actual entitlements and credits. The US
 Requires Git and Go 1.27.3 or later. The commands below use a POSIX shell.
 
 ```bash
-git clone https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
+git clone --branch develop https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
 cd codearts2api-panel
 ./build.sh
 ./start.sh
@@ -73,7 +75,7 @@ Restart the service after changing these settings. `0.0.0.0` means listening on 
 Requires Docker and Compose.
 
 ```bash
-git clone https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
+git clone --branch develop https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
 cd codearts2api-panel
 cp .env.example .env
 docker compose up -d --build
@@ -209,7 +211,7 @@ node scripts/pi/codearts-compaction.test.mjs
 
 The Go service uses only the standard library. Pi adapter tests use Node.js 24; browser checks additionally require Playwright and a browser. Live upstream acceptance tests consume real account quota; consult the acceptance plan before running them.
 
-Issues and pull requests are welcome. Record each change's motivation, resulting behavior, validation, and limitations in its commit description. Keep the README focused on current usage. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/).
+Issues and pull requests are welcome. Record each change's motivation, resulting behavior, validation, and limitations in its commit description. Keep the README focused on current usage. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/develop/).
 
 ## Contributors and acknowledgments
 

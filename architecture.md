@@ -61,3 +61,7 @@ parent: goal
 - **Windows 专属路径没有竞态检测。** CI 的 `-race` 只在 Linux job 跑，
   Windows job 只做 build + test；DPAPI 与定长回写路径未被 race detector 覆盖。
 - **非 Windows 读不到 IDE 登录态。** 容器 / Linux 上只能手工粘贴 session JSON。（`codearts`）
+
+## 多上游开发版边界（0.2.0-dev）
+
+新增 internal/provider 与 internal/workbuddy。provider 仅依赖标准库，定义适配接口与命名空间；workbuddy 实现原生授权、刷新、模型和请求转发。server 仍为组合根，码道继续使用现有签名/桌面态实现。账号数据增加 provider/scope/opaque credentials；历史 Account 类型包名暂保留。新增提供方不应直接调用其他提供方的凭据管理器。完整路由、迁移和测试边界见 docs/MULTI-PROVIDER.md。

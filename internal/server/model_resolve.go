@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 )
@@ -26,6 +27,12 @@ func (s *Server) resolveModel(settings store.Settings, requested string) (regist
 		return registry.Model{}, &apierr.ModelNotFound{
 			Name:      name,
 			Available: s.availableModelIDs(settings),
+		}
+	}
+	if strings.Contains(requested, "/") {
+		p, scope, _ := provider.ParseModel(requested)
+		if p != modelProvider(m) || scope != m.Scope {
+			return registry.Model{}, &provider.Error{Status: 400, Message: "模型别名或强制模型指向其他上游/地区，请检查模型设置"}
 		}
 	}
 	return m, nil

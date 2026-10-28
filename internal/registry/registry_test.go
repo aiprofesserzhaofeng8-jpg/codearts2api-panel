@@ -141,3 +141,22 @@ func TestFallbackModelsAreCurrent(t *testing.T) {
 		}
 	}
 }
+
+func TestReplacingOneProviderPreservesOtherCatalogs(t *testing.T) {
+	r := New()
+	r.ReplaceProvider("workbuddy", "cn", []Model{{ID: "same"}})
+	r.ReplaceProvider("workbuddy", "global", []Model{{ID: "same"}})
+	r.ReplaceProvider("codearts", "", []Model{{ID: "same"}})
+	for _, id := range []string{"same", "codearts/same", "workbuddy/cn/same", "workbuddy/global/same"} {
+		if _, ok := r.Resolve(id, nil); !ok {
+			t.Fatal("provider refresh removed another catalog", id)
+		}
+	}
+	r.ReplaceProvider("workbuddy", "cn", []Model{{ID: "new"}})
+	if _, ok := r.Resolve("workbuddy/cn/same", nil); ok {
+		t.Fatal("stale model retained")
+	}
+	if _, ok := r.Resolve("workbuddy/global/same", nil); !ok {
+		t.Fatal("other realm removed")
+	}
+}

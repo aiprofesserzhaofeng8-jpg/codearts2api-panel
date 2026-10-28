@@ -31,3 +31,9 @@ This source tree and build.sh support rebuilding with a modified library.
 Ubuntu AppArmor profile for local Codex sandbox troubleshooting:
 Unmodified bwrap-userns-restrict from Ubuntu apparmor-profiles, GPL-2.0-or-later.
 See scripts/apparmor/COPYRIGHT and scripts/apparmor/LICENSE.
+
+Native WorkBuddy adapter:
+Endpoint shapes and authentication/header semantics in internal/workbuddy were
+implemented with reference to linguo2625469/workbuddy2api-panel revision
+73a7560efc7a88ebd9865db4c71ae7f6d85859f8 (MIT). See LICENSE.workbuddy and
+internal/workbuddy/UPSTREAM.md. The upstream's authors retain their attribution.

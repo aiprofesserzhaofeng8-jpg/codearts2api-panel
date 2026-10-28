@@ -107,6 +107,8 @@ type RequestAttempt struct {
 }
 
 type LogEntry struct {
+	Provider        string           `json:"provider,omitempty"`
+	Scope           string           `json:"scope,omitempty"`
 	UsageIncomplete bool             `json:"usage_incomplete,omitempty"`
 	AttemptDetails  []RequestAttempt `json:"attempt_details,omitempty"`
 	RequestID       string           `json:"request_id,omitempty"`
@@ -160,7 +162,7 @@ type Stats struct {
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 2
+const StateVersion = 3
 
 // State 是全部持久化状态。
 type State struct {
@@ -272,6 +274,8 @@ func (s *Store) migrate() error {
 		switch s.st.Version {
 		case 0:
 			s.st.Version = 1
+		case 2:
+			s.st.Version = 3
 		case 1:
 			// Password hashes and budgets must not be silently discarded by an
 			// older binary. Plaintext passwords are hashed by Open's Save below.
@@ -437,6 +441,7 @@ func cloneAccount(a *codearts.Account) *codearts.Account {
 		return nil
 	}
 	cp := *a
+	cp.Credentials = append(json.RawMessage(nil), a.Credentials...)
 	return &cp
 }
 
@@ -485,12 +490,16 @@ func (s *Store) UpsertAccount(a *codearts.Account) bool {
 
 func (s *Store) upsertAccountLocked(a *codearts.Account) bool {
 	for i, ex := range s.st.Accounts {
+		if ex.ProviderID() != a.ProviderID() || ex.Scope != a.Scope {
+			continue
+		}
+		sameExternal := a.ExternalID != "" && a.ExternalID == ex.ExternalID
 		sameDir := ex.UserData != "" && ex.UserData == a.UserData
 		sameAK := ex.Session != nil && a.Session != nil &&
 			ex.Session.AccessKey != "" && ex.Session.AccessKey == a.Session.AccessKey
 		sameDomain := ex.Session != nil && a.Session != nil &&
 			ex.Session.DomainID != "" && ex.Session.DomainID == a.Session.DomainID
-		if sameDir || sameAK || sameDomain {
+		if sameExternal || sameDir || sameAK || sameDomain {
 			a.ID = ex.ID
 			a.Enabled, a.Paused = ex.Enabled, ex.Paused
 			s.st.Accounts[i] = cloneAccount(a)
@@ -529,7 +538,7 @@ func (s *Store) NextAccount() *codearts.Account {
 	for i := 0; i < n; i++ {
 		idx := (s.rotate + i) % n
 		a := s.st.Accounts[idx]
-		if !a.Enabled {
+		if a.ProviderID() != "codearts" || !a.Enabled {
 			continue
 		}
 		if best == nil || a.Failures < best.Failures {

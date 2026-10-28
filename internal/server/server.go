@@ -18,13 +18,18 @@ import (
 
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
+	"codearts2api/internal/workbuddy"
 )
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	Providers          *provider.Registry
+	providerRuntime    providerRuntime
+	providerLogins     providerLoginRuntime
 	AllowLocalAdmin    bool
 	adminSessions      adminSessions
 	adminFailures      adminAttempts
@@ -57,6 +62,8 @@ func New(st *store.Store) *Server {
 	up := codearts.NewClient()
 	s := &Server{Store: st, Up: up, Reg: registry.New(), cache: newModelCache()}
 	s.localPanelToken = rand.Text()
+	s.Providers = provider.NewRegistry()
+	_ = s.Providers.Register(workbuddy.New())
 	s.Cred = codearts.NewManager(up)
 	// 凭据解析拿到的是账号快照，所以续期 / 跟随 IDE 得到的新会话必须显式写回 store，
 	// 否则只对那一次请求生效（IDE 关闭后就再也拿不到）。
@@ -74,6 +81,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/auth/login", s.handleAdminLogin)
 	mux.HandleFunc("/admin/auth/logout", s.handleAdminLogout)
 	mux.HandleFunc("/admin/auth/session", s.handleAdminSession)
+	mux.HandleFunc("/admin/api/providers", s.withAdminAuth(s.handleProviders))
+	mux.HandleFunc("/admin/api/provider-login", s.withAdminAuth(s.handleProviderLogin))
+	mux.HandleFunc("/admin/api/provider-import", s.withAdminAuth(s.handleProviderImport))
 	mux.HandleFunc("/admin/api/audit", s.withAdminAuth(s.handleAudit))
 
 	// 探活

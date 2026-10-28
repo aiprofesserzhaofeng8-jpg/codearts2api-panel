@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 )
 
 // PoolSettings governs inference scheduling. Background account maintenance remains independent.
@@ -92,7 +93,11 @@ func (s *Store) AcquireAccountForModel(session, model string, exclude map[string
 		}
 		s.pool.gcAt = now.Add(time.Minute)
 	}
+	upstream, scope, _ := provider.ParseModel(model)
 	eligible := func(a *codearts.Account) bool {
+		if a.ProviderID() != upstream || (upstream != provider.CodeArts && a.Scope != scope) {
+			return false
+		}
 		return a.Enabled && !a.Paused && !exclude[a.ID] && a.CooldownUntil <= now.Unix() && s.st.ModelHealth[a.ID][model].CooldownUntil <= now.Unix() && s.pool.inFlight[a.ID] < cfg.MaxInFlight
 	}
 	var selected *codearts.Account

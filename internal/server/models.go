@@ -10,14 +10,17 @@ import (
 	"time"
 
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 )
 
 // modelCache 记录模型清单的刷新状态（清单本体在 registry 里）。
 type modelCache struct {
-	mu       sync.RWMutex
-	err      string
-	loadedAt time.Time
+	mu             sync.RWMutex
+	refreshMu      sync.Mutex
+	providerErrors map[string]string
+	err            string
+	loadedAt       time.Time
 }
 
 func newModelCache() *modelCache { return &modelCache{} }
@@ -30,6 +33,34 @@ var errEmptyModelList = errors.New("上游未返回任何可用模型")
 // 2026-10 起免费权益通道下线，模型清单只有一个来源：`GET /v1/model/builtin`
 // （积分通道）。拉取失败时保留现有清单，只记录错误。
 func (s *Server) RefreshModels(ctx context.Context) error {
+	s.cache.refreshMu.Lock()
+	defer s.cache.refreshMu.Unlock()
+	failures := s.refreshProviderModels(ctx)
+	err := s.refreshCodeArtsModels(ctx)
+	if err != nil && !errors.Is(err, apierr.NoAccount) {
+		failures[provider.CodeArts] = err.Error()
+	}
+	s.cache.mu.Lock()
+	s.cache.loadedAt = time.Now()
+	s.cache.providerErrors = failures
+	s.cache.err = ""
+	if err != nil && (!errors.Is(err, apierr.NoAccount) || len(failures) > 0) {
+		s.cache.err = err.Error()
+	}
+	s.cache.mu.Unlock()
+	if err != nil {
+		for _, a := range s.Store.Accounts() {
+			if a.Enabled && a.ProviderID() != provider.CodeArts {
+				if _, failed := failures[a.ProviderID()+"/"+a.Scope]; !failed {
+					return nil
+				}
+			}
+		}
+		return err
+	}
+	return nil
+}
+func (s *Server) refreshCodeArtsModels(ctx context.Context) error {
 	acct := s.Store.NextAccount()
 	if acct == nil {
 		return apierr.NoAccount
@@ -38,7 +69,6 @@ func (s *Server) RefreshModels(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	list, err := s.Up.FetchBuiltinModels(ctx, sess)
 	if err != nil {
 		return err
@@ -47,13 +77,7 @@ func (s *Server) RefreshModels(ctx context.Context) error {
 	if len(models) == 0 {
 		return errEmptyModelList
 	}
-
-	s.Reg.Replace(models)
-
-	s.cache.mu.Lock()
-	s.cache.loadedAt = time.Now()
-	s.cache.err = ""
-	s.cache.mu.Unlock()
+	s.Reg.ReplaceProvider(provider.CodeArts, "", models)
 	return nil
 }
 
@@ -87,7 +111,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 	for _, m := range models {
 		var recommendation map[string]any
 		if resolved, ok := s.Reg.Resolve(m.ID, settings.ModelAliases); ok {
-			if p, ok := s.Store.ModelPolicy(resolved.ID); ok {
+			if p, ok := s.modelPolicyFor(resolved); ok {
 				recommendation = profileFromPolicy(resolved.ID, p)
 			}
 		}
@@ -96,7 +120,9 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 			"id":             m.ID,
 			"object":         "model",
 			"created":        now,
-			"owned_by":       "codearts",
+			"owned_by":       modelProvider(m),
+			"provider":       modelProvider(m),
+			"scope":          m.Scope,
 			"codearts": map[string]any{
 				"name":       m.Name,
 				"context":    m.Context,
@@ -126,8 +152,9 @@ func (s *Server) handleAdminRefreshModels(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":     true,
-		"models": s.Reg.List(s.Store.Settings().ModelAliases),
+		"ok":              true,
+		"models":          s.Reg.List(s.Store.Settings().ModelAliases),
+		"provider_errors": s.providerModelErrors(),
 	})
 }
 
@@ -163,4 +190,21 @@ func truncateStr(s string, n int) string {
 		return s
 	}
 	return s[:n] + "…"
+}
+
+func modelProvider(m registry.Model) string {
+	if m.Provider == "" {
+		return provider.CodeArts
+	}
+	return m.Provider
+}
+
+func (s *Server) providerModelErrors() map[string]string {
+	s.cache.mu.RLock()
+	defer s.cache.mu.RUnlock()
+	out := map[string]string{}
+	for k, v := range s.cache.providerErrors {
+		out[k] = v
+	}
+	return out
 }

@@ -43,7 +43,7 @@ func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, mode
 			}
 			var exists bool
 			target, exists = s.Reg.Resolve(p.SummaryFallbackModel, nil)
-			if !exists {
+			if !exists || modelProvider(target) != modelProvider(model) || target.Scope != model.Scope {
 				return nil, &summaryFailure{"摘要备用模型已不在模型目录中"}
 			}
 			if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
