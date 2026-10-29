@@ -381,6 +381,11 @@ func (c *Client) Chat(ctx context.Context, sess *Session, model string, body []b
 	if resp.StatusCode != http.StatusOK {
 		return nil, &UpstreamError{Status: resp.StatusCode, Message: truncate(sessionErrorText(string(raw), sess), 600)}
 	}
+	// Reject malformed non-streaming replies before committing client output.
+	// Reuse the existing 5xx retry policy; keep valid JSON bytes and fields intact.
+	if !json.Valid(raw) {
+		return nil, &UpstreamError{Status: http.StatusBadGateway, Message: "上游非流式响应不是有效 JSON"}
+	}
 	return raw, nil
 }
 

@@ -1,0 +1,33 @@
+--- FAIL: TestNonJSONResponseRejectedAcrossProtocols (0.02s)
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/text (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body=PRIVATE_UPSTREAM_DETAIL
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/html (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body=<html>PRIVATE_UPSTREAM_DETAIL</html>
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/empty (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body=
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/whitespace (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body= 
+            	
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/truncated (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"choices":[
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/trailing (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={} {}
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/whitespace (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_bd3ba485e23afce81cc87341","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":0,"output_tokens":0}}
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/truncated (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_f1f484cda2b6e261b80285db","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":3,"output_tokens":0}}
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/trailing (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_c67d70d9611a95b78e18422c","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":1,"output_tokens":0}}
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/text (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_29155857a4df124c2ff1251f","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":5,"output_tokens":0}}
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/html (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_5e1b7bee10a04c8d109ba84a","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":9,"output_tokens":0}}
+    --- FAIL: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/empty (0.00s)
+        nonjson_response_test.go:36: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_4c3fd4ec1bb01066e06e427f","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":0,"output_tokens":0}}
+--- FAIL: TestNonJSONResponseUsesExistingFailover (0.00s)
+    nonjson_response_test.go:117: failover: calls=1 waits=0 status=200 body=broken JSON
+--- FAIL: TestNonJSONResponseHonorsRetryLimit (0.00s)
+    nonjson_response_test.go:141: retry budget changed: status=200 calls=1
+FAIL
+FAIL	codearts2api/internal/server	0.028s
+FAIL

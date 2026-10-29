@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/codearts
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkNonStreamingChat/1024-16         	   22320	     25179 ns/op	  43.17 MB/s	   18588 B/op	     131 allocs/op
+BenchmarkNonStreamingChat/1024-16         	   23077	     22483 ns/op	  48.35 MB/s	   18588 B/op	     131 allocs/op
+BenchmarkNonStreamingChat/1024-16         	   21589	     28328 ns/op	  38.37 MB/s	   18588 B/op	     131 allocs/op
+BenchmarkNonStreamingChat/1048576-16      	     687	    760511 ns/op	1378.86 MB/s	 2252458 B/op	     151 allocs/op
+BenchmarkNonStreamingChat/1048576-16      	     802	    830463 ns/op	1262.72 MB/s	 2252461 B/op	     151 allocs/op
+BenchmarkNonStreamingChat/1048576-16      	     795	    944217 ns/op	1110.59 MB/s	 2252460 B/op	     151 allocs/op
+BenchmarkNonStreamingChat/8388608-16      	     186	   3841395 ns/op	2183.76 MB/s	17088189 B/op	     156 allocs/op
+BenchmarkNonStreamingChat/8388608-16      	     175	   3312178 ns/op	2532.68 MB/s	17088185 B/op	     156 allocs/op
+BenchmarkNonStreamingChat/8388608-16      	     187	   4149577 ns/op	2021.57 MB/s	17088187 B/op	     156 allocs/op
+PASS
+ok  	codearts2api/internal/codearts	9.021s

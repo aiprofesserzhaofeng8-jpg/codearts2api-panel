@@ -1,0 +1,42 @@
+{
+  "before": {
+    "1024": {
+      "median_ms": 0.025179,
+      "bytes_per_op": 18588,
+      "allocs_per_op": 131,
+      "samples": 3
+    },
+    "1048576": {
+      "median_ms": 0.830463,
+      "bytes_per_op": 2252460,
+      "allocs_per_op": 151,
+      "samples": 3
+    },
+    "8388608": {
+      "median_ms": 3.841395,
+      "bytes_per_op": 17088187,
+      "allocs_per_op": 156,
+      "samples": 3
+    }
+  },
+  "after": {
+    "1024": {
+      "median_ms": 0.029975,
+      "bytes_per_op": 18604,
+      "allocs_per_op": 131,
+      "samples": 3
+    },
+    "1048576": {
+      "median_ms": 1.806359,
+      "bytes_per_op": 2254636,
+      "allocs_per_op": 153,
+      "samples": 3
+    },
+    "8388608": {
+      "median_ms": 7.142385,
+      "bytes_per_op": 17090545,
+      "allocs_per_op": 158,
+      "samples": 3
+    }
+  }
+}

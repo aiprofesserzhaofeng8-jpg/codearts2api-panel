@@ -1,0 +1,21 @@
+{
+  "checked_at": "2026-10-29T15:30:39.091964+00:00",
+  "running_binary_sha256": "025b3653de37e96428279be384054fc1bc17e62f81573747c0e9ea9437dd9ca0",
+  "settings_unchanged": true,
+  "accounts_unchanged": true,
+  "health_status": 200,
+  "seconds": 1.577,
+  "status": 200,
+  "answer": "11128; cc_version=42;",
+  "finish_reason": "stop",
+  "usage": {
+    "prompt_tokens": 22,
+    "completion_tokens": 9,
+    "total_tokens": 31,
+    "completion_tokens_details": {}
+  },
+  "model": "deepseek-v4.1-flash",
+  "request_id": "d8a849ea51e326877917d420",
+  "attempts": 1,
+  "temporary_key_removed": true
+}
