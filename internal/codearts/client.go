@@ -381,10 +381,10 @@ func (c *Client) Chat(ctx context.Context, sess *Session, model string, body []b
 	if resp.StatusCode != http.StatusOK {
 		return nil, &UpstreamError{Status: resp.StatusCode, Message: truncate(sessionErrorText(string(raw), sess), 600)}
 	}
-	// Reject malformed non-streaming replies before committing client output.
-	// Reuse the existing 5xx retry policy; keep valid JSON bytes and fields intact.
-	if !json.Valid(raw) {
-		return nil, &UpstreamError{Status: http.StatusBadGateway, Message: "上游非流式响应不是有效 JSON"}
+	// Validate only the Chat envelope before committing output. Keep successful
+	// response bytes intact and classify business failures in the same pass.
+	if err := validateChatReply(raw); err != nil {
+		return nil, err
 	}
 	return raw, nil
 }
@@ -495,19 +495,23 @@ func IsUpstreamBusinessError(payload []byte) (msg string, status int, bad bool) 
 	if err := json.Unmarshal(payload, &probe); err != nil {
 		return "", 0, false
 	}
-	if probe.ErrorCode == "" {
+	return classifyBusinessErrorFields(probe.ErrorCode, probe.ErrorMsg)
+}
+
+func classifyBusinessErrorFields(code, message string) (msg string, status int, bad bool) {
+	if code == "" {
 		return "", 0, false
 	}
-	msg = probe.ErrorMsg
+	msg = message
 	if msg == "" {
-		msg = "上游返回业务错误 " + probe.ErrorCode
+		msg = "上游返回业务错误 " + code
 	}
 	// Keep explicit policy codes through the legacy (message,status) interface;
 	// generic permission/parameter codes retain their original classification.
-	if requestpolicy.ExplicitContentBlock(statusFromCode(probe.ErrorCode), probe.ErrorCode, msg) {
+	if requestpolicy.ExplicitContentBlock(statusFromCode(code), code, msg) {
 		msg = "content_policy_violation: " + msg
 	}
-	return msg, statusFromCode(probe.ErrorCode), true
+	return msg, statusFromCode(code), true
 }
 
 // EnsureTrimmed 去掉字符串两端空白（供调用方复用）。

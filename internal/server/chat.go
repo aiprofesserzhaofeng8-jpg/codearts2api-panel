@@ -248,9 +248,6 @@ func (s *Server) codeartsChatOnce(ctx context.Context, sess *codearts.Session, m
 		}
 		return nil, err
 	}
-	if msg, status, bad := codearts.IsUpstreamBusinessError(raw); bad {
-		return nil, codearts.UpstreamBusinessError(status, msg)
-	}
 	captureUsage(ctx, raw)
 	return raw, nil
 }
