@@ -155,7 +155,7 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 				st.outTok = int(u.OutputTokens)
 				st.cachedTok = int(u.CachedTokens)
 			}
-			st.finish(reason)
+			err = st.finish(reason)
 		}
 		return stopAfterOutput(err, started)
 	})
@@ -191,14 +191,21 @@ type anthropicStream struct {
 	model     string
 	inTok     int
 
-	index    int
-	kind     string // "" / "thinking" / "text" / "tool_use"
-	toolArgs strings.Builder
-	toolID   string
-	toolName string
-	outTok   int
+	index     int
+	kind      string // current text/thinking block; tool blocks have independent lifetimes
+	tools     map[int]*anthropicToolBlock
+	toolIDs   map[string]int
+	toolOrder []*anthropicToolBlock
+	outTok    int
 	// sawToolUse 记录是否出现过工具调用，用于决定 stop_reason
 	sawToolUse bool
+}
+
+type anthropicToolBlock struct {
+	index    int // downstream block index; -1 until ID and name are available
+	id, name string
+	args     strings.Builder
+	sent     int
 }
 
 func newAnthropicStream(w http.ResponseWriter, f http.Flusher, msgID, model string, promptLen int) *anthropicStream {
@@ -222,23 +229,81 @@ func (a *anthropicStream) openBlock(kind string) {
 	if a.kind == kind {
 		return
 	}
-	if a.kind != "" {
-		a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": a.index})
-	}
+	a.closeBlock()
 	a.index++
 	a.kind = kind
 	var block map[string]any
 	switch kind {
 	case "thinking":
 		block = map[string]any{"type": "thinking", "thinking": ""}
-	case "tool_use":
-		block = map[string]any{"type": "tool_use", "id": a.toolID, "name": a.toolName, "input": map[string]any{}}
 	default:
 		block = map[string]any{"type": "text", "text": ""}
 	}
 	a.send("content_block_start", map[string]any{
 		"type": "content_block_start", "index": a.index, "content_block": block,
 	})
+}
+
+func (a *anthropicStream) closeBlock() {
+	if a.kind != "" {
+		a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": a.index})
+		a.kind = ""
+	}
+}
+
+// Keep each tool block open until finish: upstream argument fragments may
+// alternate between tools even after a different tool or text block starts.
+func (a *anthropicStream) flushTool(tool *anthropicToolBlock) {
+	if tool.index < 0 {
+		a.closeBlock()
+		a.index++
+		tool.index = a.index
+		a.send("content_block_start", map[string]any{
+			"type": "content_block_start", "index": tool.index,
+			"content_block": map[string]any{"type": "tool_use", "id": tool.id, "name": tool.name, "input": map[string]any{}},
+		})
+	}
+	if tool.sent < tool.args.Len() {
+		a.send("content_block_delta", map[string]any{
+			"type": "content_block_delta", "index": tool.index,
+			"delta": map[string]any{"type": "input_json_delta", "partial_json": tool.args.String()[tool.sent:]},
+		})
+		tool.sent = tool.args.Len()
+	}
+}
+
+func (a *anthropicStream) consumeTool(index int, id, name, args string) error {
+	if index < 0 {
+		return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游工具索引无效"}
+	}
+	if a.tools == nil {
+		a.tools = make(map[int]*anthropicToolBlock)
+		a.toolIDs = make(map[string]int)
+	}
+	tool := a.tools[index]
+	if tool == nil {
+		tool = &anthropicToolBlock{index: -1}
+		a.tools[index] = tool
+		a.toolOrder = append(a.toolOrder, tool)
+	}
+	if id != "" {
+		if owner, ok := a.toolIDs[id]; ok && owner != index || tool.id != "" && tool.id != id {
+			return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游工具调用 ID 冲突"}
+		}
+		tool.id, a.toolIDs[id] = id, index
+	}
+	if name != "" {
+		if tool.name != "" && tool.name != name {
+			return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游工具名称发生变化"}
+		}
+		tool.name = name
+	}
+	tool.args.WriteString(args)
+	a.sawToolUse = true
+	if tool.id != "" && tool.name != "" {
+		a.flushTool(tool)
+	}
+	return nil
 }
 
 // consume 处理一个上游分片，返回新增的输出字符数。
@@ -284,21 +349,8 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 			})
 		}
 		for _, tc := range ch.Delta.ToolCalls {
-			if a.kind != "tool_use" || a.toolID != tc.ID {
-				if tc.ID != "" {
-					a.toolID = tc.ID
-					a.toolName = tc.Function.Name
-					a.toolArgs.Reset()
-					a.openBlock("tool_use")
-				}
-			}
-			if tc.Function.Arguments != "" {
-				a.sawToolUse = true
-				a.toolArgs.WriteString(tc.Function.Arguments)
-				a.send("content_block_delta", map[string]any{
-					"type": "content_block_delta", "index": a.index,
-					"delta": map[string]any{"type": "input_json_delta", "partial_json": tc.Function.Arguments},
-				})
+			if err := a.consumeTool(tc.Index, tc.ID, tc.Function.Name, tc.Function.Arguments); err != nil {
+				return n, err
 			}
 		}
 	}
@@ -306,7 +358,20 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 }
 
 // finish 发送收尾事件。stopReason 为空时按是否出现工具调用自动判定。
-func (a *anthropicStream) finish(stopReason string) {
+func (a *anthropicStream) finish(stopReason string) error {
+	// Validate only at completion, never per fragment. Preserve legitimate
+	// max_tokens truncation rather than turning partial arguments into success.
+	for _, tool := range a.toolOrder {
+		if stopReason != "max_tokens" && (tool.name == "" || tool.args.Len() > 0 && !json.Valid([]byte(tool.args.String()))) {
+			return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游工具调用未完整结束：名称缺失或参数不是有效 JSON"}
+		}
+	}
+	for _, tool := range a.toolOrder {
+		if tool.id == "" {
+			tool.id = "call_" + codearts.RandomHex(12)
+		}
+		a.flushTool(tool)
+	}
 	if stopReason == "" {
 		if a.sawToolUse {
 			stopReason = "tool_use"
@@ -314,8 +379,9 @@ func (a *anthropicStream) finish(stopReason string) {
 			stopReason = "end_turn"
 		}
 	}
-	if a.kind != "" {
-		a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": a.index})
+	a.closeBlock()
+	for _, tool := range a.toolOrder {
+		a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": tool.index})
 	}
 	a.send("message_delta", map[string]any{
 		"type":  "message_delta",
@@ -323,6 +389,7 @@ func (a *anthropicStream) finish(stopReason string) {
 		"usage": map[string]any{"input_tokens": a.inTok, "cache_read_input_tokens": a.cachedTok, "output_tokens": a.outTok},
 	})
 	a.send("message_stop", map[string]any{"type": "message_stop"})
+	return nil
 }
 
 func (a *anthropicStream) send(event string, payload map[string]any) {

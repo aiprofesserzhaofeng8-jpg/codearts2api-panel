@@ -1,0 +1,729 @@
+{
+  "checked_at": "2026-10-29T17:09:31.852842+00:00",
+  "live_cases": 54,
+  "strict_passed": 50,
+  "tool_values_correct": 54,
+  "classification": [
+    {
+      "provider": "codearts",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": false,
+      "classification": "markdown_wrapper_only",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": false,
+      "classification": "markdown_wrapper_only",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": false,
+      "classification": "markdown_wrapper_only",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "chat",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": false,
+      "classification": "markdown_wrapper_only",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "responses",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "responses",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "recovery",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": true,
+      "classification": "strict_pass",
+      "tool_values_correct": true
+    }
+  ],
+  "summary": {
+    "codearts": {
+      "cases": 18,
+      "strict_passed": 18,
+      "tool_values_correct": 18,
+      "format_only": 0,
+      "unresolved": []
+    },
+    "workbuddy": {
+      "cases": 18,
+      "strict_passed": 14,
+      "tool_values_correct": 18,
+      "format_only": 4,
+      "unresolved": []
+    },
+    "trae": {
+      "cases": 18,
+      "strict_passed": 18,
+      "tool_values_correct": 18,
+      "format_only": 0,
+      "unresolved": []
+    }
+  },
+  "client_requests": 162,
+  "upstream_attempts": 162,
+  "total_usage": {
+    "input_tokens": 106345,
+    "output_tokens": 8979,
+    "cached_tokens": 55808,
+    "reasoning_tokens": 931
+  },
+  "sdk": {
+    "package": "anthropic-python",
+    "version": "0.86.0",
+    "real_stream_checks": [
+      {
+        "provider": "codearts",
+        "scenario": "sequence",
+        "turn": 1,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "sequence",
+        "turn": 2,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "sequence",
+        "turn": 3,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "sequence",
+        "turn": 4,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "recovery",
+        "turn": 1,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "recovery",
+        "turn": 2,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "recovery",
+        "turn": 3,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "parallel",
+        "turn": 1,
+        "tool_count": 2,
+        "passed": true
+      },
+      {
+        "provider": "codearts",
+        "scenario": "parallel",
+        "turn": 2,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "sequence",
+        "turn": 1,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "sequence",
+        "turn": 2,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "sequence",
+        "turn": 3,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "sequence",
+        "turn": 4,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "recovery",
+        "turn": 1,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "recovery",
+        "turn": 2,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "recovery",
+        "turn": 3,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "parallel",
+        "turn": 1,
+        "tool_count": 2,
+        "passed": true
+      },
+      {
+        "provider": "workbuddy",
+        "scenario": "parallel",
+        "turn": 2,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "sequence",
+        "turn": 1,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "sequence",
+        "turn": 2,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "sequence",
+        "turn": 3,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "sequence",
+        "turn": 4,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "recovery",
+        "turn": 1,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "recovery",
+        "turn": 2,
+        "tool_count": 1,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "recovery",
+        "turn": 3,
+        "tool_count": 0,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "parallel",
+        "turn": 1,
+        "tool_count": 2,
+        "passed": true
+      },
+      {
+        "provider": "trae",
+        "scenario": "parallel",
+        "turn": 2,
+        "tool_count": 0,
+        "passed": true
+      }
+    ]
+  },
+  "running_binary_sha256": "3cd383d560b7c966bb42c8f9ce171560bdc738f7ecd6adad4474b3824d17c0aa",
+  "backup": "/home/white/codearts2api-panel/data/backups/before-messages-tools-fix-20261030-005515",
+  "settings_unchanged": true,
+  "accounts_unchanged": true,
+  "final_in_flight": 0,
+  "temporary_key_removed": true,
+  "health_status": 200,
+  "baseline_original_log_sha256": "d5ca0ce2db189a68e5f9de41276cbd4f91bbb4c28dc34b4b559091a648182825",
+  "baseline_log_note": "Whitespace-only diagnostic lines normalized; original log hash recorded."
+}

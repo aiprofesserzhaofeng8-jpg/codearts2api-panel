@@ -1,0 +1,26 @@
+{
+  "before": {
+    "tools=false": {
+      "median_ms": 0.334041,
+      "bytes_per_op": 146170,
+      "allocs_per_op": 2099
+    },
+    "tools=true": {
+      "median_ms": 0.415862,
+      "bytes_per_op": 198711,
+      "allocs_per_op": 2215
+    }
+  },
+  "after": {
+    "tools=false": {
+      "median_ms": 0.367037,
+      "bytes_per_op": 146180,
+      "allocs_per_op": 2099
+    },
+    "tools=true": {
+      "median_ms": 0.472456,
+      "bytes_per_op": 202696,
+      "allocs_per_op": 2222
+    }
+  }
+}

@@ -1,0 +1,39 @@
+import collections,hashlib,json,pathlib,re,sys,subprocess
+import anthropic,httpx
+sys.path.insert(0,'/home/white/codearts2api-panel/scripts')
+from quality_common import API,current_access,save_json,utc
+
+p=pathlib.Path('/tmp/codearts-tools-fix-live-20261030.json');r=json.loads(p.read_text())
+assert r.get('finished_at'),'real upstream regression still running'
+assert len(r['checks'])==54
+classes=[];sdk=[];total=collections.Counter();summary={}
+for c in r['checks']:
+ classification='strict_pass' if c['passed'] else 'unresolved'
+ if not c['passed'] and isinstance(c.get('answer'),str):
+  m=re.fullmatch(r'\s*```(?:[A-Za-z0-9_-]+)?\s*\n(.*?)\n```\s*',c['answer'],re.S)
+  if m:
+   try:actual=m[1] if c['scenario']=='recovery' else json.loads(m[1])
+   except ValueError:actual=None
+   if actual==c['expected']:classification='markdown_wrapper_only'
+ item={k:c[k] for k in ['provider','protocol','stream','scenario','passed']};item.update(classification=classification,tool_values_correct=classification in ['strict_pass','markdown_wrapper_only']);classes.append(item)
+ for q in c['requests']:
+  log=q['gateway_log'];assert log['provider']==c['provider'] and log['model']==c['model'];assert log['attempts']==1 and log['status']==200 and log['usage']['known']
+  total.update({k:v for k,v in log['usage'].items() if type(v) is int})
+  if c['protocol']=='messages' and c['stream']:
+   raw=q['raw_response'].encode()
+   def handle(request):return httpx.Response(200,headers={'content-type':'text/event-stream'},content=raw)
+   with anthropic.Anthropic(api_key='offline-fixture-only',base_url='http://fixture.local',max_retries=0,http_client=httpx.Client(transport=httpx.MockTransport(handle))) as client:
+    with client.messages.stream(model='fixture',max_tokens=640,messages=[{'role':'user','content':'fixture'}]) as stream:msg=stream.get_final_message()
+   expected=q['parsed_response'];assert msg.stop_reason==expected['stop_reason']
+   tools=[b for b in msg.content if b.type=='tool_use'];expected_tools=[b for b in expected['content'] if b['type']=='tool_use'];assert len(tools)==len(expected_tools)
+   for b,e in zip(tools,expected_tools):assert (b.id,b.name,b.input)==(e['id'],e['name'],e['input'])
+   assert ''.join(b.text for b in msg.content if b.type=='text')==''.join(b['text'] for b in expected['content'] if b['type']=='text')
+   sdk.append({'provider':c['provider'],'scenario':c['scenario'],'turn':q['turn'],'tool_count':len(tools),'passed':True})
+for provider in ['codearts','workbuddy','trae']:
+ cases=[c for c in classes if c['provider']==provider]
+ summary[provider]={'cases':len(cases),'strict_passed':sum(c['passed'] for c in cases),'tool_values_correct':sum(c['tool_values_correct'] for c in cases),'format_only':sum(c['classification']=='markdown_wrapper_only' for c in cases),'unresolved':[c for c in cases if not c['tool_values_correct']]}
+_,pw=current_access();a=API('http://127.0.0.1:10087',password=pw);a.login();s=a.json('/admin/api/state');pre=json.loads(pathlib.Path('/tmp/codearts-tools-fix-predeploy.json').read_text());backup=json.loads(pathlib.Path('/tmp/codearts-tools-fix-backup.json').read_text());digest=lambda x:hashlib.sha256(json.dumps(x,sort_keys=True).encode()).hexdigest();assert digest(s['settings'])==pre['settings_sha256'];assert len(s['accounts'])==pre['accounts'];assert sum(a['pool']['in_flight'] for a in s['accounts'])==0
+pid=subprocess.check_output(['systemctl','--user','show','-p','MainPID','--value','codearts2api-panel.service'],text=True).strip();running=hashlib.sha256(pathlib.Path('/proc/'+pid+'/exe').read_bytes()).hexdigest();assert running==hashlib.sha256(pathlib.Path('/home/white/codearts2api-panel/bin/codearts2api-panel').read_bytes()).hexdigest()==r['running_binary_sha256'];assert r['temporary_key_removed'] and r['health_status']==200
+verification={'checked_at':utc(),'live_cases':len(classes),'strict_passed':sum(c['passed'] for c in classes),'tool_values_correct':sum(c['tool_values_correct'] for c in classes),'classification':classes,'summary':summary,'client_requests':r['client_requests_sent'],'upstream_attempts':sum(q['gateway_log']['attempts'] for c in r['checks'] for q in c['requests']),'total_usage':dict(total),'sdk':{'package':'anthropic-python','version':anthropic.__version__,'real_stream_checks':sdk},'running_binary_sha256':running,'backup':backup['backup'],'settings_unchanged':True,'accounts_unchanged':True,'final_in_flight':0,'temporary_key_removed':True,'health_status':a.request('/healthz')[0]}
+save_json('/tmp/codearts-tools-fix-verification.json',verification)
+print(json.dumps({k:verification[k] for k in ['live_cases','strict_passed','tool_values_correct','summary','client_requests','upstream_attempts','total_usage','running_binary_sha256']},ensure_ascii=False,indent=2));print('real SSE responses verified with official SDK:',len(sdk))

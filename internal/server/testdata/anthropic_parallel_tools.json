@@ -1,0 +1,941 @@
+[
+  {
+    "provider": "codearts",
+    "chunks": [
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "I",
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "'ll read both files",
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " in the same turn",
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ".",
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_00cc8b267d7d468fba0ee30f",
+                  "type": "function",
+                  "index": 0,
+                  "function": {
+                    "name": "acceptance_read_fixture",
+                    "arguments": ""
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "type": "function",
+                  "index": 0,
+                  "function": {
+                    "arguments": "{"
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "type": "function",
+                  "index": 0,
+                  "function": {
+                    "arguments": "\"path\": \"left.tx"
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "type": "function",
+                  "index": 0,
+                  "function": {
+                    "arguments": "t\"}"
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "id": "call_721134b0bf514f3284f95b19",
+                  "type": "function",
+                  "index": 1,
+                  "function": {
+                    "name": "acceptance_read_fixture",
+                    "arguments": ""
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "type": "function",
+                  "index": 1,
+                  "function": {
+                    "arguments": "{"
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "tool_calls": [
+                {
+                  "type": "function",
+                  "index": 1,
+                  "function": {
+                    "arguments": "\"path\": \"right.txt\"}"
+                  }
+                }
+              ],
+              "role": "assistant"
+            }
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "role": "assistant"
+            },
+            "finish_reason": "tool_calls"
+          }
+        ]
+      },
+      {
+        "choices": [],
+        "usage": {
+          "prompt_tokens": 381,
+          "completion_tokens": 85,
+          "total_tokens": 466,
+          "prompt_tokens_details": {
+            "cached_tokens": 256
+          }
+        }
+      }
+    ],
+    "arguments_by_id": {
+      "call_00cc8b267d7d468fba0ee30f": "{\"path\": \"left.txt\"}",
+      "call_721134b0bf514f3284f95b19": "{\"path\": \"right.txt\"}"
+    }
+  },
+  {
+    "provider": "workbuddy",
+    "chunks": [
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "id": "call_00_xljZtHZNsNqnjzJqMRL86839",
+                  "type": "function",
+                  "function": {
+                    "name": "acceptance_read_fixture",
+                    "arguments": ""
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "{\""
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "path"
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "\""
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": ": \""
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "left"
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": ".txt"
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "\""
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "}"
+                  },
+                  "index": 0
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "id": "call_01_cTmkZtXTWU6SaDZC8N0r0239",
+                  "type": "function",
+                  "function": {
+                    "name": "acceptance_read_fixture",
+                    "arguments": ""
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "{\""
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "path"
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "\""
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": ": \""
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "right"
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": ".txt"
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "\""
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "",
+              "reasoning_content": "",
+              "function_call": null,
+              "refusal": "",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "",
+                    "arguments": "}"
+                  },
+                  "index": 1
+                }
+              ],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": ""
+          }
+        ],
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "",
+              "function_call": {
+                "name": "",
+                "arguments": ""
+              },
+              "refusal": "",
+              "tool_calls": [],
+              "extra_fields": null
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 871,
+          "completion_tokens": 75,
+          "total_tokens": 946,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 640
+          },
+          "prompt_cache_hit_tokens": 640,
+          "prompt_cache_miss_tokens": 231,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0.01,
+          "cached_tokens": 0
+        }
+      }
+    ],
+    "arguments_by_id": {
+      "call_00_xljZtHZNsNqnjzJqMRL86839": "{\"path\": \"left.txt\"}",
+      "call_01_cTmkZtXTWU6SaDZC8N0r0239": "{\"path\": \"right.txt\"}"
+    }
+  },
+  {
+    "provider": "trae",
+    "chunks": [
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "I'll read both files",
+              "role": "assistant"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " in the"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " same turn."
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "",
+                    "name": "acceptance_read_fixture"
+                  },
+                  "id": "call_00_ih5tqgntrk4phya7n5lpebdg",
+                  "index": 0,
+                  "type": "function"
+                }
+              ]
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"path\": \"left.txt\"}"
+                  },
+                  "index": 0
+                }
+              ]
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "",
+                    "name": "acceptance_read_fixture"
+                  },
+                  "id": "call_01_miocmmbj6aj9jn266wpidhj3",
+                  "index": 1,
+                  "type": "function"
+                },
+                {
+                  "function": {
+                    "arguments": "{\"path\": \"right.txt\""
+                  },
+                  "index": 1
+                }
+              ]
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "}"
+                  },
+                  "index": 1
+                }
+              ]
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ]
+      },
+      {
+        "choices": [],
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 85,
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 405,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 0,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 490,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "choices": [
+          {
+            "delta": {},
+            "finish_reason": "tool_calls",
+            "index": 0
+          }
+        ],
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 85,
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 405,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 0,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 490,
+          "total_tokens_total": 0
+        }
+      }
+    ],
+    "arguments_by_id": {
+      "call_00_ih5tqgntrk4phya7n5lpebdg": "{\"path\": \"left.txt\"}",
+      "call_01_miocmmbj6aj9jn266wpidhj3": "{\"path\": \"right.txt\"}"
+    }
+  }
+]

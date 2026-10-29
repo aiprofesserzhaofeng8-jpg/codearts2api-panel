@@ -1,0 +1,32 @@
+=== RUN   TestAnthropicToolBlocks
+=== RUN   TestAnthropicToolBlocks/single
+=== RUN   TestAnthropicToolBlocks/sequential_same_name
+=== RUN   TestAnthropicToolBlocks/interleaved
+=== RUN   TestAnthropicToolBlocks/late_metadata
+=== RUN   TestAnthropicToolBlocks/text_between_tool_fragments
+=== RUN   TestAnthropicToolBlocks/repeated_metadata
+=== RUN   TestAnthropicToolBlocks/empty_input
+--- PASS: TestAnthropicToolBlocks (0.02s)
+    --- PASS: TestAnthropicToolBlocks/single (0.00s)
+    --- PASS: TestAnthropicToolBlocks/sequential_same_name (0.00s)
+    --- PASS: TestAnthropicToolBlocks/interleaved (0.00s)
+    --- PASS: TestAnthropicToolBlocks/late_metadata (0.00s)
+    --- PASS: TestAnthropicToolBlocks/text_between_tool_fragments (0.00s)
+    --- PASS: TestAnthropicToolBlocks/repeated_metadata (0.00s)
+    --- PASS: TestAnthropicToolBlocks/empty_input (0.00s)
+=== RUN   TestAnthropicToolFailuresAndTruncation
+=== RUN   TestAnthropicToolFailuresAndTruncation/invalid_complete
+=== RUN   TestAnthropicToolFailuresAndTruncation/truncated
+=== RUN   TestAnthropicToolFailuresAndTruncation/changed_id
+=== RUN   TestAnthropicToolFailuresAndTruncation/duplicate_id
+=== RUN   TestAnthropicToolFailuresAndTruncation/missing_name
+--- PASS: TestAnthropicToolFailuresAndTruncation (0.02s)
+    --- PASS: TestAnthropicToolFailuresAndTruncation/invalid_complete (0.00s)
+    --- PASS: TestAnthropicToolFailuresAndTruncation/truncated (0.00s)
+    --- PASS: TestAnthropicToolFailuresAndTruncation/changed_id (0.00s)
+    --- PASS: TestAnthropicToolFailuresAndTruncation/duplicate_id (0.00s)
+    --- PASS: TestAnthropicToolFailuresAndTruncation/missing_name (0.00s)
+=== RUN   TestAnthropicToolDeltaArrivesBeforeCompletion
+--- PASS: TestAnthropicToolDeltaArrivesBeforeCompletion (0.00s)
+PASS
+ok  	codearts2api/internal/server	1.055s

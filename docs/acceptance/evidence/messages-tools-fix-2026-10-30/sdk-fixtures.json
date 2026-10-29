@@ -1,0 +1,41 @@
+{
+  "sdk": "anthropic-python",
+  "version": "0.86.0",
+  "checks": [
+    {
+      "fixture": "empty_input",
+      "passed": true,
+      "tools": 1
+    },
+    {
+      "fixture": "interleaved",
+      "passed": true,
+      "tools": 2
+    },
+    {
+      "fixture": "late_metadata",
+      "passed": true,
+      "tools": 2
+    },
+    {
+      "fixture": "repeated_metadata",
+      "passed": true,
+      "tools": 1
+    },
+    {
+      "fixture": "sequential_same_name",
+      "passed": true,
+      "tools": 2
+    },
+    {
+      "fixture": "single",
+      "passed": true,
+      "tools": 1
+    },
+    {
+      "fixture": "text_between_tool_fragments",
+      "passed": true,
+      "tools": 2
+    }
+  ]
+}

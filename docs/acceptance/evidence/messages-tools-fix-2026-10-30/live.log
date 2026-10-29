@@ -1,0 +1,54 @@
+{"provider": "codearts", "protocol": "chat", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "chat", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "chat", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "chat", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "chat", "stream": false, "scenario": "recovery", "passed": false, "error": "AssertionError: final answer does not match tool results"}
+{"provider": "workbuddy", "protocol": "chat", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "trae", "protocol": "chat", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "trae", "protocol": "chat", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "trae", "protocol": "chat", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "chat", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "chat", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "chat", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "chat", "stream": true, "scenario": "sequence", "passed": false, "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"}
+{"provider": "workbuddy", "protocol": "chat", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "chat", "stream": true, "scenario": "parallel", "passed": false, "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"}
+{"provider": "trae", "protocol": "chat", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "trae", "protocol": "chat", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "trae", "protocol": "chat", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "responses", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "responses", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "responses", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "responses", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "responses", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "responses", "stream": false, "scenario": "parallel", "passed": false, "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"}
+{"provider": "trae", "protocol": "responses", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "trae", "protocol": "responses", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "trae", "protocol": "responses", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "responses", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "responses", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "responses", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "responses", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "responses", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "responses", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "trae", "protocol": "responses", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "trae", "protocol": "responses", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "trae", "protocol": "responses", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "messages", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "messages", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "messages", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "messages", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "messages", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "messages", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "trae", "protocol": "messages", "stream": false, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "trae", "protocol": "messages", "stream": false, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "trae", "protocol": "messages", "stream": false, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "messages", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "messages", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "codearts", "protocol": "messages", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "messages", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "messages", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "workbuddy", "protocol": "messages", "stream": true, "scenario": "parallel", "passed": true, "error": null}
+{"provider": "trae", "protocol": "messages", "stream": true, "scenario": "sequence", "passed": true, "error": null}
+{"provider": "trae", "protocol": "messages", "stream": true, "scenario": "recovery", "passed": true, "error": null}
+{"provider": "trae", "protocol": "messages", "stream": true, "scenario": "parallel", "passed": true, "error": null}

@@ -1,0 +1,188 @@
+"""Real advanced tool acceptance. Only generated allowlisted files are readable."""
+import copy,concurrent.futures,hashlib,itertools,json,pathlib,secrets,subprocess,sys,tempfile,time
+sys.path.insert(0,'/home/white/codearts2api-panel/scripts')
+from quality_common import API,current_access,save_json,scrub,utc
+
+BASE='http://127.0.0.1:10087'
+OUT=pathlib.Path('/tmp/codearts-tools-fix-live-20261030.json')
+LIMIT=162
+_,password=current_access();admin=API(BASE,password=password);admin.login()
+initial=admin.json('/admin/api/state');digest=lambda x:hashlib.sha256(json.dumps(x,sort_keys=True).encode()).hexdigest()
+pid=subprocess.check_output(['systemctl','--user','show','-p','MainPID','--value','codearts2api-panel.service'],text=True).strip()
+models={p:('' if p=='codearts' else p+'/cn/')+'deepseek-v4.1-flash' for p in ['codearts','workbuddy','trae']}
+assert all(m in {x['id'] for x in initial['models']} for m in models.values())
+report={'started_at':utc(),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd='/home/white/codearts2api-panel',text=True).strip(),'running_binary_sha256':hashlib.sha256(pathlib.Path('/proc/'+pid+'/exe').read_bytes()).hexdigest(),'request_limit':LIMIT,'max_output_tokens_per_request':640,'settings_sha256':digest(initial['settings']),'policies':{p:{k:initial['settings'][p][k] for k in ['prompt_mode','sanitize','prompt_fallback']} for p in models},'checks':[]}
+request_count=0;key=None;ref=None;blocked=set()
+tool_name='acceptance_read_fixture'
+description='Read one allowed file from the isolated test fixture, returning its exact contents or an ENOENT error. All filenames are relative and case sensitive.'
+schema={'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}
+
+def parse_response(protocol,stream,raw):
+ if not stream:
+  obj=json.loads(raw)
+  if obj.get('error'):raise ValueError('response error: '+json.dumps(obj['error']))
+  return obj
+ events=[];done=False
+ for line in raw.splitlines():
+  if not line.startswith('data:'):continue
+  data=line[5:].strip()
+  if data=='[DONE]':done=True;continue
+  event=json.loads(data)
+  if event.get('error') or event.get('type') in ['error','response.failed']:
+   raise ValueError('stream error: '+json.dumps(event))
+  events.append(event)
+ if protocol=='chat':
+  assert done,'Chat stream missing [DONE]'
+  msg={'role':'assistant','content':None};calls={};finish=None;usage=None
+  for event in events:
+   usage=event.get('usage') or usage
+   for choice in event.get('choices',[]):
+    assert choice.get('index',0)==0,'unexpected multiple choices'
+    delta=choice.get('delta') or {};finish=choice.get('finish_reason') or finish
+    for field in ['content','reasoning_content','refusal']:
+     if isinstance(delta.get(field),str):msg[field]=(msg.get(field) or '')+delta[field]
+    for part in delta.get('tool_calls',[]):
+     call=calls.setdefault(part['index'],{'id':'','type':'function','function':{'name':'','arguments':''}})
+     for field in ['id']:
+      if part.get(field):call[field]+=part[field]
+     fn=part.get('function') or {}
+     for field in ['name','arguments']:
+      if fn.get(field):call['function'][field]+=fn[field]
+  if calls:msg['tool_calls']=[calls[i] for i in sorted(calls)]
+  return {'choices':[{'message':msg,'finish_reason':finish}],'usage':usage}
+ if protocol=='responses':
+  terminal=next((e for e in reversed(events) if e.get('type') in ['response.completed','response.incomplete']),None)
+  assert terminal,'Responses stream missing terminal response'
+  seq=[e['sequence_number'] for e in events if 'sequence_number' in e]
+  assert seq==sorted(set(seq)),'Responses event sequence invalid'
+  return terminal['response']
+ assert events and events[-1].get('type')=='message_stop','Messages stream missing message_stop'
+ obj={};blocks={};fragments={}
+ for event in events:
+  kind=event['type']
+  if kind=='message_start':obj=copy.deepcopy(event['message'])
+  elif kind=='content_block_start':blocks[event['index']]=copy.deepcopy(event['content_block'])
+  elif kind=='content_block_delta':
+   i=event['index'];delta=event['delta'];kind_delta=delta['type']
+   if kind_delta=='input_json_delta':fragments[i]=fragments.get(i,'')+delta['partial_json']
+   else:
+    field={'text_delta':'text','thinking_delta':'thinking','signature_delta':'signature'}.get(kind_delta)
+    assert field,'unhandled Messages delta: '+kind_delta
+    blocks[i][field]=blocks[i].get(field,'')+delta[field]
+  elif kind=='message_delta':obj.update(event.get('delta',{}));obj.setdefault('usage',{}).update(event.get('usage',{}))
+ for i,fragment in fragments.items():blocks[i]['input']=json.loads(fragment)
+ obj['content']=[blocks[i] for i in sorted(blocks)]
+ return obj
+
+def make_request(protocol,model,stream,prompt):
+ common={'model':model,'stream':stream,'thinking':{'type':'disabled'}}
+ if protocol=='chat':
+  common.update(messages=[{'role':'user','content':prompt}],tools=[{'type':'function','function':{'name':tool_name,'description':description,'parameters':schema}}],max_tokens=640)
+  if stream:common['stream_options']={'include_usage':True}
+  return '/v1/chat/completions',common
+ if protocol=='responses':
+  common.update(input=[{'role':'user','content':prompt}],tools=[{'type':'function','name':tool_name,'description':description,'parameters':schema}],max_output_tokens=640,store=False)
+  return '/v1/responses',common
+ common.update(messages=[{'role':'user','content':prompt}],tools=[{'name':tool_name,'description':description,'input_schema':schema}],max_tokens=640)
+ return '/v1/messages',common
+
+def extract(protocol,obj):
+ if protocol=='chat':
+  choice=obj['choices'][0];msg=choice['message'];finish=choice.get('finish_reason')
+  calls=[{'id':x['id'],'name':x['function']['name'],'args':json.loads(x['function']['arguments'])} for x in msg.get('tool_calls',[])]
+  answer=msg.get('content') or '';terminal='tool_calls' if calls else 'stop'
+ elif protocol=='responses':
+  calls=[{'id':x['call_id'],'name':x['name'],'args':json.loads(x['arguments'])} for x in obj['output'] if x.get('type')=='function_call']
+  answer=''.join(p.get('text','') for x in obj['output'] for p in x.get('content',[]) if p.get('type')=='output_text');finish=obj['status'];terminal='completed'
+ else:
+  calls=[{'id':x['id'],'name':x['name'],'args':x['input']} for x in obj['content'] if x.get('type')=='tool_use']
+  answer=''.join(x.get('text','') for x in obj['content'] if x.get('type')=='text');finish=obj.get('stop_reason');terminal='tool_use' if calls else 'end_turn'
+ assert finish==terminal,'bad finish '+str(finish)
+ assert len({c['id'] for c in calls})==len(calls),'duplicate call IDs within one turn'
+ for c in calls:
+  assert c['id'] and c['name']==tool_name and isinstance(c['args'],dict) and set(c['args'])=={'path'},'invalid tool call shape'
+  assert isinstance(c['args']['path'],str),'path must be a string'
+ return calls,answer
+
+def append_results(protocol,body,obj,results):
+ if protocol=='chat':body['messages'] += [obj['choices'][0]['message']]+[{'role':'tool','tool_call_id':c['id'],'content':text} for c,text,error in results]
+ elif protocol=='responses':body['input'] += obj['output']+[{'type':'function_call_output','call_id':c['id'],'output':text} for c,text,error in results]
+ else:body['messages'] += [{'role':'assistant','content':obj['content']},{'role':'user','content':[{'type':'tool_result','tool_use_id':c['id'],'content':text,**({'is_error':True} if error else {})} for c,text,error in results]}]
+
+def send(check,body,path,session):
+ global request_count
+ assert request_count<LIMIT,'request cap reached'
+ request_count+=1;row={'turn':len(check['requests'])+1,'started_at':utc(),'request_body':copy.deepcopy(body)};check['requests'].append(row)
+ start=time.monotonic();status,raw,headers=client.request(path,body,headers={'X-Session-Id':session},timeout=75)
+ row.update(status=status,seconds=round(time.monotonic()-start,3),request_id=next((v for k,v in headers.items() if k.lower()=='x-request-id'),None),raw_response=raw)
+ logs=admin.json('/admin/api/logs?limit=100')['logs'];log=next((x for x in logs if row['request_id'] and x.get('request_id')==row['request_id']),None)
+ if log:
+  row['gateway_log']={k:log.get(k) for k in ['provider','model','attempts','status','finish_reason','usage','usage_incomplete','latency_ms']};row['account_fingerprint']=hashlib.sha256(log.get('account','').encode()).hexdigest()[:12]
+ save_json(OUT,report)
+ if status in [401,402,403,429,503]:blocked.add(check['provider'])
+ assert status==200,'HTTP '+str(status)+': '+raw[:300]
+ obj=parse_response(check['protocol'],check['stream'],raw);row['parsed_response']=obj
+ return obj
+
+def scenario_files(kind,fixture):
+ nonce=secrets.token_hex(6)
+ if kind=='sequence':
+  paths=['start.txt','middle_'+nonce+'.txt','end_'+nonce+'.txt'];values=['A_'+secrets.token_hex(6)+';11128','B_'+secrets.token_hex(6)+';cc_version=42;','C_'+secrets.token_hex(6)]
+  files={p:json.dumps({'value':v,'next':paths[i+1] if i+1<len(paths) else None}) for i,(p,v) in enumerate(zip(paths,values))}
+  prompt='Use acceptance_read_fixture to read start.txt. Its JSON contains value and next. Follow next exactly, reading one file per turn, until next is null. Collect value from all three files in order. After the third tool result, output ONLY the JSON array of the three original value strings. Do not guess any path or value.'
+  expected=values
+ elif kind=='recovery':
+  paths=['missing.txt','recovered_'+nonce+'.txt'];expected='RECOVERED_'+secrets.token_hex(8)+';11128;cc_version=42;';files={paths[1]:expected}
+  prompt='First call acceptance_read_fixture with path missing.txt. If the tool returns an ENOENT error, read the recovery_path specified in that error in a second call. Output ONLY the exact successful file contents. Treat the tool error as a tool execution failure, not a reason to stop. Never retry missing.txt and do not guess the contents.'
+ else:
+  paths=['left.txt','right.txt'];expected={'left':'LEFT_'+secrets.token_hex(8)+';11128','right':'RIGHT_'+secrets.token_hex(8)+';cc_version=42;'};files={paths[0]:expected['left'],paths[1]:expected['right']}
+  prompt='Call acceptance_read_fixture twice in the SAME assistant turn: once for left.txt and once for right.txt. They are independent and must be requested together before receiving any results. Results may arrive in reverse order: match them by tool call ID and path. After receiving both, output ONLY a JSON object with keys left and right containing the corresponding exact file texts. Never swap values and never invent file contents.'
+ for name,text in files.items():(fixture/name).write_text(text)
+ return paths,files,expected,prompt
+
+try:
+ key,ref=admin.add_key('messages-tool-fix-full-acceptance-20261030',{'max_requests':LIMIT});client=API(BASE,key=key)
+ for protocol,stream,provider,kind in itertools.product(['chat','responses','messages'],[False,True],models,['sequence','recovery','parallel']):
+  check={'provider':provider,'model':models[provider],'protocol':protocol,'stream':stream,'scenario':kind,'requests':[],'tool_executions':[]};report['checks'].append(check)
+  if provider in blocked:check.update(passed=False,skipped=True,error='provider stopped after authentication/quota/availability error');continue
+  with tempfile.TemporaryDirectory(prefix='gateway-advanced-tool-') as directory:
+   fixture=pathlib.Path(directory);paths,files,expected,prompt=scenario_files(kind,fixture);check.update(expected=expected,fixture_files=files)
+   path,body=make_request(protocol,models[provider],stream,prompt);session='acceptance-advanced-'+secrets.token_hex(12);used_ids=[]
+   try:
+    max_turns={'sequence':4,'recovery':3,'parallel':2}[kind]
+    for turn in range(max_turns):
+     obj=send(check,body,path,session);calls,answer=extract(protocol,obj)
+     expected_calls=([] if turn==max_turns-1 else [paths[turn]]) if kind!='parallel' else (paths if turn==0 else [])
+     assert len(calls)==len(expected_calls),'expected '+str(len(expected_calls))+' tool calls, got '+str(len(calls))
+     assert sorted(c['args']['path'] for c in calls)==sorted(expected_calls),'tool paths differ from required chain'
+     if calls:
+      # Read distinct files concurrently for the parallel case, then submit
+      # results in reversed call order to verify correlation by ID, not position.
+      def execute(c):
+       name=c['args']['path'];error=kind=='recovery' and name=='missing.txt'
+       if error:text=json.dumps({'error':{'code':'ENOENT','message':'fixture file not found'},'recovery_path':paths[1]})
+       else:
+        assert name in files,'path outside generated allowlist'
+        text=(fixture/name).read_text();assert text==files[name]
+       return c,text,error
+      if kind=='parallel':
+       with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(execute,calls))
+       results.reverse();check['results_returned_in_reverse_order']=True
+      else:results=[execute(c) for c in calls]
+      check['tool_executions'] += [{'turn':turn+1,'call_id':c['id'],'path':c['args']['path'],'result':text,'is_error':error} for c,text,error in results]
+      used_ids += [c['id'] for c in calls];append_results(protocol,body,obj,results)
+     else:
+      check.update(answer=answer,finish_verified=True)
+      actual=json.loads(answer) if kind in ['sequence','parallel'] else answer
+      assert actual==expected,'final answer does not match tool results'
+      check['exact_values_preserved']=True
+    check['same_account']=len({r.get('account_fingerprint') for r in check['requests']})==1
+    check['call_ids_unique_across_turns']=len(set(used_ids))==len(used_ids)
+    assert all(r.get('gateway_log',{}).get('provider')==provider for r in check['requests']),'wrong routing or missing log'
+    check['passed']=True
+   except Exception as e:check.update(passed=False,error=scrub(type(e).__name__+': '+str(e),(key,password))[:600])
+  save_json(OUT,report)
+  print(json.dumps({k:check.get(k) for k in ['provider','protocol','stream','scenario','passed','error']},ensure_ascii=False),flush=True)
+finally:
+ if ref:admin.delete_key(ref)
+ after=admin.json('/admin/api/state');report.update(finished_at=utc(),client_requests_sent=request_count,temporary_key_removed=not ref or not any(x['ref']==ref for x in after['keys']),settings_unchanged=digest(after['settings'])==report['settings_sha256'],account_count_unchanged=len(after['accounts'])==len(initial['accounts']),final_in_flight=sum(a['pool']['in_flight'] for a in after['accounts']),health_status=admin.request('/healthz')[0],service_not_restarted=subprocess.check_output(['systemctl','--user','show','-p','MainPID','--value','codearts2api-panel.service'],text=True).strip()==pid);save_json(OUT,report)
