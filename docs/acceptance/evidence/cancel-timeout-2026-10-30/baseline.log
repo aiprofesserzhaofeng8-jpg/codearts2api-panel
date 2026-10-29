@@ -1,0 +1,37 @@
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/401/cancel
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/401/deadline
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/429/cancel
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/429/deadline
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/401/cancel
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="error" account_failures=1 account_cooldown=1793297558 model={Failures:0 CooldownUntil:0 UpdatedAt:0 LastError:} pool={State:cooling InFlight:0 MaxInFlight:1 CooldownRemaining:300}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/401/deadline
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="error" account_failures=1 account_cooldown=1793297558 model={Failures:0 CooldownUntil:0 UpdatedAt:0 LastError:} pool={State:cooling InFlight:0 MaxInFlight:1 CooldownRemaining:300}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/429/cancel
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="" account_failures=0 account_cooldown=0 model={Failures:1 CooldownUntil:1793297318 UpdatedAt:1793297258 LastError:WorkBuddy 上游拒绝请求（HTTP 429，业务码 ）} pool={State:ready InFlight:0 MaxInFlight:1 CooldownRemaining:0}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/429/deadline
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="" account_failures=0 account_cooldown=0 model={Failures:1 CooldownUntil:1793297318 UpdatedAt:1793297258 LastError:WorkBuddy 上游拒绝请求（HTTP 429，业务码 ）} pool={State:ready InFlight:0 MaxInFlight:1 CooldownRemaining:0}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/401/cancel
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="error" account_failures=1 account_cooldown=1793297558 model={Failures:0 CooldownUntil:0 UpdatedAt:0 LastError:} pool={State:cooling InFlight:0 MaxInFlight:1 CooldownRemaining:300}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/401/deadline
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="error" account_failures=1 account_cooldown=1793297558 model={Failures:0 CooldownUntil:0 UpdatedAt:0 LastError:} pool={State:cooling InFlight:0 MaxInFlight:1 CooldownRemaining:300}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/429/cancel
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="" account_failures=0 account_cooldown=0 model={Failures:1 CooldownUntil:1793297318 UpdatedAt:1793297258 LastError:Trae 上游请求失败（HTTP 429，业务码 ）} pool={State:ready InFlight:0 MaxInFlight:1 CooldownRemaining:0}
+=== RUN   TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/429/deadline
+    cancel_timeout_test.go:244: interruption replayed, penalized account/model, or leaked lease: calls=1 account_status="" account_failures=0 account_cooldown=0 model={Failures:1 CooldownUntil:1793297318 UpdatedAt:1793297258 LastError:Trae 上游请求失败（HTTP 429，业务码 ）} pool={State:ready InFlight:0 MaxInFlight:1 CooldownRemaining:0}
+--- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize (0.73s)
+    --- PASS: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/401/cancel (0.01s)
+    --- PASS: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/401/deadline (0.11s)
+    --- PASS: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/429/cancel (0.02s)
+    --- PASS: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/codearts/429/deadline (0.11s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/401/cancel (0.02s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/401/deadline (0.11s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/429/cancel (0.01s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/workbuddy/429/deadline (0.11s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/401/cancel (0.01s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/401/deadline (0.11s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/429/cancel (0.01s)
+    --- FAIL: TestHTTPCanceledProviderErrorBodyDoesNotPenalize/trae/429/deadline (0.11s)
+FAIL
+FAIL	codearts2api/internal/server	0.750s
+FAIL

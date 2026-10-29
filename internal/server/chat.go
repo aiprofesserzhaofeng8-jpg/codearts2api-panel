@@ -405,6 +405,13 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 			s.Store.MarkAccountResult(acct.ID, true, "")
 			return acct, nil
 		}
+		// Cancellation/deadline applies to every provider before classifying its
+		// error. Native clients may return a status error after their error-body
+		// read was interrupted; that must not penalize credentials or the model.
+		if ctx.Err() != nil {
+			s.Store.ForgetSession(session, acct.ID)
+			return used, ctx.Err()
+		}
 		var terminal interface{ NonRetryableRequest() bool }
 		if errors.As(err, &terminal) && terminal.NonRetryableRequest() {
 			return used, err
@@ -431,10 +438,6 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		}
 		lastErr = err
 		s.Store.ForgetSession(session, acct.ID)
-		// 客户端主动断开（curl/浏览器提前关连接）不是账号故障，不应计入失败
-		if ctx.Err() != nil {
-			break
-		}
 		// 临时性故障（并发上限 / 429 / 5xx）：账号本身没问题，退避后重试
 		if codearts.IsTransientUpstream(err) {
 			cooldown := s.Store.Settings().Pool.RateCooldownSec

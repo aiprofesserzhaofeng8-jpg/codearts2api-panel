@@ -1,0 +1,38 @@
+{
+  "source_base_commit": "bd2196b522233a67285aa39e0500e1d052d38a52",
+  "go": "go version go1.27.3 linux/amd64",
+  "real_network": "two localhost HTTP connections with native CodeArts, WorkBuddy and Trae clients; synthetic credentials",
+  "real_upstream_calls": 0,
+  "production_service_or_configuration_changes": false,
+  "baseline": {
+    "targeted_cases": 12,
+    "passed": 4,
+    "failed": 8,
+    "failed_platforms": [
+      "workbuddy",
+      "trae"
+    ],
+    "failure_account_401_cooldown_seconds": 300,
+    "failure_model_429_cooldown_seconds": 60
+  },
+  "fixed": {
+    "targeted_cases": 61,
+    "passed": 61,
+    "failed": 0,
+    "race_enabled": true,
+    "matrix": {
+      "three_platforms_three_protocols_stream_and_buffered_cancel_and_deadline": 36,
+      "actual_request_timeout_one_second": 3,
+      "error_body_cancel_or_deadline_401_or_429": 12,
+      "waiting_for_headers_cancel_or_deadline": 6,
+      "uncanceled_provider_401_or_429_controls": 4
+    },
+    "package_seconds": 7.495
+  },
+  "scope": "Move existing context cancellation check before provider error classification; preserve account lease defer release and normal success path; no upstream drain or retry increase",
+  "limits": [
+    "No real model availability or latency measured",
+    "Canceled responses can have unknown final usage; never infer free usage",
+    "Timeout remains one total request deadline; no new first-token or idle timeout settings"
+  ]
+}
