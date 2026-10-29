@@ -1,0 +1,12 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/server
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkAnthropicStreaming/tools=false         	    1201	    272013 ns/op	  145370 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=false         	    1303	    270578 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=false         	    1322	    270761 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1044	    344146 ns/op	  201531 B/op	    2219 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1044	    343950 ns/op	  201531 B/op	    2219 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1045	    343188 ns/op	  201531 B/op	    2219 allocs/op
+PASS
+ok  	codearts2api/internal/server	2.319s

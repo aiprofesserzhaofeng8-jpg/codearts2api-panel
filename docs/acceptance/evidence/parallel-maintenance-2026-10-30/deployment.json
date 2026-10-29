@@ -1,0 +1,11 @@
+{
+  "created_at": "2026-10-30T02:14:23.775073+08:00",
+  "frozen_baseline": "snapshot-20261030-020016-verified-tools",
+  "old_binary_sha256": "3cd383d560b7c966bb42c8f9ce171560bdc738f7ecd6adad4474b3824d17c0aa",
+  "new_binary_sha256": "08ce2f9deaf028a7c19b9e5a7791468d3b494f15efd74d9ecdc47c162259ece3",
+  "settings_sha256": "0ceb71f6805c76cc7e193c6eb4619460494c7b5cc82cd7b38a797a86165a1bd8",
+  "account_count": 12,
+  "backup_directory": "data/backups/before-parallel-maintenance-20261030-021423",
+  "new_pid": "2781919",
+  "health_http_status": 200
+}

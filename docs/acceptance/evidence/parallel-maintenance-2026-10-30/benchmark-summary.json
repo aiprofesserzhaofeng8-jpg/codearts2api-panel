@@ -1,0 +1,104 @@
+{
+  "method": "same benchmark; frozen vs modified tree; cpu=1; 3x300ms; median; no race",
+  "results": [
+    {
+      "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+      "before_ms": 0.024625,
+      "after_ms": 0.024215,
+      "delta_ms": -0.00041,
+      "ratio": 0.9833502538071066,
+      "bytes_before": 19677,
+      "bytes_after": 19717,
+      "allocs_before": 141,
+      "allocs_after": 142
+    },
+    {
+      "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+      "before_ms": 3.177004,
+      "after_ms": 2.766074,
+      "delta_ms": -0.41093,
+      "ratio": 0.870654868549111,
+      "bytes_before": 2253148,
+      "bytes_after": 2253176,
+      "allocs_before": 162,
+      "allocs_after": 163
+    },
+    {
+      "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+      "before_ms": 25.047825,
+      "after_ms": 21.851911,
+      "delta_ms": -3.195914,
+      "ratio": 0.8724075244058117,
+      "bytes_before": 17089216,
+      "bytes_after": 17089203,
+      "allocs_before": 167,
+      "allocs_after": 168
+    },
+    {
+      "benchmark": "BenchmarkMessagesThinkingConversion/short/omitted",
+      "before_ms": 0.001373,
+      "after_ms": 0.001376,
+      "delta_ms": 3e-06,
+      "ratio": 1.0021849963583394,
+      "bytes_before": 1016,
+      "bytes_after": 1064,
+      "allocs_before": 14,
+      "allocs_after": 14
+    },
+    {
+      "benchmark": "BenchmarkMessagesThinkingConversion/short/disabled",
+      "before_ms": 0.001531,
+      "after_ms": 0.00237,
+      "delta_ms": 0.000839,
+      "ratio": 1.5480078380143696,
+      "bytes_before": 1016,
+      "bytes_after": 1904,
+      "allocs_before": 14,
+      "allocs_after": 24
+    },
+    {
+      "benchmark": "BenchmarkMessagesThinkingConversion/16KiB/omitted",
+      "before_ms": 0.029513,
+      "after_ms": 0.029514,
+      "delta_ms": 1e-06,
+      "ratio": 1.0000338833734286,
+      "bytes_before": 35825,
+      "bytes_after": 35873,
+      "allocs_before": 15,
+      "allocs_after": 15
+    },
+    {
+      "benchmark": "BenchmarkMessagesThinkingConversion/16KiB/disabled",
+      "before_ms": 0.029669,
+      "after_ms": 0.030684,
+      "delta_ms": 0.001015,
+      "ratio": 1.0342107924095858,
+      "bytes_before": 35825,
+      "bytes_after": 36713,
+      "allocs_before": 15,
+      "allocs_after": 25
+    },
+    {
+      "benchmark": "BenchmarkAnthropicStreaming/tools=false",
+      "before_ms": 0.270761,
+      "after_ms": 0.270949,
+      "delta_ms": 0.000188,
+      "ratio": 1.0006943392881544,
+      "bytes_before": 145369,
+      "bytes_after": 145369,
+      "allocs_before": 2098,
+      "allocs_after": 2098
+    },
+    {
+      "benchmark": "BenchmarkAnthropicStreaming/tools=true",
+      "before_ms": 0.34395,
+      "after_ms": 0.344919,
+      "delta_ms": 0.000969,
+      "ratio": 1.002817269952028,
+      "bytes_before": 201531,
+      "bytes_after": 201531,
+      "allocs_before": 2219,
+      "allocs_after": 2219
+    }
+  ]
+}

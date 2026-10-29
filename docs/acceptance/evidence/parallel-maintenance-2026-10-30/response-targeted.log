@@ -1,0 +1,112 @@
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/empty_object
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/number
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/string
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/null_choices
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/empty_choices
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/missing_message
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/invalid_second
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/missing_choices
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/object_choices
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/null_message
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/scalar_message
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/null
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/array
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/standard_error
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/string_error
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/mixed_error
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/truncated_message
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/null_choice
+=== RUN   TestNonStreamingChatRejectsInvalidEnvelope/array_message
+--- PASS: TestNonStreamingChatRejectsInvalidEnvelope (0.01s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/empty_object (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/number (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/string (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/null_choices (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/empty_choices (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/missing_message (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/invalid_second (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/missing_choices (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/object_choices (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/null_message (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/scalar_message (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/null (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/array (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/standard_error (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/string_error (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/mixed_error (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/truncated_message (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/null_choice (0.00s)
+    --- PASS: TestNonStreamingChatRejectsInvalidEnvelope/array_message (0.00s)
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/length
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/future_finish
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/empty_message
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/null_error
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/empty_business_code
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/text
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/refusal
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/reasoning
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/missing_finish
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/content_array
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/multiple
+=== RUN   TestNonStreamingChatPreservesValidEnvelopeBytes/tool_only
+--- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/length (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/future_finish (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/empty_message (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/null_error (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/empty_business_code (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/text (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/refusal (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/reasoning (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/missing_finish (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/content_array (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/multiple (0.00s)
+    --- PASS: TestNonStreamingChatPreservesValidEnvelopeBytes/tool_only (0.00s)
+=== RUN   TestNonStreamingBusinessErrorPrecedence
+--- PASS: TestNonStreamingBusinessErrorPrecedence (0.00s)
+=== RUN   TestNonStreamingChatPreservesBusinessErrorClassification
+=== RUN   TestNonStreamingChatPreservesBusinessErrorClassification/400
+=== RUN   TestNonStreamingChatPreservesBusinessErrorClassification/content_filter
+=== RUN   TestNonStreamingChatPreservesBusinessErrorClassification/403
+=== RUN   TestNonStreamingChatPreservesBusinessErrorClassification/429
+=== RUN   TestNonStreamingChatPreservesBusinessErrorClassification/InferHub.failure.503
+--- PASS: TestNonStreamingChatPreservesBusinessErrorClassification (0.00s)
+    --- PASS: TestNonStreamingChatPreservesBusinessErrorClassification/400 (0.00s)
+    --- PASS: TestNonStreamingChatPreservesBusinessErrorClassification/content_filter (0.00s)
+    --- PASS: TestNonStreamingChatPreservesBusinessErrorClassification/403 (0.00s)
+    --- PASS: TestNonStreamingChatPreservesBusinessErrorClassification/429 (0.00s)
+    --- PASS: TestNonStreamingChatPreservesBusinessErrorClassification/InferHub.failure.503 (0.00s)
+PASS
+ok  	codearts2api/internal/codearts	1.020s
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/null
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/empty_choices
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/missing_message
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/error
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/null
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/empty_choices
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/missing_message
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/error
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/null
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/empty_choices
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/missing_message
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/error
+--- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols (0.03s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/null (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/empty_choices (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/missing_message (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/error (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/null (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/empty_choices (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/missing_message (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/error (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/null (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/empty_choices (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/missing_message (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/error (0.00s)
+=== RUN   TestNonStreamingInvalidEnvelopeUsesExistingFailover
+--- PASS: TestNonStreamingInvalidEnvelopeUsesExistingFailover (0.00s)
+PASS
+ok  	codearts2api/internal/server	1.053s

@@ -1,0 +1,253 @@
+testing: warning: no tests to run
+PASS
+ok  	codearts2api/internal/protocol	1.010s [no tests to run]
+=== RUN   TestMessagesThinkingAtProviderBoundary
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/omitted
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/null
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/disabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/enabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/adaptive_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/budget_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=false/effort
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/omitted
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/null
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/disabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/enabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/adaptive_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/budget_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/codearts/stream=true/effort
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/omitted
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/null
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/disabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/enabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/adaptive_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/budget_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/effort
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/omitted
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/null
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/disabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/enabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/adaptive_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/budget_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/effort
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/omitted
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/null
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/disabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/enabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/adaptive_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/budget_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=false/effort
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/omitted
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/null
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/disabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/enabled
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/adaptive_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/budget_cli
+=== RUN   TestMessagesThinkingAtProviderBoundary/trae/stream=true/effort
+--- PASS: TestMessagesThinkingAtProviderBoundary (0.23s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/omitted (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/null (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/disabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/enabled (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/adaptive_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/budget_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=false/effort (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/omitted (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/null (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/disabled (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/enabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/adaptive_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/budget_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/codearts/stream=true/effort (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/omitted (0.02s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/null (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/disabled (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/enabled (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/adaptive_cli (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/budget_cli (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=false/effort (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/omitted (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/null (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/disabled (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/enabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/adaptive_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/budget_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/workbuddy/stream=true/effort (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/omitted (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/null (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/disabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/enabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/adaptive_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/budget_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=false/effort (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/omitted (0.01s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/null (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/disabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/enabled (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/adaptive_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/budget_cli (0.00s)
+    --- PASS: TestMessagesThinkingAtProviderBoundary/trae/stream=true/effort (0.00s)
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=false/disabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=false/enabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=false/adaptive
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=true/disabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=true/enabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=true/adaptive
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=false/disabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=false/enabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=false/adaptive
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=true/disabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=true/enabled
+=== RUN   TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=true/adaptive
+--- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged (0.11s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=false/disabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=false/enabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=false/adaptive (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=true/disabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=true/enabled (0.00s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/chat/completions/stream=true/adaptive (0.00s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=false/disabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=false/enabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=false/adaptive (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=true/disabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=true/enabled (0.01s)
+    --- PASS: TestMessagesThinkingLeavesOtherTraeProtocolsUnchanged//v1/responses/stream=true/adaptive (0.01s)
+=== RUN   TestHTTPInterruptionReleasesAndRecovers
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=true/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=false/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=false/deadline
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=true/cancel
+=== RUN   TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=true/deadline
+--- PASS: TestHTTPInterruptionReleasesAndRecovers (2.32s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=false/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=true/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/chat/completions/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=false/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=true/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/messages/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=false/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/codearts//v1/responses/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=false/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/chat/completions/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=false/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/messages/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=false/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/workbuddy//v1/responses/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=false/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/chat/completions/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=false/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/messages/stream=true/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=false/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=false/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=true/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionReleasesAndRecovers/trae//v1/responses/stream=true/deadline (0.11s)
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/codearts/cancel
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/codearts/deadline
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/workbuddy/cancel
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/workbuddy/deadline
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/trae/cancel
+=== RUN   TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/trae/deadline
+--- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers (0.37s)
+    --- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/codearts/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/codearts/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/workbuddy/cancel (0.02s)
+    --- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/workbuddy/deadline (0.11s)
+    --- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/trae/cancel (0.01s)
+    --- PASS: TestHTTPInterruptionBeforeHeadersReleasesAndRecovers/trae/deadline (0.11s)
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/null
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/empty_choices
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/missing_message
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/error
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/null
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/empty_choices
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/missing_message
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/error
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/null
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/empty_choices
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/missing_message
+=== RUN   TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/error
+--- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols (0.04s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/null (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/empty_choices (0.01s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/missing_message (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/error (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/null (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/empty_choices (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/missing_message (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/responses/error (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/null (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/empty_choices (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/missing_message (0.00s)
+    --- PASS: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/error (0.00s)
+=== RUN   TestNonStreamingInvalidEnvelopeUsesExistingFailover
+--- PASS: TestNonStreamingInvalidEnvelopeUsesExistingFailover (0.00s)
+=== RUN   TestAcceptanceConcurrencyLadder
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=1 samples=3 p50_ms=5.629 p95_ms=6.079 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=4 samples=12 p50_ms=8.493 p95_ms=9.625 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=16 samples=48 p50_ms=17.481 p95_ms=41.154 peak=15
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=1 samples=3 p50_ms=7.330 p95_ms=7.849 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=4 samples=12 p50_ms=10.229 p95_ms=11.545 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=16 samples=48 p50_ms=18.702 p95_ms=20.144 peak=15
+--- PASS: TestAcceptanceConcurrencyLadder (0.26s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=1 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=4 (0.03s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=16 (0.08s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=1 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=4 (0.04s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=16 (0.06s)
+PASS
+ok  	codearts2api/internal/server	4.338s

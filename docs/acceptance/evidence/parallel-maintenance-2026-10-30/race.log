@@ -1,0 +1,15 @@
+ok  	codearts2api	2.956s
+?   	codearts2api/cmd/probe	[no test files]
+ok  	codearts2api/internal/apierr	1.019s
+ok  	codearts2api/internal/codearts	1.094s
+ok  	codearts2api/internal/protocol	1.023s
+ok  	codearts2api/internal/provider	1.015s
+ok  	codearts2api/internal/ratelimit	1.018s
+ok  	codearts2api/internal/registry	1.019s
+ok  	codearts2api/internal/requestpolicy	1.022s
+?   	codearts2api/internal/responsescompat	[no test files]
+ok  	codearts2api/internal/server	44.123s
+ok  	codearts2api/internal/store	50.136s
+ok  	codearts2api/internal/trae	1.102s
+ok  	codearts2api/internal/websearch	1.044s
+ok  	codearts2api/internal/workbuddy	1.088s

@@ -1,0 +1,29 @@
+import collections,hashlib,json,pathlib,re,subprocess,sys,anthropic,httpx
+sys.path.insert(0,'/home/white/codearts2api-panel/scripts')
+from quality_common import API,current_access,save_json,utc
+out=pathlib.Path('/tmp/codearts-parallel-acceptance-20261030');r=json.loads((out/'live.json').read_text());assert r.get('finished_at')
+assert len(r['checks'])==31
+sdk=[];totals=collections.Counter();by_kind={}
+for c in r['checks']:
+ k=c['kind'];by_kind.setdefault(k,{'checks':0,'passed':0});by_kind[k]['checks']+=1;by_kind[k]['passed']+=bool(c.get('passed'))
+ for q in c.get('requests',[]):
+  log=q.get('gateway_log',{})
+  if log:
+   assert log['provider']==c['provider'] and log['attempts']==1
+   totals.update({k:v for k,v in log.get('usage',{}).items() if type(v) is int})
+  if c['protocol']=='messages' and c['stream'] and q.get('status')==200:
+   raw=q['raw_response'].encode()
+   def handle(request):return httpx.Response(200,headers={'content-type':'text/event-stream'},content=raw)
+   with anthropic.Anthropic(api_key='offline-fixture',base_url='http://fixture.local',max_retries=0,http_client=httpx.Client(transport=httpx.MockTransport(handle))) as client:
+    with client.messages.stream(model='fixture',max_tokens=512,messages=[{'role':'user','content':'fixture'}]) as s:message=s.get_final_message()
+   assert message.stop_reason in ['end_turn','tool_use'];blocks=[b for b in message.content if b.type=='tool_use']
+   if blocks:assert len(blocks)==2 and len({b.id for b in blocks})==2 and all(isinstance(b.input,dict) and set(b.input)=={'path'} for b in blocks)
+   sdk.append({'provider':c['provider'],'kind':c['kind'],'tool_count':len(blocks),'passed':True})
+_,pw=current_access();a=API('http://127.0.0.1:10087',password=pw);a.login();state=a.json('/admin/api/state');pre=json.loads((out/'predeploy.json').read_text());deploy=json.loads((out/'deployment.json').read_text())
+assert hashlib.sha256(json.dumps(state['settings'],sort_keys=True).encode()).hexdigest()==pre['settings_sha256']
+assert len(state['accounts'])==pre['account_count'] and sum(x['pool']['in_flight'] for x in state['accounts'])==0
+pid=subprocess.check_output(['systemctl','--user','show','-p','MainPID','--value','codearts2api-panel.service'],text=True).strip();binary=hashlib.sha256(pathlib.Path('/proc/'+pid+'/exe').read_bytes()).hexdigest();assert binary==deploy['new_binary_sha256']==r['running_binary_sha256'];assert r['temporary_key_removed']
+verification={'checked_at':utc(),'source_base_commit':'bd2196b522233a67285aa39e0500e1d052d38a52','source_worktree_modified_during_live':True,'running_binary_sha256':binary,'live_checks':len(r['checks']),'live_passed':sum(c.get('passed',False) for c in r['checks']),'by_kind':by_kind,'client_requests':r['client_requests'],'logged_upstream_attempts':sum(q.get('gateway_log',{}).get('attempts',0) for c in r['checks'] for q in c.get('requests',[])),'observed_usage':dict(totals),'sdk_package':'anthropic-python','sdk_version':anthropic.__version__,'sdk_stream_checks':sdk,'settings_unchanged':True,'accounts_unchanged':True,'final_in_flight':0,'temporary_key_removed':True,'health_http_status':a.request('/healthz')[0],'business_source_sha256':{p:hashlib.sha256(pathlib.Path('/home/white/codearts2api-panel',p).read_bytes()).hexdigest() for p in ['internal/codearts/client.go','internal/codearts/nonstream.go','internal/protocol/anthropic.go','internal/protocol/anthropic_thinking.go','internal/server/anthropic.go','internal/server/chat.go']}}
+save_json(out/'verification.json',verification)
+print(json.dumps({k:verification[k] for k in ['live_checks','live_passed','by_kind','client_requests','logged_upstream_attempts','observed_usage','running_binary_sha256']},ensure_ascii=False,indent=2));print('SDK_STREAMS',len(sdk))
+assert verification['live_passed']==verification['live_checks'],'Some live checks failed; see evidence'

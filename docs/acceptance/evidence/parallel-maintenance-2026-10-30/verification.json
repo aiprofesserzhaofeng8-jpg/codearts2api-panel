@@ -1,0 +1,127 @@
+{
+  "checked_at": "2026-10-29T18:15:55.769884+00:00",
+  "source_base_commit": "bd2196b522233a67285aa39e0500e1d052d38a52",
+  "source_worktree_modified_during_live": true,
+  "running_binary_sha256": "08ce2f9deaf028a7c19b9e5a7791468d3b494f15efd74d9ecdc47c162259ece3",
+  "live_checks": 31,
+  "live_passed": 31,
+  "by_kind": {
+    "normal": {
+      "checks": 18,
+      "passed": 18
+    },
+    "thinking_disabled": {
+      "checks": 4,
+      "passed": 4
+    },
+    "unsupported_thinking": {
+      "checks": 3,
+      "passed": 3
+    },
+    "parallel_tools": {
+      "checks": 3,
+      "passed": 3
+    },
+    "cancel_recover": {
+      "checks": 3,
+      "passed": 3
+    }
+  },
+  "client_requests": 37,
+  "logged_upstream_attempts": 34,
+  "observed_usage": {
+    "input_tokens": 9227,
+    "output_tokens": 1329,
+    "cached_tokens": 3584,
+    "reasoning_tokens": 504
+  },
+  "sdk_package": "anthropic-python",
+  "sdk_version": "0.86.0",
+  "sdk_stream_checks": [
+    {
+      "provider": "codearts",
+      "kind": "normal",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "workbuddy",
+      "kind": "normal",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "trae",
+      "kind": "normal",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "codearts",
+      "kind": "thinking_disabled",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "workbuddy",
+      "kind": "thinking_disabled",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "codearts",
+      "kind": "parallel_tools",
+      "tool_count": 2,
+      "passed": true
+    },
+    {
+      "provider": "codearts",
+      "kind": "parallel_tools",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "workbuddy",
+      "kind": "parallel_tools",
+      "tool_count": 2,
+      "passed": true
+    },
+    {
+      "provider": "workbuddy",
+      "kind": "parallel_tools",
+      "tool_count": 0,
+      "passed": true
+    },
+    {
+      "provider": "trae",
+      "kind": "parallel_tools",
+      "tool_count": 2,
+      "passed": true
+    },
+    {
+      "provider": "trae",
+      "kind": "parallel_tools",
+      "tool_count": 0,
+      "passed": true
+    }
+  ],
+  "settings_unchanged": true,
+  "accounts_unchanged": true,
+  "final_in_flight": 0,
+  "temporary_key_removed": true,
+  "health_http_status": 200,
+  "business_source_sha256": {
+    "internal/codearts/client.go": "406c02d1395c0a42a01988403bfa6271c6212560ac80363b6cfc87b040d86d2a",
+    "internal/codearts/nonstream.go": "ad834e507b5718b489907c23df19669262e663489409e4736cd5f47b6e0a9a80",
+    "internal/protocol/anthropic.go": "f5f99d132becba99368fb156c3aad4e67f78447dbd44d64f56cce75747df078d",
+    "internal/protocol/anthropic_thinking.go": "013eb4dbd7476b3ce4ec63597ab74d50fc56a6861289973760c4f1e5f5691f12",
+    "internal/server/anthropic.go": "e360e9615d5cfd25a4379fb471b7eba8eb2f41a1e5e57d04fe904dfa3aa1609e",
+    "internal/server/chat.go": "4e8f9e7dbda56b8002314eee20822f82ef13d2ab48967b61026e923e48b9e5d3"
+  },
+  "final_business_source_commit": "830aa51a8b46479e761b8bb90532aa9c4f8a4e01",
+  "separate_fix_commits": {
+    "response_validation": "729e0f241a4ff5ff0fe66c6203dc5bce442a7e73",
+    "cancellation": "3591012cce872cc7ccf0c23634018658637f54a0",
+    "thinking_disable": "830aa51a8b46479e761b8bb90532aa9c4f8a4e01"
+  }
+}

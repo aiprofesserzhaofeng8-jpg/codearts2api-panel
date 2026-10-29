@@ -1,0 +1,1 @@
+PASS: provider settings isolation, independent switches/URLs, reload, atomic validation, dark/light/mobile; restored defaults. No upstream calls.

@@ -1,0 +1,70 @@
+--- FAIL: TestNonStreamingChatRejectsInvalidEnvelope (0.00s)
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/number (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body=42 raw=42 err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/string (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body="upstream problem" raw="upstream problem" err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/missing_choices (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"usage":{"prompt_tokens":1,"completion_tokens":1}} raw={"usage":{"prompt_tokens":1,"completion_tokens":1}} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/null_choices (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":null} raw={"choices":null} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/object_choices (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":{}} raw={"choices":{}} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/string_error (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"error":"PRIVATE_UPSTREAM_DETAIL"} raw={"error":"PRIVATE_UPSTREAM_DETAIL"} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/mixed_error (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[{"message":{"content":"hello"}}],"error":{"message":"PRIVATE_UPSTREAM_DETAIL"}} raw={"choices":[{"message":{"content":"hello"}}],"error":{"message":"PRIVATE_UPSTREAM_DETAIL"}} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/null (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body=null raw=null err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/missing_message (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[{"finish_reason":"stop"}]} raw={"choices":[{"finish_reason":"stop"}]} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/scalar_message (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[{"message":"hello"}]} raw={"choices":[{"message":"hello"}]} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/standard_error (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"error":{"type":"upstream_error","message":"PRIVATE_UPSTREAM_DETAIL"}} raw={"error":{"type":"upstream_error","message":"PRIVATE_UPSTREAM_DETAIL"}} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/empty_object (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={} raw={} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/null_choice (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[null]} raw={"choices":[null]} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/array_message (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[{"message":[]}]} raw={"choices":[{"message":[]}]} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/invalid_second (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[{"message":{"content":"first"}},null]} raw={"choices":[{"message":{"content":"first"}},null]} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/array (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body=[] raw=[] err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/empty_choices (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[],"usage":{"prompt_tokens":1}} raw={"choices":[],"usage":{"prompt_tokens":1}} err=<nil>
+    --- FAIL: TestNonStreamingChatRejectsInvalidEnvelope/null_message (0.00s)
+        nonstream_shape_test.go:45: invalid envelope treated as success: body={"choices":[{"message":null}]} raw={"choices":[{"message":null}]} err=<nil>
+--- FAIL: TestNonStreamingChatPreservesBusinessErrorClassification (0.00s)
+    --- FAIL: TestNonStreamingChatPreservesBusinessErrorClassification/400 (0.00s)
+        nonstream_shape_test.go:94: business classification changed: raw={"error_code":"400","error_msg":"invalid request"} err=<nil>
+    --- FAIL: TestNonStreamingChatPreservesBusinessErrorClassification/content_filter (0.00s)
+        nonstream_shape_test.go:94: business classification changed: raw={"error_code":"content_filter","error_msg":"policy"} err=<nil>
+    --- FAIL: TestNonStreamingChatPreservesBusinessErrorClassification/403 (0.00s)
+        nonstream_shape_test.go:94: business classification changed: raw={"error_code":"403","error_msg":"permission denied"} err=<nil>
+    --- FAIL: TestNonStreamingChatPreservesBusinessErrorClassification/429 (0.00s)
+        nonstream_shape_test.go:94: business classification changed: raw={"error_code":"429","error_msg":"rate limit"} err=<nil>
+    --- FAIL: TestNonStreamingChatPreservesBusinessErrorClassification/InferHub.failure.503 (0.00s)
+        nonstream_shape_test.go:94: business classification changed: raw={"error_code":"InferHub.failure.503","error_msg":"temporarily unavailable"} err=<nil>
+FAIL
+FAIL	codearts2api/internal/codearts	0.005s
+--- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols (0.03s)
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/missing_message (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"choices":[{"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":1}}
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/error (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"error":{"message":"PRIVATE_UPSTREAM_DETAIL","type":"upstream_error"}}
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/null (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body=null
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/chat/completions/empty_choices (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"choices":[],"usage":{"prompt_tokens":3,"completion_tokens":1}}
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/error (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_6891a35d9fa006c1790ddc55","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":17,"output_tokens":0}}
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/null (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_09824aea4a3e880f9a48b7b4","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":1,"output_tokens":0}}
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/empty_choices (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_3e96441fbc0fd2495d04bb87","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":3,"output_tokens":1}}
+    --- FAIL: TestNonStreamingInvalidEnvelopeAcrossProtocols//v1/messages/missing_message (0.00s)
+        nonstream_shape_test.go:28: status=200 calls=1 body={"content":[{"text":"","type":"text"}],"id":"msg_ea53ca40a7abb340e3cd44bd","model":"test-model","role":"assistant","stop_reason":"end_turn","stop_sequence":null,"type":"message","usage":{"input_tokens":3,"output_tokens":1}}
+FAIL
+FAIL	codearts2api/internal/server	0.035s
+FAIL

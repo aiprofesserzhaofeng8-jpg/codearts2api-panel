@@ -1,0 +1,18 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/protocol
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkMessagesThinkingConversion/short/omitted         	  247551	      1377 ns/op	  68.28 MB/s	    1016 B/op	      14 allocs/op
+BenchmarkMessagesThinkingConversion/short/omitted         	  267244	      1373 ns/op	  68.46 MB/s	    1016 B/op	      14 allocs/op
+BenchmarkMessagesThinkingConversion/short/omitted         	  268282	      1370 ns/op	  68.61 MB/s	    1016 B/op	      14 allocs/op
+BenchmarkMessagesThinkingConversion/short/disabled        	  243028	      1528 ns/op	  81.78 MB/s	    1016 B/op	      14 allocs/op
+BenchmarkMessagesThinkingConversion/short/disabled        	  239656	      1532 ns/op	  81.61 MB/s	    1016 B/op	      14 allocs/op
+BenchmarkMessagesThinkingConversion/short/disabled        	  243543	      1531 ns/op	  81.66 MB/s	    1016 B/op	      14 allocs/op
+BenchmarkMessagesThinkingConversion/16KiB/omitted         	   12187	     29513 ns/op	 558.17 MB/s	   35825 B/op	      15 allocs/op
+BenchmarkMessagesThinkingConversion/16KiB/omitted         	   12204	     29479 ns/op	 558.81 MB/s	   35825 B/op	      15 allocs/op
+BenchmarkMessagesThinkingConversion/16KiB/omitted         	   12182	     29535 ns/op	 557.74 MB/s	   35825 B/op	      15 allocs/op
+BenchmarkMessagesThinkingConversion/16KiB/disabled        	   12127	     29669 ns/op	 556.26 MB/s	   35825 B/op	      15 allocs/op
+BenchmarkMessagesThinkingConversion/16KiB/disabled        	   12098	     29732 ns/op	 555.09 MB/s	   35825 B/op	      15 allocs/op
+BenchmarkMessagesThinkingConversion/16KiB/disabled        	   12154	     29605 ns/op	 557.47 MB/s	   35825 B/op	      15 allocs/op
+PASS
+ok  	codearts2api/internal/protocol	4.351s
