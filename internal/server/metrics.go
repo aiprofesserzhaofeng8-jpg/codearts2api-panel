@@ -9,8 +9,8 @@ import (
 
 // handleMetrics 以 Prometheus 文本格式暴露运行指标。
 //
-// 指标全部由现有的 Store.Stats / 账号池 / 模型清单即时计算，不新增计数器，
-// 因此不会给请求路径增加任何开销。
+// 指标只在采集时由现有的 Store.Stats / 账号池 / 模型清单即时计算，
+// 不在请求转发路径新增计数器。
 //
 // 鉴权与管理接口一致：设了管理密码则必须携带
 // （Prometheus 可在 scrape 配置里用 authorization.credentials 提供）；
@@ -26,9 +26,13 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 			disabled++
 		case a.Status == "ok":
 			okCount++
-			ready++
 		default:
 			errCount++
+		}
+	}
+	for _, state := range s.Store.PoolSnapshot() {
+		if state.State == "ready" {
+			ready++
 		}
 	}
 
@@ -48,7 +52,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	writeMetric(&b, "codearts2api_requests_total", "counter", "累计请求数", stats.TotalRequests)
 	writeMetric(&b, "codearts2api_requests_failed_total", "counter", "累计失败请求数", stats.FailedRequests)
 	writeMetric(&b, "codearts2api_output_chars_total", "counter", "累计输出字符数", stats.TotalCharsOut)
-	writeMetric(&b, "codearts2api_accounts_ready", "gauge", "可用账号数（启用且状态 ok）", int64(ready))
+	writeMetric(&b, "codearts2api_accounts_ready", "gauge", "账号级可调度数（启用、未暂停/冷却且有空闲并发；不含模型与分组限制）", int64(ready))
 	writeMetric(&b, "codearts2api_models", "gauge", "当前可用模型数", int64(len(s.Reg.List(nil))))
 	writeMetric(&b, "codearts2api_uptime_seconds", "gauge", "进程运行时长（秒）", uptime)
 

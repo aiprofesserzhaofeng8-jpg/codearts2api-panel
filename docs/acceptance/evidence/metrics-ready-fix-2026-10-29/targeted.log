@@ -1,0 +1,28 @@
+=== RUN   TestMetricsExposesStats
+--- PASS: TestMetricsExposesStats (0.00s)
+=== RUN   TestMetricsReadyMatchesAccountAvailability
+=== RUN   TestMetricsReadyMatchesAccountAvailability/ready
+=== RUN   TestMetricsReadyMatchesAccountAvailability/disabled
+=== RUN   TestMetricsReadyMatchesAccountAvailability/paused
+=== RUN   TestMetricsReadyMatchesAccountAvailability/cooling
+=== RUN   TestMetricsReadyMatchesAccountAvailability/cooldown_expired
+=== RUN   TestMetricsReadyMatchesAccountAvailability/default_capacity_full
+=== RUN   TestMetricsReadyMatchesAccountAvailability/override_capacity_full
+=== RUN   TestMetricsReadyMatchesAccountAvailability/override_capacity_available
+=== RUN   TestMetricsReadyMatchesAccountAvailability/historical_error_can_retry
+--- PASS: TestMetricsReadyMatchesAccountAvailability (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/ready (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/disabled (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/paused (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/cooling (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/cooldown_expired (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/default_capacity_full (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/override_capacity_full (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/override_capacity_available (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/historical_error_can_retry (0.00s)
+=== RUN   TestMetricsReadyIsGlobalNotModelSpecific
+--- PASS: TestMetricsReadyIsGlobalNotModelSpecific (0.00s)
+=== RUN   TestMetricsRequiresAdminAuth
+--- PASS: TestMetricsRequiresAdminAuth (0.00s)
+PASS
+ok  	codearts2api/internal/server	1.020s

@@ -1,0 +1,26 @@
+{
+  "before": {
+    "12": {
+      "median_ms": 0.013349,
+      "bytes_per_op": 17552,
+      "allocs_per_op": 37
+    },
+    "1000": {
+      "median_ms": 0.218373,
+      "bytes_per_op": 373925,
+      "allocs_per_op": 1028
+    }
+  },
+  "after": {
+    "12": {
+      "median_ms": 0.014695,
+      "bytes_per_op": 18666,
+      "allocs_per_op": 41
+    },
+    "1000": {
+      "median_ms": 0.323725,
+      "bytes_per_op": 505415,
+      "allocs_per_op": 1034
+    }
+  }
+}

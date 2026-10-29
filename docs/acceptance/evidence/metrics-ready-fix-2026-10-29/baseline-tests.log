@@ -1,0 +1,200 @@
+=== RUN   TestMetricsReadyMatchesAccountAvailability
+=== RUN   TestMetricsReadyMatchesAccountAvailability/ready
+=== RUN   TestMetricsReadyMatchesAccountAvailability/disabled
+=== RUN   TestMetricsReadyMatchesAccountAvailability/paused
+    metrics_test.go:115: ready should be 0: # HELP codearts2api_summary_requests_total 摘要请求数
+        # TYPE codearts2api_summary_requests_total counter
+        codearts2api_summary_requests_total 0
+        # HELP codearts2api_summary_failures_total 摘要失败数
+        # TYPE codearts2api_summary_failures_total counter
+        codearts2api_summary_failures_total 0
+        # HELP codearts2api_summary_retries_total 摘要截断重试数
+        # TYPE codearts2api_summary_retries_total counter
+        codearts2api_summary_retries_total 0
+        # HELP codearts2api_truncated_requests_total 最终输出截断数
+        # TYPE codearts2api_truncated_requests_total counter
+        codearts2api_truncated_requests_total 0
+        # HELP codearts2api_requests_total 累计请求数
+        # TYPE codearts2api_requests_total counter
+        codearts2api_requests_total 0
+        # HELP codearts2api_requests_failed_total 累计失败请求数
+        # TYPE codearts2api_requests_failed_total counter
+        codearts2api_requests_failed_total 0
+        # HELP codearts2api_output_chars_total 累计输出字符数
+        # TYPE codearts2api_output_chars_total counter
+        codearts2api_output_chars_total 0
+        # HELP codearts2api_accounts_ready 可用账号数（启用且状态 ok）
+        # TYPE codearts2api_accounts_ready gauge
+        codearts2api_accounts_ready 1
+        # HELP codearts2api_models 当前可用模型数
+        # TYPE codearts2api_models gauge
+        codearts2api_models 8
+        # HELP codearts2api_uptime_seconds 进程运行时长（秒）
+        # TYPE codearts2api_uptime_seconds gauge
+        codearts2api_uptime_seconds 0
+        # HELP codearts2api_accounts 账号数（按状态）
+        # TYPE codearts2api_accounts gauge
+        codearts2api_accounts{status="ok"} 1
+        codearts2api_accounts{status="error"} 0
+        codearts2api_accounts{status="disabled"} 0
+=== RUN   TestMetricsReadyMatchesAccountAvailability/cooling
+    metrics_test.go:115: ready should be 0: # HELP codearts2api_summary_requests_total 摘要请求数
+        # TYPE codearts2api_summary_requests_total counter
+        codearts2api_summary_requests_total 0
+        # HELP codearts2api_summary_failures_total 摘要失败数
+        # TYPE codearts2api_summary_failures_total counter
+        codearts2api_summary_failures_total 0
+        # HELP codearts2api_summary_retries_total 摘要截断重试数
+        # TYPE codearts2api_summary_retries_total counter
+        codearts2api_summary_retries_total 0
+        # HELP codearts2api_truncated_requests_total 最终输出截断数
+        # TYPE codearts2api_truncated_requests_total counter
+        codearts2api_truncated_requests_total 0
+        # HELP codearts2api_requests_total 累计请求数
+        # TYPE codearts2api_requests_total counter
+        codearts2api_requests_total 0
+        # HELP codearts2api_requests_failed_total 累计失败请求数
+        # TYPE codearts2api_requests_failed_total counter
+        codearts2api_requests_failed_total 0
+        # HELP codearts2api_output_chars_total 累计输出字符数
+        # TYPE codearts2api_output_chars_total counter
+        codearts2api_output_chars_total 0
+        # HELP codearts2api_accounts_ready 可用账号数（启用且状态 ok）
+        # TYPE codearts2api_accounts_ready gauge
+        codearts2api_accounts_ready 1
+        # HELP codearts2api_models 当前可用模型数
+        # TYPE codearts2api_models gauge
+        codearts2api_models 8
+        # HELP codearts2api_uptime_seconds 进程运行时长（秒）
+        # TYPE codearts2api_uptime_seconds gauge
+        codearts2api_uptime_seconds 0
+        # HELP codearts2api_accounts 账号数（按状态）
+        # TYPE codearts2api_accounts gauge
+        codearts2api_accounts{status="ok"} 1
+        codearts2api_accounts{status="error"} 0
+        codearts2api_accounts{status="disabled"} 0
+=== RUN   TestMetricsReadyMatchesAccountAvailability/cooldown_expired
+=== RUN   TestMetricsReadyMatchesAccountAvailability/default_capacity_full
+    metrics_test.go:115: ready should be 0: # HELP codearts2api_summary_requests_total 摘要请求数
+        # TYPE codearts2api_summary_requests_total counter
+        codearts2api_summary_requests_total 0
+        # HELP codearts2api_summary_failures_total 摘要失败数
+        # TYPE codearts2api_summary_failures_total counter
+        codearts2api_summary_failures_total 0
+        # HELP codearts2api_summary_retries_total 摘要截断重试数
+        # TYPE codearts2api_summary_retries_total counter
+        codearts2api_summary_retries_total 0
+        # HELP codearts2api_truncated_requests_total 最终输出截断数
+        # TYPE codearts2api_truncated_requests_total counter
+        codearts2api_truncated_requests_total 0
+        # HELP codearts2api_requests_total 累计请求数
+        # TYPE codearts2api_requests_total counter
+        codearts2api_requests_total 0
+        # HELP codearts2api_requests_failed_total 累计失败请求数
+        # TYPE codearts2api_requests_failed_total counter
+        codearts2api_requests_failed_total 0
+        # HELP codearts2api_output_chars_total 累计输出字符数
+        # TYPE codearts2api_output_chars_total counter
+        codearts2api_output_chars_total 0
+        # HELP codearts2api_accounts_ready 可用账号数（启用且状态 ok）
+        # TYPE codearts2api_accounts_ready gauge
+        codearts2api_accounts_ready 1
+        # HELP codearts2api_models 当前可用模型数
+        # TYPE codearts2api_models gauge
+        codearts2api_models 8
+        # HELP codearts2api_uptime_seconds 进程运行时长（秒）
+        # TYPE codearts2api_uptime_seconds gauge
+        codearts2api_uptime_seconds 0
+        # HELP codearts2api_accounts 账号数（按状态）
+        # TYPE codearts2api_accounts gauge
+        codearts2api_accounts{status="ok"} 1
+        codearts2api_accounts{status="error"} 0
+        codearts2api_accounts{status="disabled"} 0
+=== RUN   TestMetricsReadyMatchesAccountAvailability/override_capacity_full
+    metrics_test.go:115: ready should be 0: # HELP codearts2api_summary_requests_total 摘要请求数
+        # TYPE codearts2api_summary_requests_total counter
+        codearts2api_summary_requests_total 0
+        # HELP codearts2api_summary_failures_total 摘要失败数
+        # TYPE codearts2api_summary_failures_total counter
+        codearts2api_summary_failures_total 0
+        # HELP codearts2api_summary_retries_total 摘要截断重试数
+        # TYPE codearts2api_summary_retries_total counter
+        codearts2api_summary_retries_total 0
+        # HELP codearts2api_truncated_requests_total 最终输出截断数
+        # TYPE codearts2api_truncated_requests_total counter
+        codearts2api_truncated_requests_total 0
+        # HELP codearts2api_requests_total 累计请求数
+        # TYPE codearts2api_requests_total counter
+        codearts2api_requests_total 0
+        # HELP codearts2api_requests_failed_total 累计失败请求数
+        # TYPE codearts2api_requests_failed_total counter
+        codearts2api_requests_failed_total 0
+        # HELP codearts2api_output_chars_total 累计输出字符数
+        # TYPE codearts2api_output_chars_total counter
+        codearts2api_output_chars_total 0
+        # HELP codearts2api_accounts_ready 可用账号数（启用且状态 ok）
+        # TYPE codearts2api_accounts_ready gauge
+        codearts2api_accounts_ready 1
+        # HELP codearts2api_models 当前可用模型数
+        # TYPE codearts2api_models gauge
+        codearts2api_models 8
+        # HELP codearts2api_uptime_seconds 进程运行时长（秒）
+        # TYPE codearts2api_uptime_seconds gauge
+        codearts2api_uptime_seconds 0
+        # HELP codearts2api_accounts 账号数（按状态）
+        # TYPE codearts2api_accounts gauge
+        codearts2api_accounts{status="ok"} 1
+        codearts2api_accounts{status="error"} 0
+        codearts2api_accounts{status="disabled"} 0
+=== RUN   TestMetricsReadyMatchesAccountAvailability/override_capacity_available
+=== RUN   TestMetricsReadyMatchesAccountAvailability/historical_error_can_retry
+    metrics_test.go:115: ready should be 1: # HELP codearts2api_summary_requests_total 摘要请求数
+        # TYPE codearts2api_summary_requests_total counter
+        codearts2api_summary_requests_total 0
+        # HELP codearts2api_summary_failures_total 摘要失败数
+        # TYPE codearts2api_summary_failures_total counter
+        codearts2api_summary_failures_total 0
+        # HELP codearts2api_summary_retries_total 摘要截断重试数
+        # TYPE codearts2api_summary_retries_total counter
+        codearts2api_summary_retries_total 0
+        # HELP codearts2api_truncated_requests_total 最终输出截断数
+        # TYPE codearts2api_truncated_requests_total counter
+        codearts2api_truncated_requests_total 0
+        # HELP codearts2api_requests_total 累计请求数
+        # TYPE codearts2api_requests_total counter
+        codearts2api_requests_total 0
+        # HELP codearts2api_requests_failed_total 累计失败请求数
+        # TYPE codearts2api_requests_failed_total counter
+        codearts2api_requests_failed_total 0
+        # HELP codearts2api_output_chars_total 累计输出字符数
+        # TYPE codearts2api_output_chars_total counter
+        codearts2api_output_chars_total 0
+        # HELP codearts2api_accounts_ready 可用账号数（启用且状态 ok）
+        # TYPE codearts2api_accounts_ready gauge
+        codearts2api_accounts_ready 0
+        # HELP codearts2api_models 当前可用模型数
+        # TYPE codearts2api_models gauge
+        codearts2api_models 8
+        # HELP codearts2api_uptime_seconds 进程运行时长（秒）
+        # TYPE codearts2api_uptime_seconds gauge
+        codearts2api_uptime_seconds 0
+        # HELP codearts2api_accounts 账号数（按状态）
+        # TYPE codearts2api_accounts gauge
+        codearts2api_accounts{status="ok"} 0
+        codearts2api_accounts{status="error"} 1
+        codearts2api_accounts{status="disabled"} 0
+--- FAIL: TestMetricsReadyMatchesAccountAvailability (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/ready (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/disabled (0.00s)
+    --- FAIL: TestMetricsReadyMatchesAccountAvailability/paused (0.00s)
+    --- FAIL: TestMetricsReadyMatchesAccountAvailability/cooling (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/cooldown_expired (0.00s)
+    --- FAIL: TestMetricsReadyMatchesAccountAvailability/default_capacity_full (0.00s)
+    --- FAIL: TestMetricsReadyMatchesAccountAvailability/override_capacity_full (0.00s)
+    --- PASS: TestMetricsReadyMatchesAccountAvailability/override_capacity_available (0.00s)
+    --- FAIL: TestMetricsReadyMatchesAccountAvailability/historical_error_can_retry (0.00s)
+=== RUN   TestMetricsReadyIsGlobalNotModelSpecific
+--- PASS: TestMetricsReadyIsGlobalNotModelSpecific (0.00s)
+FAIL
+FAIL	codearts2api/internal/server	0.005s
+FAIL

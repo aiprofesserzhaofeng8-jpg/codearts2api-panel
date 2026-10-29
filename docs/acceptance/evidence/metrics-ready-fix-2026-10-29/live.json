@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-10-29T15:47:22.849047+00:00",
+  "metrics_status": 200,
+  "ready": 12,
+  "pool_ready": 12,
+  "pool_states": {
+    "ready": 12
+  },
+  "settings_unchanged": true,
+  "account_count_unchanged": true,
+  "running_binary_sha256": "87ba34296ea6276343c964b1209ebe1d770d479db7ee661febbc8627f42981f3",
+  "health_status": 200,
+  "backup": "/home/white/codearts2api-panel/data/backups/before-metrics-fix-20261029-234616"
+}
