@@ -1,0 +1,33 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/server
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkReviewResponseValidation/1024-16  	  228264	      2921 ns/op	 396.07 MB/s	    1224 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/1024-16  	  239475	      2709 ns/op	 427.03 MB/s	    1224 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/1024-16  	  314677	      2772 ns/op	 417.39 MB/s	    1224 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/1048576-16         	     408	   1691454 ns/op	 620.00 MB/s	 1057620 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/1048576-16         	     440	   1399746 ns/op	 749.21 MB/s	 1057620 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/1048576-16         	     554	   1518725 ns/op	 690.52 MB/s	 1057620 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/8388608-16         	      76	   7684254 ns/op	1091.68 MB/s	 8397671 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/8388608-16         	      66	   7810133 ns/op	1074.08 MB/s	 8397687 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/8388608-16         	      67	   8132631 ns/op	1031.49 MB/s	 8397679 B/op	       3 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=false-16         	233792211	         2.571 ns/op	414941.62 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=false-16         	232440483	         2.558 ns/op	417099.42 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=false-16         	235664548	         2.577 ns/op	413986.14 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=true-16          	   12939	     48072 ns/op	  22.20 MB/s	   11578 B/op	      42 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=true-16          	   12570	     49393 ns/op	  21.60 MB/s	   11561 B/op	      42 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=true-16          	   12301	     51744 ns/op	  20.62 MB/s	   11571 B/op	      42 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=false-16      	232992229	         2.570 ns/op	408082045.93 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=false-16      	235469868	         2.595 ns/op	404086180.50 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=false-16      	232675984	         2.551 ns/op	411069934.24 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=true-16       	      14	  41181037 ns/op	  25.46 MB/s	10480184 B/op	      89 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=true-16       	      14	  38503468 ns/op	  27.23 MB/s	10403662 B/op	      86 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=true-16       	      15	  38627531 ns/op	  27.15 MB/s	10272834 B/op	      86 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=false-16      	231104841	         2.536 ns/op	3307581243.31 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=false-16      	234728169	         2.587 ns/op	3243146173.39 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=false-16      	230309107	         2.564 ns/op	3271359299.73 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=true-16       	       2	 306278502 ns/op	  27.39 MB/s	83954560 B/op	      91 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=true-16       	       2	 310008265 ns/op	  27.06 MB/s	83949432 B/op	      89 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=true-16       	       2	 312673934 ns/op	  26.83 MB/s	83949376 B/op	      89 allocs/op
+PASS
+ok  	codearts2api/internal/server	23.607s

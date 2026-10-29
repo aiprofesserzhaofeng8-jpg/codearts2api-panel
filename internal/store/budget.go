@@ -143,3 +143,16 @@ func (s *Store) SetKeyBudgetAndSave(key string, b KeyBudget, reset bool) error {
 	}
 	return fmt.Errorf("密钥不存在")
 }
+
+// Search supplies no measured token or cost receipt. Do not silently bypass a
+// metered budget or poison it with an unmeasurable operation after admission.
+func (s *Store) CheckSearchBudget(key string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, k := range s.st.Keys {
+		if k.Key == key && (k.Budget.MaxTokens > 0 || k.Budget.MaxUSD > 0) {
+			return &BudgetError{"搜索未提供 Token 或费用回执，请使用仅设置请求次数预算的密钥"}
+		}
+	}
+	return nil
+}

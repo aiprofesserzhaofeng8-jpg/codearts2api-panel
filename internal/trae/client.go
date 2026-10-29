@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"codearts2api/internal/provider"
+	"codearts2api/internal/requestpolicy"
 )
 
 const (
@@ -199,15 +200,26 @@ func (c *Client) headers(r *http.Request, a Credentials, kind string) {
 	}
 }
 func errorFrom(status int, raw []byte, force bool) error {
+	upstreamStatus := status
 	var obj map[string]json.RawMessage
 	_ = json.Unmarshal(raw, &obj)
 	code := text(obj, "code", "Code", "error_code")
+	blockText := text(obj, "message", "msg", "error_msg", "Message")
+	var nested map[string]json.RawMessage
+	if json.Unmarshal(obj["error"], &nested) == nil && nested != nil {
+		blockText += " " + text(nested, "message", "msg")
+		if code == "" {
+			code = text(nested, "code", "type")
+		}
+		force = true
+	}
 	if meta := obj["ResponseMetadata"]; len(meta) > 0 {
 		var m map[string]json.RawMessage
 		_ = json.Unmarshal(meta, &m)
 		var e map[string]json.RawMessage
 		if json.Unmarshal(m["Error"], &e) == nil && e != nil {
 			code = text(e, "Code")
+			blockText += " " + text(e, "Message")
 			force = true
 		}
 	}
@@ -228,6 +240,9 @@ func errorFrom(status int, raw []byte, force bool) error {
 		status = 502
 	}
 	fault := status == 401 || code == "1001" || strings.Contains(strings.ToLower(code), "token")
+	if code == "9074" {
+		fault = false
+	}
 	if code == "1005" {
 		fault = true
 		status = 402
@@ -238,7 +253,21 @@ func errorFrom(status int, raw []byte, force bool) error {
 	if code == "11101" {
 		status = 400
 	}
-	return &provider.Error{Status: status, Code: code, AccountFault: fault, Message: fmt.Sprintf("Trae 上游请求失败（HTTP %d，业务码 %s）", status, code)}
+	blockStatus := status
+	if upstreamStatus >= 200 && upstreamStatus < 300 {
+		blockStatus = 400
+	}
+	canBeContent := (upstreamStatus == 400 || upstreamStatus == 403 || upstreamStatus >= 200 && upstreamStatus < 300) && !fault && code != "9074" && code != "2001"
+	blocked := canBeContent && requestpolicy.ExplicitContentBlock(blockStatus, code, blockText)
+	if blocked {
+		status = blockStatus
+		fault = false
+	}
+	message := fmt.Sprintf("Trae 上游请求失败（HTTP %d，业务码 %s）", upstreamStatus, code)
+	if code == "9074" {
+		message += "；请核对客户端来源与设备信息，该业务码不能单独证明限流"
+	}
+	return &provider.Error{Status: status, Code: code, AccountFault: fault, ContentBlocked: blocked, Message: message}
 }
 func (c *Client) request(ctx context.Context, a Credentials, kind, endpoint string, body any) (*http.Response, error) {
 	raw, err := json.Marshal(body)

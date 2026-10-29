@@ -287,6 +287,7 @@ type Account struct {
 	UserData       string `json:"user_data"` // %APPDATA%\codearts-agent
 	Enabled        bool   `json:"enabled"`
 	Paused         bool   `json:"paused"`
+	MaxInFlight    int    `json:"max_in_flight,omitempty"` // 0 inherits the pool default.
 	CooldownUntil  int64  `json:"cooldown_until,omitempty"`
 	CooldownReason string `json:"cooldown_reason,omitempty"`
 	Status         string `json:"status"`
@@ -295,10 +296,12 @@ type Account struct {
 	LastUsed       int64  `json:"last_used"`
 	Note           string `json:"note,omitempty"`
 	// 每日运营活动福利的领取记录（按本地日期去重）
-	LastClaimDate string `json:"last_claim_date,omitempty"`
-	LastClaimAt   int64  `json:"last_claim_at,omitempty"`
-	LastClaimErr  string `json:"last_claim_err,omitempty"`
-	LastClaimMsg  string `json:"last_claim_msg,omitempty"`
+	LastClaimState string `json:"last_claim_state,omitempty"`
+	NextClaimAt    int64  `json:"next_claim_at,omitempty"`
+	LastClaimDate  string `json:"last_claim_date,omitempty"`
+	LastClaimAt    int64  `json:"last_claim_at,omitempty"`
+	LastClaimErr   string `json:"last_claim_err,omitempty"`
+	LastClaimMsg   string `json:"last_claim_msg,omitempty"`
 	// 缓存的凭据（含 refresh_token 与 DPoP 私钥），用于 IDE 未运行时的续期
 	Session *Session `json:"session,omitempty"`
 }

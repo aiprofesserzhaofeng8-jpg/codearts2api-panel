@@ -114,7 +114,7 @@ git pull --ff-only
 
 1. 查看首次生成的管理员密码和 API Key。
 2. 打开面板，使用 `admin_password` 登录。
-3. 在「账号池」中打开浏览器登录窗口，生成链接并复制到另一浏览器授权。
+3. 在「账号池」点击「添加账号」，选择平台和「浏览器授权」，点击下一步，再生成链接并复制到另一浏览器授权。
 4. 粘贴最终回调地址，提交授权信息，核对账号预览后确认保存。
 5. 刷新模型目录，使用实际可用的模型 ID；测活会消耗真实额度。
 6. 在「API 密钥」中创建客户端专用密钥，按需设置预算。
@@ -172,7 +172,7 @@ curl http://127.0.0.1:10087/v1/chat/completions \
 
 Responses 为协议转换，当前不支持原生 compact、WebSocket、`store=true` 和 `previous_response_id`。模型别名不代表对应厂商的真实模型。兼容范围和工具调用限制见 [Responses 文档](docs/RESPONSES.md)。
 
-Trae 在账号池点击「添加 Trae」，按提示粘贴授权回调或导入完整凭据，模型名使用 `trae/cn/<config_name>`。接入和验收限制见 [Trae 说明](docs/TRAE.md)。
+Trae 在账号池点击「添加账号」并选择「Trae CN / SOLO」，按提示填写设备信息和授权回调，或选择导入完整凭据，模型名使用 `trae/cn/<config_name>`。接入和验收限制见 [Trae 说明](docs/TRAE.md)。
 
 ## 客户端接入
 
@@ -191,6 +191,8 @@ python3 scripts/connect-client.py claude --url http://127.0.0.1:10087
 | 文档 | 内容 |
 | --- | --- |
 | [面板与账号池](docs/PANEL.md) | 登录流程、账号调度、冷却和故障处理 |
+| [WorkBuddy 专用功能](docs/WORKBUDDY-FEATURES.md) | 联网搜索、系统提示词、出站指纹清洗与配置 |
+| [各平台请求策略](docs/PROVIDER-FEATURES.md) | 独立提示词、清洗、搜索后端配置与维护边界 |
 | [管理与预算](docs/MANAGEMENT.md) | 管理会话、审计、凭据续期、密钥预算与恢复 |
 | [用量与价格](docs/USAGE.md) | Token 构成、USD 计价、日期查询和分页 |
 | [客户端接入](docs/CLIENTS.md) | Pi、Codex、Claude Code 配置与限制 |

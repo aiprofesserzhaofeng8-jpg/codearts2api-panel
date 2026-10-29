@@ -48,7 +48,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	}
 
 	settings := s.Store.Settings()
-	model, err := s.resolveModel(settings, req.Model)
+	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
 		writeAnthropicErr(w, apierr.From(err).Status, "invalid_request_error", err.Error())
 		return

@@ -1,5 +1,12 @@
 // Live official sign-in entry check. No account authorization or credentials entered.
 const {chromium}=require('playwright');const assert=require('node:assert/strict');
+async function chooseAccount(page, id, method='browser') {
+  if (await page.locator('#addAccountDialog').evaluate(el=>el.open) && !await page.locator('#accountChoose').isVisible()) await page.locator('#addAccountDialog').waitFor({state:'hidden'});
+  if (!await page.locator('#addAccountDialog').evaluate(el=>el.open)) await page.locator('#addAccount').click();
+  await page.locator('#'+id).click();
+  await page.locator(method==='import'?'#accountMethodImport':'#accountMethodBrowser').click();
+  await page.locator('#accountCreateNext').click();
+}
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||'chrome'});
  let sid,token;const context=await browser.newContext();
@@ -7,7 +14,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   const page=await context.newPage();await page.goto('http://127.0.0.1:10087/#accounts');
   token=await page.locator('meta[name="local-panel-session"]').getAttribute('content');
   let starts=0;page.on('request',r=>{if(r.url().endsWith('/admin/api/login/start'))starts++;});
-  await page.locator('#browserLogin').click();await page.locator('#loginPanel').waitFor({state:'visible'});
+  await chooseAccount(page,'browserLogin');await page.locator('#loginPanel').waitFor({state:'visible'});
   assert.equal(context.pages().length,1);assert.equal(starts,0);
   const response=page.waitForResponse(r=>r.url().endsWith('/admin/api/login/start'));
   await page.locator('#loginGenerate').click();sid=(await (await response).json()).session_id;

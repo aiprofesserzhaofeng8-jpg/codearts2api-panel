@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"codearts2api/internal/requestpolicy"
 )
 
 // 上游固定端点。取值来自 extensions/vscode-codebot/product.json
@@ -494,6 +496,11 @@ func IsUpstreamBusinessError(payload []byte) (msg string, status int, bad bool) 
 	msg = probe.ErrorMsg
 	if msg == "" {
 		msg = "上游返回业务错误 " + probe.ErrorCode
+	}
+	// Keep explicit policy codes through the legacy (message,status) interface;
+	// generic permission/parameter codes retain their original classification.
+	if requestpolicy.ExplicitContentBlock(statusFromCode(probe.ErrorCode), probe.ErrorCode, msg) {
+		msg = "content_policy_violation: " + msg
 	}
 	return msg, statusFromCode(probe.ErrorCode), true
 }

@@ -51,6 +51,8 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 		Preview   string `json:"preview_id"`
 		Replace   bool   `json:"replace_existing"`
 		Name      string `json:"name"`
+		MachineID string `json:"machine_id"`
+		DeviceID  string `json:"device_id"`
 	}
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 256<<10)).Decode(&body) != nil {
 		writeErr(w, 400, "登录参数无效", "invalid_request_error")
@@ -97,10 +99,20 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		s.providerLogins.mu.Unlock()
 		defer f.mu.Unlock()
-		upstream, err := login.BeginLogin(ctx, body.Scope)
+		var upstream provider.Login
+		var err error
+		status := http.StatusBadGateway
+		errType := "upstream_error"
+		if deviceLogin, ok := adapter.(provider.DeviceBrowserLogin); ok {
+			upstream, err = deviceLogin.BeginLoginWithDevice(ctx, body.Scope, body.MachineID, body.DeviceID)
+			status = http.StatusBadRequest
+			errType = "invalid_request_error"
+		} else {
+			upstream, err = login.BeginLogin(ctx, body.Scope)
+		}
 		if err != nil {
 			f.canceled = true
-			writeErr(w, 502, err.Error(), "upstream_error")
+			writeErr(w, status, err.Error(), errType)
 			return
 		}
 		f.state = upstream.State

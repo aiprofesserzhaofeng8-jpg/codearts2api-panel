@@ -104,7 +104,11 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 	s.refreshModelsIfStale(10 * time.Minute)
 
 	settings := s.Store.Settings()
-	models := s.Reg.List(settings.ModelAliases)
+	models, err := s.visibleModels(r.Context())
+	if err != nil {
+		writeErr(w, 403, err.Error(), "permission_error")
+		return
+	}
 	now := time.Now().Unix()
 
 	data := make([]map[string]any, 0, len(models))

@@ -1,0 +1,56 @@
+package server
+import (
+ "bufio";"bytes";"encoding/json";"fmt";"io";"net/http";"net/http/httptest";"strings";"sync";"testing";"time"
+ "codearts2api/internal/codearts";"codearts2api/internal/requestpolicy"
+)
+// Assessment-only candidate: inspect a small envelope; retain original bytes.
+// It is not a complete production validator and is not connected to the gateway.
+func reviewEnvelope(raw []byte)error {
+ var v struct{Error json.RawMessage `json:"error"`;Choices []struct{Message json.RawMessage `json:"message"`} `json:"choices"`}
+ if err:=json.Unmarshal(raw,&v);err!=nil{return err}
+ if len(v.Error)>0 && string(v.Error)!="null" {return fmt.Errorf("upstream error")}
+ if len(v.Choices)==0 {return fmt.Errorf("missing choices")}
+ for _,c:=range v.Choices {m:=bytes.TrimSpace(c.Message);if len(m)==0 || m[0]!='{' {return fmt.Errorf("missing message")}}
+ return nil
+}
+func TestReviewCandidateKeepsValidBytes(t *testing.T){
+ for _,raw:=range []string{
+ `{"choices":[{"message":{"role":"assistant","content":null,"tool_calls":[{"id":"call-a","type":"function","function":{"name":"read","arguments":"{\"path\":\"file\"}"}}]},"finish_reason":"tool_calls"}]}`,
+ `{"choices":[{"message":{"role":"assistant","content":null,"refusal":"cannot help"},"finish_reason":"stop"}]}`,
+ `{"choices":[{"message":{"role":"assistant","content":"partial"},"finish_reason":"length"}],"extension":{"number":9007199254740993}}`,
+ `{"choices":[{"message":{"role":"assistant","future_output":{"data":"keep me"}},"finish_reason":"future_reason"}]}`,
+ }{body:=[]byte(raw);if err:=reviewEnvelope(body);err!=nil{t.Fatal(err)};if string(body)!=raw{t.Fatal("changed valid bytes")}}
+ fmt.Println("REVIEW_VALIDATION tool-only/refusal/length/unknown-fields/large-number: accepted; bytes unchanged")
+}
+func TestReviewExistingDataMutation(t *testing.T){
+ body:=[]byte(`{"messages":[{"role":"user","content":"Keep ID 11128 exactly"},{"role":"assistant","tool_calls":[{"id":"call-a","type":"function","function":{"name":"write","arguments":"{\"content\":\"cc_version=42; keep me 11128\"}"}}]}]}`)
+ for _,p:=range []string{"workbuddy","codearts","trae"}{
+  out,err:=requestpolicy.PrepareBody(body,"passthrough","",true,p);if err!=nil{t.Fatal(err)}
+  fmt.Printf("REVIEW_SANITIZE provider=%s body=%s\n",p,out)
+  if bytes.Contains(out,[]byte("cc_version=42")){t.Fatal("recheck observed sanitizer behavior")}
+ }
+ chunks:=[][]byte{[]byte(`{"choices":[{"index":0,"delta":{"refusal":"fixture legitimate refusal"},"finish_reason":null}]}`),[]byte(`{"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}`)}
+ out,err:=codearts.AggregateSSE(chunks);if err!=nil{t.Fatal(err)}
+ fmt.Printf("REVIEW_AGGREGATE refusal_preserved=%v body=%s\n",bytes.Contains(out,[]byte("fixture legitimate refusal")),out)
+ if bytes.Contains(out,[]byte("fixture legitimate refusal")){t.Fatal("recheck observed aggregate behavior")}
+}
+func TestReviewGatewayFlushBeforeCompletion(t *testing.T){
+ release:=make(chan struct{});var once sync.Once;open:=func(){once.Do(func(){close(release)})};defer open()
+ s,key:=responseTestServer(t,func(r *http.Request)(*http.Response,error){
+  reader,writer:=io.Pipe()
+  go func(){defer writer.Close();io.WriteString(writer,"data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"FIRST\"}}]}\n\n");select{case <-release:case <-r.Context().Done():return};io.WriteString(writer,"data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")}()
+  return &http.Response{StatusCode:200,Header:http.Header{"Content-Type":[]string{"text/event-stream"}},Body:reader,Request:r},nil
+ })
+ ts:=httptest.NewServer(s.Handler());defer ts.Close()
+ client:=ts.Client();client.Timeout=2*time.Second
+ req,_:=http.NewRequest("POST",ts.URL+"/v1/chat/completions",strings.NewReader(`{"model":"test-model","stream":true,"messages":[{"role":"user","content":"hi"}]}`));req.Header.Set("Authorization","Bearer "+key)
+ start:=time.Now();got:=make(chan error,1)
+ go func(){resp,err:=client.Do(req);if err!=nil{got<-err;return};defer resp.Body.Close();scanner:=bufio.NewScanner(resp.Body);for scanner.Scan(){if strings.Contains(scanner.Text(),"FIRST"){got<-nil;open();io.Copy(io.Discard,resp.Body);return}};got<-fmt.Errorf("missing first delta")}()
+ select{case err:=<-got:if err!=nil{t.Fatal(err)};fmt.Printf("REVIEW_STREAM first_delta_before_upstream_completion=true elapsed_ms=%.3f\n",float64(time.Since(start).Microseconds())/1000);case <-time.After(time.Second):open();t.Fatal("stream buffered until completion")}
+}
+func BenchmarkReviewResponseValidation(b *testing.B){
+ for _,size:=range []int{1024,1<<20,8<<20}{raw:=[]byte(`{"choices":[{"message":{"role":"assistant","content":"`+strings.Repeat("a",size)+`"},"finish_reason":"stop"}],"usage":{"prompt_tokens":12,"completion_tokens":4}}`);b.Run(fmt.Sprint(size),func(b *testing.B){b.SetBytes(int64(len(raw)));b.ReportAllocs();for i:=0;i<b.N;i++{if err:=reviewEnvelope(raw);err!=nil{b.Fatal(err)}}})}
+}
+func BenchmarkReviewExistingRequestPolicy(b *testing.B){
+ for _,size:=range []int{1024,1<<20,8<<20}{raw:=[]byte(`{"messages":[{"role":"user","content":"`+strings.Repeat("a",size)+`"}]}`);for _,clean:=range []bool{false,true}{b.Run(fmt.Sprintf("%d/clean=%v",size,clean),func(b *testing.B){b.SetBytes(int64(len(raw)));b.ReportAllocs();for i:=0;i<b.N;i++{if _,err:=requestpolicy.PrepareBody(raw,"passthrough","",clean,"codearts");err!=nil{b.Fatal(err)}}})}}
+}

@@ -1,24 +1,32 @@
 package store
 
-import "sort"
+import (
+	"sort"
+	"time"
+)
 
 const MaxUsageRecords = 100000
 
 type UsageQuery struct {
 	Provider       string
+	Model          string
+	Protocol       string
+	Status         string
+	Location       *time.Location
 	Start, End     int64
 	Page, PageSize int
 }
 type UsagePage struct {
-	Logs     []LogEntry `json:"logs"`
-	Stats    Stats      `json:"stats"`
-	Total    int        `json:"total"`
-	Page     int        `json:"page"`
-	PageSize int        `json:"page_size"`
-	Pages    int        `json:"pages"`
-	Retained int        `json:"retained"`
-	Oldest   int64      `json:"oldest"`
-	Limit    int        `json:"retention_limit"`
+	Analysis UsageAnalysis `json:"analysis"`
+	Logs     []LogEntry    `json:"logs"`
+	Stats    Stats         `json:"stats"`
+	Total    int           `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"page_size"`
+	Pages    int           `json:"pages"`
+	Retained int           `json:"retained"`
+	Oldest   int64         `json:"oldest"`
+	Limit    int           `json:"retention_limit"`
 }
 
 // Bootstrap from surviving logs once. Usage history then has its own retention
@@ -63,10 +71,18 @@ func (s *Store) QueryUsage(q UsageQuery) UsagePage {
 		if q.Provider != "" && name != q.Provider {
 			continue
 		}
+		if q.Model != "" && e.Model != q.Model || q.Protocol != "" && e.Protocol != q.Protocol {
+			continue
+		}
+		failed := e.Status >= 400 || e.Err != ""
+		if q.Status == "success" && failed || q.Status == "error" && !failed {
+			continue
+		}
 		matched = append(matched, e)
 		sumUsageRecord(&result.Stats, e)
 	}
 	sort.SliceStable(matched, func(i, j int) bool { return matched[i].Time > matched[j].Time })
+	result.Analysis = analyzeUsage(matched, q.Location)
 	result.Total = len(matched)
 	result.Pages = max(1, (result.Total+result.PageSize-1)/result.PageSize)
 	result.Page = min(result.Page, result.Pages)

@@ -168,6 +168,22 @@ func (c *Client) headers(r *http.Request, a Credentials) {
 	r.Header.Set("X-IDE-Type", "WorkBuddy")
 	r.Header.Set("X-IDE-Version", "5.5.4")
 }
+func (c *Client) conversationHeaders(req *http.Request, sessionID, requestID string) {
+	req.Header.Set("X-Agent-Purpose", "conversation")
+	normalizeID := func(value string) string {
+		if value == "" {
+			return randomID()
+		}
+		sum := sha256.Sum256([]byte(value))
+		return hex.EncodeToString(sum[:16])
+	}
+	conv := normalizeID(sessionID)
+	request := normalizeID(requestID)
+	id := randomID()
+	for key, value := range map[string]string{"X-Conversation-ID": conv, "X-Conversation-Request-ID": request, "X-Conversation-Message-ID": id, "X-Root-Request-ID": request, "X-Request-ID": id, "X-Trace-ID": request, "X-B3-TraceId": id, "X-B3-SpanId": id[:16], "X-B3-Sampled": "1"} {
+		req.Header.Set(key, value)
+	}
+}
 func upstreamError(status int, raw []byte) error {
 	var e struct {
 		Code    json.RawMessage `json:"code"`
@@ -194,6 +210,15 @@ func upstreamError(status int, raw []byte) error {
 	if status < 400 {
 		status = 400
 	}
+	blocked := false
+	lower := strings.ToLower(e.Message + " " + e.Error.Message)
+	if status == 400 || status == 403 {
+		for _, marker := range []string{"blocked by security policy", "unapproved channel", "illegal api invocation"} {
+			if strings.Contains(lower, marker) {
+				blocked = true
+			}
+		}
+	}
 	fault := status == 401 || status == 403 || code == "12153" || code == "14017"
 	if code == "6004" {
 		status = 429
@@ -205,7 +230,7 @@ func upstreamError(status int, raw []byte) error {
 		status = 404
 	}
 	pending := strings.Contains(strings.ToLower(e.Message), "login ing") || strings.Contains(strings.ToLower(e.Message), "pending") || strings.Contains(e.Message, "未登录") || strings.Contains(e.Message, "等待")
-	return &provider.Error{Status: status, Code: code, AccountFault: fault, Pending: pending, Message: fmt.Sprintf("WorkBuddy 上游拒绝请求（HTTP %d，业务码 %s）", status, code)}
+	return &provider.Error{Status: status, Code: code, AccountFault: fault && !blocked, ContentBlocked: blocked, Pending: pending, Message: fmt.Sprintf("WorkBuddy 上游拒绝请求（HTTP %d，业务码 %s）", status, code)}
 }
 func (c *Client) doJSON(ctx context.Context, a Credentials, method, endpoint string, body []byte, refresh bool) (json.RawMessage, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(body))
@@ -305,20 +330,7 @@ func (c *Client) Stream(ctx context.Context, credentials json.RawMessage, input 
 	}
 	c.headers(req, a)
 	req.Header.Set("Accept", "application/json, text/event-stream")
-	req.Header.Set("X-Agent-Purpose", "conversation")
-	normalizeID := func(value string) string {
-		if value == "" {
-			return randomID()
-		}
-		sum := sha256.Sum256([]byte(value))
-		return hex.EncodeToString(sum[:16])
-	}
-	conv := normalizeID(input.SessionID)
-	request := normalizeID(input.RequestID)
-	id := randomID()
-	for key, value := range map[string]string{"X-Conversation-ID": conv, "X-Conversation-Request-ID": request, "X-Conversation-Message-ID": id, "X-Root-Request-ID": request, "X-Request-ID": id, "X-Trace-ID": request, "X-B3-TraceId": id, "X-B3-SpanId": id[:16], "X-B3-Sampled": "1"} {
-		req.Header.Set(key, value)
-	}
+	c.conversationHeaders(req, input.SessionID, input.RequestID)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return fmt.Errorf("WorkBuddy 连接失败：%T", err)

@@ -9,7 +9,7 @@ import (
 
 func TestAdminUsageRejectsInvalidFilters(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	for _, query := range []string{"start=-1", "start=no", "start=20&end=10", "page=0", "page_size=101", "page_size=0", "page=9999999999999999999999"} {
+	for _, query := range []string{"start=-1", "start=no", "start=20&end=10", "page=0", "page_size=101", "page_size=0", "page=9999999999999999999999", "time_zone=Invalid/Zone", "status=bogus"} {
 		w := httptest.NewRecorder()
 		s.handleAdminUsage(w, httptest.NewRequest("GET", "/admin/api/usage?"+query, nil))
 		if w.Code != 400 {

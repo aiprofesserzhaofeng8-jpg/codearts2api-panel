@@ -30,6 +30,9 @@ func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.Handl
 	}
 }
 func (s *Server) checkRequestBudget(ctx context.Context, model string) error {
+	if err := s.checkGroupModel(ctx, model); err != nil {
+		return err
+	}
 	key, _ := ctx.Value(budgetKeyContext{}).(string)
 	return s.Store.CheckKeyBudgetProgress(key, model, requestAttemptDetails(ctx))
 }

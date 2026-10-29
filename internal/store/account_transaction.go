@@ -3,11 +3,40 @@ package store
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"codearts2api/internal/codearts"
 )
 
 var ErrAccountExists = errors.New("该账号已存在，请确认更新已有账号")
+
+// Persist the override atomically; a failed write must not change live admission.
+func (s *Store) SetAccountConcurrencyAndSave(id string, limit int) (bool, error) {
+	if limit < 0 || limit > 32 {
+		return false, fmt.Errorf("账号并发上限必须在 0–32 之间，0 表示使用全局默认值")
+	}
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, a := range s.st.Accounts {
+		if a.ID != id {
+			continue
+		}
+		before := a.MaxInFlight
+		a.MaxInFlight = limit
+		raw, err := json.MarshalIndent(s.st, "", "  ")
+		if err == nil {
+			err = s.writeState(raw)
+		}
+		if err != nil {
+			a.MaxInFlight = before
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
 
 func sameAccountSession(a, b *codearts.Session) bool {
 	return a != nil && b != nil && ((a.DomainID != "" && a.DomainID == b.DomainID) || (a.AccessKey != "" && a.AccessKey == b.AccessKey))

@@ -28,15 +28,17 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 			"model_health": modelHealth[a.ID],
 			"provider":     a.ProviderID(), "scope": a.Scope,
 			"paused": a.Paused, "pool": poolState[a.ID],
+			"max_in_flight":  a.MaxInFlight,
 			"cooldown_until": a.CooldownUntil, "cooldown_reason": a.CooldownReason,
 			"id": a.ID, "name": a.DisplayName(), "source": a.Source,
 			"user_data": a.UserData, "enabled": a.Enabled,
 			"status": a.Status, "note": a.Note, "last_err": a.LastErr,
 			"failures": a.Failures, "last_used": a.LastUsed,
 			"last_claim_date": a.LastClaimDate, "last_claim_at": a.LastClaimAt,
-			"last_claim_err": a.LastClaimErr,
-			"last_claim_msg": a.LastClaimMsg,
-			"claimed_today":  a.LastClaimDate == today,
+			"last_claim_err":        a.LastClaimErr,
+			"last_claim_msg":        a.LastClaimMsg,
+			"claimed_today":         a.LastClaimDate == claimDateFor(a, time.Now()),
+			"daily_claim_supported": s.dailyRewardsSupported(a), "last_claim_state": a.LastClaimState, "next_claim_at": a.NextClaimAt,
 		}
 		if a.Session != nil {
 			row["access_key"] = codearts.Mask(a.Session.AccessKey)
@@ -65,6 +67,7 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	for _, k := range keys {
 		safeKeys = append(safeKeys, map[string]any{
 			"ref": keyReference(k.Key), "key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
+			"group_id":   k.GroupID,
 			"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests, "budget": k.Budget, "budget_usage": k.BudgetUsage,
 		})
 	}
@@ -76,6 +79,7 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"today":           today,
 		"accounts":        safe,
+		"groups":          s.Store.Groups(),
 		"providers":       s.providerDescriptors(),
 		"provider_errors": s.providerModelErrors(),
 		"keys":            safeKeys,
@@ -102,6 +106,7 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		SecurityToken string `json:"security_token"`
 		SessionJSON   string `json:"session_json"`
 		ExpiresAt     int64  `json:"expires_at"`
+		MaxInFlight   *int   `json:"max_in_flight"`
 		// CredentialKind 显式声明凭据形态：留空或 "sts" 走临时凭据，
 		// "aksk" 表示 IAM 永久 AK/SK（不过期、不续期、不带 security_token）。
 		CredentialKind string `json:"credential_kind"`
@@ -112,6 +117,21 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch body.Action {
+	case "concurrency":
+		if strings.TrimSpace(body.ID) == "" || body.MaxInFlight == nil || *body.MaxInFlight < 0 || *body.MaxInFlight > 32 {
+			writeErr(w, 400, "请指定账号及 0–32 的并发上限；0 表示使用全局默认值", "invalid_request_error")
+			return
+		}
+		found, err := s.Store.SetAccountConcurrencyAndSave(body.ID, *body.MaxInFlight)
+		if err != nil {
+			writeErr(w, 500, "并发设置未保存，请检查状态文件目录权限后重试", "server_error")
+			return
+		}
+		if !found {
+			writeErr(w, 404, "账号不存在，请刷新列表", "invalid_request_error")
+			return
+		}
+		writeJSON(w, 200, map[string]any{"ok": true, "id": body.ID, "max_in_flight": *body.MaxInFlight, "pool": s.Store.PoolSnapshot()[body.ID]})
 	case "import":
 		dir := body.Dir
 		if dir == "" {
@@ -292,17 +312,25 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 		for _, k := range keys {
 			safe = append(safe, map[string]any{
 				"ref": keyReference(k.Key), "key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
+				"group_id":   k.GroupID,
 				"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests, "budget": k.Budget, "budget_usage": k.BudgetUsage,
 			})
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"keys": safe})
 	case http.MethodPost:
 		var body struct {
-			Name string `json:"name"`
+			Name    string `json:"name"`
+			GroupID string `json:"group_id"`
 		}
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		k := s.Store.AddKey(body.Name)
-		s.persist()
+		if json.NewDecoder(r.Body).Decode(&body) != nil {
+			writeErr(w, 400, "密钥参数无效", "invalid_request_error")
+			return
+		}
+		k, err := s.Store.AddKeyInGroupAndSave(body.Name, body.GroupID)
+		if err != nil {
+			writeErr(w, 400, err.Error(), "invalid_request_error")
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "key": k.Key})
 	case http.MethodDelete:
 		q := r.URL.Query()
@@ -346,6 +374,9 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
+		CodeArts          json.RawMessage   `json:"codearts"`
+		Trae              json.RawMessage   `json:"trae"`
+		WorkBuddy         json.RawMessage   `json:"workbuddy"`
 		ModelAliases      map[string]string `json:"model_aliases"`
 		Pool              json.RawMessage   `json:"pool"`
 		AutoClaim         *bool             `json:"auto_claim"`
@@ -376,9 +407,26 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		IDEVersion        *string           `json:"ide_version"`
 		Language          *string           `json:"language"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil {
 		writeErr(w, http.StatusBadRequest, "请求体解析失败", "invalid_request_error")
 		return
+	}
+	current := s.Store.Settings()
+	policies := map[string]store.ProviderSettings{}
+	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae} {
+		if len(raw) == 0 {
+			continue
+		}
+		config := current.ProviderPolicy(name)
+		if string(raw) == "null" || json.Unmarshal(raw, &config) != nil {
+			writeErr(w, 400, name+" 配置格式错误", "invalid_request_error")
+			return
+		}
+		if err := config.ValidateFor(name); err != nil {
+			writeErr(w, 400, err.Error(), "invalid_request_error")
+			return
+		}
+		policies[name] = config
 	}
 	poolConfig := s.Store.Settings().Pool
 	if len(body.Pool) > 0 {
@@ -400,6 +448,15 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.Store.UpdateSettings(func(st *store.Settings) {
+		if config, ok := policies["workbuddy"]; ok {
+			st.WorkBuddy = config
+		}
+		if config, ok := policies["codearts"]; ok {
+			st.CodeArts = config
+		}
+		if config, ok := policies["trae"]; ok {
+			st.Trae = config
+		}
 		if len(body.Pool) > 0 {
 			st.Pool = poolConfig
 		}

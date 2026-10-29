@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -23,11 +24,14 @@ import (
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	"codearts2api/internal/trae"
+	"codearts2api/internal/websearch"
 	"codearts2api/internal/workbuddy"
 )
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	Search             *websearch.Client
+	rewardRuntime      providerRuntime
 	Providers          *provider.Registry
 	providerRuntime    providerRuntime
 	providerLogins     providerLoginRuntime
@@ -61,7 +65,7 @@ type Server struct {
 // New 构造服务。
 func New(st *store.Store) *Server {
 	up := codearts.NewClient()
-	s := &Server{Store: st, Up: up, Reg: registry.New(), cache: newModelCache()}
+	s := &Server{Store: st, Up: up, Search: websearch.New(), Reg: registry.New(), cache: newModelCache()}
 	s.localPanelToken = rand.Text()
 	s.Providers = provider.NewRegistry()
 	_ = s.Providers.Register(workbuddy.New())
@@ -86,6 +90,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/providers", s.withAdminAuth(s.handleProviders))
 	mux.HandleFunc("/admin/api/provider-login", s.withAdminAuth(s.handleProviderLogin))
 	mux.HandleFunc("/admin/api/provider-import", s.withAdminAuth(s.handleProviderImport))
+	mux.HandleFunc("/admin/api/trae-device", s.withAdminAuth(s.handleTraeDevice))
 	mux.HandleFunc("/admin/api/audit", s.withAdminAuth(s.handleAudit))
 
 	// 探活
@@ -105,6 +110,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/chat/completions", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleChatCompletions))))
 	mux.HandleFunc("/v1/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
 	mux.HandleFunc("/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
+	mux.HandleFunc("/v1/search/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleSearchMessages))))
+	for _, name := range []string{provider.CodeArts, provider.WorkBuddy, provider.Trae} {
+		mux.HandleFunc("/v1/search/"+name+"/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.searchForProvider(name)))))
+	}
 	mux.HandleFunc("/v1/messages", s.withAuth(s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleAnthropicMessages))))
 
 	// 控制台 API（统一走管理鉴权 + 同源校验）
@@ -112,6 +121,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/state", s.withAdminAuth(s.handleAdminState))
 	mux.HandleFunc("/admin/api/accounts", s.withAdminAuth(s.handleAdminAccounts))
 	mux.HandleFunc("/admin/api/keys/budget", s.withAdminAuth(s.handleKeyBudget))
+	mux.HandleFunc("/admin/api/groups", s.withAdminAuth(s.handleAdminGroups))
+	mux.HandleFunc("/admin/api/keys/group", s.withAdminAuth(s.handleKeyGroup))
 	mux.HandleFunc("/admin/api/keys/reveal", s.withAdminAuth(s.handleAdminKeyReveal))
 	mux.HandleFunc("/admin/api/keys", s.withAdminAuth(s.handleAdminKeys))
 	mux.HandleFunc("/admin/api/logs", s.withAdminAuth(s.handleAdminLogs))
@@ -227,28 +238,35 @@ func IsLoopbackHost(host string) bool { return isLoopbackHost(host) }
 // 任何人都能白嫖账号额度。需要对外匿名开放时，在设置里显式打开
 // 「允许匿名调用」（allow_anonymous）。
 func (s *Server) withAuth(next http.HandlerFunc) http.HandlerFunc {
+	return s.withAuthStyle(errOpenAI, next)
+}
+func (s *Server) withAuthStyle(style errStyle, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		reject := func(message string) {
+			if style == errAnthropic {
+				writeAnthropicErr(w, 401, "authentication_error", message)
+			} else {
+				writeErr(w, 401, message, "invalid_request_error")
+			}
+		}
 		if !s.Store.HasKeys() {
 			if s.Store.Settings().AllowAnonymous || s.localDirect(r) {
 				next(w, r)
 				return
 			}
-			writeErr(w, http.StatusUnauthorized,
-				"尚未签发 API 密钥：请先在控制台创建密钥；若确实需要匿名开放，"+
-					"请在设置里打开「允许匿名调用」。",
-				"invalid_request_error")
+			reject("尚未签发 API 密钥：请先在控制台创建密钥；若确实需要匿名开放，请在设置里打开「允许匿名调用」。")
 			return
 		}
 		key := extractKey(r)
 		if key == "" {
-			writeErr(w, http.StatusUnauthorized, "缺少 API 密钥", "invalid_request_error")
+			reject("缺少 API 密钥")
 			return
 		}
 		if !s.Store.ValidKey(key) {
-			writeErr(w, http.StatusUnauthorized, "API 密钥无效或已停用", "invalid_request_error")
+			reject("API 密钥无效或已停用")
 			return
 		}
-		next(w, r)
+		next(w, r.WithContext(context.WithValue(r.Context(), groupKeyContext{}, key)))
 	}
 }
 
@@ -492,6 +510,9 @@ func (s *Server) resolveOptions() codearts.ResolveOptions {
 func sanitizedSettings(st store.Settings) map[string]any {
 	return map[string]any{
 		"pool":                   st.Pool,
+		"workbuddy":              st.WorkBuddy,
+		"codearts":               st.CodeArts,
+		"trae":                   st.Trae,
 		"model_aliases":          st.ModelAliases,
 		"default_model":          st.DefaultModel,
 		"force_model":            st.ForceModel,

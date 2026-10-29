@@ -66,6 +66,11 @@ type BrowserLogin interface {
 	CheckLogin(context.Context, string, string) (json.RawMessage, bool, error)
 }
 
+// DeviceBrowserLogin binds authorization to device identifiers supplied by the user.
+type DeviceBrowserLogin interface {
+	BeginLoginWithDevice(context.Context, string, string, string) (Login, error)
+}
+
 // CallbackLogin supports providers that return credentials to a browser's
 // loopback redirect instead of a remotely pollable device state.
 type LoginReleaser interface{ ReleaseLogin(string) }
@@ -121,14 +126,16 @@ func ModelID(name, scope, id string) string {
 }
 
 type Error struct {
-	Pending      bool
-	Status       int
-	Code         string
-	Message      string
-	AccountFault bool
+	ContentBlocked bool
+	Pending        bool
+	Status         int
+	Code           string
+	Message        string
+	AccountFault   bool
 }
 
-func (e *Error) Error() string { return e.Message }
+func (e *Error) Error() string       { return e.Message }
+func (e *Error) PromptBlocked() bool { return e.ContentBlocked }
 
 func (r *Registry) List() []Descriptor {
 	r.mu.RLock()
@@ -139,4 +146,38 @@ func (r *Registry) List() []Descriptor {
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out
+}
+
+// DailyRewards is optional. Status queries must not claim rewards.
+type RewardResult struct {
+	State   string   `json:"state"` // claimable, claimed, already_claimed, unavailable, unknown
+	Message string   `json:"message"`
+	Credits *float64 `json:"credits,omitempty"`
+}
+
+func (r RewardResult) Confirmed() bool { return r.State == "claimed" || r.State == "already_claimed" }
+
+type DailyRewards interface {
+	DailyStatus(context.Context, json.RawMessage) (RewardResult, error)
+	ClaimDaily(context.Context, json.RawMessage) (RewardResult, error)
+}
+
+// Search is an optional provider capability, independent from model inference.
+type SearchRequest struct {
+	Query                                                string
+	MaxResults                                           int
+	SessionID, RequestID, ConversationRequestID, TraceID string
+}
+type SearchResult struct {
+	Title   string `json:"title"`
+	URL     string `json:"url"`
+	Snippet string `json:"snippet,omitempty"`
+}
+type SearchOutcome struct {
+	Query        string         `json:"query"`
+	Results      []SearchResult `json:"results"`
+	TotalResults int            `json:"total_results"`
+}
+type Searcher interface {
+	Search(context.Context, json.RawMessage, SearchRequest) (*SearchOutcome, error)
 }

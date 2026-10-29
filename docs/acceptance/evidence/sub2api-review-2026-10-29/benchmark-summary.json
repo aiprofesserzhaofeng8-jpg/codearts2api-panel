@@ -1,0 +1,44 @@
+{
+  "BenchmarkReviewResponseValidation/1024": {
+    "runs": 3,
+    "median_ms": 0.0028,
+    "min_ms": 0.0027,
+    "max_ms": 0.0029,
+    "median_allocated_bytes": 1224
+  },
+  "BenchmarkReviewResponseValidation/1048576": {
+    "runs": 3,
+    "median_ms": 1.5187,
+    "min_ms": 1.3997,
+    "max_ms": 1.6915,
+    "median_allocated_bytes": 1057620
+  },
+  "BenchmarkReviewResponseValidation/8388608": {
+    "runs": 3,
+    "median_ms": 7.8101,
+    "min_ms": 7.6843,
+    "max_ms": 8.1326,
+    "median_allocated_bytes": 8397679
+  },
+  "BenchmarkReviewExistingRequestPolicy/1024/clean=true": {
+    "runs": 3,
+    "median_ms": 0.0494,
+    "min_ms": 0.0481,
+    "max_ms": 0.0517,
+    "median_allocated_bytes": 11571
+  },
+  "BenchmarkReviewExistingRequestPolicy/1048576/clean=true": {
+    "runs": 3,
+    "median_ms": 38.6275,
+    "min_ms": 38.5035,
+    "max_ms": 41.181,
+    "median_allocated_bytes": 10403662
+  },
+  "BenchmarkReviewExistingRequestPolicy/8388608/clean=true": {
+    "runs": 3,
+    "median_ms": 310.0083,
+    "min_ms": 306.2785,
+    "max_ms": 312.6739,
+    "median_allocated_bytes": 83949432
+  }
+}

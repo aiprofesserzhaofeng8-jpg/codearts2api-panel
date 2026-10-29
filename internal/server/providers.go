@@ -90,7 +90,11 @@ func (s *Server) streamProvider(ctx context.Context, acct *codearts.Account, mod
 	}
 	session, _ := ctx.Value(routingSessionKey{}).(string)
 	_, _, upstream := provider.ParseModel(model.ID)
-	return adapter.Stream(ctx, raw, provider.Request{Model: upstream, Body: body, SessionID: session, RequestID: requestID(ctx)}, func(b []byte) error { captureUsage(ctx, b); return onChunk(b) })
+	input := provider.Request{Model: upstream, Body: body, SessionID: session, RequestID: requestID(ctx)}
+	return s.runRequestPolicy(ctx, acct, model, body, func(prepared []byte, observe func()) error {
+		input.Body = prepared
+		return adapter.Stream(ctx, raw, input, func(b []byte) error { observe(); captureUsage(ctx, b); return onChunk(b) })
+	})
 }
 func (s *Server) providerDescriptors() []provider.Descriptor {
 	out := []provider.Descriptor{{ID: "codearts", Name: "华为云码道", Available: true, Login: true, Scopes: []string{"cn"}}}
@@ -113,6 +117,9 @@ func (s *Server) providerAccountError(ctx context.Context, acct *codearts.Accoun
 	var p *provider.Error
 	if !errors.As(err, &p) {
 		return false
+	}
+	if p.ContentBlocked {
+		return true
 	}
 	if p.AccountFault {
 		s.Store.MarkAccountResult(acct.ID, false, p.Error())

@@ -1,0 +1,5 @@
+=== RUN   TestAcceptanceGatewayLatencyAndCapacity
+QUALITY_PERF {"concurrency":2,"failures":0,"heap_growth_bytes":585120,"p95_ms":21.99,"peak_upstream_concurrency":2,"remaining_leases":0,"samples":100,"upstream_delay_ms":20}
+--- PASS: TestAcceptanceGatewayLatencyAndCapacity (1.06s)
+PASS
+ok  	codearts2api/internal/server	1.067s

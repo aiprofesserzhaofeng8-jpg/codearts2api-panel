@@ -15,6 +15,7 @@ import (
 
 // APIKey 是网关对外签发的调用密钥。
 type APIKey struct {
+	GroupID     string      `json:"group_id,omitempty"`
 	Budget      KeyBudget   `json:"budget"`
 	BudgetUsage BudgetUsage `json:"budget_usage"`
 	Key         string      `json:"key"`
@@ -27,6 +28,9 @@ type APIKey struct {
 
 // Settings 是运行期可调参数。
 type Settings struct {
+	CodeArts       ProviderSettings  `json:"codearts"`
+	Trae           ProviderSettings  `json:"trae"`
+	WorkBuddy      WorkBuddySettings `json:"workbuddy"`
 	Pool           PoolSettings      `json:"pool"`
 	ModelAliases   map[string]string `json:"model_aliases"`
 	DefaultModel   string            `json:"default_model"`
@@ -162,10 +166,11 @@ type Stats struct {
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 3
+const StateVersion = 4
 
 // State 是全部持久化状态。
 type State struct {
+	Groups                  []AccountGroup                    `json:"groups,omitempty"`
 	ModelHealth             map[string]map[string]ModelHealth `json:"model_health,omitempty"`
 	Audit                   []AuditEvent                      `json:"audit,omitempty"`
 	ModelPolicies           map[string]ModelPolicy            `json:"model_policies,omitempty"`
@@ -203,6 +208,9 @@ type Store struct {
 func DefaultSettings() Settings {
 	return Settings{
 		Pool:           DefaultPoolSettings(),
+		WorkBuddy:      DefaultWorkBuddySettings(),
+		CodeArts:       DefaultProviderSettings("codearts"),
+		Trae:           DefaultProviderSettings("trae"),
 		ModelAliases:   map[string]string{},
 		DefaultModel:   codearts.DefaultModel,
 		RequestTimeout: 300,
@@ -272,6 +280,8 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 3:
+			s.st.Version = 4
 		case 0:
 			s.st.Version = 1
 		case 2:
@@ -300,6 +310,15 @@ var legacyDefaultModels = map[string]bool{
 func (s *Store) applyDefaults() {
 	def := DefaultSettings()
 	st := &s.st.Settings
+	if st.CodeArts.ValidateFor("codearts") != nil {
+		st.CodeArts = def.CodeArts
+	}
+	if st.Trae.ValidateFor("trae") != nil {
+		st.Trae = def.Trae
+	}
+	if st.WorkBuddy.ValidateFor("workbuddy") != nil {
+		st.WorkBuddy = def.WorkBuddy
+	}
 	if st.Pool.Validate() != nil {
 		st.Pool = DefaultPoolSettings()
 	}
@@ -502,6 +521,7 @@ func (s *Store) upsertAccountLocked(a *codearts.Account) bool {
 		if sameExternal || sameDir || sameAK || sameDomain {
 			a.ID = ex.ID
 			a.Enabled, a.Paused = ex.Enabled, ex.Paused
+			a.MaxInFlight = ex.MaxInFlight
 			s.st.Accounts[i] = cloneAccount(a)
 			return false
 		}
@@ -859,4 +879,44 @@ func (s *Store) ClearStats() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.st.Stats = Stats{StartedAt: time.Now().Unix()}
+}
+
+// Record external daily rewards atomically. Failed/unavailable results never set
+// the completed-day marker; a retry deadline survives service restarts.
+func (s *Store) SaveDailyReward(id, date, state, message string, confirmed bool, next int64) error {
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, a := range s.st.Accounts {
+		if a.ID != id {
+			continue
+		}
+		before := *a
+		a.LastClaimAt = time.Now().Unix()
+		a.LastClaimState = state
+		a.NextClaimAt = next
+		a.LastClaimMsg = message
+		if confirmed {
+			a.LastClaimDate = date
+			a.LastClaimErr = ""
+		} else if state == "failed" {
+			a.LastClaimErr = message
+		} else {
+			a.LastClaimErr = ""
+		}
+		if err := s.hashPasswordLocked(); err != nil {
+			*a = before
+			return err
+		}
+		raw, err := json.MarshalIndent(s.st, "", "  ")
+		if err == nil {
+			err = s.writeState(raw)
+		}
+		if err != nil {
+			*a = before
+		}
+		return err
+	}
+	return fmt.Errorf("账号已删除")
 }

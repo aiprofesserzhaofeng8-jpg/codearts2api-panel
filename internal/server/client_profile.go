@@ -1,6 +1,7 @@
 package server
 
 import (
+	"codearts2api/internal/apierr"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	"encoding/json"
@@ -40,9 +41,9 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
 		return
 	}
-	model, err := s.resolveModel(s.Store.Settings(), r.URL.Query().Get("model"))
+	model, err := s.resolveModelForRequest(r, s.Store.Settings(), r.URL.Query().Get("model"))
 	if err != nil {
-		writeErr(w, 400, err.Error(), "invalid_request_error")
+		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return
 	}
 	p, ok := s.modelPolicyFor(model)

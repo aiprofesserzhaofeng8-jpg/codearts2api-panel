@@ -1,0 +1,20 @@
+package server
+import("testing";"net/http";"net/http/httptest";"io";"fmt";"codearts2api/internal/store")
+func TestReviewNonstreamInvalidUpstream(t *testing.T){
+ for _,tc:=range []struct{name,body string}{{"invalid-json","not json"},{"empty-choices",`{"choices":[]}`},{"error-envelope",`{"error":{"type":"server_error","message":"fixture failure"}}`}}{
+  t.Run(tc.name,func(t *testing.T){
+   s,key:=responseTestServer(t,func(r *http.Request)(*http.Response,error){w:=httptest.NewRecorder();w.Header().Set("Content-Type","application/json");io.WriteString(w,tc.body);return w.Result(),nil})
+   w:=responseRequest(s,key,"/v1/chat/completions",`{"model":"test-model","messages":[{"role":"user","content":"fixture"}],"stream":false}`)
+   log:=s.Store.Logs(1)[0]
+   fmt.Printf("REVIEW_INVALID name=%s http=%d log_status=%d finish=%q failed=%d body_preserved=%v\n",tc.name,w.Code,log.Status,log.FinishReason,s.Store.Stats().FailedRequests,w.Body.String()==tc.body)
+   if w.Code!=200 || log.Status!=200 || s.Store.Stats().FailedRequests!=0 {t.Fatal("observed behavior changed; update assessment")}
+  })
+ }
+}
+func TestReviewPausedReadinessMetric(t *testing.T){
+ s:=newTestServer(t,1,1);s.Store.MarkAccountResult("a",true,"");s.Store.SetAccountPaused("a",true)
+ s.Store.UpdateSettings(func(st *store.Settings){st.AdminPassword=""})
+ w:=httptest.NewRecorder();s.handleMetrics(w,httptest.NewRequest("GET","/metrics",nil))
+ a,release:=s.Store.AcquireAccountForModel("","test-model",nil);defer release()
+ fmt.Printf("REVIEW_READINESS paused_account_acquirable=%v metrics=%s\n",a!=nil,w.Body.String())
+}

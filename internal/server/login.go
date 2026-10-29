@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,26 +23,32 @@ func (s *Server) handleAdminClaim(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		ID string `json:"id"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil && err != io.EOF {
+		writeErr(w, 400, "领取请求格式无效", "invalid_request_error")
+		return
+	}
 
 	targets := s.Store.Accounts()
 	if body.ID != "" {
 		targets = nil
 		if a := s.Store.Account(body.ID); a != nil {
 			targets = append(targets, a)
+		} else {
+			writeErr(w, 404, "账号不存在", "invalid_request_error")
+			return
 		}
 	}
 	today := time.Now().Format("2006-01-02")
 	results := make([]map[string]any, 0, len(targets))
 	okCount := 0
 	for _, a := range targets {
-		if a.ProviderID() != "codearts" && body.ID == "" {
+		if body.ID == "" && (!a.Enabled || !s.dailyRewardsSupported(a)) {
 			continue
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 		msg, err := s.ClaimForAccount(ctx, a, today)
 		cancel()
-		row := map[string]any{"id": a.ID, "name": a.DisplayName(), "ok": err == nil}
+		row := map[string]any{"id": a.ID, "name": a.DisplayName(), "ok": err == nil, "provider": a.ProviderID()}
 		if err != nil {
 			row["message"] = codearts.DescribeClaimError(err)
 		} else {

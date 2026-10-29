@@ -24,6 +24,13 @@ func DefaultPoolSettings() PoolSettings {
 		RateCooldownSec: 60, BreakerThreshold: 3, BreakerCooldownSec: 300}
 }
 
+func accountMaxInFlight(a *codearts.Account, defaults PoolSettings) int {
+	if a.MaxInFlight >= 1 && a.MaxInFlight <= 32 {
+		return a.MaxInFlight
+	}
+	return defaults.MaxInFlight
+}
+
 func (p PoolSettings) Validate() error {
 	switch p.Strategy {
 	case "round_robin", "least_inflight", "sequential_exhaust":
@@ -81,8 +88,20 @@ func (s *Store) AcquireAccount(session string, exclude map[string]bool) (*codear
 }
 
 func (s *Store) AcquireAccountForModel(session, model string, exclude map[string]bool) (*codearts.Account, func()) {
+	a, release, _ := s.AcquireAccountForKey(session, model, exclude, "")
+	return a, release
+}
+
+func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]bool, key string) (*codearts.Account, func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	access, err := s.accessScopeLocked(key)
+	if err != nil {
+		return nil, func() {}, err
+	}
+	if !access.AllowsModel(model) {
+		return nil, func() {}, fmt.Errorf("分组不允许调用此模型")
+	}
 	s.initPoolLocked()
 	now, cfg := s.poolNow(), s.st.Settings.Pool
 	if !now.Before(s.pool.gcAt) {
@@ -95,10 +114,13 @@ func (s *Store) AcquireAccountForModel(session, model string, exclude map[string
 	}
 	upstream, scope, _ := provider.ParseModel(model)
 	eligible := func(a *codearts.Account) bool {
+		if access.Restricted && !access.AccountIDs[a.ID] {
+			return false
+		}
 		if a.ProviderID() != upstream || (upstream != provider.CodeArts && a.Scope != scope) {
 			return false
 		}
-		return a.Enabled && !a.Paused && !exclude[a.ID] && a.CooldownUntil <= now.Unix() && s.st.ModelHealth[a.ID][model].CooldownUntil <= now.Unix() && s.pool.inFlight[a.ID] < cfg.MaxInFlight
+		return a.Enabled && !a.Paused && !exclude[a.ID] && a.CooldownUntil <= now.Unix() && s.st.ModelHealth[a.ID][model].CooldownUntil <= now.Unix() && s.pool.inFlight[a.ID] < accountMaxInFlight(a, cfg)
 	}
 	var selected *codearts.Account
 	if session != "" && cfg.StickyTTLSec > 0 {
@@ -128,7 +150,7 @@ func (s *Store) AcquireAccountForModel(session, model string, exclude map[string
 		}
 	}
 	if selected == nil {
-		return nil, func() {}
+		return nil, func() {}, nil
 	}
 	if chosen >= 0 {
 		s.pool.cursor = chosen
@@ -164,7 +186,7 @@ func (s *Store) AcquireAccountForModel(session, model string, exclude map[string
 			}
 		})
 	}
-	return cloneAccount(selected), release
+	return cloneAccount(selected), release, nil
 }
 
 func (s *Store) ForgetSession(key, id string) {
@@ -216,7 +238,7 @@ func (s *Store) PoolSnapshot() map[string]PoolAccountState {
 	now := s.poolNow().Unix()
 	out := make(map[string]PoolAccountState, len(s.st.Accounts))
 	for _, a := range s.st.Accounts {
-		v := PoolAccountState{State: "ready", InFlight: s.pool.inFlight[a.ID], MaxInFlight: s.st.Settings.Pool.MaxInFlight, CooldownRemaining: max(0, a.CooldownUntil-now)}
+		v := PoolAccountState{State: "ready", InFlight: s.pool.inFlight[a.ID], MaxInFlight: accountMaxInFlight(a, s.st.Settings.Pool), CooldownRemaining: max(0, a.CooldownUntil-now)}
 		switch {
 		case !a.Enabled:
 			v.State = "disabled"

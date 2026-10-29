@@ -131,13 +131,16 @@ func TestTraeCallbackPreviewConfirmCancelAndReplay(t *testing.T) {
 		profiles++
 		io.WriteString(w, `{"Result":{"UserID":"trae-user","ScreenName":"Trae verified"}}`)
 	})
-	start := providerAdmin(s, `{"action":"start","provider":"trae","scope":"cn"}`)
+	start := providerAdmin(s, `{"action":"start","provider":"trae","scope":"cn","machine_id":"machine-fixture","device_id":"1234567890123456"}`)
 	if start.Code != 200 {
 		t.Fatal(start.Body.String())
 	}
 	var flow map[string]any
 	_ = json.Unmarshal(start.Body.Bytes(), &flow)
 	uri, _ := url.Parse(flow["url"].(string))
+	if uri.Query().Get("machine_id") != "machine-fixture" || uri.Query().Get("device_id") != "1234567890123456" {
+		t.Fatal("login URL discarded custom device identifiers")
+	}
 	callback := uri.Query().Get("auth_callback_url")
 	q := url.Values{"loginTraceID": {uri.Query().Get("login_trace_id")}, "userInfo": {`{"UserID":"trae-user"}`}, "userJwt": {fmt.Sprintf(`{"Token":"private-login-token","TokenExpireAt":%d}`, time.Now().Add(time.Hour).UnixMilli())}}
 	check := func(input string) *httptest.ResponseRecorder {
@@ -145,6 +148,9 @@ func TestTraeCallbackPreviewConfirmCancelAndReplay(t *testing.T) {
 	}
 	if w := check(""); w.Code != 200 || !strings.Contains(w.Body.String(), `"ready":false`) {
 		t.Fatal("empty callback should stay pending")
+	}
+	if w := check(callback + "?" + q.Encode() + "&device_id=9999999999999999"); w.Code < 400 || profiles != 0 {
+		t.Fatal("callback accepted an unrelated device")
 	}
 	w := check(callback + "?" + q.Encode())
 	if w.Code != 200 || strings.Contains(w.Body.String(), "private-login-token") {
@@ -169,9 +175,23 @@ func TestTraeCallbackPreviewConfirmCancelAndReplay(t *testing.T) {
 	if len(s.Store.Accounts()) != 1 || s.Store.Accounts()[0].ProviderID() != "trae" {
 		t.Fatal("provider account not saved")
 	}
+	var credentials trae.Credentials
+	if err := json.Unmarshal(s.Store.Accounts()[0].Credentials, &credentials); err != nil || credentials.MachineID != "machine-fixture" || credentials.DeviceID != "1234567890123456" {
+		t.Fatal("custom device identifiers not saved with the account")
+	}
 	s.Store.RemoveAccountAndSave(s.Store.Accounts()[0].ID)
 	if w := providerAdmin(s, payload); w.Code != 410 {
 		t.Fatal("deleted account resurrected")
+	}
+}
+
+func TestTraeLoginRequiresExplicitDevice(t *testing.T) {
+	s, _, _ := nativeTraeServer(t, func(w http.ResponseWriter, r *http.Request) { t.Error("invalid input reached upstream") })
+	for _, fields := range []string{``, `,"machine_id":"machine-fixture"`, `,"machine_id":"machine-fixture","device_id":"not-a-device"`} {
+		w := providerAdmin(s, `{"action":"start","provider":"trae","scope":"cn"`+fields+`}`)
+		if w.Code != 400 {
+			t.Fatalf("invalid device accepted: HTTP %d", w.Code)
+		}
 	}
 }
 func TestTraeStreamFailureCannotReplayAndUnknownUsageRemainsUnknown(t *testing.T) {

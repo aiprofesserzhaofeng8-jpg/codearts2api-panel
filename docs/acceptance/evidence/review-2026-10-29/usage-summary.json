@@ -1,0 +1,380 @@
+{
+  "source": "live read-only /admin/api/usage",
+  "collected_at": "2026-10-29T21:13:06.573973+08:00",
+  "retained": 469,
+  "all": {
+    "n": 469,
+    "http_200": 462,
+    "success": 462,
+    "failure": 7,
+    "success_pct": 98.51,
+    "http_200_with_err": 0,
+    "complete_evidence": 335,
+    "status_counts": {
+      "200": 462,
+      "400": 2,
+      "502": 2,
+      "422": 3
+    },
+    "finish_counts": {
+      "stop": 178,
+      "tool_calls": 157,
+      "missing": 131,
+      "length": 3
+    },
+    "kind_counts": {
+      "inference": 271,
+      "summary": 71,
+      "legacy_unknown": 127
+    },
+    "protocol_counts": {
+      "chat": 417,
+      "messages": 11,
+      "responses": 19,
+      "legacy_unknown": 22
+    },
+    "known_usage": 443,
+    "incomplete_usage": 4,
+    "priced": 430,
+    "input_tokens": 7754052,
+    "cached_tokens": 6283648,
+    "cache_input_pct": 81.04,
+    "attempt_metadata": 342,
+    "retried": 3,
+    "total_attempts": 345,
+    "first_attempt_success": 336,
+    "latency_success_p50_ms": 2946,
+    "latency_success_p95_ms": 18041,
+    "first": "2026-10-25T17:29:28+08:00",
+    "last": "2026-10-28T22:21:28+08:00"
+  },
+  "providers": {
+    "codearts": {
+      "n": 469,
+      "http_200": 462,
+      "success": 462,
+      "failure": 7,
+      "success_pct": 98.51,
+      "http_200_with_err": 0,
+      "complete_evidence": 335,
+      "status_counts": {
+        "200": 462,
+        "400": 2,
+        "502": 2,
+        "422": 3
+      },
+      "finish_counts": {
+        "stop": 178,
+        "tool_calls": 157,
+        "missing": 131,
+        "length": 3
+      },
+      "kind_counts": {
+        "inference": 271,
+        "summary": 71,
+        "legacy_unknown": 127
+      },
+      "protocol_counts": {
+        "chat": 417,
+        "messages": 11,
+        "responses": 19,
+        "legacy_unknown": 22
+      },
+      "known_usage": 443,
+      "incomplete_usage": 4,
+      "priced": 430,
+      "input_tokens": 7754052,
+      "cached_tokens": 6283648,
+      "cache_input_pct": 81.04,
+      "attempt_metadata": 342,
+      "retried": 3,
+      "total_attempts": 345,
+      "first_attempt_success": 336,
+      "latency_success_p50_ms": 2946,
+      "latency_success_p95_ms": 18041,
+      "first": "2026-10-25T17:29:28+08:00",
+      "last": "2026-10-28T22:21:28+08:00"
+    },
+    "workbuddy": {
+      "n": 0,
+      "http_200": 0,
+      "success": 0,
+      "failure": 0,
+      "success_pct": null,
+      "http_200_with_err": 0,
+      "complete_evidence": 0,
+      "status_counts": {},
+      "finish_counts": {},
+      "kind_counts": {},
+      "protocol_counts": {},
+      "known_usage": 0,
+      "incomplete_usage": 0,
+      "priced": 0,
+      "input_tokens": 0,
+      "cached_tokens": 0,
+      "cache_input_pct": null,
+      "attempt_metadata": 0,
+      "retried": 0,
+      "total_attempts": 0,
+      "first_attempt_success": 0,
+      "latency_success_p50_ms": null,
+      "latency_success_p95_ms": null,
+      "first": null,
+      "last": null
+    },
+    "trae": {
+      "n": 0,
+      "http_200": 0,
+      "success": 0,
+      "failure": 0,
+      "success_pct": null,
+      "http_200_with_err": 0,
+      "complete_evidence": 0,
+      "status_counts": {},
+      "finish_counts": {},
+      "kind_counts": {},
+      "protocol_counts": {},
+      "known_usage": 0,
+      "incomplete_usage": 0,
+      "priced": 0,
+      "input_tokens": 0,
+      "cached_tokens": 0,
+      "cache_input_pct": null,
+      "attempt_metadata": 0,
+      "retried": 0,
+      "total_attempts": 0,
+      "first_attempt_success": 0,
+      "latency_success_p50_ms": null,
+      "latency_success_p95_ms": null,
+      "first": null,
+      "last": null
+    }
+  },
+  "since_current_deployment": {
+    "n": 0,
+    "http_200": 0,
+    "success": 0,
+    "failure": 0,
+    "success_pct": null,
+    "http_200_with_err": 0,
+    "complete_evidence": 0,
+    "status_counts": {},
+    "finish_counts": {},
+    "kind_counts": {},
+    "protocol_counts": {},
+    "known_usage": 0,
+    "incomplete_usage": 0,
+    "priced": 0,
+    "input_tokens": 0,
+    "cached_tokens": 0,
+    "cache_input_pct": null,
+    "attempt_metadata": 0,
+    "retried": 0,
+    "total_attempts": 0,
+    "first_attempt_success": 0,
+    "latency_success_p50_ms": null,
+    "latency_success_p95_ms": null,
+    "first": null,
+    "last": null
+  },
+  "models": {
+    "GLM-5.2": {
+      "n": 2,
+      "http_200": 1,
+      "success": 1,
+      "failure": 1,
+      "success_pct": 50.0,
+      "http_200_with_err": 0,
+      "complete_evidence": 0,
+      "status_counts": {
+        "200": 1,
+        "502": 1
+      },
+      "finish_counts": {
+        "missing": 2
+      },
+      "kind_counts": {
+        "legacy_unknown": 2
+      },
+      "protocol_counts": {
+        "legacy_unknown": 2
+      },
+      "known_usage": 0,
+      "incomplete_usage": 0,
+      "priced": 0,
+      "input_tokens": 0,
+      "cached_tokens": 0,
+      "cache_input_pct": null,
+      "attempt_metadata": 0,
+      "retried": 0,
+      "total_attempts": 0,
+      "first_attempt_success": 0,
+      "latency_success_p50_ms": 4272,
+      "latency_success_p95_ms": 4272,
+      "first": "2026-10-25T18:33:13+08:00",
+      "last": "2026-10-25T18:34:18+08:00"
+    },
+    "deepseek-v4.1-flash": {
+      "n": 457,
+      "http_200": 452,
+      "success": 452,
+      "failure": 5,
+      "success_pct": 98.91,
+      "http_200_with_err": 0,
+      "complete_evidence": 329,
+      "status_counts": {
+        "200": 452,
+        "502": 1,
+        "422": 3,
+        "400": 1
+      },
+      "finish_counts": {
+        "stop": 173,
+        "tool_calls": 156,
+        "missing": 125,
+        "length": 3
+      },
+      "kind_counts": {
+        "inference": 264,
+        "summary": 71,
+        "legacy_unknown": 122
+      },
+      "protocol_counts": {
+        "chat": 410,
+        "messages": 11,
+        "responses": 19,
+        "legacy_unknown": 17
+      },
+      "known_usage": 437,
+      "incomplete_usage": 3,
+      "priced": 430,
+      "input_tokens": 7744163,
+      "cached_tokens": 6277632,
+      "cache_input_pct": 81.06,
+      "attempt_metadata": 335,
+      "retried": 2,
+      "total_attempts": 337,
+      "first_attempt_success": 330,
+      "latency_success_p50_ms": 2938,
+      "latency_success_p95_ms": 18715,
+      "first": "2026-10-25T17:29:28+08:00",
+      "last": "2026-10-28T19:23:55+08:00"
+    },
+    "glm-5.3": {
+      "n": 5,
+      "http_200": 5,
+      "success": 5,
+      "failure": 0,
+      "success_pct": 100.0,
+      "http_200_with_err": 0,
+      "complete_evidence": 4,
+      "status_counts": {
+        "200": 5
+      },
+      "finish_counts": {
+        "stop": 3,
+        "tool_calls": 1,
+        "missing": 1
+      },
+      "kind_counts": {
+        "inference": 4,
+        "legacy_unknown": 1
+      },
+      "protocol_counts": {
+        "chat": 4,
+        "legacy_unknown": 1
+      },
+      "known_usage": 4,
+      "incomplete_usage": 0,
+      "priced": 0,
+      "input_tokens": 6733,
+      "cached_tokens": 4480,
+      "cache_input_pct": 66.54,
+      "attempt_metadata": 4,
+      "retried": 0,
+      "total_attempts": 4,
+      "first_attempt_success": 4,
+      "latency_success_p50_ms": 2697,
+      "latency_success_p95_ms": 3715,
+      "first": "2026-10-25T18:33:40+08:00",
+      "last": "2026-10-28T22:21:28+08:00"
+    },
+    "kimi-k3": {
+      "n": 4,
+      "http_200": 3,
+      "success": 3,
+      "failure": 1,
+      "success_pct": 75.0,
+      "http_200_with_err": 0,
+      "complete_evidence": 2,
+      "status_counts": {
+        "400": 1,
+        "200": 3
+      },
+      "finish_counts": {
+        "missing": 2,
+        "stop": 2
+      },
+      "kind_counts": {
+        "inference": 3,
+        "legacy_unknown": 1
+      },
+      "protocol_counts": {
+        "chat": 3,
+        "legacy_unknown": 1
+      },
+      "known_usage": 2,
+      "incomplete_usage": 1,
+      "priced": 0,
+      "input_tokens": 3156,
+      "cached_tokens": 1536,
+      "cache_input_pct": 48.67,
+      "attempt_metadata": 3,
+      "retried": 1,
+      "total_attempts": 4,
+      "first_attempt_success": 2,
+      "latency_success_p50_ms": 4159,
+      "latency_success_p95_ms": 6818,
+      "first": "2026-10-25T18:34:13+08:00",
+      "last": "2026-10-27T23:39:17+08:00"
+    },
+    "openpangu-2.0-flash": {
+      "n": 1,
+      "http_200": 1,
+      "success": 1,
+      "failure": 0,
+      "success_pct": 100.0,
+      "http_200_with_err": 0,
+      "complete_evidence": 0,
+      "status_counts": {
+        "200": 1
+      },
+      "finish_counts": {
+        "missing": 1
+      },
+      "kind_counts": {
+        "legacy_unknown": 1
+      },
+      "protocol_counts": {
+        "legacy_unknown": 1
+      },
+      "known_usage": 0,
+      "incomplete_usage": 0,
+      "priced": 0,
+      "input_tokens": 0,
+      "cached_tokens": 0,
+      "cache_input_pct": null,
+      "attempt_metadata": 0,
+      "retried": 0,
+      "total_attempts": 0,
+      "first_attempt_success": 0,
+      "latency_success_p50_ms": 3222,
+      "latency_success_p95_ms": 3222,
+      "first": "2026-10-25T18:34:09+08:00",
+      "last": "2026-10-25T18:34:09+08:00"
+    }
+  },
+  "git_head": "683c21fd352084e3e3cdaf554f7b49bf3707a425",
+  "source_sha256": "5ece4bd0d60a517d2c3d162f738fc6360a3dc60dd8e687272577cd53cbca923a",
+  "assessment_scope": "working tree; read-only live usage; mock upstream; no real inference or search calls"
+}

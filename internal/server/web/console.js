@@ -34,13 +34,13 @@
     adminAuthenticated = false;
     document.body.classList.add("admin-locked");
     if (!$("#adminLoginDialog").open) $("#adminLoginDialog").showModal();
-    updatePwToggle();
+    updateAuthControls();
   }
   function adminLogin(password){
     return api("/admin/auth/login",{method:"POST",body:{password:password}}).then(function(){
       adminAuthenticated = true; clearStoredPw(); $("#pw").value="";
       $("#adminLoginError").textContent=""; $("#adminLoginDialog").close();
-      document.body.classList.remove("admin-locked"); updatePwToggle();
+      document.body.classList.remove("admin-locked"); updateAuthControls();
     });
   }
   function api(path, opts){
@@ -218,12 +218,12 @@
     var samples = Number(s.latency_samples || 0), requests = Number(s.total_requests || 0), failed = Number(s.failed_requests || 0);
     var measured = function(n){ return known ? usageNumber(n) : "—"; };
     var amounts=[];
-    if (s.priced_usd_requests) amounts.push(money(s.estimated_usd,"USD"));
+    if (s.priced_usd_requests) amounts.push("$"+Number(s.estimated_usd).toFixed(4));
     var cards = [
-      {kind:"requests", label:"总请求数", value:usageNumber(requests), sub:"所选范围内 · 失败 " + usageNumber(failed)},
+      {kind:"requests", label:"总请求数", value:requests.toLocaleString(), sub:"所选时间范围内"},
       {kind:"tokens", label:"总 Token", value:measured(total), sub:"输入: " + measured(input-cached) + " / 输出: " + measured(output) + " / 缓存: " + measured(cached)},
-      {kind:"cost", label:"API 估算费用", value:amounts.join(" + ") || "—", sub:"价格表估算 · 已计价 " + (s.priced_requests || 0) + "/" + requests + " 次；非华为账单"},
-      {kind:"latency", label:"平均耗时", value:samples ? (s.total_latency_ms / samples / 1000).toFixed(2) + "s" : "—", sub:samples ? "基于 " + usageNumber(samples) + " 次请求" : "等待新请求产生耗时数据"}
+      {kind:"cost", label:"估算费用", value:amounts.join(" + ") || "—", sub:"已计价 " + (s.priced_requests || 0) + " / " + requests + " 次"},
+      {kind:"latency", label:"平均耗时", value:samples ? (s.total_latency_ms / samples / 1000).toFixed(2) + "s" : "—", sub:""}
     ];
     var box = $("#kpis"); box.textContent = "";
     cards.forEach(function(item){
@@ -231,14 +231,12 @@
       var content = mk("div", "usage-kpi-content");
       content.appendChild(mk("div", "usage-label", item.label));
       content.appendChild(mk("div", "usage-value", item.value));
-      content.appendChild(mk("div", "usage-sub", item.sub));
+      if(item.sub)content.appendChild(mk("div", "usage-sub", item.sub));
       card.appendChild(content); box.appendChild(card);
     });
-    $("#usagePeriod").textContent = "全部时间 · 累计模型请求";
-    $("#usageCoverage").textContent = "Token 已覆盖 " + known.toLocaleString() + " / " + requests.toLocaleString() + " 次请求。" +
-      (known < requests ? "历史或上游未提供的用量显示为 —，不按字符数估算。" : "缓存包含在输入 Token 中，推理包含在输出 Token 中。") +
-      "";
-    if(s.partial_usage_requests) $("#usageCoverage").textContent+=" 有 "+s.partial_usage_requests+" 次请求的尝试用量不完整，统计与估价仅计已报告部分。";
+
+    $("#usageCoverage").textContent="用量已报告 "+known.toLocaleString()+" / "+requests.toLocaleString()+" 次"+(s.partial_usage_requests?" · "+s.partial_usage_requests+" 次部分报告":"");
+    $("#usageCoverage").title="缓存包含在输入 Token 中，推理包含在输出 Token 中。未报告用量显示为 —；费用按价格表估算，部分报告仅计已知用量。";
     var breakdown = $("#usageBreakdown"); breakdown.textContent = "";
     [{label:"输入（未缓存）",value:input-cached,tone:"input"},{label:"输出",value:output,tone:"output"},{label:"缓存命中",value:cached,tone:"cached"}].forEach(function(item){
       var line = mk("div", "usage-token-row " + item.tone), title = mk("div", "usage-token-label");
@@ -253,8 +251,85 @@
       var line=mk("div","usage-result "+item.tone);line.appendChild(mk("span","",item.label));line.appendChild(mk("strong","",item.value));health.appendChild(line);
     });
   }
-  var usageView={page:1,pageSize:20,start:0,end:0,label:"全部已保存记录",pages:1,total:0,busy:false,seq:0};
+  var usageAnalysis=null,usageMetrics={models:"tokens",providers:"tokens",protocols:"requests"};
+  function usageSVG(tag,attrs,text){
+    var node=document.createElementNS(document.querySelector("nav svg").namespaceURI,tag);
+    Object.keys(attrs || {}).forEach(function(key){node.setAttribute(key,String(attrs[key]));});
+    if(text!==undefined)node.textContent=text;return node;
+  }
+  function usageMetricValue(stats,metric){
+    if(metric==="requests")return Number(stats.total_requests || 0);
+    if(metric==="cost")return Number(stats.estimated_usd || 0);
+    return Number(stats.input_tokens || 0)+Number(stats.output_tokens || 0);
+  }
+  function usageMetricText(value,metric){return metric==="cost"?"$"+Number(value).toFixed(4):usageNumber(value);}
+  function usageSeriesName(name,kind){
+    var providers={codearts:"华为云码道",workbuddy:"WorkBuddy",trae:"Trae"};
+    var protocols={chat_completions:"Chat Completions",responses:"Responses",messages:"Messages",anthropic_messages:"Messages",search:"联网搜索",unknown:"未记录接口"};
+    return kind==="providers"?(providers[name] || name):kind==="protocols"?(protocols[name] || name):name;
+  }
+  function renderUsageDistribution(kind,holder){
+    var metric=usageMetrics[kind],labels={tokens:"Token",requests:"请求",cost:"估算费用"};
+    var tabs=document.querySelector('[data-usage-metric="'+kind+'"]');tabs.textContent="";
+    Object.keys(labels).forEach(function(key){var button=mk("button","",labels[key]);button.type="button";button.setAttribute("aria-pressed",String(key===metric));button.onclick=function(){usageMetrics[kind]=key;renderUsageDistribution(kind,holder);};tabs.appendChild(button);});
+    holder.textContent="";
+    var source=(usageAnalysis || {})[kind] || [];
+    var values=source.map(function(item){return {name:usageSeriesName(item.name,kind),stats:item.stats,value:usageMetricValue(item.stats,metric)};}).sort(function(a,b){return b.value-a.value;});
+    if(!values.length){holder.appendChild(mk("div","usage-chart-empty","暂无统计数据"));return;}
+    var total=values.reduce(function(sum,item){return sum+item.value;},0),ring=mk("div","usage-donut"),svg=usageSVG("svg",{viewBox:"0 0 220 220",role:"img","aria-label":labels[metric]+"分布"});
+    svg.appendChild(usageSVG("circle",{cx:110,cy:110,r:78,class:"usage-donut-track"}));
+    var center=mk("div","usage-donut-center"),value=mk("strong","",usageMetricText(total,metric)),caption=mk("span","",labels[metric]+"合计");center.appendChild(value);center.appendChild(caption);
+    var legend=mk("div","usage-chart-legend"),table=mk("table",""),head=mk("thead",""),headrow=mk("tr",""),body=mk("tbody",""),offset=0,circumference=2*Math.PI*78;
+    [kind==="models"?"模型":kind==="providers"?"上游":"接口","请求","Token","估算费用"].forEach(function(label){headrow.appendChild(mk("th","",label));});head.appendChild(headrow);table.appendChild(head);table.appendChild(body);legend.appendChild(table);
+    function reset(){value.textContent=usageMetricText(total,metric);caption.textContent=labels[metric]+"合计";ring.classList.remove("active");}
+    values.forEach(function(item,index){
+      var percent=total?item.value/total*100:0,palette="usage-palette-"+(index%8);
+      function highlight(){value.textContent=total?percent.toFixed(1)+"%":"—";caption.textContent=item.name;ring.classList.add("active");}
+      if(item.value>0){
+        var circle=usageSVG("circle",{cx:110,cy:110,r:78,class:"usage-donut-segment "+palette,"stroke-dasharray":circumference*item.value/total+" "+circumference,"stroke-dashoffset":-offset,tabindex:0});
+        circle.appendChild(usageSVG("title",{},item.name+"："+usageMetricText(item.value,metric)+"（"+percent.toFixed(1)+"%）"));
+        circle.addEventListener("mouseenter",highlight);circle.addEventListener("mouseleave",reset);circle.addEventListener("focus",highlight);circle.addEventListener("blur",reset);svg.appendChild(circle);offset+=circumference*item.value/total;
+      }
+      var entry=mk("tr","usage-chart-legend-item");entry.tabIndex=0;entry.title=item.name;entry.setAttribute("aria-label",item.name+"，"+usageNumber(item.stats.total_requests)+" 次请求");
+      var name=cell(""),dot=mk("span","usage-legend-dot");dot.classList.add(palette);name.appendChild(dot);name.appendChild(document.createTextNode(item.name));
+      [name,cell(usageNumber(item.stats.total_requests)),cell(item.stats.usage_requests?usageNumber(usageMetricValue(item.stats,"tokens")):"—"),cell(item.stats.priced_usd_requests?usageMetricText(item.stats.estimated_usd,"cost"):"—")].forEach(function(td){entry.appendChild(td);});
+      entry.addEventListener("mouseenter",highlight);entry.addEventListener("mouseleave",reset);entry.addEventListener("focus",highlight);entry.addEventListener("blur",reset);body.appendChild(entry);
+    });
+    ring.appendChild(svg);ring.appendChild(center);holder.appendChild(ring);holder.appendChild(legend);
+  }
+  function renderUsageTrend(){
+    var holder=$("#usageTrendChart");holder.textContent="";
+    var points=(usageAnalysis || {}).trend || [],days=(usageAnalysis || {}).bucket_days || 1;
+    $("#usageTrendPeriod").textContent=days>1?"每 "+days+" 天汇总":"按日统计";
+    if(!points.some(function(p){return p.stats.usage_requests>0;})){holder.appendChild(mk("div","usage-chart-empty","暂无已报告的 Token 用量"));return;}
+    var series=[{label:"输入",key:"input",palette:0},{label:"输出",key:"output",palette:1},{label:"缓存读取",key:"cached",palette:5}];
+    function amounts(p){var s=p.stats,input=Number(s.input_tokens || 0),cached=Math.min(input,Number(s.cached_tokens || 0));return {input:input-cached,output:Number(s.output_tokens || 0),cached:cached};}
+    var values=points.map(amounts),max=1;values.forEach(function(v){max=Math.max(max,v.input,v.output,v.cached);});max=Math.ceil(max/4)*4;
+    var legend=mk("div","usage-trend-legend");series.forEach(function(s){var item=mk("span",""),dot=mk("i","usage-legend-dot");dot.classList.add("usage-palette-"+s.palette);item.appendChild(dot);item.appendChild(document.createTextNode(s.label));legend.appendChild(item);});holder.appendChild(legend);
+    var svg=usageSVG("svg",{viewBox:"0 0 520 170",role:"img","aria-label":"所选范围的输入、输出与缓存 Token 趋势",preserveAspectRatio:"none"});
+    var x=function(i){return points.length===1?284:48+i*452/(points.length-1);},y=function(v){return 135-v/max*120;};
+    for(var tick=0;tick<=4;tick++){var yy=15+tick*30;svg.appendChild(usageSVG("line",{x1:48,y1:yy,x2:500,y2:yy,class:"usage-trend-grid"}));svg.appendChild(usageSVG("text",{x:40,y:yy+3,"text-anchor":"end",class:"usage-trend-label"},usageNumber(max*(4-tick)/4)));}
+    series.forEach(function(s){
+      var segments=[],current=[];points.forEach(function(p,i){if(p.stats.total_requests>0&&!p.stats.usage_requests){if(current.length)segments.push(current);current=[];return;}current.push([x(i),y(values[i][s.key])]);});if(current.length)segments.push(current);
+      segments.forEach(function(segment){var path=segment.map(function(p,i){if(!i)return "M"+p[0]+" "+p[1];var prev=segment[i-1],dx=(p[0]-prev[0])*.3;return "C"+(prev[0]+dx)+" "+prev[1]+" "+(p[0]-dx)+" "+p[1]+" "+p[0]+" "+p[1];}).join(" ");if(segment.length>1)svg.appendChild(usageSVG("path",{d:path+" L"+segment[segment.length-1][0]+" 135 L"+segment[0][0]+" 135 Z",class:"usage-trend-area usage-palette-"+s.palette}));svg.appendChild(usageSVG("path",{d:path,class:"usage-trend-line usage-palette-"+s.palette}));if(segment.length===1)svg.appendChild(usageSVG("circle",{cx:segment[0][0],cy:segment[0][1],r:3,fill:"currentColor",class:"usage-palette-"+s.palette}));});
+    });
+    var caption=mk("div","usage-trend-caption","悬停或聚焦图表查看每日用量");
+    var indices=[0,Math.floor((points.length-1)/2),points.length-1].filter(function(n,i,a){return a.indexOf(n)===i;});
+    points.forEach(function(p,i){
+      var date=new Date(p.time*1000),label=(date.getMonth()+1)+"/"+date.getDate();
+      if(indices.includes(i))svg.appendChild(usageSVG("text",{x:x(i),y:159,"text-anchor":"middle",class:"usage-trend-label"},label));
+      var width=points.length===1?452:452/(points.length-1),left=Math.max(48,x(i)-width/2),right=Math.min(500,x(i)+width/2);
+      var hit=usageSVG("rect",{x:left,y:12,width:right-left,height:128,class:"usage-trend-hover",tabindex:0});
+      var text=localDate(date)+(days>1?"起 "+days+" 天":"")+" · "+(p.stats.total_requests>0&&!p.stats.usage_requests?"用量未报告":"输入 "+usageNumber(values[i].input)+" / 输出 "+usageNumber(values[i].output)+" / 缓存 "+usageNumber(values[i].cached));
+      hit.setAttribute("aria-label",text);hit.appendChild(usageSVG("title",{},text));hit.addEventListener("mouseenter",function(){caption.textContent=text;});hit.addEventListener("focus",function(){caption.textContent=text;});svg.appendChild(hit);
+    });
+    holder.appendChild(svg);holder.appendChild(caption);
+  }
+  function renderUsageCharts(analysis){usageAnalysis=analysis || null;renderUsageDistribution("models",$("#usageModelsChart"));renderUsageDistribution("providers",$("#usageProvidersChart"));renderUsageDistribution("protocols",$("#usageProtocolsChart"));renderUsageTrend();}
+  var usageView={page:1,pageSize:20,start:0,end:0,label:"全部已保存记录",preset:"all",pages:1,total:0,busy:false,seq:0};
   function localDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+  function closeUsageDatePicker(restoreFocus){$("#usageDatePopover").classList.add("hidden");$("#usageDateToggle").setAttribute("aria-expanded","false");if(restoreFocus)$("#usageDateToggle").focus();}
+  function syncUsageDatePicker(){document.querySelectorAll("[data-usage-preset]").forEach(function(button){button.setAttribute("aria-pressed",String(button.dataset.usagePreset===$("#usagePreset").value));});}
   function setUsagePreset(){
     var preset=$("#usagePreset").value, start=new Date(), end=new Date();
     if (preset === "custom") return;
@@ -266,7 +341,7 @@
       if (preset === "lastMonth") {start=new Date(start.getFullYear(),start.getMonth()-1,1);end=new Date(end.getFullYear(),end.getMonth(),0);}
       $("#usageStart").value=localDate(start);$("#usageEnd").value=localDate(end);
     }
-    applyUsageDates();
+    return applyUsageDates();
   }
   function applyUsageDates(){
     var a=$("#usageStart").value,b=$("#usageEnd").value;
@@ -275,7 +350,7 @@
     if ((start&&!Number.isFinite(start.getTime()))||(end&&!Number.isFinite(end.getTime()))) {toast("日期格式无效","err");return;}
     if (end) end.setDate(end.getDate()+1);
     usageView.start=start?Math.floor(start.getTime()/1000):0;usageView.end=end?Math.floor(end.getTime()/1000):0;
-    usageView.label=a ? a+" 至 "+b : "全部已保存记录";usageView.page=1;
+    usageView.label=a ? a+" 至 "+b : "全部已保存记录";usageView.page=1;usageView.preset=$("#usagePreset").value;syncUsageDatePicker();closeUsageDatePicker($("#usageDatePopover").contains(document.activeElement));
     return refreshUsageLogs();
   }
   function renderUsagePagination(){
@@ -305,32 +380,47 @@
     var seq=++usageView.seq;usageView.busy=true;renderUsagePagination();
     $("#usageLogs").setAttribute("aria-busy","true");
     var query=new URLSearchParams({page:String(usageView.page),page_size:String(usageView.pageSize)});
-    if($("#usageProvider").value)query.set("provider",$("#usageProvider").value);
+    query.set("time_zone",Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+    [["provider","#usageProvider"],["model","#usageModel"],["protocol","#usageProtocol"],["status","#usageStatus"]].forEach(function(pair){if($(pair[1]).value)query.set(pair[0],$(pair[1]).value);});
     if(usageView.start)query.set("start",String(usageView.start));if(usageView.end)query.set("end",String(usageView.end));
     return api("/admin/api/usage?"+query.toString()).then(function(d){
       if(seq!==usageView.seq)return;
       usageView.page=d.page;usageView.pages=d.pages;usageView.total=d.total;
       renderUsage(d.stats || {});
-      $("#usagePeriod").textContent=usageView.label+" · 所选范围内";
-      $("#usageHistoryHint").textContent="已保存 "+d.retained+" 条用量记录"+(d.oldest?"，最早 "+fmtTime(d.oldest):"")+"。最多保留 "+d.retention_limit+" 条；升级前已清理的记录无法恢复。";
+      renderUsageCharts(d.analysis);
+      var modelFilter=$("#usageModel"),selectedModel=modelFilter.value;
+      var modelIDs=new Set(Array.from(modelFilter.options).map(function(o){return o.value;}).filter(Boolean));
+      ((d.analysis || {}).models || []).forEach(function(item){modelIDs.add(item.name);});
+      ((state.data || {}).models || []).forEach(function(item){modelIDs.add(item.id);});
+      modelFilter.textContent="";var allModels=mk("option","","全部模型");allModels.value="";modelFilter.appendChild(allModels);
+      Array.from(modelIDs).sort().forEach(function(id){var option=mk("option","",id);option.value=id;modelFilter.appendChild(option);});modelFilter.value=selectedModel;
+      $("#usagePeriod").textContent=usageView.label;
+      $("#usageHistoryHint").textContent="共 "+d.total+" 条请求记录";
+      $("#usageHistoryHint").title="已保存 "+d.retained+" 条，最多保留 "+d.retention_limit+" 条。"+(d.oldest?"最早 "+fmtTime(d.oldest):"");
       var tb=$("#usageLogs");tb.textContent="";
       var logs=d.logs || [];
-      if(!logs.length){tb.appendChild(emptyRow(10,"所选时间范围内暂无请求记录"));return;}
+      if(!logs.length){tb.appendChild(emptyRow(7,"所选条件下暂无请求记录"));return;}
       logs.forEach(function(l){
         var u=l.usage || {},known=u.known,input=Number(u.input_tokens || 0),output=Number(u.output_tokens || 0),cached=Math.min(input,Number(u.cached_tokens || 0));
-        var number=function(n){return known?(l.usage_incomplete?"≥":"")+usageNumber(n):"—";};
-        var status=cell("");status.appendChild(pill(l.status,l.status>=400?"err":"ok"));
+        var number=function(n){return known?(l.usage_incomplete?"≥":"")+n.toLocaleString():"—";};
+        var status=cell("");status.appendChild(pill(l.status,l.status>=400||l.err?"err":"ok"));
         if(l.finish_reason)status.appendChild(mk("span","usage-finish",l.finish_reason));
         if(l.request_id)status.title="请求 ID: "+l.request_id;
         if(l.err)status.title=(status.title || "")+" · "+l.err;
-        tb.appendChild(row([cell(fmtTime(l.time),"muted"),cell(l.model,"mono"),cell((l.protocol || "—")+(l.request_kind === "summary" ? " · 摘要 ×"+(l.summary_attempts || 1) : ""),"muted"),status,
-          cell(number(input-cached),"mono"),cell(number(output),"mono"),cell(number(cached),"mono"),cell(number(input+output),"mono"),cell(l.estimated_cost?money(l.estimated_cost.amount,l.estimated_cost.currency)+(l.estimated_cost.partial?"（部分）":""):"—","mono"),cell((l.latency_ms/1000).toFixed(2)+"s","mono")]));
+        var stamp=fmtTime(l.time).split(" "),date=cell("","usage-log-date");date.appendChild(mk("span","",stamp[0]));date.appendChild(mk("span","usage-log-sub",stamp[1] || ""));
+        var model=cell(""),name=mk("span","usage-log-model",l.model);name.title=l.model;model.appendChild(name);model.appendChild(mk("span","usage-log-sub",usageSeriesName(l.provider || "codearts","providers")));
+        var tokens=cell(""),counts=mk("div","usage-token-values");
+        [{n:input-cached,label:"输入（未缓存）",tone:"usage-input",path:"M7 2v10m-4-4 4 4 4-4"},{n:output,label:"输出",tone:"usage-output",path:"M7 12V2m-4 4 4-4 4 4"}].forEach(function(item){var span=mk("span",""),icon=usageSVG("svg",{viewBox:"0 0 14 14",class:item.tone,"aria-hidden":"true"});icon.appendChild(usageSVG("path",{d:item.path}));span.title=item.label;span.appendChild(icon);span.appendChild(document.createTextNode(number(item.n)));counts.appendChild(span);});
+        tokens.appendChild(counts);tokens.appendChild(mk("span","usage-cache-value","缓存 "+number(cached)));tokens.title="总 Token："+number(input+output)+(l.usage_incomplete?"（用量部分报告）":"");
+        var protocol=cell(""),badge=mk("span","usage-protocol-badge",usageSeriesName(l.protocol || "unknown","protocols"));protocol.appendChild(badge);
+        if(l.request_kind==="summary")protocol.appendChild(mk("span","usage-log-sub","摘要 ×"+(l.summary_attempts || 1)));
+        tb.appendChild(row([model,protocol,status,tokens,cell(l.estimated_cost?money(l.estimated_cost.amount,l.estimated_cost.currency)+(l.estimated_cost.partial?"（部分）":""):"—","usage-money"),cell((l.latency_ms/1000).toFixed(2)+"s"),date]));
       });
     }).catch(function(e){
       if(seq!==usageView.seq)return;
-      renderUsage({});usageView.page=1;usageView.pages=1;usageView.total=0;
+      renderUsage({});renderUsageCharts(null);usageView.page=1;usageView.pages=1;usageView.total=0;
       $("#usagePeriod").textContent=usageView.label+" · 加载失败，请重试";
-      $("#usageLogs").textContent="";$("#usageLogs").appendChild(emptyRow(10,"用量加载失败："+e.message));
+      $("#usageLogs").textContent="";$("#usageLogs").appendChild(emptyRow(7,"用量加载失败："+e.message));
     }).finally(function(){if(seq===usageView.seq){usageView.busy=false;renderUsagePagination();$("#usageLogs").setAttribute("aria-busy","false");}});
   }
 
@@ -405,15 +495,20 @@
   	var tb = $("#models");
     tb.textContent = "";
     var models = d.models || [];
+    var group=(d.groups || []).find(function(g){return g.id===$("#modelsGroupFilter").value;});
+    if(group)models=models.filter(function(m){return groupModelAllowed(m,group,d);});
+    var query=$("#modelSearch").value.trim().toLowerCase();
+    if(query)models=models.filter(function(m){return (m.id+" "+(m.name || "")).toLowerCase().includes(query);});
+    $("#modelsCount").textContent=models.length+" 个";
+    $("#modelHint").textContent=d.upstream_error?("最近一次上游刷新失败："+d.upstream_error):"";
     // 每次渲染重建元数据索引：上游清单可能删掉了模型，留着旧条目会让
     // 「测活全部」去探测已经不存在的模型，并让单行重绘拿到 undefined。
     lastModels = {};
-    if (!models.length) { tb.appendChild(emptyRow(7, "无")); return; }
+    if (!models.length) { tb.appendChild(emptyRow(7, "没有符合条件的模型")); return; }
     models.forEach(function(m){
       lastModels[m.id] = m;
       tb.appendChild(modelRow(m));
     });
-    $("#modelHint").textContent = d.upstream_error ? ("最近一次上游刷新失败：" + d.upstream_error) : "";
   }
 
   // 每个模型的测活状态：id -> {state:"idle|busy|ok|err", err}
@@ -584,7 +679,55 @@
     return c;
   }
 
+  var accountMenuTrigger=null;
+  function closeAccountMenu(restoreFocus){
+    var trigger=accountMenuTrigger,menu=$("#accountActionMenu");
+    if(menu.matches(":popover-open"))menu.hidePopover();
+    if(restoreFocus&&trigger&&trigger.isConnected)trigger.focus();
+  }
+  function accountMenuButton(label,account,items){
+    var trigger=btn(label,"xs account-menu-trigger",function(event){
+      event.preventDefault();
+      var menu=$("#accountActionMenu"),same=accountMenuTrigger===trigger&&menu.matches(":popover-open");
+      closeAccountMenu(false);if(same)return;
+      menu.textContent="";menu.setAttribute("aria-label",(account.name || "未命名账号")+" · "+label);
+      items.forEach(function(item){
+        var action=btn(item.label,"account-menu-item"+(item.danger?" danger":""),function(){
+          closeAccountMenu(true);
+          return busyable(trigger,item.run)();
+        });
+        if(item.danger)action.classList.add("account-menu-danger");
+        menu.appendChild(action);
+      });
+      accountMenuTrigger=trigger;trigger.classList.add("account-menu-open");trigger.setAttribute("aria-expanded","true");
+      menu.showPopover({source:trigger});menu.querySelector("button").focus();
+    });
+    trigger.type="button";trigger.setAttribute("aria-expanded","false");trigger.setAttribute("aria-controls","accountActionMenu");
+    // Associate the invoker so native light-dismiss does not close the menu
+    // before this button's click handler decides whether to toggle it shut.
+    trigger.popoverTargetElement=$("#accountActionMenu");
+    var chevron=usageSVG("svg",{viewBox:"0 0 24 24",class:"ico","aria-hidden":"true"});chevron.appendChild(usageSVG("path",{d:"m6 9 6 6 6-6"}));trigger.appendChild(chevron);
+    return trigger;
+  }
+  $("#accountActionMenu").addEventListener("beforetoggle",function(event){
+    if(event.newState==="closed"&&accountMenuTrigger){accountMenuTrigger.classList.remove("account-menu-open");accountMenuTrigger.setAttribute("aria-expanded","false");accountMenuTrigger=null;}
+  });
+  $("#accountActionMenu").addEventListener("keydown",function(event){
+    if(event.key==="Escape"){event.preventDefault();closeAccountMenu(true);return;}
+    var buttons=Array.from(this.querySelectorAll("button")),index=buttons.indexOf(document.activeElement);
+    if(event.key==="ArrowDown")index=(index+1)%buttons.length;
+    else if(event.key==="ArrowUp")index=(index-1+buttons.length)%buttons.length;
+    else if(event.key==="Home")index=0;
+    else if(event.key==="End")index=buttons.length-1;
+    else return;
+    event.preventDefault();buttons[index].focus();
+  });
+  $("#accountActionMenu").addEventListener("focusout",function(event){
+    if(event.relatedTarget&&!this.contains(event.relatedTarget)&&event.relatedTarget!==accountMenuTrigger)closeAccountMenu(false);
+  });
+
   function renderAccounts(d){
+    closeAccountMenu(false);
     var tb = $("#accounts");
     tb.textContent = "";
     var accts = d.accounts || [];
@@ -600,18 +743,17 @@
     var stats = $("#poolStats");
     stats.textContent = "";
     [
-      {label:"账号总数", value:accts.length, note:"已添加到账号池"},
-      {label:"可调度", value:counts.ready, note:"可接收模型请求", tone:"good"},
-      {label:"冷却中", value:counts.cooling, note:"到期后自动恢复", tone:"warning"},
-      {label:"暂停 / 停用", value:counts.paused + " / " + counts.disabled, note:"暂不参与请求调度"},
-      {label:"在途请求", value:inFlight, note:"处理中 · " + counts.busy + " 个账号已满"},
-      {label:"调度策略", value:({least_inflight:"最少并发",round_robin:"轮询",sequential_exhaust:"顺序耗尽"})[((d.settings || {}).pool || {}).strategy] || "—", note:"会话优先复用原账号", text:true}
+      {label:"账号总数", value:accts.length},
+      {label:"可调度", value:counts.ready, tone:"good"},
+      {label:"冷却中", value:counts.cooling, tone:"warning"},
+      {label:"暂停 / 停用", value:counts.paused + " / " + counts.disabled},
+      {label:"在途请求", value:inFlight},
+      {label:"调度策略", value:({least_inflight:"最少并发",round_robin:"轮询",sequential_exhaust:"顺序耗尽"})[((d.settings || {}).pool || {}).strategy] || "—", text:true}
     ].forEach(function(item){
       var stat = mk("div", "pool-stat");
       if (item.tone) stat.classList.add(item.tone);
       stat.appendChild(mk("div", item.text ? "stat-value text-value" : "stat-value", item.value));
       stat.appendChild(mk("div", "stat-label", item.label));
-      stat.appendChild(mk("div", "stat-note", item.note));
       stats.appendChild(stat);
     });
     var query = $("#accountSearch").value.trim().toLowerCase();
@@ -641,6 +783,7 @@
       if (a.has_refresh) statusCell.appendChild(document.createTextNode(" "));
       if (a.has_refresh) statusCell.appendChild(pill("可续期", "ok"));
       if (a.pool) statusCell.appendChild(mk("div", "sub", "在途 " + a.pool.in_flight + " / " + a.pool.max_in_flight));
+      statusCell.title=(a.max_in_flight>0?"独立并发上限："+a.max_in_flight:"并发上限使用全局默认值")+(statusCell.title?"；"+statusCell.title:"");
 
       var expCell = cell("", "cell-stack");
       if (a.permanent) {
@@ -657,28 +800,30 @@
       }
 
       var claimCell = cell("");
-      if (a.provider && a.provider !== "codearts") {claimCell.appendChild(mk("span","muted","未接入"));} else if (a.claimed_today) {
+      if (a.daily_claim_supported === false) {claimCell.appendChild(mk("span","muted","未接入"));} else if (a.claimed_today) {
         claimCell.appendChild(pill("已领", "ok"));
       } else {
-        claimCell.appendChild(pill("未领", "warn"));
+        claimCell.appendChild(pill(({unavailable:"暂不可领",unknown:"待确认",failed:"领取失败"})[a.last_claim_state] || (a.provider && a.provider!=="codearts" ? "待查询" : "未领"), "warn"));
       }
       if (a.last_claim_msg) claimCell.title = a.last_claim_msg;
       if (a.last_claim_err) claimCell.title = a.last_claim_err;
 
-      var ops = cell("", "actions-cell");
-      ops.appendChild(btn("模型健康", "xs", function(){openModelHealth(a);}));
-      ops.appendChild(btn("探活", "xs", function(){ checkin(a.id); }));
-      if(!a.provider || a.provider==="codearts")ops.appendChild(btn("领福利", "xs", function(){ claim(a.id); }));
-      if (a.source === "desktop") ops.appendChild(btn("重读", "xs", function(){ accountOp("reimport", {id:a.id}); }));
-      ops.appendChild(btn("导出", "xs", function(){ exportSession(a.id); }));
-      ops.appendChild(btn(a.enabled ? "停用" : "启用", "xs", function(){ accountOp("toggle", {id:a.id}); }));
-      ops.appendChild(btn(a.paused ? "恢复选号" : "暂停选号", "xs", function(){ accountOp(a.paused ? "resume" : "pause", {id:a.id}); }));
-      if (a.failures > 0 || (a.pool && a.pool.cooldown_remaining_sec > 0) || Object.keys(a.model_health || {}).some(function(m){return a.model_health[m].failures>0;})) {
-        ops.appendChild(btn("解除冷却 / 清错", "xs", function(){ accountOp("clear-errors", {id:a.id}); }));
-      }
-      ops.appendChild(btn("删除", "xs danger", function(){
-        showDeleteAccount(a);
-      }));
+      var ops = cell("", "actions-cell"),actions=mk("div","account-actions");
+      actions.appendChild(accountMenuButton("设置",a,[
+        {label:"并发设置",run:function(){openAccountConcurrency(a);}},
+        {label:"模型健康",run:function(){openModelHealth(a);}}
+      ]));
+      actions.appendChild(btn("探活", "xs", function(){return checkin(a.id);}));
+      if(a.daily_claim_supported !== false)actions.appendChild(btn(a.provider && a.provider!=="codearts" ? "每日签到" : "领福利", "xs", function(){return claim(a.id);}));
+      var more=[
+        {label:"导出",run:function(){return exportSession(a.id);}},
+        {label:a.enabled?"停用":"启用",run:function(){return accountOp("toggle",{id:a.id});}},
+        {label:a.paused?"恢复选号":"暂停选号",run:function(){return accountOp(a.paused?"resume":"pause",{id:a.id});}}
+      ];
+      if(a.source==="desktop")more.push({label:"重读",run:function(){return accountOp("reimport",{id:a.id});}});
+      if(a.failures>0 || (a.pool&&a.pool.cooldown_remaining_sec>0) || Object.keys(a.model_health || {}).some(function(m){return a.model_health[m].failures>0;}))more.push({label:"解除冷却 / 清错",run:function(){return accountOp("clear-errors",{id:a.id});}});
+      more.push({label:"删除",danger:true,run:function(){showDeleteAccount(a);}});
+      actions.appendChild(accountMenuButton("更多",a,more));ops.appendChild(actions);
 
       var identity = cell("", "account-identity");
       var who = mk("div", "account-who");
@@ -740,12 +885,13 @@
       });
       ops.appendChild(reveal);
       ops.appendChild(btn("预算", "xs",function(){openKeyBudget(k);}));
+      ops.appendChild(btn("分组", "xs",function(){openKeyGroup(k);}));
       ops.appendChild(btn(k.enabled ? "停用" : "启用", "xs", function(){ keyOp("toggle", k.ref || k.key); }));
       ops.appendChild(btn("删除", "xs danger", function(){
         if (confirm("确定删除该密钥？")) keyOp("key", k.ref || k.key);
       }));
       tb.appendChild(row([
-        keyCell, cell(k.name), st, cell(k.requests, "mono"),
+        keyCell, keyGroupCell(k), st, cell(k.requests, "mono"),
         cell(fmtTime(k.created_at), "muted"), cell(fmtTime(k.last_used), "muted"), ops
       ]));
     });
@@ -768,11 +914,26 @@
     });
   }
 
+  var providerPolicyFields=[{key:"codearts",prefix:"sCA"},{key:"workbuddy",prefix:"sWB"},{key:"trae",prefix:"sTR"}];
+  function readProviderPolicy(key){
+    var def=providerPolicyFields.find(function(item){return item.key===key;}),field=function(name){return document.getElementById(def.prefix+name);};
+    return {prompt_mode:field("PromptMode").value,prompt_text:field("PromptText").value,prompt_fallback:field("PromptFallback").checked,sanitize:field("Sanitize").checked,search_enabled:field("Search").checked,search_scope:key==="workbuddy"?field("SearchScope").value:"cn",search_backend:key==="workbuddy"?"native":"searxng",search_url:key==="workbuddy"?"":field("SearchURL").value.trim()};
+  }
   function renderSettings(s){
     // 用户正在编辑设置时不要用服务端值覆盖 —— 否则在别的页签点一下
     // 「探活」触发的 refresh() 会静默丢掉未保存的改动。
     $("#sPw").placeholder = s.admin_password_set ? "已设置，留空则不修改" : "未设置";
     if (settingsDirty) return;
+    providerPolicyFields.forEach(function(def){
+      var config=s[def.key] || {},field=function(name){return document.getElementById(def.prefix+name);};
+      field("PromptMode").value=config.prompt_mode || (def.key==="workbuddy"?"custom":"passthrough");
+      field("PromptText").value=config.prompt_text || "";
+      field("PromptFallback").checked=config.prompt_fallback!==false;
+      field("Sanitize").checked=config.sanitize!==false;
+      field("Search").checked=def.key==="workbuddy"?config.search_enabled!==false:!!config.search_enabled;
+      if(def.key==="workbuddy")field("SearchScope").value=config.search_scope || "cn";
+      else field("SearchURL").value=config.search_url || "";
+    });
     var p = s.pool || {};
     $("#sPoolStrategy").value = p.strategy || "least_inflight";
     $("#sPoolConcurrency").value = p.max_in_flight === undefined ? 2 : p.max_in_flight;
@@ -820,6 +981,7 @@
   function refresh(){
     return api("/admin/api/state").then(function(d){
       state.data = d;
+      renderGroups(d);
       renderOverview(d);
       if ($("#tab-models").classList.contains("on")) {if(!$("#pricingRows").children.length)loadPricing();if(!$("#modelPolicies").children.length)loadModelPolicies();}
       if ($("#tab-overview").classList.contains("on")) refreshUsageLogs();
@@ -828,9 +990,6 @@
       renderSettings(d.settings || {});
       if($("#tab-audit").classList.contains("on"))loadAudit();
       loadHealth();
-      var now = new Date();
-      var p2 = function(n){ return (n < 10 ? "0" : "") + n; };
-      $("#lastSync").textContent = "已更新 " + p2(now.getHours()) + ":" + p2(now.getMinutes()) + ":" + p2(now.getSeconds());
       // 账号页可见时补一次额度（首次进页签时 refresh 可能还没回来）
       if ($("#tab-accounts").classList.contains("on")) loadCredits(false);
     }).catch(function(e){
@@ -886,15 +1045,19 @@
       var results = r.results || [];
       var bad = results.filter(function(x){ return !x.ok; });
       toast("领取完成：" + (r.succeeded||0) + "/" + (r.total||0) + " 成功" +
-        (bad.length ? "\n" + bad.map(function(x){ return x.name + ": " + x.message; }).join("\n") : ""),
+        (results.length ? "\n" + results.map(function(x){ return x.name + ": " + x.message; }).join("\n") : ""),
         bad.length ? "err" : "ok");
-      return refresh();
+      // Discard balances fetched before the claim, including any in-flight query.
+      return Promise.resolve(creditLoading).then(function(){
+        results.forEach(function(x){ delete creditState[x.id]; });
+        return refresh();
+      }).then(function(){ return creditLoading; }).then(function(){ return loadCredits(true); });
     }).catch(function(e){ toast("领取失败：" + e.message, "err"); });
   }
 
   function exportSession(id){
     toast("导出中…");
-    api("/admin/api/accounts", {method:"POST", body:{action:"export", id:id}}).then(function(r){
+    return api("/admin/api/accounts", {method:"POST", body:{action:"export", id:id}}).then(function(r){
       $("#exportJSON").value = r.session_json || "";
       $("#exportMeta").textContent = "账号 " + (r.name||"") +
         " · 凭据有效期至 " + fmtTime(r.expires_at) +
@@ -936,14 +1099,14 @@
     ["loginStep1","loginStep2","loginStep3"].forEach(function(id,i){ $("#"+id).classList.toggle("active", i+1 === step); });
   }
   function setLoginBusy(busy){
-    loginBusy = busy;
+    loginBusy = busy;updateAccountCreateBusy();
     ["loginGenerate","loginSubmit","loginCheck","loginCancel","loginRestart","loginComplete"].forEach(function(id){$("#"+id).disabled=busy;});
   }
   function loginFailure(e){ $("#loginError").textContent=e.message || String(e); $("#loginError").classList.remove("hidden"); }
   function openLogin(){
     $("#loginError").classList.add("hidden");
     drawLogin();
-    if (!$("#loginPanel").open) $("#loginPanel").showModal();
+    $("#loginPanel").classList.remove("hidden");
     if(loginSid && !loginBusy){setLoginBusy(true);return pollLogin().catch(loginFailure).finally(function(){setLoginBusy(false);});}
   }
   function generateLogin(){
@@ -987,6 +1150,7 @@
   }
 
   var WELFARE_STATUS = {
+    claimable:["可签到","ok"],claimed:["已签到","ok"],already_claimed:["已签到","ok"],unavailable:["暂不可领","warn"],unknown:["待确认",""],
     ELIGIBLE:  ["可领取", "ok"],
     CLAIMED:   ["已领取", "warn"],
     CONFIRMED: ["已到账", "ok"],
@@ -1006,10 +1170,10 @@
       autoCell.appendChild(c.auto_claimable ? pill("是", "ok") : pill("否", ""));
 
       var reward = c.benefit_amount ? (c.benefit_amount + " " + (c.benefit_unit || "")) : "—";
-      var period = (c.start_time || "").slice(0,10) + " ~ " + (c.end_time || "").slice(0,10);
+      var period = c.type === "daily_checkin" ? "每日（UTC+8）" : (c.start_time || "").slice(0,10) + " ~ " + (c.end_time || "").slice(0,10);
 
       tb.appendChild(row([
-        cell(c.title), cell(c.type, "mono"), cell(reward, "mono"),
+        cell(c.title), cell(c.type === "daily_checkin" ? "签到" : c.type, "mono"), cell(reward, "mono"),
         stCell, autoCell, cell(c.trigger_event || c.trigger_mode || "—", "mono"),
         cell(period, "muted")
       ]));
@@ -1025,9 +1189,9 @@
     return api("/admin/api/welfare" + q).then(function(r){
       renderWelfare(r.campaigns);
       renderWelfareAccountPicker(r);
-      $("#welfareHint").textContent = r.claimable_count
+      $("#welfareHint").textContent = r.message || (r.claimable_count
         ? ("当前账号 " + (r.account || "") + "，可领 " + r.claimable_count + " 项")
-        : ("当前账号 " + (r.account || "") + "，暂无可领");
+        : ("当前账号 " + (r.account || "") + "，暂无可领"));
     }).catch(function(e){
       $("#welfareHint").textContent = "";
       toast("获取活动列表失败：" + e.message, "err");
@@ -1046,7 +1210,7 @@
     list.forEach(function(a){
       var o = document.createElement("option");
       o.value = a.id;
-      o.textContent = a.name + (a.permanent ? "（永久 AK/SK）" : "");
+      o.textContent = (a.provider && a.provider!=="codearts" ? a.provider+" · " : "") + a.name + (a.permanent ? "（永久 AK/SK）" : "");
       if (a.id === r.id) o.selected = true;
       sel.appendChild(o);
     });
@@ -1096,23 +1260,147 @@
     return ok;
   }
 
-  var activeProvider="workbuddy",providerSession="",providerPreviewID="",providerBusy=false;
+  var activeProvider="workbuddy",providerSession="",providerPreviewID="",providerBusy=false,providerDevices=[];
+  var accountCreatePlatform="codearts",accountCreateMethod="browser",accountCreateStep=1,accountCreateBusy=false;
+  function updateAccountCreateBusy(){
+    var busy=!!(accountCreateBusy || providerBusy || loginBusy);
+    ["#addAccountClose","#accountCreateCancel","#accountCreateBack","#accountCreateNext"].forEach(function(id){$(id).disabled=busy;});
+  }
+  function accountPlatformLabel(){return {codearts:"华为云码道",workbuddy:"WorkBuddy",trae:"Trae CN / SOLO"}[accountCreatePlatform];}
+  function renderAccountChoices(){
+    document.querySelectorAll("[data-account-platform]").forEach(function(b){var selected=b.dataset.accountPlatform===accountCreatePlatform;b.classList.toggle("selected",selected);b.setAttribute("aria-pressed",String(selected));});
+    document.querySelectorAll("[data-account-method]").forEach(function(b){var selected=b.dataset.accountMethod===accountCreateMethod;b.classList.toggle("selected",selected);b.setAttribute("aria-pressed",String(selected));});
+    $("#accountBrowserHint").textContent="通过 "+accountPlatformLabel()+" 官方页面登录并授权";
+    $("#accountImportHint").textContent=accountCreatePlatform==="codearts"?"本机客户端、STS / AK/SK 或 session JSON":"从已有客户端导入完整凭据 JSON";
+    $("#accountChoiceHint").textContent=accountCreatePlatform==="trae"&&accountCreateMethod==="browser"?"下一步填写官方客户端设备信息，再生成授权链接。":"选择平台和添加方式后继续，账号核对完成后再保存。";
+  }
+  function showAccountChoices(){
+    accountCreateStep=1;$("#accountChoose").classList.remove("hidden");$("#accountAuthorize").classList.add("hidden");
+    $("#accountCreateNext").classList.remove("hidden");$("#accountCreateBack").classList.add("hidden");
+    $("#accountChooseStep").classList.add("active");$("#accountAuthorizeStep").classList.remove("active");
+    $("#accountAuthorizeLabel").textContent="账号授权";renderAccountChoices();
+  }
+  function openAccountCreate(){
+    if(!adminAuthenticated&&!localPanelSession){showAdminLogin();return;}
+    $("#accountCreateError").textContent="";$("#accountCreateName").value="";showAccountChoices();$("#addAccountDialog").showModal();
+  }
+  function beginAccountAuthorization(){
+    if(accountCreateBusy || providerBusy || loginBusy)return;
+    $("#accountCreateError").textContent="";accountCreateStep=2;
+    $("#accountChoose").classList.add("hidden");$("#accountAuthorize").classList.remove("hidden");
+    $("#accountCreateNext").classList.add("hidden");$("#accountCreateBack").classList.remove("hidden");
+    $("#accountChooseStep").classList.remove("active");$("#accountAuthorizeStep").classList.add("active");
+    $("#accountAuthorizeLabel").textContent=accountPlatformLabel()+(accountCreateMethod==="browser"?"授权":"导入");
+    ["#providerLoginDialog","#loginPanel","#manualAccountPanel"].forEach(function(id){$(id).classList.add("hidden");});
+    var name=$("#accountCreateName").value.trim();
+    if(accountCreatePlatform==="codearts"){
+      if(accountCreateMethod==="browser")openLogin();
+      else{$("#manualAccountPanel").classList.remove("hidden");$("#manualName").value=name;$("#sessionName").value=name;}
+    }else{
+      openProvider(accountCreatePlatform);$("#providerAccountName").value=name;
+      $("#providerBrowserFields").classList.toggle("hidden",accountCreateMethod!=="browser");
+      $("#providerImportSection").classList.toggle("hidden",accountCreateMethod!=="import");
+      $("#providerImportSection").open=accountCreateMethod==="import";
+    }
+    $("#addAccountDialog").scrollTop=0;
+  }
+  function clearAccountSensitiveFields(){
+    ["#providerLoginCallback","#providerImportJSON","#loginPasted","#manualAK","#manualSK","#manualSTS","#sessionJSON","#providerDeviceJSON"].forEach(function(id){$(id).value="";});
+  }
+  function finishAccountCreation(){clearAccountSensitiveFields();$("#addAccountDialog").close();}
+  function leaveAccountCreate(close){
+    if(accountCreateBusy || providerBusy || loginBusy)return Promise.resolve();
+    accountCreateBusy=true;updateAccountCreateBusy();$("#accountCreateError").textContent="";
+    var cancel=Promise.resolve();
+    if(accountCreateStep===2){
+      if(accountCreatePlatform!=="codearts" && providerSession)cancel=providerCall("cancel");
+      if(accountCreatePlatform==="codearts" && loginSid)cancel=api("/admin/api/login/cancel",{method:"POST",body:{session_id:loginSid}});
+    }
+    return cancel.then(function(){
+      if(accountCreateStep===2){if(accountCreatePlatform==="codearts"){stopLogin();drawLogin();}else resetProviderLogin();}
+      clearAccountSensitiveFields();if(close)$("#addAccountDialog").close();else showAccountChoices();
+    }).catch(function(e){$("#accountCreateError").textContent="取消授权失败："+e.message;}).finally(function(){accountCreateBusy=false;updateAccountCreateBusy();});
+  }
+  function addAccountCredentials(action, extra){
+    if(accountCreateBusy)return Promise.resolve(false);accountCreateBusy=true;updateAccountCreateBusy();$("#accountCreateError").textContent="";
+    return api("/admin/api/accounts",{method:"POST",body:Object.assign({action:action},extra)}).then(function(){
+      toast("账号已导入","ok");finishAccountCreation();return refresh().then(function(){return true;});
+    }).catch(function(e){$("#accountCreateError").textContent="导入失败："+e.message;return false;}).finally(function(){accountCreateBusy=false;updateAccountCreateBusy();});
+  }
   function providerLabel(){return activeProvider==="trae"?"Trae":"WorkBuddy";}
-  function selectProvider(name){$("#providerLoginCallback").type=name==="trae"?"password":"text";if(activeProvider!==name){$("#providerImportJSON").value="";$("#providerAccountName").value="";$("#providerImportReplace").checked=false;}activeProvider=name;$("#providerLoginTitle").textContent="添加 "+providerLabel()+" 账号";$("#providerImportTitle").textContent="导入 "+providerLabel()+" 凭据 JSON";$("#providerScope").querySelector("option[value=global]").disabled=name==="trae";if(name==="trae")$("#providerScope").value="cn";$("#providerImportHint").textContent=name==="trae"?"支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。":"支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。";$("#providerLoginCallback").placeholder=name==="trae"?"粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）":"完成授权后可直接检查，也可粘贴带 state 的回调地址";}
-  function openProvider(name){if(!adminAuthenticated&&!localPanelSession){showAdminLogin();return;}if(providerSession&&activeProvider!==name){providerJob(function(){return providerCall("cancel").then(function(){resetProviderLogin();selectProvider(name);$("#providerLoginDialog").showModal();});});return;}selectProvider(name);$("#providerLoginDialog").showModal();}
+  function clearDeviceResults(){providerDevices=[];$("#providerDeviceChoices").classList.add("hidden");$("#providerDeviceChoice").textContent="";$("#providerDeviceStatus").textContent="";}
+  function setDeviceInputsLocked(locked){["#providerMachineID","#providerDeviceID","#providerDeviceRead","#providerDeviceApply","#providerDeviceChoice","#providerDeviceJSON"].forEach(function(id){$(id).disabled=locked;});}
+  function showDeviceChoices(devices){
+    clearDeviceResults();
+    providerDevices=devices.map(function(d){
+      if(!d || typeof d.machine_id!=="string" || typeof d.device_id!=="string" || !/^[A-Za-z0-9_.-]{1,256}$/.test(d.machine_id) || !/^[0-9]{8,32}$/.test(d.device_id))throw new Error("设备信息不完整或格式无效，请复制官方客户端读取结果");
+      return d;
+    });
+    if(!providerDevices.length)return;
+    var select=$("#providerDeviceChoice");
+    var placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="请选择要使用的客户端设备";select.appendChild(placeholder);
+    providerDevices.forEach(function(d,i){var option=document.createElement("option");option.value=String(i);option.textContent=(d.client || "Trae")+" · "+d.device_id+(d.source?" · "+d.source:"");select.appendChild(option);});
+    if(providerDevices.length===1)fillDeviceInfo(providerDevices[0]);
+    else{$("#providerMachineID").value="";$("#providerDeviceID").value="";$("#providerDeviceChoices").classList.remove("hidden");$("#providerDeviceStatus").textContent="发现多组客户端记录，请选择一组后填入。";}
+  }
+  function fillDeviceInfo(d){
+    if(providerSession)throw new Error("本次授权已绑定设备，请先关闭登录窗口再修改");
+    $("#providerMachineID").value=d.machine_id;$("#providerDeviceID").value=d.device_id;
+    $("#providerDeviceStatus").textContent="已填入 "+(d.client || "Trae")+" 的设备信息"+(d.source?"，来源："+d.source:"")+"。可继续生成登录链接。";
+  }
+  var traeDeviceWindowsCommand=String.raw`Get-ChildItem "$env:APPDATA\*Trae*\User\globalStorage\storage.json", "$env:LOCALAPPDATA\*Trae*\User\globalStorage\storage.json" -ErrorAction SilentlyContinue |
+ForEach-Object {
+  $clientName = $_.Directory.Parent.Parent.Name
+  $s = Get-Content $_.FullName -Raw | ConvertFrom-Json
+  if ($s.'telemetry.machineId' -match '^[A-Za-z0-9_.-]{1,256}$') {
+    $s.PSObject.Properties.Name |
+    Where-Object { $_ -match '^iCubeAuthInfo://icube-dc:[0-9]{8,32}$' } |
+    ForEach-Object {
+      [pscustomobject]@{client=$clientName; machine_id=$s.'telemetry.machineId'; device_id=($_ -split ':')[-1]}
+    }
+  }
+} | ConvertTo-Json
+`;
+  var traeDeviceUnixCommand=String.raw`python3 - <<'PY'
+import json, os, re, sys
+from pathlib import Path
+home = Path.home()
+roots = [Path(os.environ.get('XDG_CONFIG_HOME', home / '.config')), home / 'Library/Application Support']
+found, seen = [], set()
+for root in roots:
+    if not root.is_dir(): continue
+    for client in sorted(root.iterdir()):
+        if 'trae' not in client.name.lower() or not client.is_dir(): continue
+        path = client / 'User/globalStorage/storage.json'
+        try: data = json.loads(path.read_text(encoding='utf-8-sig'))
+        except (OSError, ValueError): continue
+        machine = data.get('telemetry.machineId', '')
+        if not isinstance(machine, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,256}', machine): continue
+        for key in data:
+            match = re.fullmatch(r'iCubeAuthInfo://icube-dc:([0-9]{8,32})', key)
+            if match and (machine, match[1]) not in seen:
+                seen.add((machine, match[1]))
+                found.append(dict(client=client.name, machine_id=machine, device_id=match[1]))
+print(json.dumps(found, ensure_ascii=False, indent=2))
+if not found: print('No registered Trae device found on this computer.', file=sys.stderr)
+PY
+`;
+  function selectProvider(name){$("#providerTraeDevice").classList.toggle("hidden",name!=="trae");$("#providerLoginCallback").type=name==="trae"?"password":"text";if(activeProvider!==name){$("#providerMachineID").value="";$("#providerDeviceID").value="";clearDeviceResults();$("#providerDeviceJSON").value="";$("#providerImportJSON").value="";$("#providerAccountName").value="";$("#providerImportReplace").checked=false;}activeProvider=name;$("#providerLoginTitle").textContent="添加 "+providerLabel()+" 账号";$("#providerImportTitle").textContent="导入 "+providerLabel()+" 凭据 JSON";$("#providerScope").querySelector("option[value=global]").disabled=name==="trae";if(name==="trae")$("#providerScope").value="cn";$("#providerImportHint").textContent=name==="trae"?"支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。":"支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。";$("#providerLoginCallback").placeholder=name==="trae"?"粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）":"完成授权后可直接检查，也可粘贴带 state 的回调地址";}
+  function openProvider(name){if(!adminAuthenticated&&!localPanelSession){showAdminLogin();return;}if(providerSession&&activeProvider!==name){providerJob(function(){return providerCall("cancel").then(function(){resetProviderLogin();selectProvider(name);$("#providerLoginDialog").classList.remove("hidden");});});return;}selectProvider(name);$("#providerLoginDialog").classList.remove("hidden");}
   function providerError(e){$("#providerLoginError").textContent=e.message || String(e);}
-  function resetProviderLogin(){providerSession="";providerPreviewID="";$("#providerLoginURL").value="";$("#providerLoginCallback").value="";$("#providerPreview").classList.add("hidden");$("#providerLoginOpen").classList.add("hidden");$("#providerLoginOpen").removeAttribute("href");$("#providerLoginCopy").disabled=true;$("#providerLoginCheck").disabled=true;$("#providerScope").disabled=false;$("#providerLoginStatus").textContent="";$("#providerLoginError").textContent="";$("#providerReplace").checked=false;}
-  function providerJob(fn){if(providerBusy)return Promise.resolve();providerBusy=true;$("#providerLoginError").textContent="";return Promise.resolve().then(fn).catch(providerError).finally(function(){providerBusy=false;});}
+  function resetProviderLogin(){providerSession="";providerPreviewID="";$("#providerLoginURL").value="";$("#providerLoginCallback").value="";$("#providerPreview").classList.add("hidden");$("#providerLoginOpen").classList.add("hidden");$("#providerLoginOpen").removeAttribute("href");$("#providerLoginCopy").disabled=true;$("#providerLoginCheck").disabled=true;$("#providerScope").disabled=false;setDeviceInputsLocked(false);$("#providerLoginStatus").textContent="";$("#providerLoginError").textContent="";$("#providerReplace").checked=false;}
+  function providerJob(fn){if(providerBusy)return Promise.resolve();providerBusy=true;updateAccountCreateBusy();$("#providerLoginError").textContent="";return Promise.resolve().then(fn).catch(providerError).finally(function(){providerBusy=false;updateAccountCreateBusy();});}
   function providerCall(action,extra){return api("/admin/api/provider-login",{method:"POST",body:Object.assign({action:action,session_id:providerSession},extra || {})});}
-  function refreshAfterProviderSave(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();toast(providerLabel()+" 账号已保存，正在刷新模型目录","ok");return api("/admin/api/models/refresh",{method:"POST"}).catch(function(e){toast("账号已保存，模型目录刷新失败："+e.message,"err");}).then(refresh);}
-  function closeProviderLogin(){if(providerBusy)return;return providerJob(function(){var cancel=providerSession?providerCall("cancel"):Promise.resolve();return cancel.then(function(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();});});}
+  function refreshAfterProviderSave(){resetProviderLogin();$("#providerImportJSON").value="";finishAccountCreation();toast(providerLabel()+" 账号已保存，正在刷新模型目录","ok");return api("/admin/api/models/refresh",{method:"POST"}).catch(function(e){toast("账号已保存，模型目录刷新失败："+e.message,"err");}).then(refresh);}
+
   function trustedProviderURL(raw){try{var u=new URL(raw);return u.protocol==="https:"&&!u.username&&!u.password&&(activeProvider==="trae"?["trae.cn"]:["workbuddy.cn","workbuddy.ai","codebuddy.cn","codebuddy.ai","tencent.com","qq.com"]).some(function(h){return u.hostname===h||u.hostname.endsWith("."+h);});}catch(e){return false;}}
   // --- events ---
-  var TAB_IDS = { accounts:1, overview:1, models:1, keys:1, logs:1, audit:1, settings:1 };
+  var TAB_IDS = { accounts:1, groups:1, overview:1, models:1, keys:1, logs:1, audit:1, settings:1 };
   var TAB_META = {
     overview: { title:"用量", hint:"请求、Token 与耗时统计", doc:"用量" },
     models: { title:"模型", hint:"模型目录、积分倍率与可用性", doc:"模型" },
     accounts: { title:"账号池", hint:"账号状态、额度与调度", doc:"账号池" },
+    groups:   { title:"账号分组", hint:"账号与模型访问范围", doc:"账号分组" },
     keys:     { title:"API 密钥", hint:"客户端接入与密钥管理", doc:"API 密钥" },
     logs:     { title:"运行日志", hint:"请求记录与错误排查", doc:"运行日志" },
     audit: { title:"管理审计", hint:"管理操作、登录与敏感信息访问记录", doc:"管理审计" },
@@ -1121,6 +1409,7 @@
   // activateTab 是唯一的页签切换入口：同步 class / aria-selected / URL hash。
   // warm=false 时只切显示、不触发额外请求（首次加载用）。
   function activateTab(name, updateHash, warm){
+    closeAccountMenu(false);
     if (!TAB_IDS[name]) return;
     if (name !== "keys" && state.data) renderKeys(state.data);
     document.querySelectorAll("nav button").forEach(function(x){
@@ -1164,17 +1453,42 @@
     activateTab(location.hash.slice(1), false);
   });
 
-  on("#workbuddyLogin",function(){openProvider("workbuddy");});
-  on("#traeLogin",function(){openProvider("trae");});
-  on("#providerLoginClose",closeProviderLogin);
-  $("#providerLoginDialog").addEventListener("cancel",function(e){e.preventDefault();closeProviderLogin();});
-  on("#providerLoginStart",function(){return providerJob(function(){var previous=providerSession?providerCall("cancel"):Promise.resolve();return previous.then(function(){resetProviderLogin();return providerCall("start",{provider:activeProvider,scope:$("#providerScope").value});}).then(function(d){if(!trustedProviderURL(d.url))throw new Error("授权链接不在所选上游官方域名范围");providerSession=d.session_id;$("#providerLoginURL").value=d.url;$("#providerLoginOpen").href=d.url;$("#providerLoginOpen").classList.remove("hidden");$("#providerScope").disabled=true;$("#providerLoginCopy").disabled=false;$("#providerLoginCheck").disabled=false;$("#providerLoginStatus").textContent=activeProvider==="trae"?"请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。":"链接已生成。请复制到另一浏览器完成授权，再点击检查。";});});});
+  on("#addAccount",openAccountCreate);
+  document.querySelectorAll("[data-account-platform]").forEach(function(button){button.addEventListener("click",function(){accountCreatePlatform=this.dataset.accountPlatform;renderAccountChoices();});});
+  document.querySelectorAll("[data-account-method]").forEach(function(button){button.addEventListener("click",function(){accountCreateMethod=this.dataset.accountMethod;renderAccountChoices();});});
+  on("#accountCreateNext",beginAccountAuthorization);
+  on("#accountCreateBack",function(){return leaveAccountCreate(false);});
+  on("#accountCreateCancel",function(){return leaveAccountCreate(true);});
+  on("#addAccountClose",function(){return leaveAccountCreate(true);});
+  $("#addAccountDialog").addEventListener("cancel",function(e){e.preventDefault();leaveAccountCreate(true);});
+  on("#providerDeviceCommand",function(){return copyText($("#providerDeviceOS").value==="windows"?traeDeviceWindowsCommand:traeDeviceUnixCommand,"读取命令已复制，请在已登录 Trae 官方客户端的电脑执行");});
+  on("#providerDeviceRead",function(){return providerJob(function(){
+    if(providerSession)throw new Error("本次授权已绑定设备，请先关闭登录窗口再读取");
+    $("#providerDeviceStatus").textContent="正在读取面板运行电脑上的 Trae 客户端记录…";
+    return api("/admin/api/trae-device").then(function(d){showDeviceChoices(d.devices || []);if(!providerDevices.length)$("#providerDeviceStatus").textContent=d.message || "未找到官方客户端设备信息，请在对应电脑执行读取命令。";if(d.warnings && d.warnings.length)$("#providerDeviceStatus").textContent+=" "+d.warnings.join("；");}).catch(function(e){$("#providerDeviceStatus").textContent="读取失败，可重试或复制命令到客户端所在电脑执行。";throw e;});
+  });});
+  $("#providerDeviceChoice").addEventListener("change",function(){var value=this.value;if(value!==""&&providerDevices[Number(value)])fillDeviceInfo(providerDevices[Number(value)]);});
+  on("#providerDeviceApply",function(){return providerJob(function(){
+    if(providerSession)throw new Error("本次授权已绑定设备，请先关闭登录窗口再修改");
+    var data;try{data=JSON.parse($("#providerDeviceJSON").value.trim());}catch(e){throw new Error("请粘贴读取命令输出的设备信息 JSON");}
+    showDeviceChoices(Array.isArray(data)?data:[data]);if(!providerDevices.length)throw new Error("命令输出没有设备信息，请确认在已登录官方客户端的电脑执行");$("#providerDeviceJSON").value="";
+  });});
+  on("#providerLoginStart",function(){return providerJob(function(){
+    var options={provider:activeProvider,scope:$("#providerScope").value};
+    if(activeProvider==="trae"){
+      options.machine_id=$("#providerMachineID").value.trim();
+      options.device_id=$("#providerDeviceID").value.trim();
+      if(!options.machine_id || !options.device_id)throw new Error("请填写 Trae 官方客户端的机器标识和设备标识");
+      if(!/^[A-Za-z0-9_.-]{1,256}$/.test(options.machine_id))throw new Error("机器标识格式无效，请复制官方客户端的完整值");
+      if(!/^[0-9]{8,32}$/.test(options.device_id))throw new Error("设备标识应为官方客户端的 8 至 32 位数字设备号");
+    }
+    var previous=providerSession?providerCall("cancel"):Promise.resolve();return previous.then(function(){resetProviderLogin();return providerCall("start",options);}).then(function(d){if(!trustedProviderURL(d.url))throw new Error("授权链接不在所选上游官方域名范围");providerSession=d.session_id;$("#providerLoginURL").value=d.url;$("#providerLoginOpen").href=d.url;$("#providerLoginOpen").classList.remove("hidden");$("#providerScope").disabled=true;setDeviceInputsLocked(true);$("#providerLoginCopy").disabled=false;$("#providerLoginCheck").disabled=false;$("#providerLoginStatus").textContent=activeProvider==="trae"?"请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。":"链接已生成。请复制到另一浏览器完成授权，再点击检查。";});});});
   on("#providerLoginCopy",function(){return copyText($("#providerLoginURL").value,providerLabel()+" 授权链接已复制");});
   on("#providerLoginCheck",function(){return providerJob(function(){providerPreviewID="";$("#providerPreview").classList.add("hidden");return providerCall("check",{input:$("#providerLoginCallback").value.trim()}).then(function(d){if(!d.ready){$("#providerLoginStatus").textContent=d.message || "尚未完成授权";return;}providerPreviewID=d.preview_id;$("#providerPreviewText").textContent=(d.name || providerLabel()+" 账号")+" · "+d.uid+" · "+(d.scope==="global"?"国际版":"国内版")+(d.existing?" · 已存在，保存将更新凭据":" · 新账号");$("#providerPreview").classList.remove("hidden");$("#providerLoginStatus").textContent="账号已验证，点击确认保存才会加入账号池。";$("#providerLoginCallback").value="";});});});
   on("#providerLoginComplete",function(){return providerJob(function(){return providerCall("complete",{preview_id:providerPreviewID,replace_existing:$("#providerReplace").checked,name:$("#providerAccountName").value.trim()}).then(refreshAfterProviderSave);});});
   on("#providerImport",function(){return providerJob(function(){var credentials;try{credentials=JSON.parse($("#providerImportJSON").value);}catch(e){throw new Error("请粘贴有效的 "+providerLabel()+" JSON 凭据");}return api("/admin/api/provider-import",{method:"POST",body:{provider:activeProvider,credentials:credentials,replace_existing:$("#providerImportReplace").checked,name:$("#providerAccountName").value.trim()}}).then(refreshAfterProviderSave);});});
   $("#accountProvider").addEventListener("change",function(){if(state.data)renderAccounts(state.data);});
-  $("#usageProvider").addEventListener("change",function(){usageView.page=1;refreshUsageLogs();});
+  ["#usageProvider","#usageModel","#usageProtocol","#usageStatus"].forEach(function(id){$(id).addEventListener("change",function(){usageView.page=1;refreshUsageLogs();});});
   on("#savePw", function(){
     return adminLogin(pw()).then(function(){ resumeLogin(); return refresh(); }).catch(function(e){$("#adminLoginError").textContent=e.message;});
   });
@@ -1201,33 +1515,31 @@
       if (state.data) renderAccounts(state.data);
     });
   });
-  on("#pwToggle", function(){if(!adminAuthenticated)showAdminLogin();});
   $("#adminLoginDialog").addEventListener("cancel",function(e){e.preventDefault();});
-  function updatePwToggle(){
+  function updateAuthControls(){
     $("#localPanelStatus").classList.toggle("hidden", !localPanelSession);
-    $("#pwToggleText").textContent=adminAuthenticated?"管理员已登录":"管理员登录";
     $("#forgetPw").classList.toggle("hidden", !adminAuthenticated);
   }
-  on("#refresh", function(){
-    var jobs = [refresh()];
-    if ($("#tab-logs").classList.contains("on")) jobs.push(refreshLogs());
-    return Promise.all(jobs);
-  });
   on("#reloadModelPolicies",loadModelPolicies);on("#policySave",saveModelPolicy);on("#policyCancel",closeModelPolicy);on("#policyClose",closeModelPolicy);
   $("#policyDialog").addEventListener("cancel",function(e){if(savingPolicy)e.preventDefault();else editingPolicy=null;});
   on("#reloadPricing", loadPricing);
   on("#reloadUsage", refreshUsageLogs);
+  on("#resetUsageFilters",function(){["#usageProvider","#usageModel","#usageProtocol","#usageStatus"].forEach(function(id){$(id).value="";});$("#usagePreset").value="all";return setUsagePreset();});
+  on("#usageDateToggle",function(){var open=$("#usageDateToggle").getAttribute("aria-expanded")!=="true";$("#usageDateToggle").setAttribute("aria-expanded",String(open));$("#usageDatePopover").classList.toggle("hidden",!open);if(open){$("#usageStart").value=usageView.start?localDate(new Date(usageView.start*1000)):"";$("#usageEnd").value=usageView.end?localDate(new Date(usageView.end*1000-1)):"";$("#usagePreset").value=usageView.preset;syncUsageDatePicker();$("#usageDatePresets").querySelector("button").focus();}});
+  document.querySelectorAll("[data-usage-preset]").forEach(function(button){button.addEventListener("click",function(){$("#usagePreset").value=button.dataset.usagePreset;setUsagePreset();closeUsageDatePicker(true);});});
+  document.addEventListener("click",function(event){if(!$("#usageDatePicker").contains(event.target))closeUsageDatePicker(false);});
+  document.addEventListener("keydown",function(event){if(event.key==="Escape"&&$("#usageDateToggle").getAttribute("aria-expanded")==="true"){event.preventDefault();closeUsageDatePicker(true);}});
   on("#applyUsageDates", applyUsageDates);
   on("#usageJump", jumpUsagePage);
   $("#usagePageJump").addEventListener("keydown",function(e){if(e.key==="Enter")jumpUsagePage();});
   $("#usagePreset").addEventListener("change",setUsagePreset);
-  ["#usageStart","#usageEnd"].forEach(function(id){$(id).addEventListener("change",function(){$("#usagePreset").value="custom";});});
+  ["#usageStart","#usageEnd"].forEach(function(id){$(id).addEventListener("change",function(){$("#usagePreset").value="custom";syncUsageDatePicker();});});
   $("#usagePageSize").addEventListener("change",function(){usageView.pageSize=Number(this.value);usageView.page=1;try{localStorage.setItem("codearts-usage-page-size",this.value);}catch{}refreshUsageLogs();});
   try{var savedSize=Number(localStorage.getItem("codearts-usage-page-size"));if([20,50,100].indexOf(savedSize)>=0)usageView.pageSize=savedSize;}catch{}
   $("#usageTimezone").textContent="日期按浏览器时区："+Intl.DateTimeFormat().resolvedOptions().timeZone;
   on("#priceEditSave",savePriceEditor);on("#priceEditCancel",closePriceEditor);on("#priceEditClose",closePriceEditor);
   $("#priceEditDialog").addEventListener("cancel",function(e){if(priceSaving)e.preventDefault();else priceEditing=null;});
-  on("#importLocal", function(){ return accountOp("import", {}); });
+  on("#importLocal", function(){ return addAccountCredentials("import", {}); });
   // 凭据类型切换：永久 AK/SK 不需要 security_token，隐藏该项并更新提示。
   // 注意 select 用 change 事件，不能复用只绑 onclick 的 on()。
   $("#manualKind").addEventListener("change", function(){
@@ -1247,15 +1559,15 @@
       credential_kind: kind
     };
     if (kind !== "aksk") payload.security_token = $("#manualSTS").value.trim();
-    return accountOp("manual", payload).then(function(){
-      $("#manualAK").value = ""; $("#manualSK").value = ""; $("#manualSTS").value = "";
+    return addAccountCredentials("manual", payload).then(function(ok){
+      if(ok){$("#manualAK").value = ""; $("#manualSK").value = ""; $("#manualSTS").value = "";}
     });
   });
   on("#addSession", function(){
     var js = $("#sessionJSON").value.trim();
     if (!js) { toast("请粘贴 session JSON", "err"); return; }
-    return accountOp("session-json", {name: $("#sessionName").value.trim(), session_json: js}).then(function(){
-      $("#sessionJSON").value = "";
+    return addAccountCredentials("session-json", {name: $("#sessionName").value.trim(), session_json: js}).then(function(ok){
+      if(ok)$("#sessionJSON").value = "";
     });
   });
   on("#checkinAll", function(){ return checkin(null); });
@@ -1264,13 +1576,13 @@
     var ids = Object.keys(lastModels).filter(function(id){
       return lastModels[id].source !== "alias";
     });
-    if (!ids.length) { toast("模型清单为空，先点「从上游刷新清单」", "err"); return; }
+    if (!ids.length) { toast("当前列表没有可测活的模型，请调整筛选或刷新清单", "err"); return; }
     // 每个模型都是一次真实请求、真实扣积分，全量探测前必须二次确认。
     if (!window.confirm("将向 " + ids.length + " 个模型各发一次真实请求（max_tokens=8，会真实扣积分），确定继续？")) return;
     ids.forEach(function(id){ modelProbeState[id] = { state: "busy" }; redrawModelRow(id); });
     $("#modelHint").textContent = "正在测活 " + ids.length + " 个模型…（每个会真实消耗极少量积分）";
 
-    return api("/admin/api/models/probe", {method:"POST", body:{}}).then(function(r){
+    return api("/admin/api/models/probe", {method:"POST", body:{models:ids}}).then(function(r){
       (r.results || []).forEach(function(x){
         modelProbeState[x.model] = x.ok
           ? { state: "ok", account: x.account }
@@ -1294,7 +1606,7 @@
     welfareAccountID = this.value;
     loadWelfare();
   });
-  on("#claimWelfareNow", function(){ return claim(null).then(loadWelfare); });
+  on("#claimWelfareNow", function(){ if(!welfareAccountID){toast("请先选择活动账号","err");return;}return claim(welfareAccountID).then(loadWelfare); });
   on("#genInvite", function(){
     toast("生成中…");
     // 用当前选中的账号生成，避免「看到的是 A 号、生成的是 B 号」
@@ -1308,13 +1620,7 @@
     }).catch(function(e){ toast("生成失败：" + e.message, "err"); });
   });
   on("#copyInvite", function(){ return copyText($("#inviteURL").value, "已复制邀请链接"); });
-  on("#browserLogin", function(){
-    if (!localPanelSession && !adminAuthenticated) { showAdminLogin();return; }
-    openLogin();
-  });
   on("#loginGenerate",generateLogin);
-  on("#loginClose",function(){ $("#loginPasted").value="";$("#loginPanel").close(); });
-  $("#loginPanel").addEventListener("cancel",function(){ $("#loginPasted").value=""; });
   on("#loginCopy",function(){return copyText($("#loginURL").value,"链接已复制，请在另一个浏览器打开");});
   on("#loginCheck",function(){
     if (loginBusy) return;
@@ -1325,8 +1631,8 @@
     if (loginBusy || !loginPreview || !loginSid) return;
     if (loginPreview.existing && !$("#loginReplace").checked) {loginFailure(new Error("请勾选确认更新已有账号，或重新生成链接登录其他账号"));return;}
     setLoginBusy(true);$("#loginError").classList.add("hidden");
-    return api("/admin/api/login/complete",{method:"POST",body:{session_id:loginSid,preview_id:loginPreview.preview_id,replace_existing:$("#loginReplace").checked}}).then(function(){
-      stopLogin();drawLogin();$("#loginPanel").close();toast("账号已保存", "ok");return refresh();
+    return api("/admin/api/login/complete",{method:"POST",body:{session_id:loginSid,preview_id:loginPreview.preview_id,replace_existing:$("#loginReplace").checked,name:$("#accountCreateName").value.trim()}}).then(function(){
+      stopLogin();drawLogin();finishAccountCreation();toast("账号已保存", "ok");return refresh();
     }).catch(loginFailure).finally(function(){setLoginBusy(false);});
   });
   on("#deleteAccountCancel",function(){if(!deleteBusy){$("#deleteAccountDialog").close();deletingAccount=null;}});
@@ -1377,12 +1683,30 @@
       return refresh();
     }).catch(function(e){ toast("刷新失败：" + e.message, "err"); });
   });
+  var keyCreating=false;
+  function closeKeyCreate(){if(!keyCreating)$("#keyCreateDialog").close();}
   on("#addKey", function(){
-    return api("/admin/api/keys", {method:"POST", body:{name:$("#keyName").value.trim()}}).then(function(r){
+    $("#keyName").value="";$("#keyCreateError").textContent="";
+    fillGroupSelect($("#keyCreateGroup"),"","不分组（全部账号）");
+    $("#keyCreateDialog").showModal();$("#keyName").focus();
+  });
+  on("#keyCreateClose",closeKeyCreate);on("#keyCreateCancel",closeKeyCreate);
+  $("#keyCreateDialog").addEventListener("cancel",function(e){e.preventDefault();closeKeyCreate();});
+  $("#keyCreateForm").addEventListener("submit",function(e){
+    e.preventDefault();if(keyCreating)return;
+    var body={name:$("#keyName").value.trim(),group_id:$("#keyCreateGroup").value};
+    keyCreating=true;$("#keyCreateError").textContent="";
+    $("#keyCreateDialog").querySelectorAll("input,select,button").forEach(function(el){el.disabled=true;});
+    $("#keyCreateSave").textContent="创建中…";
+    api("/admin/api/keys", {method:"POST", body:body}).then(function(r){
+      if(!r.ok || !r.key)throw new Error("密钥创建结果未确认");
       toast("密钥已创建，可在列表中随时显示或复制", "ok");
-      $("#keyName").value = "";
+      $("#keyCreateDialog").close();$("#keyName").value="";
       return refresh();
-    }).catch(function(e){ toast("创建失败：" + e.message, "err"); });
+    }).catch(function(e){$("#keyCreateError").textContent="创建失败："+e.message;}).finally(function(){
+      keyCreating=false;$("#keyCreateSave").textContent="创建密钥";
+      $("#keyCreateDialog").querySelectorAll("input,select,button").forEach(function(el){el.disabled=false;});
+    });
   });
   on("#reloadLogs", refreshLogs);
   on("#clearLogs", function(){
@@ -1400,6 +1724,7 @@
     try { aliases = JSON.parse($("#sAliases").value || "{}"); }
     catch { toast("模型别名不是合法 JSON", "err"); return; }
     var body = {
+      codearts:readProviderPolicy("codearts"),workbuddy:readProviderPolicy("workbuddy"),trae:readProviderPolicy("trae"),
       pool: {
         strategy: $("#sPoolStrategy").value,
         max_in_flight: Number($("#sPoolConcurrency").value),
@@ -1482,6 +1807,106 @@
     }).catch(function(e){toast(e.message,"err");});
   }
   on("#reloadAudit",loadAudit);on("#auditPrev",function(){auditPage=Math.max(1,auditPage-1);return loadAudit();});on("#auditNext",function(){auditPage++;return loadAudit();});
+  var editingGroup="",groupSaving=false,editingKeyGroup="",keyGroupSaving=false;
+  function groupModelAllowed(model,group,data){
+    var aliases=(data.settings || {}).model_aliases || {};
+    var resolved=(data.models || []).find(function(m){return m.id===aliases[model.id];}) || model;
+    if(group.allowlist_enabled && !(group.model_ids || []).includes(resolved.id))return false;
+    return (data.accounts || []).some(function(a){return (group.account_ids || []).includes(a.id)&&a.enabled&&(a.provider || "codearts")===(resolved.provider || "codearts")&&((resolved.provider || "codearts")==="codearts"||(a.scope || "")===(resolved.scope || ""));});
+  }
+  function fillGroupSelect(select,value,first){
+    select.textContent="";var option=document.createElement("option");option.value="";option.textContent=first;select.appendChild(option);
+    var groups=(state.data || {}).groups || [];
+    groups.forEach(function(g){var o=document.createElement("option");o.value=g.id;o.textContent=g.name;select.appendChild(o);});
+    if(value&&!groups.some(function(g){return g.id===value;})){var missing=document.createElement("option");missing.value=value;missing.textContent="分组不存在，请重新选择";missing.disabled=true;select.appendChild(missing);}
+    select.value=value || "";
+  }
+  function keyGroupCell(key){
+    var result=cell(key.name),group=((state.data || {}).groups || []).find(function(g){return g.id===key.group_id;});
+    result.appendChild(mk("div","sub",key.group_id?(group?group.name:"分组不存在"):"不分组"));return result;
+  }
+  function renderGroups(d){
+    fillGroupSelect($("#keyCreateGroup"),$("#keyCreateGroup").value,"不分组（全部账号）");
+    fillGroupSelect($("#modelsGroupFilter"),$("#modelsGroupFilter").value,"全部分组");
+    var rows=$("#groups");rows.textContent="";
+    (d.groups || []).forEach(function(g){
+      var bindings=(d.keys || []).filter(function(k){return k.group_id===g.id;}).length,ops=cell("","actions-cell");
+      ops.appendChild(btn("编辑","xs",function(){openGroup(g);}));
+      var remove=btn("删除","xs danger",function(){if(!confirm("确定删除分组「"+g.name+"」？"))return;return api("/admin/api/groups?id="+encodeURIComponent(g.id),{method:"DELETE"}).then(refresh).catch(function(e){toast("删除失败："+e.message,"err");});});
+      remove.disabled=bindings>0;if(bindings)remove.title="请先修改绑定密钥的分组";ops.appendChild(remove);
+      rows.appendChild(row([cell(g.name),cell((g.account_ids || []).length),cell(g.allowlist_enabled?(g.model_ids || []).length+" 个模型":"组内平台全部模型"),cell(bindings),ops]));
+    });
+    if(!rows.children.length)rows.appendChild(emptyRow(5,"尚未创建分组"));
+  }
+  function updateGroupModels(selected){
+    var data=state.data || {},ids=Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function(i){return i.value;});
+    var select=$("#groupModels"),chosen=selected || Array.from(select.selectedOptions).map(function(o){return o.value;});select.textContent="";
+    var group={account_ids:ids,allowlist_enabled:false},seen={};
+    (data.models || []).filter(function(m){return m.source!=="alias"&&groupModelAllowed(m,group,data);}).forEach(function(m){var o=document.createElement("option");o.value=m.id;o.textContent=m.id;o.selected=chosen.includes(m.id);seen[m.id]=true;select.appendChild(o);});
+    [{id:"codearts/web-search",provider:"codearts",scope:"",label:"CodeArts 联网搜索 · SearXNG"},{id:"trae/cn/web-search",provider:"trae",scope:"cn",label:"Trae 联网搜索 · SearXNG"},{id:"workbuddy/cn/web-search",provider:"workbuddy",scope:"cn",label:"WorkBuddy 联网搜索 · 国内"},{id:"workbuddy/global/web-search",provider:"workbuddy",scope:"global",label:"WorkBuddy 联网搜索 · 国际"}].forEach(function(capability){if(groupModelAllowed(capability,group,data)){var option=document.createElement("option");option.value=capability.id;option.textContent=capability.label;option.selected=chosen.includes(capability.id);seen[capability.id]=true;select.appendChild(option);}});
+    chosen.filter(function(id){return !seen[id];}).forEach(function(id){var o=document.createElement("option");o.value=id;o.textContent=id+"（当前账号范围外或目录缺失）";o.selected=true;select.appendChild(o);});
+    select.disabled=!$("#groupAllowlist").checked;
+  }
+  function openGroup(group){
+    group=group || {};editingGroup=group.id || "";$("#groupTitle").textContent=editingGroup?"编辑账号分组":"创建账号分组";
+    $("#groupName").value=group.name || "";$("#groupAllowlist").checked=!!group.allowlist_enabled;$("#groupError").textContent="";
+    var holder=$("#groupAccounts");holder.textContent="";
+    ((state.data || {}).accounts || []).forEach(function(a){var label=mk("label","check"),input=document.createElement("input");input.type="checkbox";input.value=a.id;input.checked=(group.account_ids || []).includes(a.id);input.addEventListener("change",function(){updateGroupModels();});label.appendChild(input);label.appendChild(document.createTextNode(a.name+" · "+(a.provider || "codearts")));holder.appendChild(label);});
+    if(!holder.children.length)holder.appendChild(mk("span","hint","请先添加账号"));
+    updateGroupModels(group.model_ids || []);$("#groupDialog").showModal();
+  }
+  function lockGroupForm(busy){$("#groupDialog").querySelectorAll("input,select,button").forEach(function(el){el.disabled=busy;});if(!busy)$("#groupModels").disabled=!$("#groupAllowlist").checked;}
+  function closeGroup(){if(!groupSaving)$("#groupDialog").close();}
+  on("#addGroup",function(){openGroup();});on("#groupClose",closeGroup);on("#groupCancel",closeGroup);
+  $("#groupDialog").addEventListener("cancel",function(e){e.preventDefault();closeGroup();});
+  $("#groupAllowlist").addEventListener("change",function(){updateGroupModels();});
+  $("#modelsGroupFilter").addEventListener("change",function(){if(state.data)renderOverview(state.data);});
+  $("#modelSearch").addEventListener("input",function(){if(state.data)renderOverview(state.data);});
+  on("#groupSave",function(){
+    if(groupSaving)return;var name=$("#groupName").value.trim();if(!name){$("#groupError").textContent="请填写分组名称";return;}
+    var body={id:editingGroup,name:name,account_ids:Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function(i){return i.value;}),allowlist_enabled:$("#groupAllowlist").checked,model_ids:Array.from($("#groupModels").selectedOptions).map(function(o){return o.value;})};
+    groupSaving=true;lockGroupForm(true);$("#groupError").textContent="";
+    return api("/admin/api/groups",{method:"POST",body:body}).then(function(r){if(!r.ok||!r.group)throw new Error("分组保存结果未确认");$("#groupDialog").close();toast("分组已保存","ok");return refresh();}).catch(function(e){$("#groupError").textContent="保存失败："+e.message;}).finally(function(){groupSaving=false;lockGroupForm(false);});
+  });
+  function openKeyGroup(key){editingKeyGroup=key.ref || key.key;$("#keyGroupName").textContent=key.name || "未命名密钥";fillGroupSelect($("#keyGroupSelect"),key.group_id,"不分组（全部账号）");$("#keyGroupError").textContent="";$("#keyGroupDialog").showModal();}
+  function closeKeyGroup(){if(!keyGroupSaving)$("#keyGroupDialog").close();}
+  on("#keyGroupClose",closeKeyGroup);on("#keyGroupCancel",closeKeyGroup);$("#keyGroupDialog").addEventListener("cancel",function(e){e.preventDefault();closeKeyGroup();});
+  on("#keyGroupSave",function(){
+    if(keyGroupSaving)return;keyGroupSaving=true;$("#keyGroupError").textContent="";$("#keyGroupSelect").disabled=true;
+    return api("/admin/api/keys/group",{method:"POST",body:{ref:editingKeyGroup,group_id:$("#keyGroupSelect").value}}).then(function(r){if(!r.ok)throw new Error("分组绑定未确认");$("#keyGroupDialog").close();return refresh();}).catch(function(e){$("#keyGroupError").textContent="保存失败："+e.message;}).finally(function(){keyGroupSaving=false;$("#keyGroupSelect").disabled=false;});
+  });
+  var concurrencyAccountID="",concurrencySaving=false;
+  function openAccountConcurrency(a){
+    concurrencyAccountID=a.id;
+    var defaults=((state.data || {}).settings || {}).pool || {};
+    var fallback=defaults.max_in_flight || 2;
+    $("#accountConcurrencyName").textContent=a.name || "未命名账号";
+    $("#accountConcurrencyDefault").checked=!(a.max_in_flight>0);
+    $("#accountConcurrencyDefaultHint").textContent="当前全局默认值："+fallback;
+    $("#accountConcurrencyLimit").value=a.max_in_flight>0?a.max_in_flight:fallback;
+    $("#accountConcurrencyLimit").disabled=$("#accountConcurrencyDefault").checked;
+    $("#accountConcurrencyError").textContent="";$("#accountConcurrencyDialog").showModal();
+  }
+  function closeAccountConcurrency(){if(!concurrencySaving){$("#accountConcurrencyDialog").close();concurrencyAccountID="";}}
+  $("#accountConcurrencyDefault").addEventListener("change",function(){$("#accountConcurrencyLimit").disabled=this.checked;});
+  on("#accountConcurrencyClose",closeAccountConcurrency);on("#accountConcurrencyCancel",closeAccountConcurrency);
+  $("#accountConcurrencyDialog").addEventListener("cancel",function(e){e.preventDefault();closeAccountConcurrency();});
+  on("#accountConcurrencySave",function(){
+    if(concurrencySaving || !concurrencyAccountID)return;
+    var useDefault=$("#accountConcurrencyDefault").checked,input=$("#accountConcurrencyLimit"),value=useDefault?0:Number(input.value);
+    if(!useDefault && (!input.value.trim() || !input.checkValidity() || !Number.isInteger(value) || value<1 || value>32)){$("#accountConcurrencyError").textContent="请填写 1–32 的整数并发上限";return;}
+    concurrencySaving=true;$("#accountConcurrencyError").textContent="";
+    ["#accountConcurrencyDefault","#accountConcurrencyLimit","#accountConcurrencyCancel","#accountConcurrencyClose"].forEach(function(id){$(id).disabled=true;});
+    var id=concurrencyAccountID;
+    return api("/admin/api/accounts",{method:"POST",body:{action:"concurrency",id:id,max_in_flight:value}}).then(function(r){
+      if(!r.ok || r.id!==id || r.max_in_flight!==value)throw new Error("保存结果未确认，请刷新账号列表核对");
+      $("#accountConcurrencyDialog").close();concurrencyAccountID="";toast("并发设置已保存","ok");return refresh();
+    }).catch(function(e){$("#accountConcurrencyError").textContent="保存失败："+e.message;}).finally(function(){
+      concurrencySaving=false;
+      ["#accountConcurrencyDefault","#accountConcurrencyCancel","#accountConcurrencyClose"].forEach(function(id){$(id).disabled=false;});
+      $("#accountConcurrencyLimit").disabled=$("#accountConcurrencyDefault").checked;
+    });
+  });
   var budgetKeyRef="",budgetBusy=false;
   function openKeyBudget(k){
     var b=k.budget || {},u=k.budget_usage || {};budgetKeyRef=k.ref;
@@ -1505,7 +1930,7 @@
   }
   on("#modelHealthClose",function(){$("#modelHealthDialog").close();});
   clearStoredPw();
-  updatePwToggle();
+  updateAuthControls();
   $("#pw").addEventListener("keydown", function(e){ if (e.key === "Enter") { $("#savePw").click(); } });
   $("#toast").addEventListener("click", function(){ this.className = "toast"; });
 
@@ -1515,7 +1940,7 @@
   activateTab(initialTab, false, true);
   api("/admin/auth/session").then(function(session){
     adminAuthenticated = !!session.authenticated || !!localPanelSession;
-    updatePwToggle();
+    updateAuthControls();
     $("#clearPw").classList.toggle("hidden", !session.local_compatibility);
     if(adminAuthenticated){resumeLogin();return refresh();}
     showAdminLogin();

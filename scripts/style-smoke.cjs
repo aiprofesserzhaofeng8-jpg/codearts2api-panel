@@ -5,7 +5,7 @@ const fs=require('node:fs');
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||undefined});
  try{
-  const context=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'dark'});
+  const context=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'dark',hasTouch:true});
   const now=Math.floor(Date.now()/1000);
   const accounts=['主力开发账号','项目测试账号','备用账号','个人体验账号'].map((name,i)=>({
    id:'fixture-'+i,name,source:'browser',enabled:true,paused:i===3,status:'ok',failures:0,
@@ -34,6 +34,40 @@ await context.route('**/admin/api/**',route=>{
   assert.equal(await page.locator('#poolStats .pool-stat').count(),6);
   assert.equal(await page.locator('.credit-bar progress').first().getAttribute('style'),null);
   fs.mkdirSync('artifacts',{recursive:true});
+  const firstRow=page.locator('#accounts tr').first(), menu=page.locator('#accountActionMenu');
+  assert.equal(await firstRow.locator('.actions-cell button').count(),4);
+  for(const name of ['设置','更多']){
+   const trigger=firstRow.getByRole('button',{name,exact:true});
+   for(let attempt=0;attempt<2;attempt++){
+    await trigger.click();assert.equal(await menu.isVisible(),true);
+    assert.equal(await trigger.getAttribute('aria-expanded'),'true');
+    await trigger.click();assert.equal(await menu.isVisible(),false,'second click must close '+name);
+    assert.equal(await trigger.getAttribute('aria-expanded'),'false');
+   }
+  }
+  for(const key of ['Enter','Space']){
+   const trigger=firstRow.getByRole('button',{name:'设置',exact:true});
+   await trigger.focus();await page.keyboard.press(key);assert.equal(await menu.isVisible(),true);
+   await trigger.focus();await page.keyboard.press(key);assert.equal(await menu.isVisible(),false);
+  }
+  await firstRow.getByRole('button',{name:'设置',exact:true}).click();
+  await firstRow.getByRole('button',{name:'更多',exact:true}).click();
+  assert.equal(await firstRow.getByRole('button',{name:'设置',exact:true}).getAttribute('aria-expanded'),'false');
+  assert.equal(await menu.getByRole('button',{name:'删除',exact:true}).isVisible(),true);
+  await page.locator('#accounts tr').nth(1).getByRole('button',{name:'设置',exact:true}).click();
+  assert.match(await menu.getAttribute('aria-label'),/项目测试账号/);
+  await page.keyboard.press('Escape');
+
+  await firstRow.getByRole('button',{name:'设置',exact:true}).click();
+  assert.deepEqual(await menu.getByRole('button').allTextContents(),['并发设置','模型健康']);
+  await page.keyboard.press('ArrowDown');assert.equal(await menu.getByRole('button',{name:'模型健康',exact:true}).evaluate(el=>el===document.activeElement),true);
+  await page.keyboard.press('Escape');assert.equal(await menu.isVisible(),false);
+  assert.equal(await firstRow.getByRole('button',{name:'设置',exact:true}).evaluate(el=>el===document.activeElement),true);
+  await firstRow.getByRole('button',{name:'更多',exact:true}).click();
+  assert.equal(await menu.getByRole('button',{name:'删除',exact:true}).isVisible(),true);
+  const menuBox=await menu.boundingBox();assert.ok(menuBox.x>=0 && menuBox.x+menuBox.width<=1440 && menuBox.y>=0 && menuBox.y+menuBox.height<=1000,'desktop menu stays inside viewport');
+  await page.screenshot({path:'artifacts/account-actions-menu-dark.png',animations:'disabled'});
+  await page.locator('#pageTitle').click();assert.equal(await menu.isVisible(),false);
   await page.screenshot({animations:'disabled',path:'artifacts/panel-accounts-dark.png',fullPage:true});
   await page.locator('[data-account-filter="cooling"]').click();
   assert.equal(await page.locator('#accounts tr[data-state]').count(),1);
@@ -62,7 +96,20 @@ await context.route('**/admin/api/**',route=>{
   await page.screenshot({animations:'disabled',path:'artifacts/panel-accounts-mobile.png',fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth);
   assert.equal(overflow,false,'mobile page should not overflow horizontally');
-  await page.locator('#accounts tr').first().getByRole('button',{name:'暂停选号',exact:true}).waitFor({state:'visible'});
+  await page.locator('#accounts tr').first().getByRole('button',{name:'更多',exact:true}).waitFor({state:'visible'});
+  for(const name of ['设置','更多']){
+   const trigger=firstRow.getByRole('button',{name,exact:true});
+   await trigger.tap();assert.equal(await menu.isVisible(),true);
+   await trigger.tap();assert.equal(await menu.isVisible(),false,'second tap must close '+name);
+   assert.equal(await trigger.getAttribute('aria-expanded'),'false');
+  }
+
+  await firstRow.getByRole('button',{name:'更多',exact:true}).click();
+  const mobileMenu=await menu.boundingBox();assert.ok(mobileMenu.x>=0&&mobileMenu.x+mobileMenu.width<=390&&mobileMenu.y>=0&&mobileMenu.y+mobileMenu.height<=844,'mobile menu stays inside viewport');
+  await page.screenshot({path:'artifacts/account-actions-menu-mobile.png',animations:'disabled'});
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({width:320,height:740});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.setViewportSize({width:390,height:844});
   await page.locator('#nav-keys').click();
   assert.equal(await page.locator('#keys').getByRole('button',{name:'复制',exact:true}).isVisible(),true);
   await page.screenshot({animations:'disabled',path:'artifacts/panel-keys-mobile.png',fullPage:true});

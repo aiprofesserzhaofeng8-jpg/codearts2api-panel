@@ -65,3 +65,32 @@ func TestUsageHistoryBootstrapsOnce(t *testing.T) {
 		t.Fatal("duplicate history import")
 	}
 }
+
+func TestUsageCombinedFiltersApplyBeforePagingAndAnalysis(t *testing.T) {
+	s, err := Open(filepath.Join(t.TempDir(), "state.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 30; i++ {
+		s.Record(LogEntry{Time: int64(100 + i), Provider: "trae", Model: "target", Protocol: "responses", Status: 200, Err: "stream failed", Usage: TokenUsage{Known: true, InputTokens: 10}}, 0)
+	}
+	for _, e := range []LogEntry{
+		{Provider: "workbuddy", Model: "target", Protocol: "responses", Status: 500},
+		{Provider: "trae", Model: "other", Protocol: "responses", Status: 500},
+		{Provider: "trae", Model: "target", Protocol: "messages", Status: 500},
+		{Provider: "trae", Model: "target", Protocol: "responses", Status: 200},
+	} {
+		e.Time = 110
+		s.Record(e, 0)
+	}
+	q := UsageQuery{Provider: "trae", Model: "target", Protocol: "responses", Status: "error", Start: 100, End: 200, Page: 2, PageSize: 20}
+	got := s.QueryUsage(q)
+	if got.Total != 30 || len(got.Logs) != 10 || got.Stats.FailedRequests != 30 || got.Stats.InputTokens != 300 || len(got.Analysis.Models) != 1 || got.Analysis.Models[0].Stats.TotalRequests != 30 {
+		t.Fatalf("filters must constrain records and full-range analysis: %+v", got)
+	}
+	q.Status = "success"
+	got = s.QueryUsage(q)
+	if got.Total != 1 || got.Stats.FailedRequests != 0 {
+		t.Fatalf("stream errors must not count as successful: %+v", got)
+	}
+}

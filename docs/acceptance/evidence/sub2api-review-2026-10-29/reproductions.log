@@ -1,0 +1,38 @@
+=== RUN   TestReviewCandidateKeepsValidBytes
+REVIEW_VALIDATION tool-only/refusal/length/unknown-fields/large-number: accepted; bytes unchanged
+--- PASS: TestReviewCandidateKeepsValidBytes (0.00s)
+=== RUN   TestReviewExistingDataMutation
+REVIEW_SANITIZE provider=workbuddy body={"messages":[{"content":"Keep ID 11-128 exactly","role":"user"},{"role":"assistant","tool_calls":[{"function":{"arguments":"{\"content\":\"keep me 11-128\"}","name":"write"},"id":"call-a","type":"function"}]}]}
+REVIEW_SANITIZE provider=codearts body={"messages":[{"content":"Keep ID 11128 exactly","role":"user"},{"role":"assistant","tool_calls":[{"function":{"arguments":"{\"content\":\"keep me 11128\"}","name":"write"},"id":"call-a","type":"function"}]}]}
+REVIEW_SANITIZE provider=trae body={"messages":[{"content":"Keep ID 11128 exactly","role":"user"},{"role":"assistant","tool_calls":[{"function":{"arguments":"{\"content\":\"keep me 11128\"}","name":"write"},"id":"call-a","type":"function"}]}]}
+REVIEW_AGGREGATE refusal_preserved=false body={"choices":[{"finish_reason":"stop","index":0,"message":{"content":"","role":"assistant"}}],"created":0,"id":"chatcmpl-07ce81cc1b9462f3ea6b7ae9","model":"","object":"chat.completion"}
+--- PASS: TestReviewExistingDataMutation (0.00s)
+=== RUN   TestReviewGatewayFlushBeforeCompletion
+REVIEW_STREAM first_delta_before_upstream_completion=true elapsed_ms=0.892
+--- PASS: TestReviewGatewayFlushBeforeCompletion (0.00s)
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/server
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkReviewResponseValidation
+BenchmarkReviewResponseValidation/1024
+BenchmarkReviewResponseValidation/1024-16  	  113024	      2462 ns/op	 469.85 MB/s	    1224 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/1048576
+BenchmarkReviewResponseValidation/1048576-16         	     213	   1792711 ns/op	 584.98 MB/s	 1057634 B/op	       3 allocs/op
+BenchmarkReviewResponseValidation/8388608
+BenchmarkReviewResponseValidation/8388608-16         	      36	   7712012 ns/op	1087.75 MB/s	 8397721 B/op	       3 allocs/op
+BenchmarkReviewExistingRequestPolicy
+BenchmarkReviewExistingRequestPolicy/1024/clean=false
+BenchmarkReviewExistingRequestPolicy/1024/clean=false-16         	100000000	         2.544 ns/op	419427.35 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1024/clean=true
+BenchmarkReviewExistingRequestPolicy/1024/clean=true-16          	    6424	     49002 ns/op	  21.77 MB/s	   11527 B/op	      42 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=false
+BenchmarkReviewExistingRequestPolicy/1048576/clean=false-16      	114943312	         2.606 ns/op	402351877.78 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/1048576/clean=true
+BenchmarkReviewExistingRequestPolicy/1048576/clean=true-16       	       7	  38590454 ns/op	  27.17 MB/s	10553723 B/op	      87 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=false
+BenchmarkReviewExistingRequestPolicy/8388608/clean=false-16      	100000000	         2.545 ns/op	3296449808.09 MB/s	       0 B/op	       0 allocs/op
+BenchmarkReviewExistingRequestPolicy/8388608/clean=true
+BenchmarkReviewExistingRequestPolicy/8388608/clean=true-16       	       1	 315210955 ns/op	  26.61 MB/s	83959464 B/op	      94 allocs/op
+PASS
+ok  	codearts2api/internal/server	4.026s

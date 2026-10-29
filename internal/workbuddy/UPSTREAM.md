@@ -6,6 +6,10 @@
 - 本机参考版本：`73a7560efc7a88ebd9865db4c71ae7f6d85859f8`
 - 主要参考文件：`internal/auth/auth.go`、`internal/panel/login.go`、`internal/panel/login_staged.go`、`internal/upstream/client.go`、`internal/upstream/headers.go`。
 
-本目录是适配本项目 provider 接口的新实现，仅依赖标准库；没有引入原项目的 Redis、活动任务调度或指纹内容清洗。保留原项目的 MIT 许可和版权声明，见根目录 `LICENSE.workbuddy`。
+本目录是适配本项目 provider 接口的新实现，仅依赖标准库；没有引入原项目的 Redis 或活动任务调度。搜索、系统提示词与指纹清洗已按当前网关架构接入，见 `docs/WORKBUDDY-FEATURES.md`。保留原项目的 MIT 许可和版权声明，见根目录 `LICENSE.workbuddy`。
 
-现阶段连接 `/v3/config` 模型目录、`/v2/chat/completions` 推理、设备授权、令牌续期和个人积分包查询。企业额度、成长任务、签到等活动接口未接入。没有 WorkBuddy 账号实测之前，不能将模拟测试和授权入口连通等同于真实模型调用验收。
+现阶段连接 `/v3/config` 模型目录、`/v2/chat/completions` 推理、设备授权、令牌续期、个人积分包查询与每日签到。企业额度、成长任务和其他活动接口未接入。2026-10-29 已实测个人账号签到成功并增加 100 积分；此结果不代替真实模型调用验收。
+
+搜索参考 `internal/upstream/search.go`、`internal/server/messages.go`；提示词和清洗参考 `internal/prompt/*`、`internal/upstream/sanitize.go`。清洗保留工具参数中的数字和字段名；降级重试限定当前请求、同一账号且没有输出分片，不使用参考项目的全局降级窗口。
+
+公共请求变换现位于 `internal/requestpolicy`，WorkBuddy 专属规则按平台隔离；各平台维护边界见 `docs/PROVIDER-FEATURES.md`。

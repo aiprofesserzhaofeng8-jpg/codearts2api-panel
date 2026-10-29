@@ -56,7 +56,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	settings := s.Store.Settings()
-	model, err := s.resolveModel(settings, req.Model)
+	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
 		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return
@@ -215,6 +215,16 @@ func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model reg
 		return nil, err
 	}
 
+	var result []byte
+	err = s.runRequestPolicy(ctx, acct, model, body, func(prepared []byte, observe func()) error {
+		var callErr error
+		result, callErr = s.codeartsChatOnce(ctx, sess, model, prepared, observe)
+		return callErr
+	})
+	return result, err
+}
+
+func (s *Server) codeartsChatOnce(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, observe func()) ([]byte, error) {
 	if policy, ok := s.summaryPolicy(ctx, body, model.ID); ok {
 		chunks, err := s.summaryChunks(ctx, sess, model, body, policy)
 		if err != nil {
@@ -223,14 +233,14 @@ func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model reg
 		return codearts.AggregateSSE(chunks)
 	}
 	if model.StreamOnly {
-		return s.aggregateViaStream(ctx, sess, model, body)
+		return s.aggregateViaStream(ctx, sess, model, body, observe)
 	}
 
 	raw, err := s.Up.Chat(ctx, sess, model.ID, body)
 	if err != nil {
 		if codearts.IsEmptyRejection(err) {
 			s.Reg.MarkStreamOnly(model.ID)
-			if agg, aerr := s.aggregateViaStream(ctx, sess, model, body); aerr == nil {
+			if agg, aerr := s.aggregateViaStream(ctx, sess, model, body, observe); aerr == nil {
 				return agg, nil
 			} else {
 				return nil, aerr
@@ -246,7 +256,7 @@ func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model reg
 }
 
 // aggregateViaStream 用流式请求取回分片，再在本地聚合成一次性响应。
-func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte) ([]byte, error) {
+func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, observe func()) ([]byte, error) {
 	streamBody, err := rewriteStream(body, true)
 	if err == nil {
 		streamBody, err = requestStreamUsage(streamBody)
@@ -259,6 +269,7 @@ func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session,
 		if msg, status, bad := codearts.IsUpstreamBusinessError(chunk); bad {
 			return codearts.UpstreamBusinessError(status, msg)
 		}
+		observe()
 		captureUsage(ctx, chunk)
 		chunks = append(chunks, append([]byte(nil), chunk...))
 		return nil
@@ -283,6 +294,12 @@ func (s *Server) streamOnce(ctx context.Context, acct *codearts.Account, model r
 	if err != nil {
 		return err
 	}
+	return s.runRequestPolicy(ctx, acct, model, body, func(prepared []byte, observe func()) error {
+		return s.codeartsStreamOnce(ctx, sess, model, prepared, observe, onChunk)
+	})
+}
+
+func (s *Server) codeartsStreamOnce(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, observe func(), onChunk func([]byte) error) error {
 	if policy, ok := s.summaryPolicy(ctx, body, model.ID); ok {
 		chunks, err := s.summaryChunks(ctx, sess, model, body, policy)
 		if err != nil {
@@ -299,6 +316,7 @@ func (s *Server) streamOnce(ctx context.Context, acct *codearts.Account, model r
 		if msg, status, bad := codearts.IsUpstreamBusinessError(chunk); bad {
 			return codearts.UpstreamBusinessError(status, msg)
 		}
+		observe()
 		captureUsage(ctx, chunk)
 		return onChunk(chunk)
 	})
@@ -375,7 +393,10 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		if ctx.Err() != nil {
 			return used, ctx.Err()
 		}
-		acct, release := s.Store.AcquireAccountForModel(session, model, tried)
+		acct, release, accessErr := s.Store.AcquireAccountForKey(session, model, tried, groupKey(ctx))
+		if accessErr != nil {
+			return used, groupDenied()
+		}
 		if acct == nil {
 			break
 		}
@@ -394,10 +415,13 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		if errors.Is(err, codearts.ErrSessionChanged) {
 			return used, err
 		}
+		if promptBlocked(err) {
+			return used, err
+		}
 		var external *provider.Error
 		if errors.As(err, &external) {
 			s.providerAccountError(ctx, acct, model, err)
-			if !external.AccountFault && (external.Status == 400 || external.Status == 422 || external.Status == 403) {
+			if external.ContentBlocked || !external.AccountFault && (external.Status == 400 || external.Status == 422 || external.Status == 403) {
 				return used, err
 			}
 			lastErr = err

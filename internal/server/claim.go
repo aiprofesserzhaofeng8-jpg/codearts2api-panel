@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -66,9 +65,9 @@ func (s *Server) RunDailyClaim(ctx context.Context) {
 	if !claimWindowOpen(now, st.ClaimAfterHour, st.ClaimAfterMinute) {
 		return
 	}
-	today := now.Format("2006-01-02")
 	for _, a := range s.Store.Accounts() {
-		if a.ProviderID() != "codearts" || !a.Enabled || a.LastClaimDate == today {
+		today := claimDateFor(a, now)
+		if !s.dailyRewardsSupported(a) || !a.Enabled || a.LastClaimDate == today || a.NextClaimAt > now.Unix() {
 			continue
 		}
 		if _, err := s.ClaimForAccount(ctx, a, today); err != nil {
@@ -88,7 +87,7 @@ func claimWindowOpen(now time.Time, hour, minute int) bool {
 // 返回给控制台展示的一句话。today 为空时按当前本地日期计算。
 func (s *Server) ClaimForAccount(ctx context.Context, a *codearts.Account, today string) (string, error) {
 	if a.ProviderID() != "codearts" {
-		return "", fmt.Errorf("此上游的活动领取尚未接入")
+		return s.claimProviderDaily(ctx, a, claimDateFor(a, time.Now()))
 	}
 	if today == "" {
 		today = time.Now().Format("2006-01-02")
@@ -156,7 +155,19 @@ func (s *Server) handleAdminWelfare(w http.ResponseWriter, r *http.Request) {
 		acct = s.Store.NextAccount()
 	}
 	if acct == nil {
+		for _, a := range s.Store.Accounts() {
+			if a.Enabled && s.dailyRewardsSupported(a) {
+				acct = a
+				break
+			}
+		}
+	}
+	if acct == nil {
 		writeErr(w, http.StatusBadRequest, apierr.NoAccount.Error(), "invalid_request_error")
+		return
+	}
+	if acct.ProviderID() != "codearts" {
+		s.handleProviderWelfare(w, r, acct)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
@@ -206,11 +217,11 @@ func (s *Server) welfareAccountOptions() []map[string]any {
 	accts := s.Store.Accounts()
 	out := make([]map[string]any, 0, len(accts))
 	for _, a := range accts {
-		if a.ProviderID() != "codearts" {
+		if !s.dailyRewardsSupported(a) {
 			continue
 		}
 		out = append(out, map[string]any{
-			"id": a.ID, "name": a.DisplayName(),
+			"id": a.ID, "name": a.DisplayName(), "provider": a.ProviderID(),
 			"enabled": a.Enabled, "status": a.Status,
 			"permanent": a.Session != nil && a.Session.IsPermanent(),
 		})

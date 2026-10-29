@@ -60,7 +60,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	settings := s.Store.Settings()
-	model, err := s.resolveModel(settings, req.Model)
+	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
 		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return

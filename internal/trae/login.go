@@ -19,6 +19,8 @@ type loginPending struct {
 	created     time.Time
 	credential  *Credentials
 	fingerprint [32]byte
+	machine     string
+	device      string
 }
 
 func (c *Client) ReleaseLogin(state string) {
@@ -41,6 +43,29 @@ func loginIDs(state string) (machine, device, trace string, err error) {
 	return parts[0], parts[1], hex.EncodeToString(sum[:8]), nil
 }
 func (c *Client) BeginLogin(ctx context.Context, scope string) (provider.Login, error) {
+	return c.beginLogin(ctx, scope, "", "")
+}
+
+func (c *Client) BeginLoginWithDevice(ctx context.Context, scope, machine, device string) (provider.Login, error) {
+	machine, device = strings.TrimSpace(machine), strings.TrimSpace(device)
+	if machine == "" || device == "" {
+		return provider.Login{}, fmt.Errorf("请填写 Trae 官方客户端的机器标识和设备标识")
+	}
+	if len(machine) > 256 {
+		return provider.Login{}, fmt.Errorf("Trae 机器标识过长")
+	}
+	for _, ch := range machine {
+		if !(ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '-' || ch == '_' || ch == '.') {
+			return provider.Login{}, fmt.Errorf("Trae 机器标识只允许字母、数字、连字符、下划线和点")
+		}
+	}
+	if len(device) < 8 || len(device) > 32 || strings.IndexFunc(device, func(ch rune) bool { return ch < '0' || ch > '9' }) >= 0 {
+		return provider.Login{}, fmt.Errorf("Trae 设备标识应为官方客户端的 8 至 32 位数字设备号")
+	}
+	return c.beginLogin(ctx, scope, machine, device)
+}
+
+func (c *Client) beginLogin(ctx context.Context, scope, machine, device string) (provider.Login, error) {
 	if err := ctx.Err(); err != nil {
 		return provider.Login{}, err
 	}
@@ -48,6 +73,10 @@ func (c *Client) BeginLogin(ctx context.Context, scope string) (provider.Login, 
 		return provider.Login{}, fmt.Errorf("当前仅支持 Trae 国内版")
 	}
 	state := randomID() + "." + randomID()
+	defaultMachine, defaultDevice, trace, _ := loginIDs(state)
+	if machine == "" {
+		machine, device = defaultMachine, defaultDevice
+	}
 	c.loginMu.Lock()
 	if c.logins == nil {
 		c.logins = map[string]*loginPending{}
@@ -61,10 +90,9 @@ func (c *Client) BeginLogin(ctx context.Context, scope string) (provider.Login, 
 		c.loginMu.Unlock()
 		return provider.Login{}, fmt.Errorf("Trae 未完成授权过多，请稍后重试")
 	}
-	c.logins[state] = &loginPending{created: time.Now()}
+	c.logins[state] = &loginPending{created: time.Now(), machine: machine, device: device}
 	c.loginMu.Unlock()
 
-	machine, device, trace, _ := loginIDs(state)
 	q := url.Values{"login_version": {"1"}, "auth_from": {"solo"}, "login_channel": {"native_ide"}, "plugin_version": {"2.3.62834"}, "auth_type": {"local"}, "client_id": {ClientID}, "redirect": {"0"}, "login_trace_id": {trace}, "auth_callback_url": {callbackAddress}, "machine_id": {machine}, "device_id": {device}, "x_machine_id": {machine}, "x_device_id": {device}, "x_device_brand": {"PC"}, "x_device_type": {"PC"}, "x_os_version": {"1.0"}, "x_app_version": {IDEVersion}, "x_app_type": {"stable"}}
 	return provider.Login{State: state, URL: "https://www.trae.cn/authorization?" + q.Encode()}, nil
 }
@@ -102,6 +130,13 @@ func (c *Client) CheckCallback(ctx context.Context, scope, state, input string) 
 	if err != nil {
 		return nil, false, err
 	}
+	c.loginMu.Lock()
+	pending := c.logins[state]
+	c.loginMu.Unlock()
+	if pending == nil || time.Since(pending.created) > 10*time.Minute {
+		return nil, false, fmt.Errorf("Trae 授权已过期，请重新生成链接")
+	}
+	machine, device = pending.machine, pending.device
 	u, err := url.Parse(strings.TrimSpace(input))
 	if err != nil || u.Scheme != "http" || u.Host != "127.0.0.1:18080" || u.Path != "/authorize" || u.User != nil || u.Fragment != "" {
 		return nil, false, fmt.Errorf("请粘贴本次授权跳转到 127.0.0.1:18080/authorize 的完整地址")
@@ -129,12 +164,6 @@ func (c *Client) CheckCallback(ctx context.Context, scope, state, input string) 
 		if got := q.Get(k); got != "" && got != want {
 			return nil, false, fmt.Errorf("Trae 回调设备标识不匹配")
 		}
-	}
-	c.loginMu.Lock()
-	pending := c.logins[state]
-	c.loginMu.Unlock()
-	if pending == nil || time.Since(pending.created) > 10*time.Minute {
-		return nil, false, fmt.Errorf("Trae 授权已过期，请重新生成链接")
 	}
 	pending.mu.Lock()
 	defer pending.mu.Unlock()
@@ -187,3 +216,4 @@ func (c *Client) CheckCallback(ctx context.Context, scope, state, input string) 
 
 var _ provider.BrowserLogin = (*Client)(nil)
 var _ provider.CallbackLogin = (*Client)(nil)
+var _ provider.DeviceBrowserLogin = (*Client)(nil)

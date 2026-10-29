@@ -4,6 +4,7 @@ import (
 	"codearts2api/internal/store"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (s *Server) handleAdminUsage(w http.ResponseWriter, r *http.Request) {
@@ -12,6 +13,21 @@ func (s *Server) handleAdminUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := store.UsageQuery{Page: 1, PageSize: 20, Provider: r.URL.Query().Get("provider")}
+	q.Model = r.URL.Query().Get("model")
+	q.Protocol = r.URL.Query().Get("protocol")
+	q.Status = r.URL.Query().Get("status")
+	if q.Status != "" && q.Status != "success" && q.Status != "error" {
+		writeErr(w, 400, "请求状态无效", "invalid_request_error")
+		return
+	}
+	if zone := r.URL.Query().Get("time_zone"); zone != "" {
+		location, err := time.LoadLocation(zone)
+		if err != nil {
+			writeErr(w, 400, "时区无效", "invalid_request_error")
+			return
+		}
+		q.Location = location
+	}
 	for name, target := range map[string]*int64{"start": &q.Start, "end": &q.End} {
 		if v := r.URL.Query().Get(name); v != "" {
 			n, err := strconv.ParseInt(v, 10, 64)
