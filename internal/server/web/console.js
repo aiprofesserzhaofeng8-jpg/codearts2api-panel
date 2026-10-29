@@ -577,7 +577,7 @@
     var bits = ["已用 " + fmtNum(used)];
     if (info.expiring) bits.push("即将到期 " + fmtNum(info.expiring));
     if (info.reset_date) bits.push("重置 " + info.reset_date);
-    if (info.status && info.status !== "active") bits.push(info.status);
+    if (info.status && info.status !== "active" && info.status !== "unknown") bits.push(info.status);
     var sub = mk("span", "sub", bits.join(" · "));
     sub.title = (info.package_name || "") + (info.spec_code ? (" / " + info.spec_code) : "");
     c.appendChild(sub);

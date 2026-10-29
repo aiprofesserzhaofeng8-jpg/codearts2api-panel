@@ -408,7 +408,32 @@ func (c *Client) Credit(ctx context.Context, raw json.RawMessage) (json.RawMessa
 	if err != nil {
 		return nil, err
 	}
+	return parseCreditInfo(data)
+}
+
+// Summary amounts only have a known credit unit when the upstream explicitly
+// identifies credit billing. A capability-only entitlement must not invalidate
+// an authoritative summary, and dollars must never be displayed as credits.
+func parseCreditInfo(data json.RawMessage) (json.RawMessage, error) {
+	var root map[string]json.RawMessage
+	if json.Unmarshal(data, &root) != nil || root == nil {
+		return nil, fmt.Errorf("Trae 积分数据无效")
+	}
+	_, hasSummary := root["usage_summary"]
+	_, hasPacks := root["user_entitlement_pack_list"]
+	if !hasSummary && !hasPacks {
+		var nested map[string]json.RawMessage
+		if json.Unmarshal(root["data"], &nested) == nil && nested != nil {
+			data = root["data"]
+		}
+	}
 	var obj struct {
+		CreditsBilling *bool `json:"is_credits_billing"`
+		DollarBilling  *bool `json:"is_dollar_usage_billing"`
+		Summary        *struct {
+			Total *float64 `json:"total_amount"`
+			Used  *float64 `json:"consumed_amount"`
+		} `json:"usage_summary"`
 		Packs []struct {
 			Base struct {
 				Quota struct {
@@ -420,21 +445,36 @@ func (c *Client) Credit(ctx context.Context, raw json.RawMessage) (json.RawMessa
 			} `json:"usage"`
 		} `json:"user_entitlement_pack_list"`
 	}
-	data = unwrapData(data, "user_entitlement_pack_list")
 	if json.Unmarshal(data, &obj) != nil {
 		return nil, fmt.Errorf("Trae 积分数据无效")
 	}
 	total, used := 0.0, 0.0
-	known := len(obj.Packs) > 0
-	for _, p := range obj.Packs {
-		if p.Base.Quota.Limit == nil || p.Usage.Used == nil || *p.Base.Quota.Limit <= 0 || *p.Usage.Used < 0 {
-			known = false
-			continue
+	known := false
+	reason := "上游未返回完整可计量的积分数据；未将未知或无限额度视为零"
+	incompatibleUnit := (obj.CreditsBilling != nil && !*obj.CreditsBilling) || (obj.DollarBilling != nil && *obj.DollarBilling)
+	if incompatibleUnit {
+		reason = "上游返回非积分或混合计费数据，不能将金额直接显示为积分"
+	} else if obj.CreditsBilling != nil && *obj.CreditsBilling && obj.Summary != nil && ((obj.Summary.Total != nil && *obj.Summary.Total < 0) || (obj.Summary.Used != nil && *obj.Summary.Used < 0)) {
+		reason = "上游汇总额度不可计量，未将无限或异常额度显示为有限积分"
+	} else if obj.CreditsBilling != nil && *obj.CreditsBilling && obj.Summary != nil && obj.Summary.Total != nil && obj.Summary.Used != nil && *obj.Summary.Total >= 0 && *obj.Summary.Used >= 0 {
+		// The summary is authoritative and already includes applicable credit packs.
+		// Do not add package limits again or infer missing per-package usage as zero.
+		total, used, known = *obj.Summary.Total, *obj.Summary.Used, true
+	} else {
+		known = len(obj.Packs) > 0
+		for _, p := range obj.Packs {
+			if p.Base.Quota.Limit == nil || p.Usage.Used == nil || *p.Base.Quota.Limit <= 0 || *p.Usage.Used < 0 {
+				known = false
+				continue
+			}
+			total += *p.Base.Quota.Limit
+			used += *p.Usage.Used
 		}
-		total += *p.Base.Quota.Limit
-		used += *p.Usage.Used
 	}
-	return json.Marshal(map[string]any{"available": known, "total": total, "used": used, "remaining": max(0, total-used), "package_name": "Trae", "status": "unknown", "reason": "上游未返回完整可计量的积分包；未将未知或无限额度视为零"})
+	if known {
+		reason = ""
+	}
+	return json.Marshal(map[string]any{"available": known, "total": total, "used": used, "remaining": max(0, total-used), "package_name": "Trae", "status": "unknown", "reason": reason})
 }
 
 var _ provider.Adapter = (*Client)(nil)
