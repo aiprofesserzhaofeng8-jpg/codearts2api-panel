@@ -1,0 +1,157 @@
+{
+  "summary": {
+    "codearts": {
+      "cases": 18,
+      "strict_passed": 16,
+      "tool_semantics_passed": 17,
+      "format_only_deviations": 1,
+      "client_requests": 53,
+      "upstream_attempts": 53,
+      "usage": {
+        "input_tokens": 26294,
+        "output_tokens": 3185,
+        "cached_tokens": 13568,
+        "reasoning_tokens": 468
+      }
+    },
+    "workbuddy": {
+      "cases": 18,
+      "strict_passed": 13,
+      "tool_semantics_passed": 17,
+      "format_only_deviations": 4,
+      "client_requests": 53,
+      "upstream_attempts": 53,
+      "usage": {
+        "input_tokens": 51177,
+        "output_tokens": 2573,
+        "cached_tokens": 40576,
+        "reasoning_tokens": 0
+      }
+    },
+    "trae": {
+      "cases": 18,
+      "strict_passed": 16,
+      "tool_semantics_passed": 16,
+      "format_only_deviations": 0,
+      "client_requests": 52,
+      "upstream_attempts": 52,
+      "usage": {
+        "input_tokens": 26077,
+        "output_tokens": 3791,
+        "cached_tokens": 0,
+        "reasoning_tokens": 297
+      }
+    }
+  },
+  "total_usage": {
+    "input_tokens": 103548,
+    "output_tokens": 9549,
+    "cached_tokens": 54144,
+    "reasoning_tokens": 765
+  },
+  "strict_passed": 45,
+  "tool_semantics_passed": 50,
+  "case_count": 54,
+  "cleanup": true,
+  "classification_issues": [
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": false,
+      "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": true,
+      "classification": "markdown_wrapper_only"
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "chat",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": false,
+      "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": true,
+      "classification": "markdown_wrapper_only"
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "sequence",
+      "passed": false,
+      "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": true,
+      "classification": "markdown_wrapper_only"
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": false,
+      "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": true,
+      "classification": "markdown_wrapper_only"
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": false,
+      "scenario": "parallel",
+      "passed": false,
+      "error": "AssertionError: expected 2 tool calls, got 12",
+      "strict_format_passed": false,
+      "tool_semantics_passed": false,
+      "classification": "unclassified"
+    },
+    {
+      "provider": "codearts",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": false,
+      "error": "JSONDecodeError: Extra data: line 1 column 21 (char 20)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": false,
+      "classification": "unclassified"
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "sequence",
+      "passed": false,
+      "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": true,
+      "classification": "markdown_wrapper_only"
+    },
+    {
+      "provider": "workbuddy",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": false,
+      "error": "JSONDecodeError: Extra data: line 1 column 21 (char 20)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": false,
+      "classification": "unclassified"
+    },
+    {
+      "provider": "trae",
+      "protocol": "messages",
+      "stream": true,
+      "scenario": "parallel",
+      "passed": false,
+      "error": "JSONDecodeError: Extra data: line 1 column 21 (char 20)",
+      "strict_format_passed": false,
+      "tool_semantics_passed": false,
+      "classification": "unclassified"
+    }
+  ]
+}

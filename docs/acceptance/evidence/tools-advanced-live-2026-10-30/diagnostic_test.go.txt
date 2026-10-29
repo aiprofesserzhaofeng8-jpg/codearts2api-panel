@@ -1,0 +1,55 @@
+package server
+
+import (
+ "encoding/json"
+ "fmt"
+ "net/http"
+ "strings"
+ "testing"
+)
+
+// Diagnostic expectation deliberately pins the currently observed bug. This
+// file is loaded only with a temporary Go overlay, never into production.
+func TestAdvancedParallelToolDiagnostic(t *testing.T) {
+ fixture := "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_left\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"{\\\"path\\\":\"}},{\"index\":1,\"id\":\"call_right\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"{\\\"path\\\":\"}}]}}]}\n\n" +
+ "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"left.txt\\\"}\"}},{\"index\":1,\"function\":{\"arguments\":\"\\\"right.txt\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n"
+ for _, protocol := range []string{"chat","responses","messages"} {
+  for _, stream := range []bool{false,true} {
+   t.Run(fmt.Sprintf("%s/stream=%v",protocol,stream),func(t *testing.T) {
+    s,key:=responseTestServer(t,func(r *http.Request)(*http.Response,error){return responseUpstream(r,fixture),nil})
+    s.Reg.MarkStreamOnly("test-model")
+    path:=map[string]string{"chat":"/v1/chat/completions","responses":"/v1/responses","messages":"/v1/messages"}[protocol]
+    body:=fmt.Sprintf(`{"model":"test-model","stream":%v,"messages":[{"role":"user","content":"fixture"}],"input":"fixture","max_tokens":100}`,stream)
+    w:=responseRequest(s,key,path,body)
+    if w.Code!=200 { t.Fatalf("unexpected HTTP status %d: %s",w.Code,w.Body.String()) }
+    type call struct{ ID,Args string };calls:=map[int]call{}
+    collect:=func(obj map[string]any){
+     switch protocol {
+     case "chat":
+      for _,c:=range obj["choices"].([]any){
+       choice:=c.(map[string]any);field:="message";if stream{field="delta"};msg,_:=choice[field].(map[string]any);list,_:=msg["tool_calls"].([]any)
+       for i,c:=range list{tc:=c.(map[string]any);index:=i;if v,ok:=tc["index"].(float64);ok{index=int(v)};state:=calls[index];if id,ok:=tc["id"].(string);ok{state.ID=id};fn:=tc["function"].(map[string]any);if args,ok:=fn["arguments"].(string);ok{state.Args+=args};calls[index]=state}
+      }
+     case "responses":
+      if stream{if obj["type"]!="response.completed"{return};obj=obj["response"].(map[string]any)}
+      for i,o:=range obj["output"].([]any){item:=o.(map[string]any);if item["type"]=="function_call"{calls[i]=call{item["call_id"].(string),item["arguments"].(string)}}}
+     case "messages":
+      if !stream{
+       for i,c:=range obj["content"].([]any){part:=c.(map[string]any);if part["type"]=="tool_use"{raw,_:=json.Marshal(part["input"]);calls[i]=call{part["id"].(string),string(raw)}}};return
+      }
+      if obj["type"]=="content_block_start"{part:=obj["content_block"].(map[string]any);if part["type"]=="tool_use"{calls[int(obj["index"].(float64))]=call{ID:part["id"].(string)}}}
+      if obj["type"]=="content_block_delta"{delta:=obj["delta"].(map[string]any);if delta["type"]=="input_json_delta"{index:=int(obj["index"].(float64));c:=calls[index];c.Args+=delta["partial_json"].(string);calls[index]=c}}
+     }
+    }
+    if !stream{var obj map[string]any;if err:=json.Unmarshal(w.Body.Bytes(),&obj);err!=nil{t.Fatal(err)};collect(obj)}else{
+     for _,line:=range strings.Split(w.Body.String(),"\n"){if !strings.HasPrefix(line,"data:"){continue};payload:=strings.TrimSpace(strings.TrimPrefix(line,"data:"));if payload=="[DONE]"{continue};var obj map[string]any;if err:=json.Unmarshal([]byte(payload),&obj);err!=nil{t.Fatal(err)};collect(obj)}
+    }
+    valid:=0;for _,c:=range calls{if json.Valid([]byte(c.Args)){valid++}}
+    t.Logf("upstream_tools=2 client_tools=%d valid_argument_objects=%d calls=%+v",len(calls),valid,calls)
+    if protocol=="messages"&&stream{
+     if len(calls)!=1||valid!=0{t.Fatal("observed bug did not reproduce as expected")}
+    }else if len(calls)!=2||valid!=2{t.Fatal("control protocol changed tools")}
+   })
+  }
+ }
+}

@@ -1,0 +1,22 @@
+=== RUN   TestAdvancedParallelToolDiagnostic
+=== RUN   TestAdvancedParallelToolDiagnostic/chat/stream=false
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/chat/stream=true
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/responses/stream=false
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/responses/stream=true
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/messages/stream=false
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/messages/stream=true
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=1 valid_argument_objects=0 calls=map[0:{ID:call_left Args:{"path":{"path":"left.txt"}"right.txt"}}]
+--- PASS: TestAdvancedParallelToolDiagnostic (0.02s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/chat/stream=false (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/chat/stream=true (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/responses/stream=false (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/responses/stream=true (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/messages/stream=false (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/messages/stream=true (0.00s)
+PASS
+ok  	codearts2api/internal/server	1.034s

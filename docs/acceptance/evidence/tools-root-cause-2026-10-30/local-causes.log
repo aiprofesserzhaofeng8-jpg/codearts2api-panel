@@ -1,0 +1,36 @@
+=== RUN   TestAdvancedParallelToolDiagnostic
+=== RUN   TestAdvancedParallelToolDiagnostic/chat/stream=false
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/chat/stream=true
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/responses/stream=false
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/responses/stream=true
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/messages/stream=false
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=2 valid_argument_objects=2 calls=map[0:{ID:call_left Args:{"path":"left.txt"}} 1:{ID:call_right Args:{"path":"right.txt"}}]
+=== RUN   TestAdvancedParallelToolDiagnostic/messages/stream=true
+    advanced_tool_diagnostic_test.go:48: upstream_tools=2 client_tools=1 valid_argument_objects=0 calls=map[0:{ID:call_left Args:{"path":{"path":"left.txt"}"right.txt"}}]
+--- PASS: TestAdvancedParallelToolDiagnostic (0.02s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/chat/stream=false (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/chat/stream=true (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/responses/stream=false (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/responses/stream=true (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/messages/stream=false (0.00s)
+    --- PASS: TestAdvancedParallelToolDiagnostic/messages/stream=true (0.00s)
+=== RUN   TestToolBlockCauseCharacterization
+=== RUN   TestToolBlockCauseCharacterization/single_tool
+    tool_block_cause_test.go:34: blocks=1 valid_arguments=1 IDs=map[0:left] arguments=map[0:{"path":"left.txt"}]
+=== RUN   TestToolBlockCauseCharacterization/two_complete_tools
+    tool_block_cause_test.go:34: blocks=1 valid_arguments=0 IDs=map[0:left] arguments=map[0:{"path":"left.txt"}{"path":"right.txt"}]
+=== RUN   TestToolBlockCauseCharacterization/two_headers_then_fragments
+    tool_block_cause_test.go:34: blocks=1 valid_arguments=0 IDs=map[0:left] arguments=map[0:{"path":{"path":"left.txt"}"right.txt"}]
+=== RUN   TestToolBlockCauseCharacterization/tools_separated_by_text
+    tool_block_cause_test.go:34: blocks=2 valid_arguments=2 IDs=map[0:left 2:right] arguments=map[0:{"path":"left.txt"} 2:{"path":"right.txt"}]
+--- PASS: TestToolBlockCauseCharacterization (0.00s)
+    --- PASS: TestToolBlockCauseCharacterization/single_tool (0.00s)
+    --- PASS: TestToolBlockCauseCharacterization/two_complete_tools (0.00s)
+    --- PASS: TestToolBlockCauseCharacterization/two_headers_then_fragments (0.00s)
+    --- PASS: TestToolBlockCauseCharacterization/tools_separated_by_text (0.00s)
+PASS
+ok  	codearts2api/internal/server	1.040s

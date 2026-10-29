@@ -1,0 +1,38 @@
+package server
+
+import (
+ "encoding/json"
+ "fmt"
+ "net/http/httptest"
+ "strings"
+ "testing"
+)
+
+func causeChunk(index int,id,args string)[]byte{
+ tc:=map[string]any{"index":index,"function":map[string]any{"arguments":args}}
+ if id!=""{tc["id"]=id;tc["function"].(map[string]any)["name"]="read"}
+ raw,_:=json.Marshal(map[string]any{"choices":[]any{map[string]any{"index":0,"delta":map[string]any{"tool_calls":[]any{tc}}}}});return raw
+}
+func TestToolBlockCauseCharacterization(t *testing.T){
+ for _,tc:=range []struct{name string;chunks [][]byte;wantBlocks,wantValid int}{
+  {"single_tool",[][]byte{causeChunk(0,"left",`{"path":`),causeChunk(0,"",`"left.txt"}`)},1,1},
+  {"two_complete_tools",[][]byte{causeChunk(0,"left",`{"path":"left.txt"}`),causeChunk(1,"right",`{"path":"right.txt"}`)},1,0},
+  {"two_headers_then_fragments",[][]byte{causeChunk(0,"left",`{"path":`),causeChunk(1,"right",`{"path":`),causeChunk(0,"",`"left.txt"}`),causeChunk(1,"",`"right.txt"}`)},1,0},
+  {"tools_separated_by_text",[][]byte{causeChunk(0,"left",`{"path":"left.txt"}`),[]byte(`{"choices":[{"delta":{"content":"separator"}}]}`),causeChunk(1,"right",`{"path":"right.txt"}`)},2,2},
+ }{
+  t.Run(tc.name,func(t *testing.T){
+   w:=httptest.NewRecorder();s:=newAnthropicStream(w,w,"diagnostic","fixture",1);s.start()
+   for _,chunk:=range tc.chunks{if _,err:=s.consume(chunk);err!=nil{t.Fatal(err)}};s.finish("")
+   ids:=map[int]string{};args:=map[int]string{}
+   for _,line:=range strings.Split(w.Body.String(),"\n"){
+    if !strings.HasPrefix(line,"data:"){continue};var e map[string]any;if err:=json.Unmarshal([]byte(strings.TrimSpace(line[5:])),&e);err!=nil{t.Fatal(err)}
+    index:=-1;if i,ok:=e["index"].(float64);ok{index=int(i)}
+    if e["type"]=="content_block_start"{b:=e["content_block"].(map[string]any);if b["type"]=="tool_use"{ids[index]=b["id"].(string)}}
+    if e["type"]=="content_block_delta"{d:=e["delta"].(map[string]any);if d["type"]=="input_json_delta"{args[index]+=d["partial_json"].(string)}}
+   }
+   valid:=0;for _,a:=range args{if json.Valid([]byte(a)){valid++}}
+   t.Logf("blocks=%d valid_arguments=%d IDs=%v arguments=%v",len(ids),valid,ids,args)
+   if len(ids)!=tc.wantBlocks||valid!=tc.wantValid{t.Fatal(fmt.Sprintf("characterization changed: %d %d",len(ids),valid))}
+  })
+ }
+}

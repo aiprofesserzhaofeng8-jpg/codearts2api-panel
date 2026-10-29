@@ -1,0 +1,86 @@
+=== RUN   TestNonJSONOverHTTP
+=== RUN   TestNonJSONOverHTTP/plain_text
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=1 log_status=502 failed_requests=1 elapsed=8ms body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/html
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=1 log_status=502 failed_requests=1 elapsed=7ms body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/empty
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=1 log_status=502 failed_requests=1 elapsed=3ms body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/whitespace
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=1 log_status=502 failed_requests=1 elapsed=3ms body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/truncated
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=1 log_status=502 failed_requests=1 elapsed=2ms body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/trailing_json
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=1 log_status=502 failed_requests=1 elapsed=2ms body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/recover_on_retry
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=2 log_status=200 failed_requests=0 elapsed=1.006s body={"choices":[{"message":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":1}}
+=== RUN   TestNonJSONOverHTTP/exhaust_retries
+    nonjson_http_test.go:83: upstream=200 downstream=502 calls=3 log_status=502 failed_requests=1 elapsed=3.016s body={"error":{"code":502,"message":"上游 HTTP 502: 上游非流式响应不是有效 JSON","type":"upstream_error"}}
+=== RUN   TestNonJSONOverHTTP/valid_tool_only
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=6ms body= {"choices":[{"message":{"content":null,"tool_calls":[{"id":"c","type":"function","function":{"name":"read","arguments":"{\"n\":9007199254740993}"}}]},"finish_reason":"tool_calls"}],"extension":9007199254740993} 
+=== RUN   TestNonJSONOverHTTP/valid_refusal
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=4ms body={"choices":[{"message":{"content":null,"refusal":"Cannot comply."},"finish_reason":"stop"}]}
+--- PASS: TestNonJSONOverHTTP (4.08s)
+    --- PASS: TestNonJSONOverHTTP/plain_text (0.01s)
+    --- PASS: TestNonJSONOverHTTP/html (0.01s)
+    --- PASS: TestNonJSONOverHTTP/empty (0.01s)
+    --- PASS: TestNonJSONOverHTTP/whitespace (0.00s)
+    --- PASS: TestNonJSONOverHTTP/truncated (0.00s)
+    --- PASS: TestNonJSONOverHTTP/trailing_json (0.00s)
+    --- PASS: TestNonJSONOverHTTP/recover_on_retry (1.01s)
+    --- PASS: TestNonJSONOverHTTP/exhaust_retries (3.02s)
+    --- PASS: TestNonJSONOverHTTP/valid_tool_only (0.01s)
+    --- PASS: TestNonJSONOverHTTP/valid_refusal (0.01s)
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/html
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/empty
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/whitespace
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/truncated
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/trailing
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/text
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/responses/text
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/responses/html
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/responses/empty
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/responses/whitespace
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/responses/truncated
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/responses/trailing
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/messages/text
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/messages/html
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/messages/empty
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/messages/whitespace
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/messages/truncated
+=== RUN   TestNonJSONResponseRejectedAcrossProtocols//v1/messages/trailing
+--- PASS: TestNonJSONResponseRejectedAcrossProtocols (0.06s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/html (0.01s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/empty (0.01s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/whitespace (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/truncated (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/trailing (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/chat/completions/text (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/responses/text (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/responses/html (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/responses/empty (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/responses/whitespace (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/responses/truncated (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/responses/trailing (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/text (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/html (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/empty (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/whitespace (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/truncated (0.00s)
+    --- PASS: TestNonJSONResponseRejectedAcrossProtocols//v1/messages/trailing (0.00s)
+=== RUN   TestNonJSONResponsePreservesValidReplies
+=== RUN   TestNonJSONResponsePreservesValidReplies/text
+=== RUN   TestNonJSONResponsePreservesValidReplies/tool_only
+=== RUN   TestNonJSONResponsePreservesValidReplies/refusal
+=== RUN   TestNonJSONResponsePreservesValidReplies/reasoning
+--- PASS: TestNonJSONResponsePreservesValidReplies (0.01s)
+    --- PASS: TestNonJSONResponsePreservesValidReplies/text (0.00s)
+    --- PASS: TestNonJSONResponsePreservesValidReplies/tool_only (0.00s)
+    --- PASS: TestNonJSONResponsePreservesValidReplies/refusal (0.00s)
+    --- PASS: TestNonJSONResponsePreservesValidReplies/reasoning (0.00s)
+=== RUN   TestNonJSONResponseUsesExistingFailover
+--- PASS: TestNonJSONResponseUsesExistingFailover (0.00s)
+=== RUN   TestNonJSONResponseHonorsRetryLimit
+--- PASS: TestNonJSONResponseHonorsRetryLimit (0.00s)
+PASS
+ok  	codearts2api/internal/server	5.162s

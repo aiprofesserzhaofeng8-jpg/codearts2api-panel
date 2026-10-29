@@ -1,0 +1,25 @@
+{
+  "created_at": "2026-10-30T02:00:16+08:00",
+  "tag": "snapshot-20261030-020016-verified-tools",
+  "business_source_commit": "b6891bfe3e93ab492763b6ffdbdf1d0a131302d7",
+  "binary_sha256": "3cd383d560b7c966bb42c8f9ce171560bdc738f7ecd6adad4474b3824d17c0aa",
+  "settings_sha256": "0ceb71f6805c76cc7e193c6eb4619460494c7b5cc82cd7b38a797a86165a1bd8",
+  "account_count": 12,
+  "in_flight": 0,
+  "health_http_status": 200,
+  "secrets_scan": {
+    "candidate_files": 27,
+    "exact_secret_hit_files": []
+  },
+  "targeted_tests": "passed; race enabled; no real upstream inference",
+  "service_restarted": false,
+  "business_code_modified": false,
+  "backup_directory": "data/backups/version-freeze-20261030-020016",
+  "prior_acceptance_report": "docs/acceptance/MESSAGES-TOOLS-FIX-2026-10-30.md",
+  "prior_live_tool_cases": 54,
+  "prior_live_tool_values_correct": 54,
+  "prior_live_strict_format_passed": 50,
+  "prior_real_messages_stream_sdk_checks": 27,
+  "prior_pending_acceptance_files_preserved": 27,
+  "raw_log_whitespace_preserved": true
+}

@@ -1,0 +1,39 @@
+import collections,hashlib,json,pathlib,re,sys,subprocess
+sys.path.insert(0,'/home/white/codearts2api-panel/scripts')
+from quality_common import API,current_access,save_json
+p=pathlib.Path('/tmp/codearts-tools-advanced-20261030.json');r=json.loads(p.read_text())
+assert r.get('finished_at'),'acceptance still running'
+classified=[]
+for c in r['checks']:
+ out={k:c.get(k) for k in ['provider','protocol','stream','scenario','passed','error']}
+ out['strict_format_passed']=c['passed'];out['tool_semantics_passed']=c['passed'];out['classification']='pass' if c['passed'] else 'unclassified'
+ if not c['passed'] and isinstance(c.get('answer'),str):
+  m=re.fullmatch(r'\s*```(?:json)?\s*\n(.*?)\n```\s*',c['answer'],flags=re.S)
+  if m:
+   try:
+    if json.loads(m[1])==c['expected']:
+     out.update(classification='markdown_wrapper_only',tool_semantics_passed=True)
+   except ValueError:pass
+ classified.append(out)
+summary={};totals=collections.Counter();all_attempts=[]
+for provider in ['codearts','workbuddy','trae']:
+ cases=[c for c in r['checks'] if c['provider']==provider];cls=[c for c in classified if c['provider']==provider];rows=[q for c in cases for q in c['requests']];usage=collections.Counter()
+ for q in rows:
+  log=q.get('gateway_log')
+  assert log and log['provider']==provider,'missing log or routing mismatch'
+  assert log['status']==200,'non-200 request'
+  assert log['usage']['known'],'unknown usage'
+  assert log['attempts']==1,'upstream retry occurred'
+  all_attempts.append(log['attempts'])
+  usage.update({k:v for k,v in log['usage'].items() if type(v) is int})
+ totals.update(usage)
+ summary[provider]={'cases':len(cases),'strict_passed':sum(c['strict_format_passed'] for c in cls),'tool_semantics_passed':sum(c['tool_semantics_passed'] for c in cls),'format_only_deviations':sum(c['classification']=='markdown_wrapper_only' for c in cls),'client_requests':len(rows),'upstream_attempts':sum(q['gateway_log']['attempts'] for q in rows),'usage':dict(usage)}
+_,pw=current_access();admin=API('http://127.0.0.1:10087',password=pw);admin.login();state=admin.json('/admin/api/state');inflight=sum(a['pool']['in_flight'] for a in state['accounts']);assert inflight==0
+assert r['temporary_key_removed'] and r['settings_unchanged'] and r['account_count_unchanged'] and r['health_status']==200 and r['service_not_restarted']
+for c in r['checks']:
+ if len(c['requests'])=={'sequence':4,'recovery':3,'parallel':2}[c['scenario']]:
+  c['same_account_verified']=len({q['account_fingerprint'] for q in c['requests']})==1
+  ids=[x['call_id'] for x in c['tool_executions']];c['call_ids_unique_verified']=len(ids)==len(set(ids))
+r.update(classifications=classified,summary=summary,total_usage=dict(totals),all_attempts_one=all(x==1 for x in all_attempts),final_in_flight_rechecked=inflight,strict_passed=sum(c['strict_format_passed'] for c in classified),tool_semantics_passed=sum(c['tool_semantics_passed'] for c in classified))
+save_json(p,r)
+print(json.dumps({'summary':summary,'total_usage':dict(totals),'strict_passed':r['strict_passed'],'tool_semantics_passed':r['tool_semantics_passed'],'case_count':len(r['checks']),'cleanup':r['temporary_key_removed'],'classification_issues':[c for c in classified if not c['passed']]},ensure_ascii=False,indent=2))

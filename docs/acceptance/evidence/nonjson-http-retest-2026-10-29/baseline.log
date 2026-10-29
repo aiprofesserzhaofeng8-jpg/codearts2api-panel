@@ -1,0 +1,44 @@
+=== RUN   TestNonJSONOverHTTP
+=== RUN   TestNonJSONOverHTTP/plain_text
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body=PRIVATE_UPSTREAM_DETAIL
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/html
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body=<html>PRIVATE_UPSTREAM_DETAIL</html>
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/empty
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body=
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/whitespace
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body= 
+        	
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/truncated
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body={"choices":[
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/trailing_json
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=2ms body={} {}
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/recover_on_retry
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body=PRIVATE_UPSTREAM_DETAIL
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/exhaust_retries
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body=PRIVATE_UPSTREAM_DETAIL
+    nonjson_http_test.go:85: unexpected status, attempts, malformed output or upstream body leak
+=== RUN   TestNonJSONOverHTTP/valid_tool_only
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body= {"choices":[{"message":{"content":null,"tool_calls":[{"id":"c","type":"function","function":{"name":"read","arguments":"{\"n\":9007199254740993}"}}]},"finish_reason":"tool_calls"}],"extension":9007199254740993} 
+=== RUN   TestNonJSONOverHTTP/valid_refusal
+    nonjson_http_test.go:83: upstream=200 downstream=200 calls=1 log_status=200 failed_requests=0 elapsed=1ms body={"choices":[{"message":{"content":null,"refusal":"Cannot comply."},"finish_reason":"stop"}]}
+--- FAIL: TestNonJSONOverHTTP (0.02s)
+    --- FAIL: TestNonJSONOverHTTP/plain_text (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/html (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/empty (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/whitespace (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/truncated (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/trailing_json (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/recover_on_retry (0.00s)
+    --- FAIL: TestNonJSONOverHTTP/exhaust_retries (0.00s)
+    --- PASS: TestNonJSONOverHTTP/valid_tool_only (0.00s)
+    --- PASS: TestNonJSONOverHTTP/valid_refusal (0.00s)
+FAIL
+FAIL	codearts2api/internal/server	0.029s
+FAIL

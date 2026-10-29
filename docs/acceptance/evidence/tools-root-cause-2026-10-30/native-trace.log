@@ -1,0 +1,13 @@
+=== RUN   TestToolCauseNativeTrace
+    tool_cause_trace_test.go:79: trace=trae_original_1 HTTP_calls=1 status=200 seconds=1.842
+    tool_cause_trace_test.go:79: trace=trae_original_2 HTTP_calls=1 status=200 seconds=1.620
+    tool_cause_trace_test.go:79: trace=trae_original_3 HTTP_calls=1 status=200 seconds=1.920
+    tool_cause_trace_test.go:79: trace=wb_custom_1 HTTP_calls=1 status=200 seconds=2.141
+    tool_cause_trace_test.go:79: trace=wb_custom_2 HTTP_calls=1 status=200 seconds=1.681
+    tool_cause_trace_test.go:79: trace=wb_custom_no_markdown_1 HTTP_calls=1 status=200 seconds=2.120
+    tool_cause_trace_test.go:79: trace=wb_custom_no_markdown_2 HTTP_calls=1 status=200 seconds=2.089
+    tool_cause_trace_test.go:79: trace=wb_passthrough_1 HTTP_calls=1 status=200 seconds=1.688
+    tool_cause_trace_test.go:79: trace=wb_passthrough_2 HTTP_calls=1 status=200 seconds=2.045
+--- PASS: TestToolCauseNativeTrace (17.19s)
+PASS
+ok  	codearts2api/internal/server	17.202s

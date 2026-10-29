@@ -1,0 +1,91 @@
+package server
+
+import (
+ "bytes"
+ "context"
+ "encoding/json"
+ "fmt"
+ "io"
+ "net/http"
+ "os"
+ "path/filepath"
+ "strings"
+ "testing"
+ "time"
+
+ "codearts2api/internal/codearts"
+ "codearts2api/internal/protocol"
+ "codearts2api/internal/provider"
+ "codearts2api/internal/requestpolicy"
+ "codearts2api/internal/store"
+ "codearts2api/internal/trae"
+ "codearts2api/internal/workbuddy"
+)
+
+type causeTrace struct {
+ Name string `json:"name"`
+ Prepared json.RawMessage `json:"prepared_chat_request"`
+ NativeRequest json.RawMessage `json:"native_request"`
+ NativeResponse string `json:"native_response"`
+ Chunks []json.RawMessage `json:"normalized_chunks"`
+ ClientStatus int `json:"client_status"`
+ ClientResponse string `json:"client_response"`
+ HTTPCalls int `json:"http_calls"`
+ Seconds float64 `json:"seconds"`
+}
+type causeBody struct {io.ReadCloser; buf *bytes.Buffer}
+func(b *causeBody)Read(p []byte)(int,error){n,e:=b.ReadCloser.Read(p);b.buf.Write(p[:n]);return n,e}
+type causeAdapter struct {provider.Adapter; record *causeTrace}
+func(a *causeAdapter)Stream(ctx context.Context,raw json.RawMessage,input provider.Request,emit func([]byte)error)error{
+ a.record.Prepared=append([]byte(nil),input.Body...)
+ return a.Adapter.Stream(ctx,raw,input,func(b []byte)error{a.record.Chunks=append(a.record.Chunks,append([]byte(nil),b...));return emit(b)})
+}
+
+// Opt-in diagnostics only. A temporary Store owns copied credentials, with no
+// refresh, reward loop, metadata refresh, retries or production state writes.
+func TestToolCauseNativeTrace(t *testing.T){
+ if os.Getenv("CODEARTS_CAUSE_TRACE")!="1" {t.Skip("opt-in real upstream trace")}
+ root:="/home/white/codearts2api-panel"
+ var production store.State
+ b,err:=os.ReadFile(filepath.Join(root,"data/state.json"));if err!=nil{t.Fatal("read state failed")};if json.Unmarshal(b,&production)!=nil{t.Fatal("decode state failed")}
+ var evidence struct {Checks []struct {Provider,Protocol,Scenario string;Stream bool;Requests []struct{Body json.RawMessage `json:"request_body"`}}}
+ b,err=os.ReadFile("/tmp/codearts-tools-advanced-20261030.json");if err!=nil{t.Fatal(err)};if json.Unmarshal(b,&evidence)!=nil{t.Fatal("decode evidence failed")}
+ var traces []*causeTrace
+ output:="/tmp/codearts-tool-cause-native.json"
+ save:=func(){raw,_:=json.MarshalIndent(traces,"","  ");if os.WriteFile(output,raw,0600)!=nil{t.Fatal("cannot save trace")}}
+ find:=func(p,scenario string,last bool)json.RawMessage{
+  for _,c:=range evidence.Checks{if c.Provider==p&&c.Protocol=="messages"&&!c.Stream&&c.Scenario==scenario{index:=0;if last{index=len(c.Requests)-1};return c.Requests[index].Body}}
+  t.Fatal("fixture missing");return nil
+ }
+ run:=func(p,mode,name string,body json.RawMessage,dropMarkdown bool){
+  if len(traces)>=11{t.Fatal("diagnostic request cap reached")}
+  rec:=&causeTrace{Name:name};traces=append(traces,rec)
+  st,e:=store.Open(filepath.Join(t.TempDir(),"state.json"));if e!=nil{t.Fatal(e)}
+  st.UpdateSettings(func(c *store.Settings){*c=production.Settings;c.MaxRetries=1;c.AutoRefresh=false;c.AutoClaim=false;c.RateLimitEnabled=false;c.RequestTimeout=75
+   if p=="workbuddy"{c.WorkBuddy.PromptMode=mode;c.WorkBuddy.PromptFallback=false;if dropMarkdown{prompt:=c.WorkBuddy.PromptText;if prompt==""{prompt=requestpolicy.DefaultSystemPrompt};prompt=strings.ReplaceAll(prompt,"- 用 Markdown 组织结构。\n","");prompt=strings.ReplaceAll(prompt,"- 代码块标注语言（```go / ```bash / ```json 等）。\n","");c.WorkBuddy.PromptText=prompt}}
+  })
+  var acct *codearts.Account
+  for _,a:=range production.Accounts{if a.ProviderID()==p&&a.Enabled{copyAccount:=*a;acct=&copyAccount;acct.Credentials=append([]byte(nil),a.Credentials...);break}}
+  if acct==nil{t.Fatal("provider account missing")};acct.ID="diagnostic-"+p;acct.Name="diagnostic";acct.Paused=false;acct.CooldownUntil=0;st.UpsertAccount(acct)
+  s:=New(st);s.Providers=provider.NewRegistry()
+  rawResponse:=&bytes.Buffer{}
+  wrapHTTP:=func(client *http.Client){base:=client.Transport;client.Transport=roundTripFunc(func(r *http.Request)(*http.Response,error){rec.HTTPCalls++;if rec.HTTPCalls>1{return nil,fmt.Errorf("diagnostic HTTP cap")};raw,e:=io.ReadAll(r.Body);if e!=nil{return nil,e};r.Body=io.NopCloser(bytes.NewReader(raw));rec.NativeRequest=append([]byte(nil),raw...);resp,e:=base.RoundTrip(r);if e==nil{resp.Body=&causeBody{ReadCloser:resp.Body,buf:rawResponse}};return resp,e})}
+  var adapter provider.Adapter
+  if p=="trae"{c:=trae.New();wrapHTTP(c.HTTP);adapter=c}else{c:=workbuddy.New();wrapHTTP(c.HTTP);adapter=c}
+  _,identity,e:=adapter.Normalize(acct.Credentials);if e!=nil{t.Fatal("invalid credentials")};if identity.ExpiresAt<time.Now().Add(6*time.Minute).Unix(){t.Fatal("credentials too close to expiry; no refresh allowed")}
+  s.Providers.Register(&causeAdapter{Adapter:adapter,record:rec});s.Reg.ReplaceProvider(p,"cn",[]provider.Model{{ID:"deepseek-v4.1-flash",StreamOnly:true}})
+  key:=st.AddKey("temporary diagnostic").Key
+  start:=time.Now();w:=responseRequest(s,key,"/v1/messages",string(body));rec.Seconds=time.Since(start).Seconds();rec.ClientStatus=w.Code;rec.ClientResponse=w.Body.String();rec.NativeResponse=rawResponse.String();save()
+  t.Logf("trace=%s HTTP_calls=%d status=%d seconds=%.3f",name,rec.HTTPCalls,w.Code,rec.Seconds)
+  if w.Code!=200{t.Fatal("upstream diagnostic failed; trace saved privately")}
+ }
+ originalTrae:=find("trae","parallel",false)
+ for i:=0;i<3;i++{run("trae","passthrough",fmt.Sprintf("trae_original_%d",i+1),originalTrae,false)}
+ originalWB:=find("workbuddy","parallel",true)
+ // Only add an explicit client formatting instruction in this isolated request.
+ var req map[string]any;json.Unmarshal(originalWB,&req);req["system"]="Return only raw JSON matching the user's requested structure. Never add Markdown fences or explanations.";req["temperature"]=0
+ wb,_:=json.Marshal(req)
+ for _,mode:=range []string{"custom","custom_no_markdown","passthrough"}{for i:=0;i<2;i++{run("workbuddy",strings.Split(mode,"_")[0],fmt.Sprintf("wb_%s_%d",mode,i+1),wb,mode=="custom_no_markdown")}}
+ // Record the protocol's exact field filtering, without an upstream call.
+ var original protocol.Request;json.Unmarshal(originalTrae,&original);converted,e:=protocol.ToOpenAI(&original,"trae/cn/deepseek-v4.1-flash");if e!=nil{t.Fatal(e)};filtered,_:=json.MarshalIndent(converted,"","  ");os.WriteFile("/tmp/codearts-cause-messages-request-converted.json",filtered,0600)
+}

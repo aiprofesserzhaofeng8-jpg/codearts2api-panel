@@ -1,0 +1,106 @@
+{
+  "real_http_calls": 9,
+  "trae": [
+    {
+      "name": "trae_original_1",
+      "native_tool_ids": [
+        "call_00_7xi52j3yiahvsd4im3meget3",
+        "call_01_17pnmpuvkbivebza6fjnhycf"
+      ],
+      "normalized_tool_ids": [
+        "call_00_7xi52j3yiahvsd4im3meget3",
+        "call_01_17pnmpuvkbivebza6fjnhycf"
+      ],
+      "client_tool_ids": [
+        "call_00_7xi52j3yiahvsd4im3meget3",
+        "call_01_17pnmpuvkbivebza6fjnhycf"
+      ],
+      "max_tokens_sent": 640,
+      "thinking_sent": null
+    },
+    {
+      "name": "trae_original_2",
+      "native_tool_ids": [
+        "call_00_wymi92gic7ehzl3p0a0wk0qa",
+        "call_01_om28v6bzwmamivf1w6n1i875"
+      ],
+      "normalized_tool_ids": [
+        "call_00_wymi92gic7ehzl3p0a0wk0qa",
+        "call_01_om28v6bzwmamivf1w6n1i875"
+      ],
+      "client_tool_ids": [
+        "call_00_wymi92gic7ehzl3p0a0wk0qa",
+        "call_01_om28v6bzwmamivf1w6n1i875"
+      ],
+      "max_tokens_sent": 640,
+      "thinking_sent": null
+    },
+    {
+      "name": "trae_original_3",
+      "native_tool_ids": [
+        "call_00_pqzkrpv6q8l9smpkdshlk5gk",
+        "call_01_0npc0x1vjf0zy86j64n2i31t"
+      ],
+      "normalized_tool_ids": [
+        "call_00_pqzkrpv6q8l9smpkdshlk5gk",
+        "call_01_0npc0x1vjf0zy86j64n2i31t"
+      ],
+      "client_tool_ids": [
+        "call_00_pqzkrpv6q8l9smpkdshlk5gk",
+        "call_01_0npc0x1vjf0zy86j64n2i31t"
+      ],
+      "max_tokens_sent": 640,
+      "thinking_sent": null
+    }
+  ],
+  "workbuddy": [
+    {
+      "name": "wb_custom_1",
+      "native_equals_normalized_equals_client": true,
+      "code_fence": true,
+      "client_json_system_survives": false,
+      "default_markdown_rules_present": true,
+      "response": "```json\n{\n  \"left\": \"LEFT_c2422154e51aef07;11128\",\n  \"right\": \"RIGHT_6a9dacb03790b65e;cc_version=42;\"\n}\n```"
+    },
+    {
+      "name": "wb_custom_2",
+      "native_equals_normalized_equals_client": true,
+      "code_fence": false,
+      "client_json_system_survives": false,
+      "default_markdown_rules_present": true,
+      "response": "{\"left\": \"LEFT_c2422154e51aef07;11128\", \"right\": \"RIGHT_6a9dacb03790b65e;cc_version=42;\"}"
+    },
+    {
+      "name": "wb_custom_no_markdown_1",
+      "native_equals_normalized_equals_client": true,
+      "code_fence": false,
+      "client_json_system_survives": false,
+      "default_markdown_rules_present": false,
+      "response": "{\"left\": \"LEFT_c2422154e51aef07;11128\", \"right\": \"RIGHT_6a9dacb03790b65e;cc_version=42;\"}"
+    },
+    {
+      "name": "wb_custom_no_markdown_2",
+      "native_equals_normalized_equals_client": true,
+      "code_fence": false,
+      "client_json_system_survives": false,
+      "default_markdown_rules_present": false,
+      "response": "{\"left\": \"LEFT_c2422154e51aef07;11128\", \"right\": \"RIGHT_6a9dacb03790b65e;cc_version=42;\"}"
+    },
+    {
+      "name": "wb_passthrough_1",
+      "native_equals_normalized_equals_client": true,
+      "code_fence": false,
+      "client_json_system_survives": true,
+      "default_markdown_rules_present": false,
+      "response": "{\"left\": \"LEFT_c2422154e51aef07;11128\", \"right\": \"RIGHT_6a9dacb03790b65e;cc_version=42;\"}"
+    },
+    {
+      "name": "wb_passthrough_2",
+      "native_equals_normalized_equals_client": true,
+      "code_fence": false,
+      "client_json_system_survives": true,
+      "default_markdown_rules_present": false,
+      "response": "{\"left\": \"LEFT_c2422154e51aef07;11128\", \"right\": \"RIGHT_6a9dacb03790b65e;cc_version=42;\"}"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+"""Bounded real tool roundtrips; only synthetic fixture reads are executable."""
+import copy,hashlib,itertools,json,pathlib,secrets,subprocess,sys,tempfile,time
+sys.path.insert(0,'/home/white/codearts2api-panel/scripts')
+from quality_common import API,current_access,save_json,scrub,utc
+
+BASE='http://127.0.0.1:10087'
+OUT=pathlib.Path('/tmp/codearts-tool-acceptance-20261030.json')
+_,password=current_access();admin=API(BASE,password=password);admin.login()
+initial=admin.json('/admin/api/state')
+digest=lambda value:hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()
+pid=subprocess.check_output(['systemctl','--user','show','-p','MainPID','--value','codearts2api-panel.service'],text=True).strip()
+models={p:('' if p=='codearts' else p+'/cn/')+'deepseek-v4.1-flash' for p in ['codearts','workbuddy','trae']}
+assert all(m in {x['id'] for x in initial['models']} for m in models.values())
+report={'started_at':utc(),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd='/home/white/codearts2api-panel',text=True).strip(),'running_binary_sha256':hashlib.sha256(pathlib.Path('/proc/'+pid+'/exe').read_bytes()).hexdigest(),'request_limit':36,'max_output_tokens_per_request':512,'gateway_max_attempts':initial['settings']['max_retries'],'settings_sha256':digest(initial['settings']),'policies':{p:{k:initial['settings'][p][k] for k in ['prompt_mode','sanitize','prompt_fallback']} for p in models},'checks':[]}
+schema={'type':'object','properties':{'path':{'type':'string'}},'required':['path'],'additionalProperties':False}
+tool_name='acceptance_read_fixture'
+description='Read probe.txt from the isolated acceptance fixture. Return its exact text. This tool has no other filesystem access.'
+prompt='Call acceptance_read_fixture with path probe.txt. Do not guess the file contents. After the tool result is returned, reply with only its exact text, preserving newlines and punctuation. Do not explain or call another tool.'
+request_count=0;blocked=set();key=None;ref=None
+
+def parse_response(protocol,stream,raw):
+ if not stream:
+  obj=json.loads(raw)
+  if obj.get('error'):raise ValueError('response error: '+json.dumps(obj['error']))
+  return obj
+ events=[];done=False
+ for line in raw.splitlines():
+  if not line.startswith('data:'):continue
+  data=line[5:].strip()
+  if data=='[DONE]':done=True;continue
+  event=json.loads(data)
+  if event.get('error') or event.get('type') in ['error','response.failed']:
+   raise ValueError('stream error: '+json.dumps(event))
+  events.append(event)
+ if protocol=='chat':
+  assert done,'Chat stream missing [DONE]'
+  msg={'role':'assistant','content':None};calls={};finish=None;usage=None
+  for event in events:
+   usage=event.get('usage') or usage
+   for choice in event.get('choices',[]):
+    assert choice.get('index',0)==0,'unexpected multiple choices'
+    delta=choice.get('delta') or {};finish=choice.get('finish_reason') or finish
+    for field in ['content','reasoning_content','refusal']:
+     if isinstance(delta.get(field),str):msg[field]=(msg.get(field) or '')+delta[field]
+    for part in delta.get('tool_calls',[]):
+     call=calls.setdefault(part['index'],{'id':'','type':'function','function':{'name':'','arguments':''}})
+     for field in ['id']:
+      if part.get(field):call[field]+=part[field]
+     fn=part.get('function') or {}
+     for field in ['name','arguments']:
+      if fn.get(field):call['function'][field]+=fn[field]
+  if calls:msg['tool_calls']=[calls[i] for i in sorted(calls)]
+  return {'choices':[{'message':msg,'finish_reason':finish}],'usage':usage}
+ if protocol=='responses':
+  terminal=next((e for e in reversed(events) if e.get('type') in ['response.completed','response.incomplete']),None)
+  assert terminal,'Responses stream missing terminal response'
+  seq=[e['sequence_number'] for e in events if 'sequence_number' in e]
+  assert seq==sorted(set(seq)),'Responses event sequence invalid'
+  return terminal['response']
+ assert events and events[-1].get('type')=='message_stop','Messages stream missing message_stop'
+ obj={};blocks={};fragments={}
+ for event in events:
+  kind=event['type']
+  if kind=='message_start':obj=copy.deepcopy(event['message'])
+  elif kind=='content_block_start':blocks[event['index']]=copy.deepcopy(event['content_block'])
+  elif kind=='content_block_delta':
+   i=event['index'];delta=event['delta'];kind_delta=delta['type']
+   if kind_delta=='input_json_delta':fragments[i]=fragments.get(i,'')+delta['partial_json']
+   else:
+    field={'text_delta':'text','thinking_delta':'thinking','signature_delta':'signature'}.get(kind_delta)
+    assert field,'unhandled Messages delta: '+kind_delta
+    blocks[i][field]=blocks[i].get(field,'')+delta[field]
+  elif kind=='message_delta':obj.update(event.get('delta',{}));obj.setdefault('usage',{}).update(event.get('usage',{}))
+ for i,fragment in fragments.items():blocks[i]['input']=json.loads(fragment)
+ obj['content']=[blocks[i] for i in sorted(blocks)]
+ return obj
+
+def make_request(protocol,model,stream):
+ common={'model':model,'stream':stream,'thinking':{'type':'disabled'}}
+ if protocol=='chat':
+  common.update(messages=[{'role':'user','content':prompt}],tools=[{'type':'function','function':{'name':tool_name,'description':description,'parameters':schema}}],max_tokens=512)
+  if stream:common['stream_options']={'include_usage':True}
+  return '/v1/chat/completions',common
+ if protocol=='responses':
+  common.update(input=[{'role':'user','content':prompt}],tools=[{'type':'function','name':tool_name,'description':description,'parameters':schema}],max_output_tokens=512,store=False)
+  return '/v1/responses',common
+ common.update(messages=[{'role':'user','content':prompt}],tools=[{'name':tool_name,'description':description,'input_schema':schema}],max_tokens=512)
+ return '/v1/messages',common
+
+def send(check,protocol,stream,path,body,session,stage):
+ global request_count
+ assert request_count<36,'client request limit reached'
+ request_count+=1;row={'stage':stage,'started_at':utc()};check['requests'].append(row)
+ start=time.monotonic();status,raw,headers=client.request(path,body,headers={'X-Session-Id':session},timeout=75)
+ row.update(status=status,seconds=round(time.monotonic()-start,3),request_id=next((v for k,v in headers.items() if k.lower()=='x-request-id'),None),raw_response=raw)
+ logs=admin.json('/admin/api/logs?limit=100')['logs']
+ log=next((x for x in logs if row['request_id'] and x.get('request_id')==row['request_id']),None)
+ if log:
+  row['gateway_log']={k:log.get(k) for k in ['provider','model','attempts','status','finish_reason','usage','usage_incomplete','latency_ms']}
+  row['account_fingerprint']=hashlib.sha256(log.get('account','').encode()).hexdigest()[:12]
+ save_json(OUT,report)
+ if status in [401,402,403,429,503]:blocked.add(check['provider'])
+ assert status==200,'HTTP '+str(status)+': '+raw[:350]
+ obj=parse_response(protocol,stream,raw);row['parsed_response']=obj
+ return obj
+
+try:
+ key,ref=admin.add_key('tool-roundtrip-acceptance-20261030',{'max_requests':36});client=API(BASE,key=key)
+ with tempfile.TemporaryDirectory(prefix='gateway-tool-fixture-') as fixture:
+  fixture=pathlib.Path(fixture)
+  for protocol,stream,provider in itertools.product(['chat','responses','messages'],[False,True],models):
+   check={'provider':provider,'model':models[provider],'protocol':protocol,'stream':stream,'requests':[]};report['checks'].append(check)
+   if provider in blocked:
+    check.update(passed=False,skipped=True,error='provider stopped after authentication/quota/availability error');continue
+   expected='FILE_'+secrets.token_hex(8)+'\n11128; cc_version=42;'
+   (fixture/'probe.txt').write_text(expected);check['expected']=expected
+   session='acceptance-tools-'+secrets.token_hex(12)
+   path,body=make_request(protocol,models[provider],stream)
+   try:
+    first=send(check,protocol,stream,path,body,session,'tool_call')
+    if protocol=='chat':
+     choice=first['choices'][0];message=choice['message'];calls=message.get('tool_calls') or [];assert len(calls)==1,'expected exactly one tool call'
+     call=calls[0];name=call['function']['name'];args=json.loads(call['function']['arguments']);call_id=call['id'];assert choice.get('finish_reason')=='tool_calls','unexpected tool finish reason'
+    elif protocol=='responses':
+     calls=[x for x in first['output'] if x.get('type')=='function_call'];assert len(calls)==1,'expected exactly one function_call'
+     call=calls[0];name=call['name'];args=json.loads(call['arguments']);call_id=call['call_id'];assert first['status']=='completed','tool response incomplete'
+    else:
+     calls=[x for x in first['content'] if x.get('type')=='tool_use'];assert len(calls)==1,'expected exactly one tool_use'
+     call=calls[0];name=call['name'];args=call['input'];call_id=call['id'];assert first.get('stop_reason')=='tool_use','unexpected tool stop_reason'
+    assert name==tool_name and args=={'path':'probe.txt'} and call_id,'invalid tool name, arguments or call ID'
+    # No arbitrary command or path from the model is executed.
+    result=(fixture/'probe.txt').read_text();assert result==expected
+    check.update(tool_executed=True,tool_name=name,tool_arguments=args,tool_call_id=call_id)
+    if protocol=='chat':body['messages'] += [message,{'role':'tool','tool_call_id':call_id,'content':result}]
+    elif protocol=='responses':body['input'] += first['output']+[{'type':'function_call_output','call_id':call_id,'output':result}]
+    else:body['messages'] += [{'role':'assistant','content':first['content']},{'role':'user','content':[{'type':'tool_result','tool_use_id':call_id,'content':result}]}]
+    second=send(check,protocol,stream,path,body,session,'tool_result_followup')
+    if protocol=='chat':
+     final=second['choices'][0];answer=final['message'].get('content') or '';finish=final.get('finish_reason');assert not final['message'].get('tool_calls'),'unexpected repeated tool call';normal=finish=='stop'
+    elif protocol=='responses':
+     answer=''.join(p.get('text','') for item in second['output'] for p in item.get('content',[]) if p.get('type')=='output_text');finish=second.get('status');normal=finish=='completed';assert not any(x.get('type')=='function_call' for x in second['output']),'unexpected repeated function_call'
+    else:
+     answer=''.join(x.get('text','') for x in second['content'] if x['type']=='text');finish=second.get('stop_reason');normal=finish=='end_turn';assert not any(x['type']=='tool_use' for x in second['content']),'unexpected repeated tool_use'
+    check.update(answer=answer,finish_reason=finish,exact_match=answer==expected)
+    assert normal and answer==expected,'tool result not returned exactly or abnormal completion'
+    assert all(x.get('gateway_log',{}).get('provider',provider)==provider for x in check['requests']),'wrong provider routing'
+    check['same_account']=len({x.get('account_fingerprint') for x in check['requests']})==1
+    check['passed']=True
+   except Exception as e:check.update(passed=False,error=scrub(type(e).__name__+': '+str(e),(key,password))[:600])
+   save_json(OUT,report)
+   print(json.dumps({k:check.get(k) for k in ['provider','protocol','stream','passed','error','same_account']},ensure_ascii=False),flush=True)
+finally:
+ if ref:admin.delete_key(ref)
+ after=admin.json('/admin/api/state')
+ report.update(finished_at=utc(),client_requests_sent=request_count,temporary_key_removed=not ref or not any(x['ref']==ref for x in after['keys']),settings_unchanged=digest(after['settings'])==report['settings_sha256'],account_count_unchanged=len(after['accounts'])==len(initial['accounts']),health_status=admin.request('/healthz')[0])
+ save_json(OUT,report)
