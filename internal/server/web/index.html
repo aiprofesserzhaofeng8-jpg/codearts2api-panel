@@ -37,15 +37,15 @@
   <p id="keyBudgetError" class="hint" role="alert"></p><button class="btn primary" id="keyBudgetSave">保存预算</button>
 </dialog>
 <dialog id="providerLoginDialog" class="modal" aria-labelledby="providerLoginTitle">
-  <div class="card-head"><h2 id="providerLoginTitle">添加 WorkBuddy 账号</h2><button class="btn xs" id="providerLoginClose">关闭</button></div>
+  <div class="card-head"><h2 id="providerLoginTitle">添加上游账号</h2><button class="btn xs" id="providerLoginClose">关闭</button></div>
   <p class="hint">生成链接 → 在另一浏览器授权 → 检查账号预览 → 确认保存。关闭窗口不会自动保存账号。</p>
   <div class="field"><label for="providerScope">账号地区</label><select id="providerScope"><option value="cn">国内版</option><option value="global">国际版</option></select></div>
   <div class="row"><button class="btn primary" id="providerLoginStart">生成登录链接</button><button class="btn" id="providerLoginCopy" disabled>复制登录链接</button><a class="btn hidden" id="providerLoginOpen" target="_blank" rel="noopener noreferrer">在浏览器打开</a></div>
   <div class="field"><label for="providerLoginURL">授权链接</label><input id="providerLoginURL" readonly></div>
-  <div class="field"><label for="providerLoginCallback">回调地址（可选）</label><input id="providerLoginCallback" placeholder="完成授权后可直接点击检查；也可粘贴包含 state 的回调地址"></div>
+  <div class="field"><label for="providerLoginCallback">回调地址（可选）</label><input id="providerLoginCallback" autocomplete="off" spellcheck="false" placeholder="完成授权后按提示提交回调地址"></div>
   <button class="btn" id="providerLoginCheck" disabled>检查授权信息</button>
   <div id="providerPreview" class="hidden"><p id="providerPreviewText"></p><label><input id="providerReplace" type="checkbox">若账号已存在，确认更新它的凭据</label><div class="field"><label for="providerAccountName">账号备注（可选）</label><input id="providerAccountName"></div><button class="btn primary" id="providerLoginComplete">确认保存账号</button></div>
-  <details><summary>导入 WorkBuddy 凭据 JSON</summary><p class="hint">支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份，不会读取原项目配置或替原项目写入。</p><textarea id="providerImportJSON" aria-label="WorkBuddy 凭据 JSON" placeholder="粘贴完整凭据，包含 accessToken、refreshToken、expiresAt 和 uid"></textarea><label><input id="providerImportReplace" type="checkbox">确认覆盖已有同地区账号的凭据</label><div class="row"><button class="btn" id="providerImport">校验并导入</button></div></details>
+  <details><summary id="providerImportTitle">导入上游凭据 JSON</summary><p class="hint" id="providerImportHint">支持扁平或 auth/account 嵌套 JSON，导入前向上游核对身份。</p><textarea id="providerImportJSON" aria-label="上游凭据 JSON" placeholder="粘贴完整上游凭据 JSON"></textarea><label><input id="providerImportReplace" type="checkbox">确认覆盖已有同地区账号的凭据</label><div class="row"><button class="btn" id="providerImport">校验并导入</button></div></details>
   <p id="providerLoginStatus" class="hint" role="status"></p><p id="providerLoginError" class="hint" role="alert"></p>
 </dialog>
 <dialog id="modelHealthDialog" class="modal" aria-labelledby="modelHealthTitle">
@@ -61,7 +61,7 @@
       </span>
       <span class="brand-text">
         <span class="brand-name">CodeArts2API</span>
-        <span class="brand-sub">码道 · WorkBuddy · 控制台</span>
+        <span class="brand-sub">码道 · WorkBuddy · Trae</span>
       </span>
     </div>
 
@@ -98,7 +98,7 @@
 
     <div class="sidebar-foot">
       <span id="health" class="badge"><i class="dot"></i><span>检测中…</span></span>
-      <span class="sidebar-note">CodeArts2API Panel <span class="mono">v0.2-dev</span></span>
+      <span class="sidebar-note">CodeArts2API Panel <span class="mono">v0.3-dev</span></span>
     </div>
   </aside>
 
@@ -159,7 +159,7 @@
           <button class="btn" id="reloadUsage">刷新数据</button>
         </div>
         <div class="usage-filters">
-          <label>上游<select id="usageProvider"><option value="">全部上游</option><option value="codearts">华为云码道</option><option value="workbuddy">WorkBuddy</option></select></label>
+          <label>上游<select id="usageProvider"><option value="">全部上游</option><option value="codearts">华为云码道</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option></select></label>
           <label>时间范围<select id="usagePreset"><option value="all">全部记录</option><option value="today">今天</option><option value="yesterday">昨天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="month">本月</option><option value="lastMonth">上月</option><option value="custom">自定义</option></select></label>
           <label>开始日期<input id="usageStart" type="date"></label>
           <span class="muted">至</span>
@@ -250,7 +250,7 @@
             <div class="card-actions">
               <button class="btn primary" id="browserLogin">码道登录</button>
               <button class="btn primary" id="workbuddyLogin">添加 WorkBuddy</button>
-              <button class="btn" disabled title="适配接口已预留，尚未实现登录和转发">Trae · 待接入</button>
+              <button class="btn primary" id="traeLogin">添加 Trae</button>
               <button class="btn" id="importLocal">导入登录态</button>
               <button class="btn" id="checkinAll">全部探活</button>
               <button class="btn" id="refreshCredits">刷新额度</button>
@@ -279,7 +279,7 @@
           </div>
 
           <div class="account-toolbar">
-            <label>上游<select id="accountProvider"><option value="">全部上游</option><option value="codearts">华为云码道</option><option value="workbuddy">WorkBuddy</option></select></label>
+            <label>上游<select id="accountProvider"><option value="">全部上游</option><option value="codearts">华为云码道</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option></select></label>
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" placeholder="搜索账号名称或来源" aria-label="搜索账号"></label>
             <div class="account-filters" role="group" aria-label="账号状态筛选">
               <button class="filter-chip on" data-account-filter="all" aria-pressed="true">全部</button>

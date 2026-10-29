@@ -2,9 +2,9 @@
 
 # CodeArts2API Panel
 
-**A multi-account API gateway and management panel for CodeArts and WorkBuddy**
+**A multi-account API gateway and management panel for CodeArts, WorkBuddy, and Trae CN/SOLO**
 
-Access CodeArts and WorkBuddy accounts through Chat Completions, Responses, and Anthropic Messages compatible endpoints.
+Access CodeArts, WorkBuddy, and Trae CN/SOLO accounts through Chat Completions, Responses, and Anthropic Messages compatible endpoints.
 
 [中文](README.md) · **English**
 
@@ -15,7 +15,7 @@ Access CodeArts and WorkBuddy accounts through Chat Completions, Responses, and 
 
 </div>
 
-> This is the `develop` version with a native WorkBuddy adapter. Trae is reserved but not implemented. The original CodeArts baseline is pinned at [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0). See [multi-provider setup and verification limits](docs/MULTI-PROVIDER.md). Real WorkBuddy model generation has not yet been validated with an account in this environment.
+> This is the `develop` version with native WorkBuddy and Trae CN/SOLO adapters. Trae international accounts are not supported, and live Trae inference has not been validated with an account in this environment. The original CodeArts baseline is pinned at [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0). See [multi-provider setup and verification limits](docs/MULTI-PROVIDER.md). Real WorkBuddy model generation has not yet been validated with an account in this environment.
 
 ## Overview
 
@@ -171,6 +171,8 @@ curl http://127.0.0.1:10087/v1/chat/completions \
 ```
 
 Responses support is implemented through protocol translation. Native compaction, WebSocket, `store=true`, and `previous_response_id` are not supported. A model alias does not mean the upstream serves that vendor's actual model. See [Responses compatibility](docs/RESPONSES.md) for supported behavior and tool-call limitations.
+
+For Trae, use **Add Trae** in the account panel, paste the authorization callback or import complete credentials, and select `trae/cn/<config_name>`. See [Trae setup and validation limits](docs/TRAE.md).
 
 ## Client setup
 

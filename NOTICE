@@ -37,3 +37,10 @@ Endpoint shapes and authentication/header semantics in internal/workbuddy were
 implemented with reference to linguo2625469/workbuddy2api-panel revision
 73a7560efc7a88ebd9865db4c71ae7f6d85859f8 (MIT). See LICENSE.workbuddy and
 internal/workbuddy/UPSTREAM.md. The upstream's authors retain their attribution.
+
+Trae CN/SOLO adapter:
+Protocol shapes are adapted with reference to connectedGraph/trae2api-web
+(3aabdaa5b02037469a8b019cf1c41d6261a87f49, based on Sliverkiss/traework2api)
+and autumnsentiment/Trae2api-cn (bb7b659bdad50ecec9f5eb7686a265d98984b387).
+MIT notices: internal/trae/LICENSE.reference and LICENSE.cn-reference.
+See internal/trae/UPSTREAM.md for the supported channel and verification limits.

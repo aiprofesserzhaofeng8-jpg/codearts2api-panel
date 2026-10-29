@@ -22,6 +22,7 @@ type providerLoginFlow struct {
 	credentials                 json.RawMessage
 	identity                    provider.Identity
 	saved                       string
+	callbackDigest              string
 	canceled                    bool
 }
 type providerLoginRuntime struct {
@@ -79,6 +80,11 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 		}
 		for k, v := range s.providerLogins.flows {
 			if time.Since(v.created) > 10*time.Minute {
+				if adapter, ok := s.Providers.Get(v.provider); ok {
+					if cleanup, ok := adapter.(provider.LoginReleaser); ok {
+						cleanup.ReleaseLogin(v.state)
+					}
+				}
 				delete(s.providerLogins.flows, k)
 			}
 		}
@@ -113,6 +119,11 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 	defer f.mu.Unlock()
 	if body.Action == "cancel" {
 		f.canceled = true
+		if adapter, ok := s.Providers.Get(f.provider); ok {
+			if cleanup, ok := adapter.(provider.LoginReleaser); ok {
+				cleanup.ReleaseLogin(f.state)
+			}
+		}
 		f.credentials = nil
 		writeJSON(w, 200, map[string]any{"ok": true})
 		return
@@ -127,7 +138,14 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 409, "本次授权已保存，请刷新账号列表", "invalid_request_error")
 			return
 		}
-		if body.Input != "" {
+		adapter, _ := s.Providers.Get(f.provider)
+		callback, usesCallback := adapter.(provider.CallbackLogin)
+		if usesCallback && f.credentials != nil && strings.TrimSpace(body.Input) != "" && fingerprintCredentials([]byte(strings.TrimSpace(body.Input))) != f.callbackDigest {
+			writeErr(w, 409, "本次授权已核对其他回调；切换账号请重新生成登录链接", "invalid_request_error")
+			return
+		}
+
+		if body.Input != "" && !usesCallback {
 			u, e := url.Parse(strings.TrimSpace(body.Input))
 			if e != nil || u.User != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Query().Get("state") != f.state {
 				writeErr(w, 400, "回调地址不属于本次授权；WorkBuddy 也可完成登录后直接点击检查", "invalid_request_error")
@@ -135,15 +153,21 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if f.credentials == nil {
-			adapter, _ := s.Providers.Get(f.provider)
-			login := adapter.(provider.BrowserLogin)
-			raw, ready, err := login.CheckLogin(ctx, f.scope, f.state)
+			var raw json.RawMessage
+			var ready bool
+			var err error
+			if usesCallback {
+				raw, ready, err = callback.CheckCallback(ctx, f.scope, f.state, body.Input)
+			} else {
+				login := adapter.(provider.BrowserLogin)
+				raw, ready, err = login.CheckLogin(ctx, f.scope, f.state)
+			}
 			if err != nil {
 				writeErr(w, 502, err.Error(), "upstream_error")
 				return
 			}
 			if !ready {
-				writeJSON(w, 200, map[string]any{"ready": false, "message": "尚未完成授权，请在另一浏览器登录后再检查"})
+				writeJSON(w, 200, map[string]any{"ready": false, "message": "尚未完成授权；Trae 请在浏览器授权后粘贴完整回调地址，WorkBuddy 可直接检查"})
 				return
 			}
 			normalized, identity, err := adapter.Normalize(raw)
@@ -152,6 +176,9 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			f.credentials = normalized
+			if usesCallback {
+				f.callbackDigest = fingerprintCredentials([]byte(strings.TrimSpace(body.Input)))
+			}
 			f.identity = identity
 		}
 		writeJSON(w, 200, s.providerPreview(f))
@@ -182,6 +209,11 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		f.saved = a.ID
+		if adapter, ok := s.Providers.Get(f.provider); ok {
+			if cleanup, ok := adapter.(provider.LoginReleaser); ok {
+				cleanup.ReleaseLogin(f.state)
+			}
+		}
 		f.credentials = nil
 		writeJSON(w, 200, map[string]any{"ok": true, "account_id": a.ID})
 	default:
@@ -227,7 +259,7 @@ func (s *Server) handleProviderImport(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	verified, err := verifier.Verify(ctx, raw)
-	if err != nil || verified.ID != identity.ID {
+	if err != nil || verified.ID != identity.ID || verified.Scope != identity.Scope {
 		writeErr(w, 400, "上游账号身份校验失败，请检查完整凭据和所属地区", "invalid_request_error")
 		return
 	}

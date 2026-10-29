@@ -100,6 +100,9 @@ func From(err error) Error {
 	}
 	var upstream *provider.Error
 	if errors.As(err, &upstream) {
+		if upstream.Status == 402 {
+			return Error{Status: 402, OpenAI: "insufficient_quota", Anthropic: "permission_error"}
+		}
 		if upstream.Status == 429 {
 			return Error{Status: 429, OpenAI: "rate_limit_error", Anthropic: "rate_limit_error"}
 		}

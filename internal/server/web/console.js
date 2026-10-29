@@ -685,7 +685,7 @@
       who.appendChild(mk("span", "account-avatar", Array.from(a.name || "码")[0].toUpperCase()));
       var info = mk("div", "account-name");
       info.appendChild(mk("strong", "account-title", a.name || "未命名账号"));
-      info.appendChild(pill(a.provider === "workbuddy" ? "WorkBuddy · "+(a.scope === "global" ? "国际" : "国内") : "华为云码道"));
+      info.appendChild(pill(a.provider === "trae" ? "Trae · 国内" : (a.provider === "workbuddy" ? "WorkBuddy · "+(a.scope === "global" ? "国际" : "国内") : "华为云码道")));
       info.appendChild(mk("span", "account-caption", a.has_refresh ? "自动续期已就绪" : "临时凭据"));
       who.appendChild(info);
       identity.appendChild(who);
@@ -1096,14 +1096,17 @@
     return ok;
   }
 
-  var providerSession="",providerPreviewID="",providerBusy=false;
+  var activeProvider="workbuddy",providerSession="",providerPreviewID="",providerBusy=false;
+  function providerLabel(){return activeProvider==="trae"?"Trae":"WorkBuddy";}
+  function selectProvider(name){$("#providerLoginCallback").type=name==="trae"?"password":"text";if(activeProvider!==name){$("#providerImportJSON").value="";$("#providerAccountName").value="";$("#providerImportReplace").checked=false;}activeProvider=name;$("#providerLoginTitle").textContent="添加 "+providerLabel()+" 账号";$("#providerImportTitle").textContent="导入 "+providerLabel()+" 凭据 JSON";$("#providerScope").querySelector("option[value=global]").disabled=name==="trae";if(name==="trae")$("#providerScope").value="cn";$("#providerImportHint").textContent=name==="trae"?"支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。":"支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。";$("#providerLoginCallback").placeholder=name==="trae"?"粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）":"完成授权后可直接检查，也可粘贴带 state 的回调地址";}
+  function openProvider(name){if(!adminAuthenticated&&!localPanelSession){showAdminLogin();return;}if(providerSession&&activeProvider!==name){providerJob(function(){return providerCall("cancel").then(function(){resetProviderLogin();selectProvider(name);$("#providerLoginDialog").showModal();});});return;}selectProvider(name);$("#providerLoginDialog").showModal();}
   function providerError(e){$("#providerLoginError").textContent=e.message || String(e);}
   function resetProviderLogin(){providerSession="";providerPreviewID="";$("#providerLoginURL").value="";$("#providerLoginCallback").value="";$("#providerPreview").classList.add("hidden");$("#providerLoginOpen").classList.add("hidden");$("#providerLoginOpen").removeAttribute("href");$("#providerLoginCopy").disabled=true;$("#providerLoginCheck").disabled=true;$("#providerScope").disabled=false;$("#providerLoginStatus").textContent="";$("#providerLoginError").textContent="";$("#providerReplace").checked=false;}
   function providerJob(fn){if(providerBusy)return Promise.resolve();providerBusy=true;$("#providerLoginError").textContent="";return Promise.resolve().then(fn).catch(providerError).finally(function(){providerBusy=false;});}
   function providerCall(action,extra){return api("/admin/api/provider-login",{method:"POST",body:Object.assign({action:action,session_id:providerSession},extra || {})});}
-  function refreshAfterProviderSave(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();toast("WorkBuddy 账号已保存，正在刷新模型目录","ok");return api("/admin/api/models/refresh",{method:"POST"}).catch(function(e){toast("账号已保存，模型目录刷新失败："+e.message,"err");}).then(refresh);}
+  function refreshAfterProviderSave(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();toast(providerLabel()+" 账号已保存，正在刷新模型目录","ok");return api("/admin/api/models/refresh",{method:"POST"}).catch(function(e){toast("账号已保存，模型目录刷新失败："+e.message,"err");}).then(refresh);}
   function closeProviderLogin(){if(providerBusy)return;return providerJob(function(){var cancel=providerSession?providerCall("cancel"):Promise.resolve();return cancel.then(function(){resetProviderLogin();$("#providerImportJSON").value="";$("#providerLoginDialog").close();});});}
-  function trustedWorkBuddyURL(raw){try{var u=new URL(raw);return u.protocol==="https:"&&!u.username&&!u.password&&["workbuddy.cn","workbuddy.ai","codebuddy.cn","codebuddy.ai","tencent.com","qq.com"].some(function(h){return u.hostname===h||u.hostname.endsWith("."+h);});}catch(e){return false;}}
+  function trustedProviderURL(raw){try{var u=new URL(raw);return u.protocol==="https:"&&!u.username&&!u.password&&(activeProvider==="trae"?["trae.cn"]:["workbuddy.cn","workbuddy.ai","codebuddy.cn","codebuddy.ai","tencent.com","qq.com"]).some(function(h){return u.hostname===h||u.hostname.endsWith("."+h);});}catch(e){return false;}}
   // --- events ---
   var TAB_IDS = { accounts:1, overview:1, models:1, keys:1, logs:1, audit:1, settings:1 };
   var TAB_META = {
@@ -1161,14 +1164,15 @@
     activateTab(location.hash.slice(1), false);
   });
 
-  on("#workbuddyLogin",function(){if(!adminAuthenticated&&!localPanelSession){showAdminLogin();return;}$("#providerLoginDialog").showModal();});
+  on("#workbuddyLogin",function(){openProvider("workbuddy");});
+  on("#traeLogin",function(){openProvider("trae");});
   on("#providerLoginClose",closeProviderLogin);
   $("#providerLoginDialog").addEventListener("cancel",function(e){e.preventDefault();closeProviderLogin();});
-  on("#providerLoginStart",function(){return providerJob(function(){var previous=providerSession?providerCall("cancel"):Promise.resolve();return previous.then(function(){resetProviderLogin();return providerCall("start",{provider:"workbuddy",scope:$("#providerScope").value});}).then(function(d){if(!trustedWorkBuddyURL(d.url))throw new Error("授权链接不在 WorkBuddy 官方域名范围");providerSession=d.session_id;$("#providerLoginURL").value=d.url;$("#providerLoginOpen").href=d.url;$("#providerLoginOpen").classList.remove("hidden");$("#providerScope").disabled=true;$("#providerLoginCopy").disabled=false;$("#providerLoginCheck").disabled=false;$("#providerLoginStatus").textContent="链接已生成。请复制到另一浏览器完成授权，再点击检查。";});});});
-  on("#providerLoginCopy",function(){return copyText($("#providerLoginURL").value,"WorkBuddy 授权链接已复制");});
-  on("#providerLoginCheck",function(){return providerJob(function(){return providerCall("check",{input:$("#providerLoginCallback").value.trim()}).then(function(d){if(!d.ready){$("#providerLoginStatus").textContent=d.message || "尚未完成授权";return;}providerPreviewID=d.preview_id;$("#providerPreviewText").textContent=(d.name || "WorkBuddy 账号")+" · "+d.uid+" · "+(d.scope==="global"?"国际版":"国内版")+(d.existing?" · 已存在，保存将更新凭据":" · 新账号");$("#providerPreview").classList.remove("hidden");$("#providerLoginStatus").textContent="账号已验证，点击确认保存才会加入账号池。";$("#providerLoginCallback").value="";});});});
+  on("#providerLoginStart",function(){return providerJob(function(){var previous=providerSession?providerCall("cancel"):Promise.resolve();return previous.then(function(){resetProviderLogin();return providerCall("start",{provider:activeProvider,scope:$("#providerScope").value});}).then(function(d){if(!trustedProviderURL(d.url))throw new Error("授权链接不在所选上游官方域名范围");providerSession=d.session_id;$("#providerLoginURL").value=d.url;$("#providerLoginOpen").href=d.url;$("#providerLoginOpen").classList.remove("hidden");$("#providerScope").disabled=true;$("#providerLoginCopy").disabled=false;$("#providerLoginCheck").disabled=false;$("#providerLoginStatus").textContent=activeProvider==="trae"?"请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。":"链接已生成。请复制到另一浏览器完成授权，再点击检查。";});});});
+  on("#providerLoginCopy",function(){return copyText($("#providerLoginURL").value,providerLabel()+" 授权链接已复制");});
+  on("#providerLoginCheck",function(){return providerJob(function(){providerPreviewID="";$("#providerPreview").classList.add("hidden");return providerCall("check",{input:$("#providerLoginCallback").value.trim()}).then(function(d){if(!d.ready){$("#providerLoginStatus").textContent=d.message || "尚未完成授权";return;}providerPreviewID=d.preview_id;$("#providerPreviewText").textContent=(d.name || providerLabel()+" 账号")+" · "+d.uid+" · "+(d.scope==="global"?"国际版":"国内版")+(d.existing?" · 已存在，保存将更新凭据":" · 新账号");$("#providerPreview").classList.remove("hidden");$("#providerLoginStatus").textContent="账号已验证，点击确认保存才会加入账号池。";$("#providerLoginCallback").value="";});});});
   on("#providerLoginComplete",function(){return providerJob(function(){return providerCall("complete",{preview_id:providerPreviewID,replace_existing:$("#providerReplace").checked,name:$("#providerAccountName").value.trim()}).then(refreshAfterProviderSave);});});
-  on("#providerImport",function(){return providerJob(function(){var credentials;try{credentials=JSON.parse($("#providerImportJSON").value);}catch(e){throw new Error("请粘贴有效的 WorkBuddy JSON 凭据");}return api("/admin/api/provider-import",{method:"POST",body:{provider:"workbuddy",credentials:credentials,replace_existing:$("#providerImportReplace").checked,name:$("#providerAccountName").value.trim()}}).then(refreshAfterProviderSave);});});
+  on("#providerImport",function(){return providerJob(function(){var credentials;try{credentials=JSON.parse($("#providerImportJSON").value);}catch(e){throw new Error("请粘贴有效的 "+providerLabel()+" JSON 凭据");}return api("/admin/api/provider-import",{method:"POST",body:{provider:activeProvider,credentials:credentials,replace_existing:$("#providerImportReplace").checked,name:$("#providerAccountName").value.trim()}}).then(refreshAfterProviderSave);});});
   $("#accountProvider").addEventListener("change",function(){if(state.data)renderAccounts(state.data);});
   $("#usageProvider").addEventListener("change",function(){usageView.page=1;refreshUsageLogs();});
   on("#savePw", function(){

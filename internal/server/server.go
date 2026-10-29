@@ -22,6 +22,7 @@ import (
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
+	"codearts2api/internal/trae"
 	"codearts2api/internal/workbuddy"
 )
 
@@ -64,6 +65,7 @@ func New(st *store.Store) *Server {
 	s.localPanelToken = rand.Text()
 	s.Providers = provider.NewRegistry()
 	_ = s.Providers.Register(workbuddy.New())
+	_ = s.Providers.Register(trae.New())
 	s.Cred = codearts.NewManager(up)
 	// 凭据解析拿到的是账号快照，所以续期 / 跟随 IDE 得到的新会话必须显式写回 store，
 	// 否则只对那一次请求生效（IDE 关闭后就再也拿不到）。

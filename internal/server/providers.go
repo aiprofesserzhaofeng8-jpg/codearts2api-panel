@@ -100,7 +100,7 @@ func (s *Server) providerDescriptors() []provider.Descriptor {
 			return out
 		}
 	}
-	return append(out, provider.Descriptor{ID: "trae", Name: "Trae", Available: false, Reason: "适配接口已预留，尚未实现登录和转发"})
+	return append(out, provider.Descriptor{ID: "trae", Name: "Trae CN / SOLO", Available: false, Reason: "当前服务未加载 Trae 适配器"})
 }
 func (s *Server) handleProviders(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {

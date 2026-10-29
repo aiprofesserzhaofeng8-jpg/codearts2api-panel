@@ -29,7 +29,7 @@ import (
 )
 
 // version 由构建时注入：-ldflags "-X main.version=1.0.0"
-var version = "0.2.0-dev"
+var version = "0.3.0-dev"
 
 func main() {
 	var (

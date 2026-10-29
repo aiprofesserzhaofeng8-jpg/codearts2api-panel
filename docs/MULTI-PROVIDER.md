@@ -1,6 +1,6 @@
-# 多上游开发版：码道、WorkBuddy 与后续 Trae
+# 多上游开发版：码道、WorkBuddy 与 Trae CN / SOLO
 
-此功能位于 `develop`，版本 `0.2.0-dev`。`v0.1.0` 标签固定原码道版本。
+此功能位于 `develop`，版本 `0.3.0-dev`。`v0.1.0` 标签固定原码道版本。
 
 ## 使用入口
 
@@ -23,7 +23,8 @@
 | `codearts/deepseek-v4.1-flash` | 显式码道，转换为原上游模型 ID |
 | `workbuddy/cn/<上游模型ID>` | WorkBuddy 国内账号 |
 | `workbuddy/global/<上游模型ID>` | WorkBuddy 国际账号 |
-| `trae/...` | 尚未接入，拒绝调用 |
+| `trae/cn/<config_name>` | Trae 国内 CN/SOLO 原生通道 |
+| `trae/global/...` | 国际版尚未接入，拒绝调用 |
 
 WorkBuddy 模型来自该地区的上游目录，不在没有账号时虚构可用模型。保存账号后面板会刷新目录，也可手动刷新。各上游刷新结果独立保留；一个目录更新不会覆盖另一个上游或地区。
 
@@ -45,7 +46,7 @@ WorkBuddy 的个人积分包可读取；企业积分和达到查询分页上限�
 - `internal/store`：按 provider/scope/external_id 区分账号；新 credentials 为独立不透明 JSON，不把 WorkBuddy token 填进码道 AK/SK。
 - 码道沿用已验证的签名、桌面登录态及 Manager 路径；旧账号结构所在包名暂时保留，以减少迁移改动。
 
-后续 Trae 需要基于实际协议实现 Adapter；如采用设备授权，再实现 BrowserLogin。还需增加该上游的导入身份核对、错误分类、协议测试和真实账号验收。界面显示「待接入」不代表已有转发能力。
+Trae CN/SOLO 实现 Adapter、BrowserLogin 和 CallbackLogin，通过粘贴带 trace 的本机回调完成预览；详细凭据格式、协议范围及未完成的真实账号验收见 [TRAE.md](TRAE.md)。
 
 ## 验证与迁移
 
@@ -53,6 +54,6 @@ WorkBuddy 的个人积分包可读取；企业积分和达到查询分页上限�
 
 自动化覆盖：三种 API 的流式/非流式请求、provider/地区选号隔离、命名空间模型路由、用量过滤、登录预览和显式保存、重复确认与删除后重放、导入身份检查、续期并发和取消、凭据快照/CAS、错误脱敏、重定向拒绝和截断流不重放。
 
-界面验证：`CODEARTS_TEST_BASE=http://127.0.0.1:10088 node scripts/providers-smoke.cjs`，使用模拟数据，不添加真实账号。原码道测试也必须继续通过。
+界面验证：`CODEARTS_TEST_BASE=http://127.0.0.1:10088 node scripts/providers-smoke.cjs`，使用模拟数据，不添加真实账号。Trae 界面验证另见 `scripts/trae-smoke.cjs`。原码道与 WorkBuddy 流程也必须继续通过。
 
 本次已验证国内与国际官方设备授权入口可返回合法链接。当前本机 WorkBuddy auths 目录没有账号凭据，因此尚未执行真实 WorkBuddy 模型生成、额度和到期续期验收；请在新入口添加账号后再做实际验证。

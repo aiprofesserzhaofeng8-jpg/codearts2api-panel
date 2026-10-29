@@ -2,9 +2,9 @@
 
 # CodeArts2API Panel
 
-**码道 / WorkBuddy 多账号 API 网关与管理面板**
+**码道 / WorkBuddy / Trae 多账号 API 网关与管理面板**
 
-将码道和 WorkBuddy 账号接入 Chat Completions、Responses 和 Anthropic Messages 兼容接口。
+将码道、WorkBuddy 和 Trae CN/SOLO 账号接入 Chat Completions、Responses 和 Anthropic Messages 兼容接口。
 
 **中文** · [English](README_EN.md)
 
@@ -15,7 +15,7 @@
 
 </div>
 
-> 当前为 `develop` 开发版：已加入 WorkBuddy 原生适配，Trae 接口预留但尚未实现。原码道基线固定在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入方法和验收边界见 [多上游说明](docs/MULTI-PROVIDER.md)。
+> 当前为 `develop` 开发版：已加入 WorkBuddy 与 Trae CN/SOLO 原生适配；Trae 国际版尚未接入，真实账号调用待验证。原码道基线固定在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入方法和验收边界见 [多上游说明](docs/MULTI-PROVIDER.md)。
 
 ## 项目简介
 
@@ -171,6 +171,8 @@ curl http://127.0.0.1:10087/v1/chat/completions \
 ```
 
 Responses 为协议转换，当前不支持原生 compact、WebSocket、`store=true` 和 `previous_response_id`。模型别名不代表对应厂商的真实模型。兼容范围和工具调用限制见 [Responses 文档](docs/RESPONSES.md)。
+
+Trae 在账号池点击「添加 Trae」，按提示粘贴授权回调或导入完整凭据，模型名使用 `trae/cn/<config_name>`。接入和验收限制见 [Trae 说明](docs/TRAE.md)。
 
 ## 客户端接入
 

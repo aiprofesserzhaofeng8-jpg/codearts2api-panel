@@ -13,6 +13,7 @@ import (
 
 const CodeArts = "codearts"
 const WorkBuddy = "workbuddy"
+const Trae = "trae"
 
 type Model struct {
 	ID         string `json:"id"`
@@ -63,6 +64,13 @@ type Adapter interface {
 type BrowserLogin interface {
 	BeginLogin(context.Context, string) (Login, error)
 	CheckLogin(context.Context, string, string) (json.RawMessage, bool, error)
+}
+
+// CallbackLogin supports providers that return credentials to a browser's
+// loopback redirect instead of a remotely pollable device state.
+type LoginReleaser interface{ ReleaseLogin(string) }
+type CallbackLogin interface {
+	CheckCallback(context.Context, string, string, string) (json.RawMessage, bool, error)
 }
 type Registry struct {
 	mu       sync.RWMutex

@@ -4,7 +4,7 @@ services:
     build:
       context: .
       args:
-        VERSION: ${VERSION:-0.2.0-dev}
+        VERSION: ${VERSION:-0.3.0-dev}
     image: codearts2api-panel:local
     container_name: codearts2api-panel
     restart: unless-stopped
