@@ -12,6 +12,7 @@ import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/protocol"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 )
 
@@ -62,6 +63,10 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	upReq, err := protocol.ToOpenAI(&req, model.ID)
 	if err != nil {
 		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", err.Error())
+		return
+	}
+	if model.Provider == provider.Trae && upReq["thinking"] != nil {
+		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", "当前网关暂不支持 Trae 的 Messages 思考控制映射，请省略 thinking 参数")
 		return
 	}
 	upBody, err := json.Marshal(upReq)

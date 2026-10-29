@@ -24,6 +24,8 @@ type Request struct {
 	StopSequences []string        `json:"stop_sequences"`
 	Tools         []Tool          `json:"tools"`
 	ToolChoice    json.RawMessage `json:"tool_choice"`
+	Thinking      json.RawMessage `json:"thinking"`
+	OutputConfig  json.RawMessage `json:"output_config"`
 }
 
 // Message 是一条 Anthropic 消息（content 为字符串或内容块数组）。
@@ -55,6 +57,9 @@ func ToOpenAI(req *Request, model string) (map[string]any, error) {
 	out := map[string]any{
 		"model":  model,
 		"stream": req.Stream,
+	}
+	if err := applyAnthropicThinking(req, out); err != nil {
+		return nil, err
 	}
 	if req.MaxTokens > 0 {
 		out["max_tokens"] = req.MaxTokens
