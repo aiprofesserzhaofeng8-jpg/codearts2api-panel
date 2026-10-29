@@ -1,0 +1,32 @@
+{
+  "BenchmarkPrepareBody/1024": {
+    "runs": 3,
+    "median_ms": 0.0075,
+    "baseline_ms": 0.0489,
+    "allocated_bytes": 3585
+  },
+  "BenchmarkPrepareBody/1048576": {
+    "runs": 3,
+    "median_ms": 3.0329,
+    "baseline_ms": 38.893,
+    "allocated_bytes": 2133772
+  },
+  "BenchmarkPrepareBody/8388608": {
+    "runs": 3,
+    "median_ms": 23.2379,
+    "baseline_ms": 303.9852,
+    "allocated_bytes": 16829446
+  },
+  "BenchmarkAggregateSSE/100": {
+    "runs": 3,
+    "median_ms": 0.1005,
+    "baseline_ms": 0.1232,
+    "allocated_bytes": 37202
+  },
+  "BenchmarkAggregateSSE/2000": {
+    "runs": 3,
+    "median_ms": 1.8957,
+    "baseline_ms": 2.1313,
+    "allocated_bytes": 754163
+  }
+}

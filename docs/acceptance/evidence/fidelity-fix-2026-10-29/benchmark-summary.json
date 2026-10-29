@@ -1,0 +1,56 @@
+{
+  "before": {
+    "BenchmarkPrepareBody/1024": {
+      "median_ms": 0.0489,
+      "bytes_per_op": 12804,
+      "samples": 3
+    },
+    "BenchmarkPrepareBody/1048576": {
+      "median_ms": 38.893,
+      "bytes_per_op": 10353066,
+      "samples": 3
+    },
+    "BenchmarkPrepareBody/8388608": {
+      "median_ms": 303.9852,
+      "bytes_per_op": 83995088,
+      "samples": 3
+    },
+    "BenchmarkAggregateSSE/100": {
+      "median_ms": 0.1232,
+      "bytes_per_op": 35371,
+      "samples": 3
+    },
+    "BenchmarkAggregateSSE/2000": {
+      "median_ms": 2.1313,
+      "bytes_per_op": 720481,
+      "samples": 3
+    }
+  },
+  "after": {
+    "BenchmarkPrepareBody/1024": {
+      "median_ms": 0.0081,
+      "bytes_per_op": 3581,
+      "samples": 3
+    },
+    "BenchmarkPrepareBody/1048576": {
+      "median_ms": 3.3714,
+      "bytes_per_op": 2133896,
+      "samples": 3
+    },
+    "BenchmarkPrepareBody/8388608": {
+      "median_ms": 23.0816,
+      "bytes_per_op": 16826840,
+      "samples": 3
+    },
+    "BenchmarkAggregateSSE/100": {
+      "median_ms": 0.1139,
+      "bytes_per_op": 37202,
+      "samples": 3
+    },
+    "BenchmarkAggregateSSE/2000": {
+      "median_ms": 2.3885,
+      "bytes_per_op": 754319,
+      "samples": 3
+    }
+  }
+}

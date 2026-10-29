@@ -1,0 +1,880 @@
+{
+  "started_at": "2026-10-29T14:58:04.231601+00:00",
+  "kind": "real upstream, current deployed configuration, synthetic data only",
+  "max_requests": 12,
+  "max_tokens_per_request": 160,
+  "settings_before_sha256": "0ceb71f6805c76cc7e193c6eb4619460494c7b5cc82cd7b38a797a86165a1bd8",
+  "binary_sha256": "ff836f1e741b92a03484f49abfde19d6c158e25a8eff821c82a418f859aa5189",
+  "checks": [
+    {
+      "provider": "codearts",
+      "model": "deepseek-v4.1-flash",
+      "case": "normal",
+      "stream": false,
+      "started_at": "2026-10-29T14:58:04.264522+00:00",
+      "expected": "FIDELITY_OK_7319",
+      "status": 200,
+      "headers_seconds": 1.208,
+      "request_id": "246b8c9321f1f67ef457c236",
+      "content_type": "application/json; charset=utf-8",
+      "seconds": 1.208,
+      "answer": "FIDELITY_OK_7319",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 54,
+        "completion_tokens": 9,
+        "total_tokens": 63,
+        "completion_tokens_details": {}
+      },
+      "done": null,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "246b8c9321f1f67ef457c236",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "estimated_cost": {
+              "currency": "USD",
+              "amount": 2.7e-05,
+              "price": {
+                "currency": "USD",
+                "input": 0.3,
+                "output": 1.2,
+                "cached": 0.006,
+                "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+                "updated_at": "2026-10-26"
+              }
+            },
+            "number": 1,
+            "model": "deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 54,
+              "output_tokens": 9,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 54,
+          "output_tokens": 9,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1188,
+        "model": "deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "codearts",
+      "model": "deepseek-v4.1-flash",
+      "case": "normal",
+      "stream": true,
+      "started_at": "2026-10-29T14:58:05.478196+00:00",
+      "expected": "FIDELITY_OK_7319",
+      "status": 200,
+      "headers_seconds": 0.656,
+      "request_id": "64b6e7708d053cf550599635",
+      "content_type": "text/event-stream; charset=utf-8",
+      "first_text_seconds": 0.656,
+      "seconds": 0.842,
+      "answer": "FIDELITY_OK_7319",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 54,
+        "completion_tokens": 9,
+        "total_tokens": 63
+      },
+      "done": true,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "64b6e7708d053cf550599635",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "estimated_cost": {
+              "currency": "USD",
+              "amount": 2.7e-05,
+              "price": {
+                "currency": "USD",
+                "input": 0.3,
+                "output": 1.2,
+                "cached": 0.006,
+                "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+                "updated_at": "2026-10-26"
+              }
+            },
+            "number": 1,
+            "model": "deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 54,
+              "output_tokens": 9,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 54,
+          "output_tokens": 9,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 841,
+        "model": "deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "codearts",
+      "model": "deepseek-v4.1-flash",
+      "case": "business",
+      "stream": false,
+      "started_at": "2026-10-29T14:58:06.326043+00:00",
+      "expected": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "status": 200,
+      "headers_seconds": 1.189,
+      "request_id": "9c0d3ed401a25a09efd22191",
+      "content_type": "application/json; charset=utf-8",
+      "seconds": 1.189,
+      "answer": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 77,
+        "completion_tokens": 33,
+        "total_tokens": 110,
+        "completion_tokens_details": {}
+      },
+      "done": null,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "9c0d3ed401a25a09efd22191",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "estimated_cost": {
+              "currency": "USD",
+              "amount": 6.27e-05,
+              "price": {
+                "currency": "USD",
+                "input": 0.3,
+                "output": 1.2,
+                "cached": 0.006,
+                "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+                "updated_at": "2026-10-26"
+              }
+            },
+            "number": 1,
+            "model": "deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 77,
+              "output_tokens": 33,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 77,
+          "output_tokens": 33,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1188,
+        "model": "deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "codearts",
+      "model": "deepseek-v4.1-flash",
+      "case": "business",
+      "stream": true,
+      "started_at": "2026-10-29T14:58:07.517473+00:00",
+      "expected": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "status": 200,
+      "headers_seconds": 1.692,
+      "request_id": "234b0b679563b4b47f66d535",
+      "content_type": "text/event-stream; charset=utf-8",
+      "first_text_seconds": 1.692,
+      "seconds": 1.806,
+      "answer": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 77,
+        "completion_tokens": 33,
+        "total_tokens": 110
+      },
+      "done": true,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "234b0b679563b4b47f66d535",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "estimated_cost": {
+              "currency": "USD",
+              "amount": 6.27e-05,
+              "price": {
+                "currency": "USD",
+                "input": 0.3,
+                "output": 1.2,
+                "cached": 0.006,
+                "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+                "updated_at": "2026-10-26"
+              }
+            },
+            "number": 1,
+            "model": "deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 77,
+              "output_tokens": 33,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 77,
+          "output_tokens": 33,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1805,
+        "model": "deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "workbuddy",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "case": "normal",
+      "stream": false,
+      "started_at": "2026-10-29T14:58:09.328779+00:00",
+      "expected": "FIDELITY_OK_7319",
+      "status": 200,
+      "headers_seconds": 1.917,
+      "request_id": "993338af166c6caa0bf50fe1",
+      "content_type": "application/json; charset=utf-8",
+      "seconds": 1.917,
+      "answer": "FIDELITY_OK_7319",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 546,
+        "completion_tokens": 8,
+        "total_tokens": 554,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 0
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 546,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "prompt_cache_write_tokens": 0,
+        "completion_thinking_tokens": 0,
+        "credit": 0.01,
+        "cached_tokens": 0
+      },
+      "done": null,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "993338af166c6caa0bf50fe1",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "workbuddy/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 546,
+              "output_tokens": 8,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 546,
+          "output_tokens": 8,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1916,
+        "model": "workbuddy/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "workbuddy",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "case": "normal",
+      "stream": true,
+      "started_at": "2026-10-29T14:58:11.251709+00:00",
+      "expected": "FIDELITY_OK_7319",
+      "status": 200,
+      "headers_seconds": 1.587,
+      "request_id": "f7062cdd4707b3c3b3f7ab33",
+      "content_type": "text/event-stream; charset=utf-8",
+      "first_text_seconds": 1.587,
+      "seconds": 1.746,
+      "answer": "FIDELITY_OK_7319",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 546,
+        "completion_tokens": 8,
+        "total_tokens": 554,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 162,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "prompt_cache_write_tokens": 0,
+        "completion_thinking_tokens": 0,
+        "credit": 0,
+        "cached_tokens": 0
+      },
+      "done": true,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "f7062cdd4707b3c3b3f7ab33",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "workbuddy/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 546,
+              "output_tokens": 8,
+              "cached_tokens": 384,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 546,
+          "output_tokens": 8,
+          "cached_tokens": 384,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1744,
+        "model": "workbuddy/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "workbuddy",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "case": "business",
+      "stream": false,
+      "started_at": "2026-10-29T14:58:13.003212+00:00",
+      "expected": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "status": 200,
+      "headers_seconds": 1.529,
+      "request_id": "cae49a84c8839754d9eaedeb",
+      "content_type": "application/json; charset=utf-8",
+      "seconds": 1.529,
+      "answer": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 569,
+        "completion_tokens": 32,
+        "total_tokens": 601,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 185,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "prompt_cache_write_tokens": 0,
+        "completion_thinking_tokens": 0,
+        "credit": 0,
+        "cached_tokens": 0
+      },
+      "done": null,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "cae49a84c8839754d9eaedeb",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "workbuddy/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 569,
+              "output_tokens": 32,
+              "cached_tokens": 384,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 569,
+          "output_tokens": 32,
+          "cached_tokens": 384,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1528,
+        "model": "workbuddy/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "workbuddy",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "case": "business",
+      "stream": true,
+      "started_at": "2026-10-29T14:58:14.538550+00:00",
+      "expected": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "status": 200,
+      "headers_seconds": 1.256,
+      "request_id": "046f3be431db3e69b6e93bfd",
+      "content_type": "text/event-stream; charset=utf-8",
+      "first_text_seconds": 1.257,
+      "seconds": 1.479,
+      "answer": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 569,
+        "completion_tokens": 32,
+        "total_tokens": 601,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 185,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "prompt_cache_write_tokens": 0,
+        "completion_thinking_tokens": 0,
+        "credit": 0,
+        "cached_tokens": 0
+      },
+      "done": true,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "046f3be431db3e69b6e93bfd",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "workbuddy/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 569,
+              "output_tokens": 32,
+              "cached_tokens": 384,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 569,
+          "output_tokens": 32,
+          "cached_tokens": 384,
+          "reasoning_tokens": 0
+        },
+        "status": 200,
+        "latency_ms": 1477,
+        "model": "workbuddy/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "trae",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "case": "normal",
+      "stream": false,
+      "started_at": "2026-10-29T14:58:16.020378+00:00",
+      "expected": "FIDELITY_OK_7319",
+      "status": 200,
+      "headers_seconds": 4.0,
+      "request_id": "2f1d8138dd02c463211c3f94",
+      "content_type": "application/json; charset=utf-8",
+      "seconds": 4.0,
+      "answer": "FIDELITY_OK_7319",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_creation_input_tokens_total": 0,
+        "cache_read_input_tokens": 0,
+        "cache_read_input_tokens_total": 0,
+        "cluster": "normal_context",
+        "completion_tokens": 33,
+        "completion_tokens_details": {
+          "reasoning_tokens": 24
+        },
+        "completion_tokens_total": 0,
+        "name": "",
+        "prompt_tokens": 80,
+        "prompt_tokens_total": 0,
+        "reasoning_tokens": 24,
+        "reasoning_tokens_total": 0,
+        "total_tokens": 113,
+        "total_tokens_total": 0
+      },
+      "done": null,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "2f1d8138dd02c463211c3f94",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "trae/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 80,
+              "output_tokens": 33,
+              "cached_tokens": 0,
+              "reasoning_tokens": 24
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 80,
+          "output_tokens": 33,
+          "cached_tokens": 0,
+          "reasoning_tokens": 24
+        },
+        "status": 200,
+        "latency_ms": 3998,
+        "model": "trae/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "trae",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "case": "normal",
+      "stream": true,
+      "started_at": "2026-10-29T14:58:20.022891+00:00",
+      "expected": "FIDELITY_OK_7319",
+      "status": 200,
+      "headers_seconds": 1.121,
+      "request_id": "26fe6d49e484d41e78f78bda",
+      "content_type": "text/event-stream; charset=utf-8",
+      "first_text_seconds": 1.476,
+      "seconds": 1.579,
+      "answer": "FIDELITY_OK_7319",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_creation_input_tokens_total": 0,
+        "cache_read_input_tokens": 0,
+        "cache_read_input_tokens_total": 0,
+        "cluster": "normal_context",
+        "completion_tokens": 35,
+        "completion_tokens_details": {
+          "reasoning_tokens": 26
+        },
+        "completion_tokens_total": 0,
+        "name": "",
+        "prompt_tokens": 80,
+        "prompt_tokens_total": 0,
+        "reasoning_tokens": 26,
+        "reasoning_tokens_total": 0,
+        "total_tokens": 115,
+        "total_tokens_total": 0
+      },
+      "done": true,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "26fe6d49e484d41e78f78bda",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "trae/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 80,
+              "output_tokens": 35,
+              "cached_tokens": 0,
+              "reasoning_tokens": 26
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 80,
+          "output_tokens": 35,
+          "cached_tokens": 0,
+          "reasoning_tokens": 26
+        },
+        "status": 200,
+        "latency_ms": 1578,
+        "model": "trae/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "trae",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "case": "business",
+      "stream": false,
+      "started_at": "2026-10-29T14:58:21.610112+00:00",
+      "expected": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "status": 200,
+      "headers_seconds": 2.353,
+      "request_id": "19c0424554efd474d0854d36",
+      "content_type": "application/json; charset=utf-8",
+      "seconds": 2.354,
+      "answer": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_creation_input_tokens_total": 0,
+        "cache_read_input_tokens": 0,
+        "cache_read_input_tokens_total": 0,
+        "cluster": "normal_context",
+        "completion_tokens": 101,
+        "completion_tokens_details": {
+          "reasoning_tokens": 68
+        },
+        "completion_tokens_total": 0,
+        "name": "",
+        "prompt_tokens": 103,
+        "prompt_tokens_total": 0,
+        "reasoning_tokens": 68,
+        "reasoning_tokens_total": 0,
+        "total_tokens": 204,
+        "total_tokens_total": 0
+      },
+      "done": null,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "19c0424554efd474d0854d36",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "trae/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 103,
+              "output_tokens": 101,
+              "cached_tokens": 0,
+              "reasoning_tokens": 68
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 103,
+          "output_tokens": 101,
+          "cached_tokens": 0,
+          "reasoning_tokens": 68
+        },
+        "status": 200,
+        "latency_ms": 2352,
+        "model": "trae/cn/deepseek-v4.1-flash"
+      }
+    },
+    {
+      "provider": "trae",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "case": "business",
+      "stream": true,
+      "started_at": "2026-10-29T14:58:23.965906+00:00",
+      "expected": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "status": 200,
+      "headers_seconds": 1.374,
+      "request_id": "dedbac9079ad5ce092fd35fd",
+      "content_type": "text/event-stream; charset=utf-8",
+      "first_text_seconds": 2.256,
+      "seconds": 2.523,
+      "answer": "11128; cc_version=42;\nx-anthropic-billing-header: business value;\nYou are Claude Code, Anthropic's official CLI for Claude.",
+      "refusal": "",
+      "finish_reason": "stop",
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_creation_input_tokens_total": 0,
+        "cache_read_input_tokens": 0,
+        "cache_read_input_tokens_total": 0,
+        "cluster": "normal_context",
+        "completion_tokens": 106,
+        "completion_tokens_details": {
+          "reasoning_tokens": 73
+        },
+        "completion_tokens_total": 0,
+        "name": "",
+        "prompt_tokens": 103,
+        "prompt_tokens_total": 0,
+        "reasoning_tokens": 73,
+        "reasoning_tokens_total": 0,
+        "total_tokens": 209,
+        "total_tokens_total": 0
+      },
+      "done": true,
+      "error": null,
+      "valid_completion": true,
+      "exact_echo": true,
+      "passed": true,
+      "gateway_log": {
+        "request_id": "dedbac9079ad5ce092fd35fd",
+        "attempts": 1,
+        "attempt_details": [
+          {
+            "number": 1,
+            "model": "trae/cn/deepseek-v4.1-flash",
+            "finish_reason": "stop",
+            "usage": {
+              "known": true,
+              "input_tokens": 103,
+              "output_tokens": 106,
+              "cached_tokens": 0,
+              "reasoning_tokens": 73
+            }
+          }
+        ],
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 103,
+          "output_tokens": 106,
+          "cached_tokens": 0,
+          "reasoning_tokens": 73
+        },
+        "status": 200,
+        "latency_ms": 2522,
+        "model": "trae/cn/deepseek-v4.1-flash"
+      }
+    }
+  ],
+  "finished_at": "2026-10-29T14:58:26.523964+00:00",
+  "temporary_key_removed": true,
+  "settings_unchanged": true,
+  "running_binary_sha256": "ff836f1e741b92a03484f49abfde19d6c158e25a8eff821c82a418f859aa5189",
+  "total_usage": {
+    "input_tokens": 2858,
+    "output_tokens": 439,
+    "cached_tokens": 1152,
+    "reasoning_tokens": 191
+  }
+}

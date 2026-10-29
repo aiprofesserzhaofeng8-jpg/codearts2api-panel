@@ -26,16 +26,22 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 		Arguments strings.Builder
 	}
 
+	// Choice and tool indices are independent namespaces. Keep each candidate's
+	// text, refusal, reasoning, tool arguments and finish reason separate.
+	type choiceState struct {
+		content, think, refusal strings.Builder
+		hasRefusal              bool
+		finish                  string
+		calls                   map[int]*toolCall
+		order                   []int
+	}
 	var (
-		id      string
-		model   string
-		created int64
-		content strings.Builder
-		think   strings.Builder
-		finish  string
-		usage   json.RawMessage
-		calls   = map[int]*toolCall{}
-		order   []int
+		id          string
+		model       string
+		created     int64
+		usage       json.RawMessage
+		choices     = map[int]*choiceState{}
+		choiceOrder []int
 	)
 
 	for _, raw := range chunks {
@@ -45,9 +51,11 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 			Created int64  `json:"created"`
 			Model   string `json:"model"`
 			Choices []struct {
+				Index int `json:"index"`
 				Delta struct {
-					Content          string `json:"content"`
-					ReasoningContent string `json:"reasoning_content"`
+					Refusal          *string `json:"refusal"`
+					Content          string  `json:"content"`
+					ReasoningContent string  `json:"reasoning_content"`
 					ToolCalls        []struct {
 						Index    int    `json:"index"`
 						ID       string `json:"id"`
@@ -75,14 +83,24 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 			created = c.Created
 		}
 		for _, ch := range c.Choices {
-			content.WriteString(ch.Delta.Content)
-			think.WriteString(ch.Delta.ReasoningContent)
+			state := choices[ch.Index]
+			if state == nil {
+				state = &choiceState{calls: map[int]*toolCall{}}
+				choices[ch.Index] = state
+				choiceOrder = append(choiceOrder, ch.Index)
+			}
+			state.content.WriteString(ch.Delta.Content)
+			state.think.WriteString(ch.Delta.ReasoningContent)
+			if ch.Delta.Refusal != nil {
+				state.hasRefusal = true
+				state.refusal.WriteString(*ch.Delta.Refusal)
+			}
 			for _, tc := range ch.Delta.ToolCalls {
-				call, ok := calls[tc.Index]
+				call, ok := state.calls[tc.Index]
 				if !ok {
 					call = &toolCall{}
-					calls[tc.Index] = call
-					order = append(order, tc.Index)
+					state.calls[tc.Index] = call
+					state.order = append(state.order, tc.Index)
 				}
 				if tc.ID != "" {
 					call.ID = tc.ID
@@ -96,7 +114,7 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 				call.Arguments.WriteString(tc.Function.Arguments)
 			}
 			if ch.FinishReason != nil && *ch.FinishReason != "" {
-				finish = *ch.FinishReason
+				state.finish = *ch.FinishReason
 			}
 		}
 		if len(c.Usage) > 0 && string(c.Usage) != "null" {
@@ -104,41 +122,52 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 		}
 	}
 
-	msg := map[string]any{"role": "assistant", "content": content.String()}
-	if think.Len() > 0 {
-		msg["reasoning_content"] = think.String()
-	}
-	if len(order) > 0 {
-		sort.Ints(order)
-		list := make([]map[string]any, 0, len(order))
-		for _, idx := range order {
-			call := calls[idx]
-			callID := call.ID
-			if callID == "" {
-				callID = "call_" + RandomHex(12)
-			}
-			typ := call.Type
-			if typ == "" {
-				typ = "function"
-			}
-			list = append(list, map[string]any{
-				"index": idx,
-				"id":    callID,
-				"type":  typ,
-				"function": map[string]any{
-					"name":      call.Name,
-					"arguments": call.Arguments.String(),
-				},
-			})
+	sort.Ints(choiceOrder)
+	outputChoices := make([]any, 0, len(choiceOrder))
+	for _, index := range choiceOrder {
+		state := choices[index]
+
+		msg := map[string]any{"role": "assistant", "content": state.content.String()}
+		if state.hasRefusal {
+			msg["refusal"] = state.refusal.String()
 		}
-		msg["tool_calls"] = list
-		if finish == "" {
-			finish = "tool_calls"
+		if state.think.Len() > 0 {
+			msg["reasoning_content"] = state.think.String()
 		}
+		if len(state.order) > 0 {
+			sort.Ints(state.order)
+			list := make([]map[string]any, 0, len(state.order))
+			for _, idx := range state.order {
+				call := state.calls[idx]
+				callID := call.ID
+				if callID == "" {
+					callID = "call_" + RandomHex(12)
+				}
+				typ := call.Type
+				if typ == "" {
+					typ = "function"
+				}
+				list = append(list, map[string]any{
+					"index": idx,
+					"id":    callID,
+					"type":  typ,
+					"function": map[string]any{
+						"name":      call.Name,
+						"arguments": call.Arguments.String(),
+					},
+				})
+			}
+			msg["tool_calls"] = list
+			if state.finish == "" {
+				state.finish = "tool_calls"
+			}
+		}
+		if state.finish == "" {
+			state.finish = "stop"
+		}
+		outputChoices = append(outputChoices, map[string]any{"index": index, "message": msg, "finish_reason": state.finish})
 	}
-	if finish == "" {
-		finish = "stop"
-	}
+
 	if id == "" {
 		id = "chatcmpl-" + RandomHex(12)
 	}
@@ -148,11 +177,7 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 		"object":  "chat.completion",
 		"created": created,
 		"model":   model,
-		"choices": []any{map[string]any{
-			"index":         0,
-			"message":       msg,
-			"finish_reason": finish,
-		}},
+		"choices": outputChoices,
 	}
 	if len(usage) > 0 {
 		resp["usage"] = usage

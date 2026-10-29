@@ -249,7 +249,7 @@ func TestWorkBuddyPolicyAcrossProtocols(t *testing.T) {
 		t.Run(path, func(t *testing.T) {
 			s, key, _ := nativeWBServer(t, func(w http.ResponseWriter, r *http.Request) {
 				raw, _ := io.ReadAll(r.Body)
-				if strings.Contains(string(raw), "CLIENT") || !strings.Contains(string(raw), "CUSTOM") || !strings.Contains(string(raw), "CLI tool for Claude") {
+				if strings.Contains(string(raw), "CLIENT") || !strings.Contains(string(raw), "CUSTOM") || !strings.Contains(string(raw), "CLI for Claude") {
 					t.Errorf("policy absent %s", raw)
 				}
 				io.WriteString(w, summaryFixture("OK", "stop", 2, 1))

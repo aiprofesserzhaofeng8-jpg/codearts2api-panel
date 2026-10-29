@@ -1,0 +1,242 @@
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.01s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.01s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.01s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- PASS: TestChatAggregationPreservesRefusal (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+=== RUN   TestFidelityStreamReturnsBeforeUpstreamCompletion
+--- PASS: TestFidelityStreamReturnsBeforeUpstreamCompletion (0.00s)
+PASS
+ok  	codearts2api/internal/server	0.109s

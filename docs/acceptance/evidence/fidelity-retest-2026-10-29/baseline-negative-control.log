@@ -1,0 +1,85 @@
+=== RUN   TestFidelityBusinessDataAtEachUpstream
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=false
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=true
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=false
+    fidelity_acceptance_test.go:70: unexpected system: "ADMIN PROMPT 11128"
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=true
+    fidelity_acceptance_test.go:70: unexpected system: "ADMIN PROMPT 11128"
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=false
+    fidelity_acceptance_test.go:70: unexpected system: "You are Claude Code, Anthropic's official CLI tool for Claude.\nKeep system ID 11-128."
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11-128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11-128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=true
+    fidelity_acceptance_test.go:70: unexpected system: "You are Claude Code, Anthropic's official CLI tool for Claude.\nKeep system ID 11-128."
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11-128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11-128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=false
+    fidelity_acceptance_test.go:70: unexpected system: "ADMIN PROMPT 11-128"
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11-128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11-128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=true
+    fidelity_acceptance_test.go:70: unexpected system: "ADMIN PROMPT 11-128"
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11-128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11-128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=false
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=true
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=false
+    fidelity_acceptance_test.go:70: unexpected system: "ADMIN PROMPT 11128"
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=true
+    fidelity_acceptance_test.go:70: unexpected system: "ADMIN PROMPT 11128"
+    fidelity_acceptance_test.go:73: user data changed
+    fidelity_acceptance_test.go:85: tool arguments changed: "{\"content\":\"11128\\nYou are Claude Code, Anthropic's official CLI tool for Claude.\",\"n\":9007199254740993,\"path\":\"11128.txt\"}"
+    fidelity_acceptance_test.go:88: tool result changed
+--- FAIL: TestFidelityBusinessDataAtEachUpstream (0.03s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=false (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=true (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=false (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=true (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=false (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=true (0.01s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=false (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=true (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=false (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=true (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=false (0.00s)
+    --- FAIL: TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=true (0.00s)
+=== RUN   TestChatAggregationPreservesRefusal
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=false
+    fidelity_test.go:45: refusal lost or retried: 200 {"choices":[{"finish_reason":"stop","index":0,"message":{"content":"","role":"assistant"}}],"created":0,"id":"chatcmpl-c7ab75b2b1a425472b93d3fc","model":"","object":"chat.completion"} calls=1
+=== RUN   TestChatAggregationPreservesRefusal/codearts/stream=true
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=false
+    fidelity_test.go:45: refusal lost or retried: 200 {"choices":[{"finish_reason":"stop","index":0,"message":{"content":"","role":"assistant"}}],"created":0,"id":"chatcmpl-fde022d7c25357296da88aab","model":"workbuddy/cn/shared","object":"chat.completion"} calls=1
+=== RUN   TestChatAggregationPreservesRefusal/workbuddy/stream=true
+--- FAIL: TestChatAggregationPreservesRefusal (0.01s)
+    --- FAIL: TestChatAggregationPreservesRefusal/codearts/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/codearts/stream=true (0.00s)
+    --- FAIL: TestChatAggregationPreservesRefusal/workbuddy/stream=false (0.00s)
+    --- PASS: TestChatAggregationPreservesRefusal/workbuddy/stream=true (0.00s)
+FAIL
+FAIL	codearts2api/internal/server	0.040s
+FAIL

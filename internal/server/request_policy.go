@@ -24,7 +24,7 @@ func (s *Server) runRequestPolicy(ctx context.Context, acct *codearts.Account, m
 	if summaryRequest(body, explicit) {
 		policy.PromptMode, policy.PromptFallback = "passthrough", false
 	}
-	prepared, err := requestpolicy.PrepareBody(body, policy.PromptMode, policy.PromptText, policy.Sanitize, acct.ProviderID())
+	prepared, err := requestpolicy.PrepareBody(body, policy.PromptMode, policy.PromptText, policy.Sanitize)
 	if err != nil {
 		return &provider.Error{Status: 400, Message: err.Error()}
 	}
@@ -37,7 +37,7 @@ func (s *Server) runRequestPolicy(ctx context.Context, acct *codearts.Account, m
 	if err = s.checkRequestBudget(ctx, model.ID); err != nil {
 		return err
 	}
-	prepared, err = requestpolicy.PrepareBody(body, "custom", requestpolicy.FallbackSystemPrompt, policy.Sanitize, acct.ProviderID())
+	prepared, err = requestpolicy.PrepareBody(body, "custom", requestpolicy.FallbackSystemPrompt, policy.Sanitize)
 	if err != nil {
 		return &provider.Error{Status: 400, Message: err.Error()}
 	}

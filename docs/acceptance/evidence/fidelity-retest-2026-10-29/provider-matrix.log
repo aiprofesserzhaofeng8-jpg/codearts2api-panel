@@ -1,0 +1,28 @@
+=== RUN   TestFidelityBusinessDataAtEachUpstream
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=false
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=true
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=false
+=== RUN   TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=true
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=false
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=true
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=false
+=== RUN   TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=true
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=false
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=true
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=false
+=== RUN   TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=true
+--- PASS: TestFidelityBusinessDataAtEachUpstream (0.09s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=false (0.00s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/codearts/passthrough/stream=true (0.00s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=false (0.00s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/codearts/custom/stream=true (0.00s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=false (0.01s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/workbuddy/passthrough/stream=true (0.01s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=false (0.00s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/workbuddy/custom/stream=true (0.00s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=false (0.01s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/trae/passthrough/stream=true (0.01s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=false (0.01s)
+    --- PASS: TestFidelityBusinessDataAtEachUpstream/trae/custom/stream=true (0.01s)
+PASS
+ok  	codearts2api/internal/server	1.103s

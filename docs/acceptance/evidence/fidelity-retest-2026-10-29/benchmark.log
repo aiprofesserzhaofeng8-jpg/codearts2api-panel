@@ -1,0 +1,27 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/requestpolicy
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkPrepareBody/1024-16         	   56445	      9529 ns/op	 118.48 MB/s	    3588 B/op	      22 allocs/op
+BenchmarkPrepareBody/1024-16         	   75642	      7482 ns/op	 150.90 MB/s	    3585 B/op	      22 allocs/op
+BenchmarkPrepareBody/1024-16         	   79773	      7137 ns/op	 158.19 MB/s	    3584 B/op	      22 allocs/op
+BenchmarkPrepareBody/1048576-16      	     204	   3107865 ns/op	 337.43 MB/s	 2133772 B/op	      25 allocs/op
+BenchmarkPrepareBody/1048576-16      	     205	   2953195 ns/op	 355.10 MB/s	 2132231 B/op	      25 allocs/op
+BenchmarkPrepareBody/1048576-16      	     199	   3032873 ns/op	 345.77 MB/s	 2133885 B/op	      25 allocs/op
+BenchmarkPrepareBody/8388608-16      	      25	  23237916 ns/op	 360.99 MB/s	16826271 B/op	      28 allocs/op
+BenchmarkPrepareBody/8388608-16      	      25	  23200910 ns/op	 361.57 MB/s	16829446 B/op	      29 allocs/op
+BenchmarkPrepareBody/8388608-16      	      24	  23248726 ns/op	 360.82 MB/s	16830479 B/op	      28 allocs/op
+PASS
+ok  	codearts2api/internal/requestpolicy	6.952s
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/codearts
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkAggregateSSE/100-16         	    5716	    100463 ns/op	   37213 B/op	     248 allocs/op
+BenchmarkAggregateSSE/100-16         	    5395	     99138 ns/op	   37202 B/op	     248 allocs/op
+BenchmarkAggregateSSE/100-16         	    5670	    101027 ns/op	   37200 B/op	     248 allocs/op
+BenchmarkAggregateSSE/2000-16        	     296	   1895667 ns/op	  754595 B/op	    4064 allocs/op
+BenchmarkAggregateSSE/2000-16        	     331	   1869723 ns/op	  754163 B/op	    4064 allocs/op
+BenchmarkAggregateSSE/2000-16        	     298	   1906453 ns/op	  753631 B/op	    4063 allocs/op
+PASS
+ok  	codearts2api/internal/codearts	4.063s

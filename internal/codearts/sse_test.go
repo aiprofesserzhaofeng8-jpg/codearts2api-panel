@@ -177,3 +177,68 @@ func TestIsTransientUpstream(t *testing.T) {
 		}
 	}
 }
+
+// Different candidates may reuse tool index 0. Their text, arguments, refusals
+// and termination must not be concatenated into one synthetic answer.
+func TestAggregateSSEIndependentChoicesAndRefusal(t *testing.T) {
+	chunks := [][]byte{
+		[]byte(`{"id":"fidelity","choices":[{"index":1,"delta":{"refusal":"Cannot "}},{"index":0,"delta":{"content":"part","reasoning_content":"think","tool_calls":[{"index":0,"id":"left","type":"function","function":{"name":"write","arguments":"{\"n\":"}}]}},{"index":2,"delta":{"tool_calls":[{"index":0,"id":"right","type":"function","function":{"name":"read","arguments":"{\"path\":"}}]}}]}`),
+		[]byte(`{"choices":[{"index":2,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"11128\"}"}}]},"finish_reason":"tool_calls"},{"index":0,"delta":{"content":"ial","reasoning_content":"ing","tool_calls":[{"index":0,"function":{"arguments":"9007199254740993}"}}]},"finish_reason":"length"},{"index":1,"delta":{"refusal":"comply."},"finish_reason":"future_finish"}]}`),
+		[]byte(`{"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":20,"extra":9007199254740993}}`),
+	}
+	raw, err := AggregateSSE(chunks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		Choices []struct {
+			Index   int
+			Message struct {
+				Content, Refusal string
+				Reasoning        string `json:"reasoning_content"`
+				Calls            []struct {
+					ID       string
+					Function struct{ Name, Arguments string }
+				} `json:"tool_calls"`
+			}
+			Finish string `json:"finish_reason"`
+		}
+		Usage json.RawMessage
+	}
+	if err = json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Choices) != 3 {
+		t.Fatalf("merged choices: %s", raw)
+	}
+	left, refusal, right := got.Choices[0], got.Choices[1], got.Choices[2]
+	if left.Index != 0 || left.Message.Content != "partial" || left.Message.Reasoning != "thinking" || left.Finish != "length" || len(left.Message.Calls) != 1 || left.Message.Calls[0].ID != "left" || left.Message.Calls[0].Function.Arguments != `{"n":9007199254740993}` {
+		t.Fatalf("first choice corrupted: %s", raw)
+	}
+	if refusal.Index != 1 || refusal.Message.Refusal != "Cannot comply." || refusal.Message.Content != "" || refusal.Finish != "future_finish" || len(refusal.Message.Calls) != 0 {
+		t.Fatalf("refusal lost: %s", raw)
+	}
+	if right.Index != 2 || right.Finish != "tool_calls" || len(right.Message.Calls) != 1 || right.Message.Calls[0].ID != "right" || right.Message.Calls[0].Function.Arguments != `{"path":"11128"}` {
+		t.Fatalf("tool choices mixed: %s", raw)
+	}
+	if !strings.Contains(string(got.Usage), "9007199254740993") {
+		t.Fatal("usage metadata rounded")
+	}
+}
+
+func TestAggregateSSERefusalPresence(t *testing.T) {
+	for _, tc := range []struct {
+		delta string
+		want  bool
+	}{
+		{`{"refusal":""}`, true}, {`{"refusal":null}`, false}, {`{"content":"normal"}`, false},
+	} {
+		raw, err := AggregateSSE([][]byte{[]byte(`{"choices":[{"index":0,"delta":` + tc.delta + `,"finish_reason":"stop"}]}`)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(raw), `"refusal"`) != tc.want {
+			t.Fatalf("refusal presence changed: %s", raw)
+		}
+	}
+}

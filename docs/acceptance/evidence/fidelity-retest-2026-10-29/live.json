@@ -1,0 +1,8 @@
+{
+  "checked_at": "2026-10-29T22:44:22.696380+08:00",
+  "source_matches_deployed_fix_evidence": true,
+  "running_matches_built": true,
+  "binary_sha256": "ff836f1e741b92a03484f49abfde19d6c158e25a8eff821c82a418f859aa5189",
+  "source_sha256_before_test_addition": "c1511e84963d933aaa216d16a153b1eb5c177efcf0073f1892470d339d007abc",
+  "health_http": 200
+}

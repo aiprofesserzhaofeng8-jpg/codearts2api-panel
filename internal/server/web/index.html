@@ -757,7 +757,7 @@
             <div class="field"><label for="sCAPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sCAPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
             <div class="row">
               <label class="check"><input id="sCAPromptFallback" type="checkbox">透传遇明确内容策略拦截时，使用中性提示词重试一次</label>
-              <label class="check"><input id="sCASanitize" type="checkbox">清洗出站消息中的已知客户端指纹文本</label>
+              <label class="check"><input id="sCASanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
             </div>
             <div class="field"><label for="sCASearchURL">独立搜索后端 · SearXNG</label><input id="sCASearchURL" type="url" maxlength="2048" placeholder="http://127.0.0.1:8080/search"></div>
             <p class="group-hint">使用启用 JSON 输出的 SearXNG 服务；不使用 CodeArts 原生搜索或其他平台账号。</p>
@@ -774,7 +774,7 @@
             <div class="row">
               <label class="check"><input id="sWBSearch" type="checkbox">启用联网搜索</label>
               <label class="check"><input id="sWBPromptFallback" type="checkbox">透传遇内容策略拦截时，使用中性提示词重试一次</label>
-              <label class="check"><input id="sWBSanitize" type="checkbox">清洗出站消息中的已知客户端指纹文本</label>
+              <label class="check"><input id="sWBSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
             </div>
           </div>
 
@@ -784,7 +784,7 @@
             <div class="field"><label for="sTRPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sTRPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
             <div class="row">
               <label class="check"><input id="sTRPromptFallback" type="checkbox">透传遇明确内容策略拦截时，使用中性提示词重试一次</label>
-              <label class="check"><input id="sTRSanitize" type="checkbox">清洗出站消息中的已知客户端指纹文本</label>
+              <label class="check"><input id="sTRSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
             </div>
             <div class="field"><label for="sTRSearchURL">独立搜索后端 · SearXNG</label><input id="sTRSearchURL" type="url" maxlength="2048" placeholder="http://127.0.0.1:8080/search"></div>
             <p class="group-hint">使用启用 JSON 输出的 SearXNG 服务；不使用 Trae 原生搜索或其他平台账号。</p>

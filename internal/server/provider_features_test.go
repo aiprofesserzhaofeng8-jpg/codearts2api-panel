@@ -67,7 +67,7 @@ func TestOtherProviderPoliciesAcrossProtocols(t *testing.T) {
 					s, key, model, _ := providerPolicyServer(t, name, func(w http.ResponseWriter, r *http.Request) {
 						calls++
 						raw, _ := io.ReadAll(r.Body)
-						if !strings.Contains(string(raw), "OWN-PROMPT") || strings.Contains(string(raw), "OTHER-PROMPT") || strings.Contains(string(raw), "CLIENT-PROMPT") || !strings.Contains(string(raw), "CLI tool for Claude") || !strings.Contains(string(raw), "11128") || strings.Contains(string(raw), "11-128") {
+						if !strings.Contains(string(raw), "OWN-PROMPT") || strings.Contains(string(raw), "OTHER-PROMPT") || strings.Contains(string(raw), "CLIENT-PROMPT") || !strings.Contains(string(raw), "CLI for Claude") || !strings.Contains(string(raw), "11128") || strings.Contains(string(raw), "11-128") {
 							t.Errorf("wrong policy: %s", raw)
 						}
 						var obj struct{ Stream bool }

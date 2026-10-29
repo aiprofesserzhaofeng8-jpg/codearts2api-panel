@@ -10,6 +10,6 @@
 
 现阶段连接 `/v3/config` 模型目录、`/v2/chat/completions` 推理、设备授权、令牌续期、个人积分包查询与每日签到。企业额度、成长任务和其他活动接口未接入。2026-10-29 已实测个人账号签到成功并增加 100 积分；此结果不代替真实模型调用验收。
 
-搜索参考 `internal/upstream/search.go`、`internal/server/messages.go`；提示词和清洗参考 `internal/prompt/*`、`internal/upstream/sanitize.go`。清洗保留工具参数中的数字和字段名；降级重试限定当前请求、同一账号且没有输出分片，不使用参考项目的全局降级窗口。
+搜索参考 `internal/upstream/search.go`、`internal/server/messages.go`；提示词和清洗参考 `internal/prompt/*`、`internal/upstream/sanitize.go`。清洗仅作用于系统提示词中的明确模板，全部业务消息和工具参数原样保留；降级重试限定当前请求、同一账号且没有输出分片，不使用参考项目的全局降级窗口。
 
-公共请求变换现位于 `internal/requestpolicy`，WorkBuddy 专属规则按平台隔离；各平台维护边界见 `docs/PROVIDER-FEATURES.md`。
+公共请求变换现位于 `internal/requestpolicy`，业务文本及错误码字符串不再参与清洗；各平台维护边界见 `docs/PROVIDER-FEATURES.md`。
