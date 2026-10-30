@@ -404,8 +404,16 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 			break
 		}
 		used = acct
-		err := func() error { defer release(); return fn(ctx, acct) }()
-		finishAttempt(ctx, err)
+		var repeated bool
+		err := func() error {
+			defer release()
+			var err error
+			err, repeated = s.runAccountAttempt(ctx, acct, model, fn, i+1 < attempts)
+			return err
+		}()
+		if repeated {
+			i++ // The recovery uses one slot in the existing total-attempt limit.
+		}
 
 		if err == nil {
 			s.Store.MarkModelResult(acct.ID, model, true, "", 0)

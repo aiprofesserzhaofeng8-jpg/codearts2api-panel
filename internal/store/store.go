@@ -112,6 +112,9 @@ type RequestAttempt struct {
 	Model         string       `json:"model"`
 	FinishReason  string       `json:"finish_reason,omitempty"`
 	Usage         TokenUsage   `json:"usage"`
+
+	// Adapter status before public error mapping; absent on success/older logs.
+	UpstreamStatus int `json:"upstream_status,omitempty"`
 }
 
 type LogEntry struct {

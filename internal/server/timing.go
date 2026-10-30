@@ -103,12 +103,18 @@ func finishAttempt(ctx context.Context, err error) {
 	n := max(0, time.Since(c.attemptStarted).Milliseconds())
 	c.attemptDurationMS = &n
 	c.attemptStatus = apierr.From(err).Status
+	if err != nil {
+		var upstream *provider.Error
+		if errors.As(err, &upstream) {
+			c.upstreamStatus = upstream.Status
+		}
+	}
 	c.attemptErrorKind = failureKind(ctx, err)
 }
 
 func (c *usageCapture) attemptDetail() store.RequestAttempt {
 	return store.RequestAttempt{Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage,
-		DurationMS: c.attemptDurationMS, FirstTokenMS: c.attemptFirstMS, Status: c.attemptStatus, ErrorKind: c.attemptErrorKind}
+		DurationMS: c.attemptDurationMS, FirstTokenMS: c.attemptFirstMS, Status: c.attemptStatus, UpstreamStatus: c.upstreamStatus, ErrorKind: c.attemptErrorKind}
 }
 
 func failureKind(ctx context.Context, err error) string {

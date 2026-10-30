@@ -18,7 +18,9 @@ type usageCapture struct {
 	attemptDurationMS *int64
 	attemptFirstMS    *int64
 	attemptStatus     int
+	upstreamStatus    int
 	attemptErrorKind  string
+	attemptObserved   bool
 	accountID         string
 	details           []store.RequestAttempt
 	account           string
@@ -49,6 +51,8 @@ func resetUsage(ctx context.Context) {
 		c.attemptStarted = time.Now()
 		c.attemptDurationMS, c.attemptFirstMS = nil, nil
 		c.attemptStatus, c.attemptErrorKind = 0, ""
+		c.upstreamStatus = 0
+		c.attemptObserved = false
 	}
 }
 
@@ -59,6 +63,7 @@ func captureUsage(ctx context.Context, raw []byte) {
 	if !ok {
 		return
 	}
+	c.attemptObserved = true
 	// Parse finish and usage together. Only until the first useful delta of an
 	// attempt do we inspect delta fields; later chunks retain the small decoder.
 	var u *usageSnapshot

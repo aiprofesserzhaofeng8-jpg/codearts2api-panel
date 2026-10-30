@@ -125,7 +125,11 @@ func (s *Server) providerAccountError(ctx context.Context, acct *codearts.Accoun
 		s.Store.MarkAccountResult(acct.ID, false, p.Error())
 		s.Store.CooldownAccount(acct.ID, p.Error(), s.Store.Settings().Pool.BreakerCooldownSec)
 	} else if p.Status == 429 || p.Status >= 500 || p.Status == 404 {
-		s.Store.MarkModelResult(acct.ID, model, false, p.Error(), s.Store.Settings().Pool.RateCooldownSec)
+		cooldown := s.Store.Settings().Pool.RateCooldownSec
+		if acct.ProviderID() == provider.WorkBuddy && workBuddyTransientStatus(p.Status) {
+			cooldown = min(cooldown, 5)
+		}
+		s.Store.MarkModelResult(acct.ID, model, false, p.Error(), cooldown)
 	}
 
 	return true
