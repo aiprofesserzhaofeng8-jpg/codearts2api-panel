@@ -39,7 +39,7 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, ad
 			}
 			// Activity has no billable model call. Historical uncertain-chat
 			// checkpoints remain intact and must not block explicit onboarding.
-			if err := activity.ReportGrowthActivity(ctx, raw, "first_buddy"); err != nil {
+			if err := activity.ReportGrowthActivity(ctx, raw, *first); err != nil {
 				return reply, false, fmt.Errorf("领养前置活跃上报未确认：%w", err)
 			}
 			reply.CompletedReports = 1

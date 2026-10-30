@@ -1,6 +1,7 @@
 package workbuddy
 
 import (
+	"codearts2api/internal/provider"
 	"context"
 	"encoding/json"
 	"io"
@@ -42,7 +43,7 @@ func TestGrowthActivityUsesMaintenanceWireWithoutChat(t *testing.T) {
 	c := New()
 	c.CNBilling, c.CNBase = billing.URL, "http://chat-must-not-be-called.invalid"
 	for _, code := range []string{"first_buddy", "chat_5"} {
-		if err := c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), code); err != nil {
+		if err := c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), provider.GrowthTask{Code: code}); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := c.RunGrowthChat(context.Background(), fixtureAuth("cn"), code, func([]byte) error { t.Fatal("activity invoked model"); return nil }); err == nil {
@@ -52,8 +53,8 @@ func TestGrowthActivityUsesMaintenanceWireWithoutChat(t *testing.T) {
 	if len(ids) != 2 || ids[0] == ids[1] {
 		t.Fatal("activity reports share an identity")
 	}
-	for _, code := range []string{"Model_chat_GLM5.2", "automation_1", "missing"} {
-		if c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), code) == nil {
+	for _, code := range []string{"Model_chat_GLM5.2", "wb_wechat_oa_subscribe_task", "missing"} {
+		if c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), provider.GrowthTask{Code: code}) == nil {
 			t.Fatal("unsupported task reported", code)
 		}
 	}

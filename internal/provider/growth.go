@@ -22,7 +22,9 @@ type GrowthActions interface {
 }
 
 type GrowthAction struct {
-	Model        string
+	Model string
+	// NativeModel is a task-only upstream alias absent from the public catalog.
+	NativeModel  bool
 	MaxCalls     int64
 	MaxReports   int64
 	Prerequisite string
@@ -31,7 +33,19 @@ type GrowthAction struct {
 // GrowthActivityActions is optional. WorkBuddy growth activity uses a separate
 // maintenance protocol, never the normal inference request path.
 type GrowthActivityActions interface {
-	ReportGrowthActivity(context.Context, json.RawMessage, string) error
+	ReportGrowthActivity(context.Context, json.RawMessage, GrowthTask) error
+}
+
+// GrowthChatSteps resolves task-specific resources before acquiring a model
+// lease/checkpoint. Provider data never enters normal inference or persistence.
+type GrowthChatSteps interface {
+	PrepareGrowthChat(context.Context, json.RawMessage, GrowthTask) (GrowthChatStep, error)
+	RunGrowthChatStep(context.Context, json.RawMessage, GrowthChatStep, func([]byte) error) (bool, error)
+}
+
+type GrowthChatStep struct {
+	Task GrowthTask
+	Data json.RawMessage
 }
 
 // GrowthBuddyOperations is optional and only used by explicit WorkBuddy task
@@ -52,6 +66,7 @@ type GrowthTask struct {
 	Title             string `json:"title"`
 	Description       string `json:"description,omitempty"`
 	TaskDesc          string `json:"task_desc,omitempty"`
+	JumpURL           string `json:"jump_url,omitempty"`
 	Credit            int64  `json:"credit"`
 	Energy            int64  `json:"energy"`
 	RewardBuddy       bool   `json:"reward_buddy,omitempty"`

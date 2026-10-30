@@ -29,6 +29,9 @@ func (c *Client) GrowthAction(code string) (provider.GrowthAction, bool) {
 	case "chat_5":
 		return provider.GrowthAction{MaxReports: 5, Prerequisite: "first_buddy"}, true
 	default:
+		if spec, ok := growthSpec(code); ok {
+			return spec.action, true
+		}
 		return provider.GrowthAction{}, false
 	}
 }
@@ -53,8 +56,15 @@ func annotateGrowthTask(t *provider.GrowthTask) {
 		t.ActionDescription = "活跃上报解锁后，按已确认的协议领养 Buddy；不调用模型，领养及奖励分别核对"
 	case "Expert_Philanthropy":
 		t.ManualInstruction = "涉及捐款，请在官方应用自行决定是否参与"
+	case "wb_wechat_oa_subscribe_task":
+		t.ManualInstruction = "需本人在微信关注「腾讯 WorkBuddy」官方公众号满 24 小时，随后刷新并领取；活动上报不能代替微信关注"
 	default:
-		t.ManualInstruction = "请按任务说明在官方应用完成，随后刷新进度并领取达标奖励"
+		if spec, ok := growthSpec(t.Code); ok {
+			t.AutoSupported, t.ActivityOnly = true, spec.action.MaxReports > 0
+			t.ActionDescription = spec.description
+		} else {
+			t.ManualInstruction = "请按任务说明在官方应用完成，随后刷新进度并领取达标奖励"
+		}
 	}
 }
 

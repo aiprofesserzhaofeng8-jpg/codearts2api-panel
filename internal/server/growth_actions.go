@@ -342,11 +342,18 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	modelID := provider.ModelID(provider.WorkBuddy, "cn", action.Model)
-	if _, ok = s.Reg.Resolve(modelID, nil); !ok {
+	if _, ok = s.Reg.Resolve(modelID, nil); !ok && !action.NativeModel {
 		writeErr(w, 409, "任务指定模型当前不可用，未开始付费对话", "invalid_request_error")
 		return
 	}
 	for int64(calls) < action.MaxCalls && task.Current < task.Target {
+		if calls > 0 {
+			if err = growthPause(ctx, 6*time.Second); err != nil {
+				reply.Message = "执行已停止，请刷新核对已完成的对话"
+				finish()
+				return
+			}
+		}
 		pending, stateErr := s.growthExecution.pending(s.growthExecutionPath(), a.ID, *task)
 		if stateErr != nil {
 			reply.Message = stateErr.Error()
@@ -368,7 +375,7 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 			finish()
 			return
 		}
-		updated, readErr := s.waitGrowth(ctx, growth, raw, func(ts []provider.GrowthTask) bool {
+		updated, readErr := s.waitGrowthScoring(ctx, growth, raw, func(ts []provider.GrowthTask) bool {
 			t := growthTask(ts, body.Code)
 			return t != nil && (t.Claimed || t.Claimable || t.Current > previous)
 		})
@@ -407,6 +414,17 @@ func (s *Server) runGrowthChat(ctx context.Context, a *codearts.Account, actions
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+	// Resolve expert identity and submit its non-billable summon chain before
+	// opening a paid checkpoint. Ordinary model requests never use this path.
+	planner, planned := actions.(provider.GrowthChatSteps)
+	var step provider.GrowthChatStep
+	if planned {
+		var err error
+		step, err = planner.PrepareGrowthChat(ctx, raw, task)
+		if err != nil {
+			return false, err
+		}
+	}
 	budget, err := s.Store.BeginKeyBudget("")
 	if err != nil {
 		return false, fmt.Errorf("用量账本不可用，未开始付费对话")
@@ -433,7 +451,14 @@ func (s *Server) runGrowthChat(ctx context.Context, a *codearts.Account, actions
 	capture.started = time.Now()
 	startAttempt(chatCtx, a, model)
 	out := 0
-	completed, runErr := actions.RunGrowthChat(chatCtx, raw, task.Code, func(b []byte) error { captureUsage(chatCtx, b); out += deltaLen(b); return nil })
+	chunk := func(b []byte) error { captureUsage(chatCtx, b); out += deltaLen(b); return nil }
+	var completed bool
+	var runErr error
+	if planned {
+		completed, runErr = planner.RunGrowthChatStep(chatCtx, raw, step, chunk)
+	} else {
+		completed, runErr = actions.RunGrowthChat(chatCtx, raw, task.Code, chunk)
+	}
 	finishAttempt(chatCtx, runErr)
 	status := 200
 	if runErr != nil {

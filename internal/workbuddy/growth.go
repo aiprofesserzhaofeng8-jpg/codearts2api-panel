@@ -35,6 +35,10 @@ func (c *Client) growthRequest(ctx context.Context, raw json.RawMessage, method,
 }
 
 func (c *Client) growthRequestAt(ctx context.Context, raw json.RawMessage, method, path string, payload []byte, web bool, base string) (json.RawMessage, error) {
+	return c.growthRequestWithHeaders(ctx, raw, method, path, payload, web, base, nil)
+}
+
+func (c *Client) growthRequestWithHeaders(ctx context.Context, raw json.RawMessage, method, path string, payload []byte, web bool, base string, headers func(*http.Request, Credentials)) (json.RawMessage, error) {
 	if !c.SupportsGrowthTasks(raw) {
 		return nil, fmt.Errorf("成长任务仅支持 WorkBuddy 国内个人账号")
 	}
@@ -57,12 +61,14 @@ func (c *Client) growthRequestAt(ctx context.Context, raw json.RawMessage, metho
 	if err != nil {
 		return nil, fmt.Errorf("WorkBuddy 成长任务请求无效")
 	}
-	if !web && (path == "/v2/report" || path == GrowthBuddyInfoPath || path == GrowthBuddyAgreementPath || path == GrowthBuddyFirstPath) {
+	if headers != nil {
+		headers(req, a)
+	} else if !web && (path == "/v2/report" || path == GrowthBuddyInfoPath || path == GrowthBuddyAgreementPath || path == GrowthBuddyFirstPath) {
 		c.growthMaintenanceHeaders(req, a)
 	} else {
 		c.headers(req, a)
 	}
-	if web {
+	if web && headers == nil {
 		req.Header.Set("Origin", "https://www.workbuddy.cn")
 		req.Header.Set("Referer", "https://www.workbuddy.cn/profile/growth-center")
 		req.Header.Set("X-Client-Platform", "web")
@@ -90,7 +96,7 @@ func (c *Client) growthRequestAt(ctx context.Context, raw json.RawMessage, metho
 		return nil, fmt.Errorf("WorkBuddy 成长任务响应缺少明确业务结果")
 	}
 	data := bytes.TrimSpace(envelope.Data)
-	commandAck := !web && method == http.MethodPost && (path == GrowthAcceptPath || path == "/v2/report" || path == GrowthBuddyAgreementPath || path == GrowthBuddyFirstPath) && (len(data) == 0 || bytes.Equal(data, []byte("null")))
+	commandAck := method == http.MethodPost && (path == GrowthAcceptPath || path == "/v2/report" || path == "/v2/user-asset/appearance/set" || path == GrowthBuddyAgreementPath || path == GrowthBuddyFirstPath) && (len(data) == 0 || bytes.Equal(data, []byte("null")))
 	if !bytes.HasPrefix(data, []byte("{")) && !commandAck {
 		return nil, fmt.Errorf("WorkBuddy 成长任务响应结构无效")
 	}

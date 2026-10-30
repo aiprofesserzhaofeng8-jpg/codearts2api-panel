@@ -20,14 +20,14 @@
     }
     function needsBuddy(entry){return entry.tasks.some(function(t){return t.task_code==="first_buddy"&&t.auto_supported&&!t.claimed;})&&!(entry.buddy&&entry.buddy.owned);}
     function needsConsent(entry){return needsBuddy(entry)&&!(entry.buddy&&entry.buddy.agreed);}
-    function runOrder(code){return code==="first_buddy"?-2:(code==="Model_chat_GLM5.2"?-1:0);}
+    function runOrder(code,entry){var task=entry.tasks.find(function(t){return t.task_code===code;});return code==="first_buddy"?-2:(task&&task.activity_only?-1:(code==="Model_chat_GLM5.2"?0:1));}
     function runTask(entry,code){
       var codes=[code];
       if(code!=="first_buddy"&&needsBuddy(entry))codes.unshift("first_buddy");
       return operate([{entry:entry,codes:codes}],"run");
     }
     function selectedJobs(kind){
-      return entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return eligible(e,t,kind);}).map(function(t){return t.task_code;}).sort(function(a,b){return runOrder(a)-runOrder(b);})};}).filter(function(job){return job.codes.length;});
+      return entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return eligible(e,t,kind);}).map(function(t){return t.task_code;}).sort(function(a,b){return runOrder(a,e)-runOrder(b,e);})};}).filter(function(job){return job.codes.length;});
     }
     function accepted(entry,code){
       return entry.tasks.some(function(t){return t.task_code===code&&(t.claimed||t.accept_status==="accepted"||t.accept_status==="completed"||t.accept_status==="claimed");});
@@ -53,7 +53,7 @@
       var hasActivity=entries.some(function(e){return e.tasks.some(function(t){return t.activity_only&&eligible(e,t,"run");});});
       $("growthRunAll").textContent=busyKind==="run"?"执行中…":(entries.some(needsBuddy)||hasActivity?"执行成长任务":"执行对话任务")+(runCount?"（"+runCount+"）":"");
       $("growthClaimAll").textContent=busyKind==="claim"?"领取中…":"领取可领奖励";
-      $("growthRunAll").title=runCount?"按依赖顺序执行；活跃和领养不调用模型，指定模型体验任务会消耗积分":"当前没有可执行的任务；其他任务需在官方应用完成";
+      $("growthRunAll").title=runCount?"按依赖顺序执行；先执行不调用模型的事件任务，再执行会消耗积分的模型、专家和技能任务":"当前没有可执行的任务；其他任务需在官方应用完成";
       $("growthClaimAll").title=$("growthClaimAll").disabled&&!busy?"当前没有可领取的奖励，请先完成任务并刷新进度":"只领取上游已确认达标的奖励";
       var all=entries.flatMap(function(e){return e.tasks;}),failed=entries.filter(function(e){return e.error;});
       $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取 · "+all.filter(function(t){return t.auto_supported&&!t.claimed;}).length+" 项支持自动执行";

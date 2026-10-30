@@ -286,7 +286,7 @@ func TestGrowthActionsEnrollmentMustBeConfirmedAndTargetsBounded(t *testing.T) {
 	if w := runGrowthFixture(s, "chat_5"); w.Code != 409 || f.chats != 0 {
 		t.Fatal("unbounded model calls", w.Code, w.Body.String())
 	}
-	for _, code := range []string{"automation_1", "RichMeow_Chat", "skill_1", "missing"} {
+	for _, code := range []string{"wb_wechat_oa_subscribe_task", "Expert_Philanthropy", "missing"} {
 		if w := runGrowthFixture(s, code); w.Code != 409 || f.chats != 0 || f.reports != 0 {
 			t.Fatal("unsupported action executed", code, w.Code)
 		}

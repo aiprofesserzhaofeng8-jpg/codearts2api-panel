@@ -29,10 +29,13 @@ func (c *Client) growthMaintenanceHeaders(r *http.Request, a Credentials) {
 	}
 }
 
-func (c *Client) ReportGrowthActivity(ctx context.Context, raw json.RawMessage, code string) error {
-	action, ok := c.GrowthAction(code)
+func (c *Client) ReportGrowthActivity(ctx context.Context, raw json.RawMessage, task provider.GrowthTask) error {
+	action, ok := c.GrowthAction(task.Code)
 	if !ok || action.MaxReports == 0 || !c.SupportsGrowthTasks(raw) {
 		return fmt.Errorf("该任务不支持活跃上报")
+	}
+	if task.Code != "first_buddy" && task.Code != "chat_5" {
+		return c.growthDesktopActivity(ctx, raw, task)
 	}
 	normalized, _, err := c.Normalize(raw)
 	if err != nil {

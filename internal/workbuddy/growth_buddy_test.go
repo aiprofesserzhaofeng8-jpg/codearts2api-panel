@@ -1,6 +1,7 @@
 package workbuddy
 
 import (
+	"codearts2api/internal/provider"
 	"context"
 	"fmt"
 	"io"
@@ -86,7 +87,7 @@ func TestGrowthBuddyCommandsAndActivityUseCorrectDomains(t *testing.T) {
 	c.CNBase = up.URL
 	c.CNBilling = billing.URL
 	c.CNWeb = "http://invalid.invalid"
-	if err := c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), "first_buddy"); err != nil {
+	if err := c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), provider.GrowthTask{Code: "first_buddy"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := c.AgreeGrowthBuddy(context.Background(), fixtureAuth("cn")); err != nil {

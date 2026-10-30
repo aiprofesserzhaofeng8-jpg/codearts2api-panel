@@ -68,7 +68,7 @@ func TestGrowthActionsRequireRealChatAndCorrectWire(t *testing.T) {
 	if err != nil || !completed || chunks != 1 || len(calls) != 3 {
 		t.Fatal(completed, err, calls, chunks)
 	}
-	for _, code := range []string{"RichMeow_Chat", "automation_1", "skill_1", "missing"} {
+	for _, code := range []string{"wb_wechat_oa_subscribe_task", "Expert_Philanthropy", "missing"} {
 		if _, ok := c.GrowthAction(code); ok {
 			t.Error("unsupported task advertised as executable", code)
 		}
@@ -111,7 +111,7 @@ func TestGrowthEnrollmentValidationAndLocalCapabilities(t *testing.T) {
 			t.Error("invalid enrollment accepted")
 		}
 	}
-	tasks, err := parseGrowthTasks([]byte(`{"tasks":[{"task_code":"automation_1","auto_supported":true,"activity_only":true,"action_description":"untrusted"},{"task_code":"Model_chat_GLM5.2","auto_supported":false,"activity_only":true}]}`))
+	tasks, err := parseGrowthTasks([]byte(`{"tasks":[{"task_code":"unsupported","auto_supported":true,"activity_only":true,"action_description":"untrusted"},{"task_code":"Model_chat_GLM5.2","auto_supported":false,"activity_only":true}]}`))
 	if err != nil || tasks[0].AutoSupported || tasks[0].ActivityOnly || !tasks[1].AutoSupported || tasks[1].ActivityOnly || strings.Contains(tasks[0].ActionDescription, "untrusted") {
 		t.Fatal("local capability trusted upstream metadata", tasks, err)
 	}

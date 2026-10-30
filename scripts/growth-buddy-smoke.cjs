@@ -35,7 +35,7 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  await page.goto((process.env.CODEARTS_TEST_BASE||'http://127.0.0.1:19092')+'/#accounts');await page.locator('#accounts tr').first().waitFor();await page.locator('#accountProvider').selectOption('workbuddy');
  const idle=()=>page.waitForFunction(()=>!document.querySelector('#growthRefresh').disabled);
  const open=async()=>{await page.locator('#accountGrowth').click();await idle();};
- await open();assert.match(await page.locator('#growthRunAll').getAttribute('title'),/活跃和领养不调用模型/);assert.equal(posts.length,0);assert.equal(await page.locator('#growthBuddyAgree').isChecked(),false);assert.equal(await page.locator('#growthBuddyConsent').isVisible(),true);
+ await open();assert.match(await page.locator('#growthRunAll').getAttribute('title'),/先执行不调用模型的事件任务/);assert.equal(posts.length,0);assert.equal(await page.locator('#growthBuddyAgree').isChecked(),false);assert.equal(await page.locator('#growthBuddyConsent').isVisible(),true);
  assert.equal(await page.locator('[data-task-code="first_buddy"]').getByRole('button',{name:'接取任务',exact:true}).count(),0);
  assert.doesNotMatch(await page.locator('[data-task-code="first_buddy"]').first().textContent(),/未报名/);
  await page.locator('#growthAcceptAll').click();await idle();assert.equal(accepts.length,2);assert.equal(posts.length,0);
