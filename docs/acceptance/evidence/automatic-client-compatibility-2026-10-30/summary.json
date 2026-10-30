@@ -1,0 +1,18 @@
+{
+  "baseline_commit": "04472c1837ead846a39d506b795e86e55d5e786f",
+  "go_race_pass": 13,
+  "real_client_pass": 6,
+  "real_requests": 15,
+  "real_attempts": 15,
+  "real_status_counts": {
+    "200": 15
+  },
+  "known_usage_requests": 15,
+  "incomplete_usage_requests": 0,
+  "benchmark_method": "identical benchmark; -cpu=1 -benchtime=250ms -count=5; medians; controlled upstream, not real provider speed",
+  "stream_benchmark_ns": {
+    "before": 372640.0,
+    "after": 338932.0
+  },
+  "source_reference_sub2api": "a3298b46ebe239fb0720b068a1eb3383955bdac2"
+}

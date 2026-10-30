@@ -1,0 +1,11 @@
+{
+  "bwrap_pid": 3591048,
+  "returncode": 1,
+  "error": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted",
+  "kernel_denial": [
+    "audit: type=1400 audit(1793352049.683:394425): apparmor=\"AUDIT\" operation=\"userns_create\" class=\"namespace\" info=\"Userns create - transitioning profile\" profile=\"unconfined\" pid=3591048 comm=\"bwrap\" requested=\"userns_create\" target=\"unprivileged_userns\"",
+    "audit: type=1400 audit(1793352049.684:394426): apparmor=\"DENIED\" operation=\"capable\" class=\"cap\" profile=\"unprivileged_userns\" pid=3591049 comm=\"bwrap\" capability=8  capname=\"setpcap\"",
+    "audit: type=1400 audit(1793352049.684:394427): apparmor=\"DENIED\" operation=\"capable\" class=\"cap\" profile=\"unprivileged_userns\" pid=3591049 comm=\"bwrap\" capability=12  capname=\"net_admin\""
+  ],
+  "userns_restriction": "1"
+}

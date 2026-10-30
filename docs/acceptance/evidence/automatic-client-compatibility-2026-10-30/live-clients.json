@@ -1,0 +1,605 @@
+{
+  "started_at": "2026-10-30T09:26:07.827529+00:00",
+  "ended_at": "2026-10-30T09:26:34.435602+00:00",
+  "clients": [
+    {
+      "case": "codearts-pi",
+      "provider": "codearts",
+      "client": "pi",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 4.019,
+      "profile_source": "gateway; no overrides",
+      "event_count": 45,
+      "request_count": 2
+    },
+    {
+      "case": "codearts-claude",
+      "provider": "codearts",
+      "client": "claude",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 6.239,
+      "profile_source": "gateway; no overrides",
+      "event_count": 58,
+      "request_count": 3
+    },
+    {
+      "case": "workbuddy-pi",
+      "provider": "workbuddy",
+      "client": "pi",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 3.866,
+      "profile_source": "gateway; no overrides",
+      "event_count": 47,
+      "request_count": 2
+    },
+    {
+      "case": "workbuddy-claude",
+      "provider": "workbuddy",
+      "client": "claude",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 4.836,
+      "profile_source": "gateway; no overrides",
+      "event_count": 5,
+      "request_count": 3
+    },
+    {
+      "case": "trae-pi",
+      "provider": "trae",
+      "client": "pi",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 3.223,
+      "profile_source": "gateway; no overrides",
+      "event_count": 42,
+      "request_count": 2
+    },
+    {
+      "case": "trae-claude",
+      "provider": "trae",
+      "client": "claude",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 4.124,
+      "profile_source": "gateway; no overrides",
+      "event_count": 5,
+      "request_count": 3
+    }
+  ],
+  "requests": [
+    {
+      "index": 1,
+      "case": "codearts-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1178,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "a79d64b9233166a9dbd8249d",
+      "headers_ms": 1884.53,
+      "first_sse_data_ms": 1884.744,
+      "first_meaningful_ms": 1884.793,
+      "response_bytes": 4398,
+      "duration_ms": 2342.03
+    },
+    {
+      "index": 2,
+      "case": "codearts-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1646,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "f845b854b0d884d84ca6c085",
+      "headers_ms": 1237.786,
+      "first_sse_data_ms": 1238.138,
+      "first_meaningful_ms": 1238.22,
+      "response_bytes": 1105,
+      "duration_ms": 1422.67
+    },
+    {
+      "index": 3,
+      "case": "codearts-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4153,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "74701281dd50f242c8f9ec1f",
+      "headers_ms": 931.224,
+      "first_sse_data_ms": 931.335,
+      "first_meaningful_ms": 931.43,
+      "response_bytes": 4795,
+      "duration_ms": 1597.36
+    },
+    {
+      "index": 4,
+      "case": "codearts-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2021,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "21ed0e989e29debdb76b4fd9",
+      "headers_ms": 1100.089,
+      "first_sse_data_ms": 1100.431,
+      "first_meaningful_ms": 1100.655,
+      "response_bytes": 6090,
+      "duration_ms": 2166.669
+    },
+    {
+      "index": 5,
+      "case": "codearts-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2936,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "8190573e7baf3ed6fb23eed2",
+      "headers_ms": 2219.924,
+      "first_sse_data_ms": 2220.19,
+      "first_meaningful_ms": 2220.424,
+      "response_bytes": 3402,
+      "duration_ms": 2466.505
+    },
+    {
+      "index": 6,
+      "case": "workbuddy-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1192,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "427c57756b2f813ac082e0d0",
+      "headers_ms": 1657.817,
+      "first_sse_data_ms": 1658.046,
+      "first_meaningful_ms": 1658.22,
+      "response_bytes": 5236,
+      "duration_ms": 1787.46
+    },
+    {
+      "index": 7,
+      "case": "workbuddy-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1474,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "92ec181291f054a9856e8370",
+      "headers_ms": 1595.525,
+      "first_sse_data_ms": 1595.721,
+      "first_meaningful_ms": 1595.866,
+      "response_bytes": 5679,
+      "duration_ms": 1816.64
+    },
+    {
+      "index": 8,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4166,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "112ce2c63fd9e43978c07387",
+      "headers_ms": 1565.986,
+      "first_sse_data_ms": 1566.169,
+      "first_meaningful_ms": 1566.328,
+      "response_bytes": 7567,
+      "duration_ms": 1809.844
+    },
+    {
+      "index": 9,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "bcbfc8e810a68deb7a7c410e",
+      "headers_ms": 1429.194,
+      "first_sse_data_ms": 1429.447,
+      "first_meaningful_ms": 1429.91,
+      "response_bytes": 2087,
+      "duration_ms": 1546.181
+    },
+    {
+      "index": 10,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2357,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 8192
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "db686392e055d5d6677bc737",
+      "headers_ms": 1391.414,
+      "first_sse_data_ms": 1391.527,
+      "first_meaningful_ms": 1391.624,
+      "response_bytes": 1997,
+      "duration_ms": 1966.83
+    },
+    {
+      "index": 11,
+      "case": "trae-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1182,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 4096
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "6964b7cac4fb34de0545dc0e",
+      "headers_ms": 927.418,
+      "first_sse_data_ms": 927.535,
+      "first_meaningful_ms": 927.561,
+      "response_bytes": 4350,
+      "duration_ms": 1790.04
+    },
+    {
+      "index": 12,
+      "case": "trae-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1632,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 4096
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "34f450f13b7a6c12814f91c1",
+      "headers_ms": 1135.134,
+      "first_sse_data_ms": 1135.361,
+      "first_meaningful_ms": 1135.413,
+      "response_bytes": 2028,
+      "duration_ms": 1175.518
+    },
+    {
+      "index": 13,
+      "case": "trae-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4161,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 4096
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "56228c6ec82ce8a102ae418e",
+      "headers_ms": 1194.214,
+      "first_sse_data_ms": 1194.474,
+      "first_meaningful_ms": 1194.719,
+      "response_bytes": 8359,
+      "duration_ms": 3350.729
+    },
+    {
+      "index": 14,
+      "case": "trae-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2029,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 4096
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "8836d0f2ac01c63f6b3d4a8d",
+      "headers_ms": 1296.456,
+      "first_sse_data_ms": 1296.734,
+      "first_meaningful_ms": 1296.877,
+      "response_bytes": 1048,
+      "duration_ms": 1630.755
+    },
+    {
+      "index": 15,
+      "case": "trae-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2352,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 4096
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "request_id": "1ca1dcf85480a777075579c7",
+      "headers_ms": 1135.663,
+      "first_sse_data_ms": 1135.806,
+      "first_meaningful_ms": 1135.977,
+      "response_bytes": 1300,
+      "duration_ms": 1206.045
+    }
+  ],
+  "cleanup": {
+    "key_removed": true,
+    "health": 200,
+    "inflight": 0,
+    "account_count_before": 12,
+    "account_count_after": 12,
+    "settings_unchanged": true
+  },
+  "log_count": 15
+}

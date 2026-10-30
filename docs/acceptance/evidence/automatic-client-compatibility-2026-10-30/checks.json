@@ -1,0 +1,87 @@
+{
+  "launcher_checks": [
+    {
+      "case": "codearts-pi",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "codearts-codex",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "codearts-claude",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-pi",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-codex",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-claude",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "trae-pi",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "trae-codex",
+      "exit": 0,
+      "pass": true
+    },
+    {
+      "case": "trae-claude",
+      "exit": 0,
+      "pass": true
+    }
+  ],
+  "rejection_checks": [
+    {
+      "path": "/v1/chat/completions",
+      "status": 400,
+      "log_count": 1,
+      "request_id": "63be08bd1cda624c1e2b26d4",
+      "attempts": null,
+      "error_kind": "invalid_request",
+      "known_usage": false,
+      "pass": true
+    },
+    {
+      "path": "/v1/messages",
+      "status": 400,
+      "log_count": 1,
+      "request_id": "4deed5c220233a04fd88f6b4",
+      "attempts": null,
+      "error_kind": "invalid_request",
+      "known_usage": false,
+      "pass": true
+    },
+    {
+      "path": "/v1/responses",
+      "status": 400,
+      "log_count": 1,
+      "request_id": "5f4d2701b013ba7b0ef9abac",
+      "attempts": null,
+      "error_kind": "invalid_request",
+      "known_usage": false,
+      "pass": true
+    }
+  ],
+  "budget_unchanged": true,
+  "codex_native_preflight": {
+    "pass": false,
+    "stopped_before_model_request": true,
+    "classification": "host AppArmor namespace restriction"
+  }
+}

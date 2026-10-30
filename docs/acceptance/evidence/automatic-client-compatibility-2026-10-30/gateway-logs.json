@@ -1,0 +1,612 @@
+[
+  {
+    "first_token_ms": 1883,
+    "provider": "codearts",
+    "request_id": "a79d64b9233166a9dbd8249d",
+    "finish_reason": "tool_calls",
+    "attempts": 1,
+    "protocol": "chat",
+    "usage": {
+      "known": true,
+      "input_tokens": 486,
+      "output_tokens": 82,
+      "cached_tokens": 0,
+      "reasoning_tokens": 43
+    },
+    "model": "deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 2341,
+    "attempt_details": [
+      {
+        "duration_ms": 2340,
+        "first_token_ms": 1883,
+        "status": 200,
+        "estimated_cost": {
+          "currency": "USD",
+          "amount": 0.00024419999999999997,
+          "price": {
+            "currency": "USD",
+            "input": 0.3,
+            "output": 1.2,
+            "cached": 0.006,
+            "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+            "updated_at": "2026-10-26"
+          }
+        },
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "known": true,
+          "input_tokens": 486,
+          "output_tokens": 82,
+          "cached_tokens": 0,
+          "reasoning_tokens": 43
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1236,
+    "provider": "codearts",
+    "request_id": "f845b854b0d884d84ca6c085",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "chat",
+    "usage": {
+      "known": true,
+      "input_tokens": 592,
+      "output_tokens": 14,
+      "cached_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "model": "deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1422,
+    "attempt_details": [
+      {
+        "duration_ms": 1421,
+        "first_token_ms": 1236,
+        "status": 200,
+        "estimated_cost": {
+          "currency": "USD",
+          "amount": 0.0001944,
+          "price": {
+            "currency": "USD",
+            "input": 0.3,
+            "output": 1.2,
+            "cached": 0.006,
+            "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+            "updated_at": "2026-10-26"
+          }
+        },
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 592,
+          "output_tokens": 14,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 930,
+    "provider": "codearts",
+    "request_id": "74701281dd50f242c8f9ec1f",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 774,
+      "output_tokens": 93,
+      "cached_tokens": 0,
+      "reasoning_tokens": 83
+    },
+    "model": "deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1596,
+    "attempt_details": [
+      {
+        "duration_ms": 1596,
+        "first_token_ms": 930,
+        "status": 200,
+        "estimated_cost": {
+          "currency": "USD",
+          "amount": 0.00034379999999999995,
+          "price": {
+            "currency": "USD",
+            "input": 0.3,
+            "output": 1.2,
+            "cached": 0.006,
+            "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+            "updated_at": "2026-10-26"
+          }
+        },
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 774,
+          "output_tokens": 93,
+          "cached_tokens": 0,
+          "reasoning_tokens": 83
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1099,
+    "provider": "codearts",
+    "request_id": "21ed0e989e29debdb76b4fd9",
+    "finish_reason": "tool_calls",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 616,
+      "output_tokens": 163,
+      "cached_tokens": 0,
+      "reasoning_tokens": 123
+    },
+    "model": "deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 2165,
+    "attempt_details": [
+      {
+        "duration_ms": 2165,
+        "first_token_ms": 1098,
+        "status": 200,
+        "estimated_cost": {
+          "currency": "USD",
+          "amount": 0.0003804,
+          "price": {
+            "currency": "USD",
+            "input": 0.3,
+            "output": 1.2,
+            "cached": 0.006,
+            "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+            "updated_at": "2026-10-26"
+          }
+        },
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "known": true,
+          "input_tokens": 616,
+          "output_tokens": 163,
+          "cached_tokens": 0,
+          "reasoning_tokens": 123
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 2219,
+    "provider": "codearts",
+    "request_id": "8190573e7baf3ed6fb23eed2",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 684,
+      "output_tokens": 62,
+      "cached_tokens": 0,
+      "reasoning_tokens": 50
+    },
+    "model": "deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 2465,
+    "attempt_details": [
+      {
+        "duration_ms": 2465,
+        "first_token_ms": 2218,
+        "status": 200,
+        "estimated_cost": {
+          "currency": "USD",
+          "amount": 0.00027959999999999997,
+          "price": {
+            "currency": "USD",
+            "input": 0.3,
+            "output": 1.2,
+            "cached": 0.006,
+            "source": "DeepSeek 官方美元高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/",
+            "updated_at": "2026-10-26"
+          }
+        },
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 684,
+          "output_tokens": 62,
+          "cached_tokens": 0,
+          "reasoning_tokens": 50
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1657,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "request_id": "427c57756b2f813ac082e0d0",
+    "finish_reason": "tool_calls",
+    "attempts": 1,
+    "protocol": "chat",
+    "usage": {
+      "known": true,
+      "input_tokens": 911,
+      "output_tokens": 38,
+      "cached_tokens": 768,
+      "reasoning_tokens": 0
+    },
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1786,
+    "attempt_details": [
+      {
+        "duration_ms": 1786,
+        "first_token_ms": 1656,
+        "status": 200,
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "known": true,
+          "input_tokens": 911,
+          "output_tokens": 38,
+          "cached_tokens": 768,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1595,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "request_id": "92ec181291f054a9856e8370",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "chat",
+    "usage": {
+      "known": true,
+      "input_tokens": 975,
+      "output_tokens": 13,
+      "cached_tokens": 768,
+      "reasoning_tokens": 0
+    },
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1815,
+    "attempt_details": [
+      {
+        "duration_ms": 1815,
+        "first_token_ms": 1594,
+        "status": 200,
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 975,
+          "output_tokens": 13,
+          "cached_tokens": 768,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1429,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "request_id": "bcbfc8e810a68deb7a7c410e",
+    "finish_reason": "tool_calls",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 1055,
+      "output_tokens": 39,
+      "cached_tokens": 896,
+      "reasoning_tokens": 0
+    },
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1545,
+    "attempt_details": [
+      {
+        "duration_ms": 1545,
+        "first_token_ms": 1429,
+        "status": 200,
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "known": true,
+          "input_tokens": 1055,
+          "output_tokens": 39,
+          "cached_tokens": 896,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1565,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "request_id": "112ce2c63fd9e43978c07387",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 565,
+      "output_tokens": 56,
+      "cached_tokens": 384,
+      "reasoning_tokens": 0
+    },
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1808,
+    "attempt_details": [
+      {
+        "duration_ms": 1808,
+        "first_token_ms": 1564,
+        "status": 200,
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 565,
+          "output_tokens": 56,
+          "cached_tokens": 384,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1390,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "request_id": "db686392e055d5d6677bc737",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 1122,
+      "output_tokens": 11,
+      "cached_tokens": 896,
+      "reasoning_tokens": 0
+    },
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1966,
+    "attempt_details": [
+      {
+        "duration_ms": 1965,
+        "first_token_ms": 1390,
+        "status": 200,
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 1122,
+          "output_tokens": 11,
+          "cached_tokens": 896,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 926,
+    "provider": "trae",
+    "scope": "cn",
+    "request_id": "6964b7cac4fb34de0545dc0e",
+    "finish_reason": "tool_calls",
+    "attempts": 1,
+    "protocol": "chat",
+    "usage": {
+      "known": true,
+      "input_tokens": 486,
+      "output_tokens": 81,
+      "cached_tokens": 0,
+      "reasoning_tokens": 24
+    },
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1789,
+    "attempt_details": [
+      {
+        "duration_ms": 1788,
+        "first_token_ms": 926,
+        "status": 200,
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "known": true,
+          "input_tokens": 486,
+          "output_tokens": 81,
+          "cached_tokens": 0,
+          "reasoning_tokens": 24
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1134,
+    "provider": "trae",
+    "scope": "cn",
+    "request_id": "34f450f13b7a6c12814f91c1",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "chat",
+    "usage": {
+      "known": true,
+      "input_tokens": 566,
+      "output_tokens": 11,
+      "cached_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1175,
+    "attempt_details": [
+      {
+        "duration_ms": 1174,
+        "first_token_ms": 1134,
+        "status": 200,
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 566,
+          "output_tokens": 11,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1295,
+    "provider": "trae",
+    "scope": "cn",
+    "request_id": "8836d0f2ac01c63f6b3d4a8d",
+    "finish_reason": "tool_calls",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 616,
+      "output_tokens": 40,
+      "cached_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1629,
+    "attempt_details": [
+      {
+        "duration_ms": 1629,
+        "first_token_ms": 1295,
+        "status": 200,
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "usage": {
+          "known": true,
+          "input_tokens": 616,
+          "output_tokens": 40,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1135,
+    "provider": "trae",
+    "scope": "cn",
+    "request_id": "1ca1dcf85480a777075579c7",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 685,
+      "output_tokens": 13,
+      "cached_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 1205,
+    "attempt_details": [
+      {
+        "duration_ms": 1204,
+        "first_token_ms": 1134,
+        "status": 200,
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 685,
+          "output_tokens": 13,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "first_token_ms": 1192,
+    "provider": "trae",
+    "scope": "cn",
+    "request_id": "56228c6ec82ce8a102ae418e",
+    "finish_reason": "stop",
+    "attempts": 1,
+    "protocol": "messages",
+    "usage": {
+      "known": true,
+      "input_tokens": 774,
+      "output_tokens": 144,
+      "cached_tokens": 0,
+      "reasoning_tokens": 134
+    },
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "stream": true,
+    "status": 200,
+    "latency_ms": 3349,
+    "attempt_details": [
+      {
+        "duration_ms": 3349,
+        "first_token_ms": 1192,
+        "status": 200,
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "usage": {
+          "known": true,
+          "input_tokens": 774,
+          "output_tokens": 144,
+          "cached_tokens": 0,
+          "reasoning_tokens": 134
+        }
+      }
+    ]
+  }
+]

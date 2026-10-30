@@ -1,0 +1,58 @@
+{
+  "before": {
+    "BenchmarkGatewayStreamTiming": {
+      "samples": 5,
+      "median_ns": 372640.0,
+      "bytes": 142363.0,
+      "allocations": 1197.0
+    },
+    "BenchmarkNonStreamingCodeArtsOnce/1024": {
+      "samples": 5,
+      "median_ns": 24764.0,
+      "bytes": 19717.0,
+      "allocations": 142.0
+    },
+    "BenchmarkNonStreamingCodeArtsOnce/1048576": {
+      "samples": 5,
+      "median_ns": 2811398.0,
+      "bytes": 2253187.0,
+      "allocations": 163.0
+    },
+    "BenchmarkNonStreamingCodeArtsOnce/8388608": {
+      "samples": 5,
+      "median_ns": 21953844.0,
+      "bytes": 17089256.0,
+      "allocations": 168.0
+    }
+  },
+  "after": {
+    "BenchmarkGatewayStreamTiming": {
+      "samples": 5,
+      "median_ns": 338932.0,
+      "bytes": 142906.0,
+      "allocations": 1100.0,
+      "change_percent": -9.05
+    },
+    "BenchmarkNonStreamingCodeArtsOnce/1024": {
+      "samples": 5,
+      "median_ns": 23179.0,
+      "bytes": 19717.0,
+      "allocations": 141.0,
+      "change_percent": -6.4
+    },
+    "BenchmarkNonStreamingCodeArtsOnce/1048576": {
+      "samples": 5,
+      "median_ns": 1995086.0,
+      "bytes": 2253170.0,
+      "allocations": 162.0,
+      "change_percent": -29.04
+    },
+    "BenchmarkNonStreamingCodeArtsOnce/8388608": {
+      "samples": 5,
+      "median_ns": 15533585.0,
+      "bytes": 17089141.0,
+      "allocations": 167.0,
+      "change_percent": -29.24
+    }
+  }
+}

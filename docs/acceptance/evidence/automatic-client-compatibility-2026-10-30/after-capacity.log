@@ -1,0 +1,62 @@
+=== RUN   TestAcceptanceConcurrencyLadder
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=1 samples=3 p50_ms=3.756 p95_ms=4.313 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=4 samples=12 p50_ms=4.422 p95_ms=6.597 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=16 samples=48 p50_ms=9.600 p95_ms=18.900 peak=14
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=1 samples=3 p50_ms=3.949 p95_ms=5.982 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=4 samples=12 p50_ms=6.035 p95_ms=6.765 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=16 samples=48 p50_ms=10.677 p95_ms=13.503 peak=15
+--- PASS: TestAcceptanceConcurrencyLadder (0.15s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=1 (0.01s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=4 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=16 (0.04s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=1 (0.01s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=4 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=16 (0.04s)
+=== RUN   TestAcceptanceConcurrencyLadder
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=1 samples=3 p50_ms=3.832 p95_ms=4.321 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=4 samples=12 p50_ms=5.248 p95_ms=6.248 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=16 samples=48 p50_ms=8.320 p95_ms=10.023 peak=16
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=1 samples=3 p50_ms=4.376 p95_ms=5.843 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=4 samples=12 p50_ms=5.972 p95_ms=6.251 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=16 samples=48 p50_ms=11.261 p95_ms=12.878 peak=12
+--- PASS: TestAcceptanceConcurrencyLadder (0.14s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=1 (0.01s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=4 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=16 (0.03s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=1 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=4 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=16 (0.04s)
+=== RUN   TestAcceptanceConcurrencyLadder
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=1 samples=3 p50_ms=4.617 p95_ms=5.729 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=4 samples=12 p50_ms=5.686 p95_ms=6.483 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=false/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=false concurrency=16 samples=48 p50_ms=6.621 p95_ms=8.339 peak=16
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=1
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=1 samples=3 p50_ms=4.144 p95_ms=4.232 peak=1
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=4
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=4 samples=12 p50_ms=4.573 p95_ms=4.641 peak=4
+=== RUN   TestAcceptanceConcurrencyLadder/stream=true/concurrency=16
+    quality_acceptance_test.go:243: CAPACITY stream=true concurrency=16 samples=48 p50_ms=6.095 p95_ms=7.399 peak=16
+--- PASS: TestAcceptanceConcurrencyLadder (0.11s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=1 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=4 (0.02s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=false/concurrency=16 (0.03s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=1 (0.01s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=4 (0.01s)
+    --- PASS: TestAcceptanceConcurrencyLadder/stream=true/concurrency=16 (0.02s)
+PASS
+ok  	codearts2api/internal/server	0.406s

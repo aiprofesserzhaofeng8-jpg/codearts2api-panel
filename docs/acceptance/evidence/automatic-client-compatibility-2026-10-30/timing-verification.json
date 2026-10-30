@@ -1,0 +1,172 @@
+{
+  "log_count": 15,
+  "request_count": 15,
+  "unique_request_ids": 15,
+  "checks": [
+    {
+      "case": "codearts-pi",
+      "request_id": "a79d64b9233166a9dbd8249d",
+      "protocol": "chat",
+      "first_token_ms": 1883,
+      "latency_ms": 2341,
+      "upstream_attempt_ms": 2340,
+      "first_delta_to_proxy_ms": 1884.793,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "codearts-pi",
+      "request_id": "f845b854b0d884d84ca6c085",
+      "protocol": "chat",
+      "first_token_ms": 1236,
+      "latency_ms": 1422,
+      "upstream_attempt_ms": 1421,
+      "first_delta_to_proxy_ms": 1238.22,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "codearts-claude",
+      "request_id": "74701281dd50f242c8f9ec1f",
+      "protocol": "messages",
+      "first_token_ms": 930,
+      "latency_ms": 1596,
+      "upstream_attempt_ms": 1596,
+      "first_delta_to_proxy_ms": 931.43,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "codearts-claude",
+      "request_id": "21ed0e989e29debdb76b4fd9",
+      "protocol": "messages",
+      "first_token_ms": 1099,
+      "latency_ms": 2165,
+      "upstream_attempt_ms": 2165,
+      "first_delta_to_proxy_ms": 1100.655,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "codearts-claude",
+      "request_id": "8190573e7baf3ed6fb23eed2",
+      "protocol": "messages",
+      "first_token_ms": 2219,
+      "latency_ms": 2465,
+      "upstream_attempt_ms": 2465,
+      "first_delta_to_proxy_ms": 2220.424,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-pi",
+      "request_id": "427c57756b2f813ac082e0d0",
+      "protocol": "chat",
+      "first_token_ms": 1657,
+      "latency_ms": 1786,
+      "upstream_attempt_ms": 1786,
+      "first_delta_to_proxy_ms": 1658.22,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-pi",
+      "request_id": "92ec181291f054a9856e8370",
+      "protocol": "chat",
+      "first_token_ms": 1595,
+      "latency_ms": 1815,
+      "upstream_attempt_ms": 1815,
+      "first_delta_to_proxy_ms": 1595.866,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-claude",
+      "request_id": "bcbfc8e810a68deb7a7c410e",
+      "protocol": "messages",
+      "first_token_ms": 1429,
+      "latency_ms": 1545,
+      "upstream_attempt_ms": 1545,
+      "first_delta_to_proxy_ms": 1429.91,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-claude",
+      "request_id": "112ce2c63fd9e43978c07387",
+      "protocol": "messages",
+      "first_token_ms": 1565,
+      "latency_ms": 1808,
+      "upstream_attempt_ms": 1808,
+      "first_delta_to_proxy_ms": 1566.328,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "workbuddy-claude",
+      "request_id": "db686392e055d5d6677bc737",
+      "protocol": "messages",
+      "first_token_ms": 1390,
+      "latency_ms": 1966,
+      "upstream_attempt_ms": 1965,
+      "first_delta_to_proxy_ms": 1391.624,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "trae-pi",
+      "request_id": "6964b7cac4fb34de0545dc0e",
+      "protocol": "chat",
+      "first_token_ms": 926,
+      "latency_ms": 1789,
+      "upstream_attempt_ms": 1788,
+      "first_delta_to_proxy_ms": 927.561,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "trae-pi",
+      "request_id": "34f450f13b7a6c12814f91c1",
+      "protocol": "chat",
+      "first_token_ms": 1134,
+      "latency_ms": 1175,
+      "upstream_attempt_ms": 1174,
+      "first_delta_to_proxy_ms": 1135.413,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "trae-claude",
+      "request_id": "8836d0f2ac01c63f6b3d4a8d",
+      "protocol": "messages",
+      "first_token_ms": 1295,
+      "latency_ms": 1629,
+      "upstream_attempt_ms": 1629,
+      "first_delta_to_proxy_ms": 1296.877,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "trae-claude",
+      "request_id": "1ca1dcf85480a777075579c7",
+      "protocol": "messages",
+      "first_token_ms": 1135,
+      "latency_ms": 1205,
+      "upstream_attempt_ms": 1204,
+      "first_delta_to_proxy_ms": 1135.977,
+      "one_final_log": true,
+      "pass": true
+    },
+    {
+      "case": "trae-claude",
+      "request_id": "56228c6ec82ce8a102ae418e",
+      "protocol": "messages",
+      "first_token_ms": 1192,
+      "latency_ms": 3349,
+      "upstream_attempt_ms": 3349,
+      "first_delta_to_proxy_ms": 1194.719,
+      "one_final_log": true,
+      "pass": true
+    }
+  ]
+}

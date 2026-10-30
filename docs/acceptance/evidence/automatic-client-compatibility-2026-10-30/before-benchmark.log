@@ -1,0 +1,26 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/server
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkGatewayStreamTiming      	     736	    371502 ns/op	  142567 B/op	    1197 allocs/op
+BenchmarkGatewayStreamTiming      	     840	    372640 ns/op	  142348 B/op	    1197 allocs/op
+BenchmarkGatewayStreamTiming      	     831	    368225 ns/op	  142363 B/op	    1197 allocs/op
+BenchmarkGatewayStreamTiming      	     852	    373376 ns/op	  142326 B/op	    1197 allocs/op
+BenchmarkGatewayStreamTiming      	     828	    373000 ns/op	  142371 B/op	    1197 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1024         	   10000	     25002 ns/op	  45.48 MB/s	   19717 B/op	     142 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1024         	   12079	     24747 ns/op	  45.94 MB/s	   19717 B/op	     142 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1024         	   12088	     24764 ns/op	  45.91 MB/s	   19717 B/op	     142 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1024         	   12108	     24837 ns/op	  45.78 MB/s	   19717 B/op	     142 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1024         	   12115	     24702 ns/op	  46.03 MB/s	   19717 B/op	     142 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1048576      	      93	   2793271 ns/op	 375.43 MB/s	 2253191 B/op	     163 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1048576      	     100	   2792613 ns/op	 375.52 MB/s	 2253187 B/op	     163 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1048576      	     100	   2844083 ns/op	 368.73 MB/s	 2253188 B/op	     163 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1048576      	     100	   2811398 ns/op	 373.01 MB/s	 2253187 B/op	     163 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/1048576      	     100	   2837006 ns/op	 369.65 MB/s	 2253187 B/op	     163 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/8388608      	      12	  22368321 ns/op	 375.03 MB/s	17089284 B/op	     168 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/8388608      	      13	  21974852 ns/op	 381.74 MB/s	17089252 B/op	     168 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/8388608      	      13	  21953844 ns/op	 382.11 MB/s	17089256 B/op	     168 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/8388608      	      13	  21920829 ns/op	 382.68 MB/s	17089256 B/op	     168 allocs/op
+BenchmarkNonStreamingCodeArtsOnce/8388608      	      13	  21899678 ns/op	 383.05 MB/s	17089253 B/op	     168 allocs/op
+PASS
+ok  	codearts2api/internal/server	7.142s

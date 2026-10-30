@@ -1,0 +1,14 @@
+{
+  "health": 200,
+  "accounts": 12,
+  "ready": 12,
+  "inflight": 0,
+  "settings_unchanged": true,
+  "temporary_keys_removed": true,
+  "binary_sha256": "fa16e1f91ba651e77ef2c2eda4c0e1473e96f5d44c6569c1ea1aecaeb08bce91",
+  "account_states": {
+    "codearts:ready": 10,
+    "trae:ready": 1,
+    "workbuddy:ready": 1
+  }
+}
