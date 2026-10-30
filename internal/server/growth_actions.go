@@ -113,6 +113,10 @@ func (s *Server) handleGrowthAccept(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 409, "任务尚未解锁", "invalid_request_error")
 			return
 		}
+		if task.AcceptNotRequired {
+			writeErr(w, 409, "该任务无需接取，请直接点击「解锁并领养」", "invalid_request_error")
+			return
+		}
 		if !enrolledGrowth(task) {
 			codes = append(codes, code)
 		}

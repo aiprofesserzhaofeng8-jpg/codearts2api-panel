@@ -47,6 +47,22 @@ func TestGrowthBuddyConsentAndReadOnlyStatus(t *testing.T) {
 	}
 }
 
+func TestGrowthBuddyDoesNotRequireEnrollment(t *testing.T) {
+	s, f := buddyFixture(t)
+	w := growthRequest(s, "GET", "/admin/api/workbuddy/tasks?id=wb-cn", "")
+	var reply growthReply
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &reply) != nil || !growthTask(reply.Tasks, "first_buddy").AcceptNotRequired || growthTask(reply.Tasks, "chat_5").AcceptNotRequired {
+		t.Fatal("incorrect enrollment capability", w.Code, w.Body.String())
+	}
+	w = growthRequest(s, "POST", "/admin/api/workbuddy/tasks/accept", `{"id":"wb-cn","task_codes":["first_buddy"]}`)
+	if w.Code != 409 || !strings.Contains(w.Body.String(), "无需接取") || f.accepts+f.chats+f.agreements+f.adoptions != 0 {
+		t.Fatal("unnecessary enrollment reached upstream", w.Code, w.Body.String())
+	}
+	if runBuddyFixture(t, s, "first_buddy", true).State != "claimed" {
+		t.Fatal("enrollment rejection blocked explicit onboarding")
+	}
+}
+
 func TestGrowthBuddyPreparesDependencyBeforeEnrollingAndExecuting(t *testing.T) {
 	s, f := buddyFixture(t)
 	budget := s.Store.Keys()[0].BudgetUsage

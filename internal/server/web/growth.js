@@ -8,11 +8,12 @@
     var select=$("growthAccountSelect");
     function active(seq){return sequence===seq&&dialog.open;}
     function claimable(entry,task){return entry.account.enabled&&entry.loaded&&task.claimable&&!entry.blocked.has(task.task_code);}
+    function block(entry,code,kind){(kind==="accept"?entry.acceptBlocked:entry.blocked).add(code);}
     function eligible(entry,task,kind){
-      if(!entry.account.enabled||!entry.loaded||entry.blocked.has(task.task_code))return false;
+      if(!entry.account.enabled||!entry.loaded||(kind==="accept"?entry.acceptBlocked:entry.blocked).has(task.task_code))return false;
       if(kind==="claim")return task.claimable;
       if(task.claimed||task.locked)return false;
-      if(kind==="accept")return task.accept_status==="not_accepted";
+      if(kind==="accept")return !task.accept_not_required&&task.accept_status==="not_accepted";
       if(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned)return false;
       if(task.task_code!=="first_buddy"&&entry.blocked.has("first_buddy"))return false;
       return task.auto_supported&&(!task.execution_pending||task.task_code==="first_buddy");
@@ -82,11 +83,11 @@
           if(task.energy)rewards.push("+"+task.energy+" 能量");
           if(task.reward_buddy)rewards.push("Buddy 奖励");
           meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||"奖励以上游活动为准"));
-          var status=task.claimed?"已领取":(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned?"已领养":(task.locked?"未解锁":(entry.running===task.task_code?"执行中":(entry.rejected.has(task.task_code)?"操作未完成":(entry.blocked.has(task.task_code)||task.execution_pending?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"?"未报名":"未完成")))))));
+          var status=task.claimed?"已领取":(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned?"已领养":(task.locked?"未解锁":(entry.running===task.task_code?"执行中":(entry.rejected.has(task.task_code)?"操作未完成":(entry.blocked.has(task.task_code)||task.execution_pending?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"&&!task.accept_not_required?"未报名":"未完成")))))));
           meta.appendChild(ui.pill(status,task.claimed?"ok":(task.claimable&&!entry.blocked.has(task.task_code)?"warn":"")));
           content.appendChild(meta);item.appendChild(content);
           var actions=ui.mk("div","growth-task-actions");
-          if(task.accept_status==="not_accepted"){
+          if(!task.accept_not_required&&task.accept_status==="not_accepted"){
             var accept=ui.btn("接取任务","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"accept");});
             accept.disabled=busy||!eligible(entry,task,"accept");actions.appendChild(accept);
           }
@@ -104,7 +105,7 @@
       if(busy)return Promise.resolve();
       var seq=++sequence;
       $("growthBuddyAgree").checked=false;
-      entries=accounts.filter(function(a){return !select.value||a.id===select.value;}).map(function(a){return {account:a,tasks:[],buddy:null,loaded:false,error:"",blocked:new Set(),rejected:new Set()};});
+      entries=accounts.filter(function(a){return !select.value||a.id===select.value;}).map(function(a){return {account:a,tasks:[],buddy:null,loaded:false,error:"",blocked:new Set(),acceptBlocked:new Set(),rejected:new Set()};});
       $("growthAccountName").textContent=select.value?((accounts.find(function(a){return a.id===select.value;})||{}).name||"WorkBuddy"):"全部 WorkBuddy 账号";
       busy=true;busyKind="refresh";notice="正在刷新任务进度…";render();
       return workers(entries,seq,async function(entry){
@@ -146,7 +147,7 @@
               if(kind==="accept")confirmed+=codes.filter(function(c){return accepted(entry,c);}).length;
               else if(r.state==="claimed"||r.state==="already_claimed"||prepared)confirmed++;
               if(r.state!=="claimed"&&r.state!=="already_claimed"&&!prepared&&!(kind==="accept"&&r.state==="accepted")){
-                codes.forEach(function(c){if(kind!=="accept"||!accepted(entry,c))entry.blocked.add(c);});entry.error=r.message||"操作结果待确认，请刷新任务进度";break;
+                codes.forEach(function(c){if(kind!=="accept"||!accepted(entry,c))block(entry,c,kind);});entry.error=r.message||"操作结果待确认，请刷新任务进度";break;
               }
               if(r.balance_error)entry.error=r.balance_error;
             }catch(e){
@@ -164,7 +165,7 @@
                 }
                 if(active(seq))codes.forEach(function(c){
                   if(kind==="accept"&&accepted(entry,c)){confirmed++;return;}
-                  entry.blocked.add(c);
+                  block(entry,c,kind);
                   if(e.status>=400&&e.status<500&&e.status!==408)entry.rejected.add(c);
                 });
               }

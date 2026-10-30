@@ -114,6 +114,14 @@ func TestGrowthEnrollmentValidationAndLocalCapabilities(t *testing.T) {
 	if err != nil || tasks[0].AutoSupported || !tasks[1].AutoSupported || strings.Contains(tasks[0].ActionDescription, "untrusted") {
 		t.Fatal("local capability trusted upstream metadata", tasks, err)
 	}
+	tasks, err = parseGrowthTasks([]byte(`{"tasks":[{"task_code":"first_buddy","accept_not_required":false},{"task_code":"chat_5","accept_not_required":true}]}`))
+	if err != nil || !tasks[0].AcceptNotRequired || tasks[1].AcceptNotRequired {
+		t.Fatal("local enrollment capability trusted upstream metadata", tasks, err)
+	}
+	err = validateGrowthEnrollment([]byte(`{"results":[{"task_code":"first_buddy","status":"error","message":"task does not require acceptance"}]}`), []string{"first_buddy"})
+	if err == nil || !strings.Contains(err.Error(), "无需接取") {
+		t.Fatal("unnecessary enrollment mislabeled as prerequisite refusal", err)
+	}
 }
 
 func TestGrowthEnrollmentDetectsIndividualRejectionsInsideSuccessEnvelope(t *testing.T) {

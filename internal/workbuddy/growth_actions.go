@@ -35,6 +35,7 @@ func (c *Client) GrowthAction(code string) (provider.GrowthAction, bool) {
 func annotateGrowthTask(t *provider.GrowthTask) {
 	// Never trust upstream fields that advertise local execution capabilities.
 	t.AutoSupported, t.ActionDescription, t.ManualInstruction, t.ExecutionPending = false, "", "", false
+	t.AcceptNotRequired = false
 	switch t.Code {
 	case "Model_chat_GLM5.2":
 		t.AutoSupported = true
@@ -43,6 +44,7 @@ func annotateGrowthTask(t *provider.GrowthTask) {
 		t.AutoSupported = true
 		t.ActionDescription = "使用 GLM-5.2 按差额进行真实对话，最多 5 次，每次最多输出 32 Token，会消耗积分"
 	case "first_buddy":
+		t.AcceptNotRequired = true
 		t.AutoSupported = true
 		t.ActionDescription = "先完成一次真实对话解锁，再按已确认的协议领养 Buddy；最多一次对话，会消耗积分"
 	case "Expert_Philanthropy":
@@ -103,6 +105,8 @@ func validateGrowthEnrollment(data json.RawMessage, codes []string) error {
 			message := "上游拒绝接取该成长任务，请在官方成长中心核对前置条件"
 			if strings.Contains(result.Message, "prerequisite not met: first_buddy") {
 				message = "请先执行「领养第一只 Buddy」完成前置条件，再接取此任务"
+			} else if result.Message == "task does not require acceptance" {
+				message = "该任务无需接取，请直接执行对应操作"
 			}
 			return &provider.Error{Status: 409, Message: message}
 		}

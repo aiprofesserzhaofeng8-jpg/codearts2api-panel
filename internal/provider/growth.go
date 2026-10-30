@@ -51,6 +51,7 @@ type GrowthTask struct {
 	Current           int64  `json:"current"`
 	Target            int64  `json:"target"`
 	AcceptStatus      string `json:"accept_status,omitempty"`
+	AcceptNotRequired bool   `json:"accept_not_required,omitempty"`
 	Status            string `json:"status,omitempty"`
 	Locked            bool   `json:"locked"`
 	Claimed           bool   `json:"claimed"`
