@@ -1,0 +1,14 @@
+{
+  "core_commit": "3ac48d2842242c77fcb04e42a2ad2ee8471d836d",
+  "old_sha256": "00d8d30e148482c883e272d3a7f822e5778c8cd2159e94de66ba67d89c1134b2",
+  "new_sha256": "86cc0d3232ed5f3472d020e4f7a3819d6a304bb4ee31a3200c57c6c14f4da45e",
+  "schema_before": 5,
+  "pid": 13920,
+  "runtime_matches": true,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 8
+  }
+}

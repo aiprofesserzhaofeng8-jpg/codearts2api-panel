@@ -1,0 +1,868 @@
+{
+  "actions": [
+    {
+      "task_code": "playbook_prompt",
+      "http": 200,
+      "elapsed_ms": 2731,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 1,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "playbook_prompt",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "RichMeow_Chat",
+      "http": 200,
+      "elapsed_ms": 2535,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "RichMeow_Chat",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "Library_read",
+      "http": 200,
+      "elapsed_ms": 5742,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 1,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "Library_read",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "Hp_Appearance",
+      "http": 200,
+      "elapsed_ms": 8600,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 1,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "Hp_Appearance",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "Buddy_App",
+      "http": 200,
+      "elapsed_ms": 2388,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 1,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "Buddy_App",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "template_5",
+      "http": 200,
+      "elapsed_ms": 14586,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 5,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "template_5",
+        "current": 5,
+        "target": 5,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "automation_1",
+      "http": 200,
+      "elapsed_ms": 2655,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 1,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "automation_1",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "Expert_lighthouse",
+      "http": 200,
+      "elapsed_ms": 8033,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "Expert_lighthouse",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "WorkBuddy_Valorant",
+      "http": 200,
+      "elapsed_ms": 5567,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "WorkBuddy_Valorant",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "expert_use_maidehao",
+      "http": 200,
+      "elapsed_ms": 8034,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 50,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "expert_use_maidehao",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "expert_use_douyinyin",
+      "http": 200,
+      "elapsed_ms": 4625,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 50,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "expert_use_douyinyin",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "expert_use_shangjia_xuanchuan",
+      "http": 200,
+      "elapsed_ms": 4774,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 50,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "expert_use_shangjia_xuanchuan",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "expert_use_bowangwang",
+      "http": 200,
+      "elapsed_ms": 8191,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 50,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "expert_use_bowangwang",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "Expert_team_use_3",
+      "http": 200,
+      "elapsed_ms": 22288,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 3,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "Expert_team_use_3",
+        "current": 3,
+        "target": 3,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "skill_1",
+      "http": 200,
+      "elapsed_ms": 7628,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 1,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "skill_1",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      }
+    },
+    {
+      "task_code": "expert_5",
+      "http": 200,
+      "elapsed_ms": 2296,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 0,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "task": {
+        "task_code": "expert_5",
+        "current": 5,
+        "target": 5,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      }
+    }
+  ],
+  "before": {
+    "tasks": [
+      {
+        "task_code": "playbook_prompt",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "RichMeow_Chat",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Library_read",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Expert_lighthouse",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Hp_Appearance",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Buddy_App",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "wb_wechat_oa_subscribe_task",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "WorkBuddy_Valorant",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_maidehao",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_douyinyin",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_shangjia_xuanchuan",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_bowangwang",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "Expert_team_use_3",
+        "current": 0,
+        "target": 3,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "first_buddy",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 300,
+        "energy": 8
+      },
+      {
+        "task_code": "chat_5",
+        "current": 5,
+        "target": 5,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "skill_1",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_5",
+        "current": 0,
+        "target": 5,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "template_5",
+        "current": 0,
+        "target": 5,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "automation_1",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    ],
+    "remaining": 2598
+  },
+  "after": {
+    "tasks": [
+      {
+        "task_code": "playbook_prompt",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "RichMeow_Chat",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Library_read",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Expert_lighthouse",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Hp_Appearance",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "Buddy_App",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "wb_wechat_oa_subscribe_task",
+        "current": 0,
+        "target": 1,
+        "accept_status": "accepted",
+        "claimed": false,
+        "claimable": false,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "WorkBuddy_Valorant",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_maidehao",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_douyinyin",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_shangjia_xuanchuan",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_use_bowangwang",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 50,
+        "energy": 5
+      },
+      {
+        "task_code": "Expert_team_use_3",
+        "current": 3,
+        "target": 3,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "first_buddy",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 300,
+        "energy": 8
+      },
+      {
+        "task_code": "chat_5",
+        "current": 5,
+        "target": 5,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "skill_1",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "expert_5",
+        "current": 5,
+        "target": 5,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "template_5",
+        "current": 5,
+        "target": 5,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      },
+      {
+        "task_code": "automation_1",
+        "current": 1,
+        "target": 1,
+        "accept_status": "claimed",
+        "claimed": true,
+        "claimable": false,
+        "auto_supported": true,
+        "activity_only": true,
+        "credit": 100,
+        "energy": 5
+      }
+    ],
+    "remaining": 3998
+  },
+  "credit_delta": 1400,
+  "model_attempt_delta": 10,
+  "settings_keys_groups_and_daily_health_unchanged": true,
+  "other_providers_unchanged": true,
+  "in_flight": 0,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 83
+  },
+  "javascript_errors": [],
+  "temporary_session_logged_out": true
+}

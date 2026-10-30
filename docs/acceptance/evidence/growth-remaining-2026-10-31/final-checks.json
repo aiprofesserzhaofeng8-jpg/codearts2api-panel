@@ -1,0 +1,38 @@
+{
+  "core_commit": "3ac48d2842242c77fcb04e42a2ad2ee8471d836d",
+  "runtime_matches": true,
+  "pid": 13920,
+  "binary_sha256": "86cc0d3232ed5f3472d020e4f7a3819d6a304bb4ee31a3200c57c6c14f4da45e",
+  "served_assets": {
+    "growth.js": "c15360c7d75e7ea522e1021f8e76869b91c08a839a65dc35a673fffbd7e9593c",
+    "console.css": "c5cbc4197f2d8d0f64f9f701ffc345b71b179a3ffe0e06d07580ea7e2e00ac51"
+  },
+  "tasks_total": 19,
+  "previously_claimed": 2,
+  "newly_claimed": 16,
+  "finally_claimed": 18,
+  "remaining_task_codes": [
+    "wb_wechat_oa_subscribe_task"
+  ],
+  "remaining_before": 2598,
+  "remaining_after": 3998,
+  "net_credit_delta": 1400,
+  "confirmed_reward_credits": 1400,
+  "confirmed_reward_energy": 80,
+  "real_model_calls": 10,
+  "model_usage_known": 10,
+  "input_tokens": 380,
+  "output_tokens": 48,
+  "all_model_attempts_recorded": true,
+  "all_model_attempts_successful": true,
+  "account_credentials_daily_health_settings_keys_groups_unchanged": true,
+  "other_provider_accounts_completely_unchanged": true,
+  "historical_paid_checkpoint_preserved": true,
+  "in_flight": 0,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 83
+  }
+}
