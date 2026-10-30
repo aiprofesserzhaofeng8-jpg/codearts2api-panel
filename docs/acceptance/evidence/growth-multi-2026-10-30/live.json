@@ -1,0 +1,19 @@
+{
+  "central_entry_visible_for_workbuddy": true,
+  "other_providers_hidden": true,
+  "filter_does_not_query": true,
+  "real_supported_accounts": 1,
+  "real_task_queries": 2,
+  "task_count": 19,
+  "claimable_count": 0,
+  "claimed_count": 0,
+  "tasks_actually_visible": true,
+  "original_row_entry_works": true,
+  "light_dark_desktop_mobile": true,
+  "real_claim_writes": 0,
+  "model_requests": 0,
+  "settings_keys_budgets_groups_stats_daily_markers_unchanged": true,
+  "javascript_errors": [],
+  "real_multi_account_claim": "not_verified_only_one_supported_account",
+  "real_reward_credit": "not_verified_no_eligible_tasks"
+}

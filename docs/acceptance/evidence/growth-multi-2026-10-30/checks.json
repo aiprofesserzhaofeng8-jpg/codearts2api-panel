@@ -1,0 +1,16 @@
+{
+  "javascript_syntax": "passed",
+  "go_targeted_tests": "passed: Test(Growth|Console|ExternalDaily|DailyScheduler)",
+  "linux_build": "passed",
+  "browser_growth_multi": "passed",
+  "browser_growth_single": "passed",
+  "browser_account_concurrency": "passed",
+  "browser_groups_keys_models": "passed",
+  "git_diff_check": "passed",
+  "multi_account_fixture_count": 4,
+  "claim_enabled_fixture_accounts": 3,
+  "claim_fixture_requests": 6,
+  "real_multi_account_claim": "not_verified_only_one_supported_real_account",
+  "upstream_mode_for_automated_tests": "isolated fixtures",
+  "performance": "No inference or SSE code changed; no new polling. Throughput and TTFT benchmarks not performed."
+}
