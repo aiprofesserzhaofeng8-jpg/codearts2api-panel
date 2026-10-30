@@ -736,6 +736,8 @@
     var tb = $("#accounts");
     tb.textContent = "";
     var accts = d.accounts || [];
+    $("#accountGrowth").classList.toggle("hidden",$("#accountProvider").value!=="workbuddy");
+    $("#accountGrowth").disabled=!accts.some(function(a){return a.provider==="workbuddy"&&a.growth_tasks_supported;});
     var counts = {ready:0, cooling:0, paused:0, disabled:0, busy:0};
     var inFlight = 0;
     accts.forEach(function(a){
@@ -1499,6 +1501,9 @@ PY
   on("#providerLoginComplete",function(){return providerJob(function(){return providerCall("complete",{preview_id:providerPreviewID,replace_existing:$("#providerReplace").checked,name:$("#providerAccountName").value.trim()}).then(refreshAfterProviderSave);});});
   on("#providerImport",function(){return providerJob(function(){var credentials;try{credentials=JSON.parse($("#providerImportJSON").value);}catch(e){throw new Error("请粘贴有效的 "+providerLabel()+" JSON 凭据");}return api("/admin/api/provider-import",{method:"POST",body:{provider:activeProvider,credentials:credentials,replace_existing:$("#providerImportReplace").checked,name:$("#providerAccountName").value.trim()}}).then(refreshAfterProviderSave);});});
   $("#accountProvider").addEventListener("change",function(){if(state.data)renderAccounts(state.data);});
+  on("#accountGrowth",function(){
+    return growthTasks.openAccounts(((state.data&&state.data.accounts)||[]).filter(function(a){return a.provider==="workbuddy"&&a.growth_tasks_supported;}));
+  });
   ["#usageProvider","#usageModel","#usageProtocol","#usageStatus"].forEach(function(id){$(id).addEventListener("change",function(){usageView.page=1;refreshUsageLogs();});});
   on("#savePw", function(){
     return adminLogin(pw()).then(function(){ resumeLogin(); return refresh(); }).catch(function(e){$("#adminLoginError").textContent=e.message;});

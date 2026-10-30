@@ -1122,6 +1122,9 @@ code{
 .modal::backdrop{background:rgba(6,8,18,.62);backdrop-filter:blur(3px)}
 .modal-small{width:min(440px,calc(100vw - 32px))}
 .growth-modal{width:min(820px,calc(100vw - 32px))}
+#growthDialog .growth-account+.growth-account{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+#growthDialog .growth-account-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px;overflow-wrap:anywhere}
+#growthDialog .growth-account-error{font-size:12px;overflow-wrap:anywhere}
 #growthDialog #growthError:empty{display:none}
 #growthDialog .growth-task{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}
 #growthDialog .growth-task:last-child{border-bottom:0}

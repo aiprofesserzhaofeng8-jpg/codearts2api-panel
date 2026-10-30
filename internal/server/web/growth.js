@@ -1,82 +1,117 @@
-// Account-scoped task UI. No background polling or changes to other views.
+// Bounded account workers share the existing account-scoped read/claim APIs.
+// Closing the dialog stops queued work; no timers or background queue remain.
 (function(){
   "use strict";
   window.CodeArtsGrowth=function(ui){
     var $=function(id){return document.getElementById(id);};
-    var dialog=$("growthDialog"),sequence=0,account=null,tasks=[],busy=false,loaded=false,blocked=new Set();
-    function active(seq,id){return sequence===seq&&account&&account.id===id&&dialog.open;}
-    function claimable(t){return account&&account.enabled&&t.claimable&&!blocked.has(t.task_code);}
+    var dialog=$("growthDialog"),sequence=0,accounts=[],entries=[],busy=false;
+    var select=$("growthAccountSelect");
+    function active(seq){return sequence===seq&&dialog.open;}
+    function claimable(entry,task){return entry.account.enabled&&entry.loaded&&task.claimable&&!entry.blocked.has(task.task_code);}
+    async function workers(items,seq,run){
+      var next=0;
+      async function work(){
+        while(active(seq)&&next<items.length){var item=items[next++];await run(item);}
+      }
+      await Promise.all(Array.from({length:Math.min(2,items.length)},work));
+    }
     function render(){
       $("growthRefresh").disabled=busy;
-      $("growthClaimAll").disabled=busy||!loaded||!tasks.some(claimable);
+      select.disabled=busy;
+      $("growthClaimAll").disabled=busy||!entries.some(function(e){return e.tasks.some(function(t){return claimable(e,t);});});
+      var all=entries.flatMap(function(e){return e.tasks;}),failed=entries.filter(function(e){return e.error;});
+      $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取";
+      $("growthError").textContent=failed.length===1&&entries.length===1?failed[0].error:(failed.length?failed.length+" 个账号出现错误，请查看对应账号结果":"");
       var list=$("growthTaskList");list.setAttribute("aria-busy",busy?"true":"false");list.textContent="";
-      if(!loaded){list.appendChild(ui.mk("p","hint",busy?"正在读取任务…":"请刷新任务进度"));return;}
-      $("growthSummary").textContent=tasks.length+" 项任务 · "+tasks.filter(function(t){return t.claimed;}).length+" 项已领取 · "+tasks.filter(function(t){return t.claimable;}).length+" 项可领取";
-      if(!tasks.length){list.appendChild(ui.mk("p","empty","当前账号没有成长任务"));return;}
-      tasks.forEach(function(t){
-        var item=ui.mk("div","growth-task"),content=ui.mk("div","growth-task-content");
-        item.dataset.taskCode=t.task_code;
-        content.appendChild(ui.mk("strong","growth-task-title",t.title||t.task_code));
-        var description=[t.task_desc,t.description].filter(function(s,i,a){return s&&a.indexOf(s)===i;}).join("；");
-        if(description)content.appendChild(ui.mk("p","growth-task-description",description));
-        var meta=ui.mk("div","growth-task-meta");
-        meta.appendChild(ui.mk("span","",t.target>0?"进度 "+t.current+" / "+t.target:"进度待确认"));
-        var rewards=[];
-        if(t.credit)rewards.push("+"+t.credit+" 积分");
-        if(t.energy)rewards.push("+"+t.energy+" 能量");
-        if(t.reward_buddy)rewards.push("Buddy 奖励");
-        meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||"奖励以上游活动为准"));
-        var status=t.claimed?"已领取":(t.locked?"未解锁":(blocked.has(t.task_code)?"待刷新确认":(t.claimable?"可领取":(t.accept_status==="not_accepted"?"未报名":"未完成"))));
-        meta.appendChild(ui.pill(status,t.claimed?"ok":(t.claimable&&!blocked.has(t.task_code)?"warn":"")));
-        content.appendChild(meta);item.appendChild(content);
-        var button=ui.btn("领取奖励","xs",function(){return claim([t.task_code]);});
-        button.disabled=busy||!claimable(t);item.appendChild(button);list.appendChild(item);
+      if(!entries.length){list.appendChild(ui.mk("p","empty","没有支持成长任务的账号"));return;}
+      entries.forEach(function(entry){
+        var group=ui.mk("div","growth-account");group.dataset.accountId=entry.account.id;
+        if(entries.length>1){
+          var header=ui.mk("div","growth-account-head");header.appendChild(ui.mk("strong","",entry.account.name||"WorkBuddy"));
+          if(!entry.account.enabled)header.appendChild(ui.pill("已停用",""));
+          group.appendChild(header);
+          if(entry.error)group.appendChild(ui.mk("p","err-text growth-account-error",entry.error));
+        }
+        if(!entry.loaded){group.appendChild(ui.mk("p","hint",entry.error?"任务未加载，请刷新重试":"正在读取任务…"));}
+        else if(!entry.tasks.length){group.appendChild(ui.mk("p","empty","当前账号没有成长任务"));}
+        entry.tasks.forEach(function(task){
+          var item=ui.mk("div","growth-task"),content=ui.mk("div","growth-task-content");item.dataset.taskCode=task.task_code;
+          content.appendChild(ui.mk("strong","growth-task-title",task.title||task.task_code));
+          var description=[task.task_desc,task.description].filter(function(s,i,a){return s&&a.indexOf(s)===i;}).join("；");
+          if(description)content.appendChild(ui.mk("p","growth-task-description",description));
+          var meta=ui.mk("div","growth-task-meta");
+          meta.appendChild(ui.mk("span","",task.target>0?"进度 "+task.current+" / "+task.target:"进度待确认"));
+          var rewards=[];
+          if(task.credit)rewards.push("+"+task.credit+" 积分");
+          if(task.energy)rewards.push("+"+task.energy+" 能量");
+          if(task.reward_buddy)rewards.push("Buddy 奖励");
+          meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||"奖励以上游活动为准"));
+          var status=task.claimed?"已领取":(task.locked?"未解锁":(entry.blocked.has(task.task_code)?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"?"未报名":"未完成"))));
+          meta.appendChild(ui.pill(status,task.claimed?"ok":(task.claimable&&!entry.blocked.has(task.task_code)?"warn":"")));
+          content.appendChild(meta);item.appendChild(content);
+          var button=ui.btn("领取奖励","xs",function(){return claim([{entry:entry,codes:[task.task_code]}]);});
+          button.disabled=busy||!claimable(entry,task);item.appendChild(button);group.appendChild(item);
+        });
+        list.appendChild(group);
       });
     }
     function load(){
-      if(!account||busy)return Promise.resolve();
-      var seq=++sequence,id=account.id;
-      busy=true;loaded=false;tasks=[];blocked.clear();$("growthError").textContent="";$("growthSummary").textContent="";render();
-      return ui.api("/admin/api/workbuddy/tasks?id="+encodeURIComponent(id)).then(function(r){
-        if(!active(seq,id))return;
-        tasks=r.tasks||[];loaded=true;
-      }).catch(function(e){
-        if(active(seq,id))$("growthError").textContent="查询失败："+e.message;
-      }).finally(function(){if(active(seq,id)){busy=false;render();}});
+      if(busy)return Promise.resolve();
+      var seq=++sequence;
+      entries=accounts.filter(function(a){return !select.value||a.id===select.value;}).map(function(a){return {account:a,tasks:[],loaded:false,error:"",blocked:new Set()};});
+      $("growthAccountName").textContent=select.value?((accounts.find(function(a){return a.id===select.value;})||{}).name||"WorkBuddy"):"全部 WorkBuddy 账号";
+      busy=true;render();
+      return workers(entries,seq,async function(entry){
+        try{
+          var r=await ui.api("/admin/api/workbuddy/tasks?id="+encodeURIComponent(entry.account.id));
+          if(active(seq)){entry.tasks=r.tasks||[];entry.loaded=true;}
+        }catch(e){if(active(seq))entry.error="查询失败："+e.message;}
+        if(active(seq))render();
+      }).finally(function(){if(active(seq)){busy=false;render();}});
     }
-    async function claim(codes){
-      if(!account||busy||!loaded)return;
-      var seq=sequence,id=account.id;
-      busy=true;$("growthError").textContent="";render();
+    async function claim(jobs){
+      if(busy)return;
+      var seq=sequence;busy=true;jobs.forEach(function(job){job.entry.error="";});render();
       try{
-        var confirmed=0;
-        for(var i=0;i<codes.length;i++){
-          if(!active(seq,id))break;
-          var code=codes[i],r;
-          try{r=await ui.api("/admin/api/workbuddy/tasks/claim",{method:"POST",body:{id:id,task_code:code}});}
-          catch(e){if(active(seq,id))blocked.add(code);throw e;}
-          if(r.balance)ui.onBalance(id,r.balance);
-          if(!active(seq,id))break;
-          tasks=r.tasks||tasks;
-          if(r.state!=="claimed"&&r.state!=="already_claimed"){
-            blocked.add(code);$("growthError").textContent=r.message||"领取结果待确认，请刷新任务进度";break;
+        await workers(jobs,seq,async function(job){
+          var entry=job.entry,id=entry.account.id;
+          for(var i=0;i<job.codes.length&&active(seq);i++){
+            var code=job.codes[i];
+            try{
+              var r=await ui.api("/admin/api/workbuddy/tasks/claim",{method:"POST",body:{id:id,task_code:code}});
+              if(r.balance)ui.onBalance(id,r.balance);
+              if(!active(seq))break;
+              entry.tasks=r.tasks||entry.tasks;
+              if(r.state!=="claimed"&&r.state!=="already_claimed"){
+                entry.blocked.add(code);entry.error=r.message||"领取结果待确认，请刷新任务进度";break;
+              }
+              if(r.balance_error)entry.error=r.balance_error;
+            }catch(e){
+              if(active(seq)){entry.blocked.add(code);entry.error=e.message;}
+              break;
+            }finally{if(active(seq))render();}
           }
-          confirmed++;
-          $("growthSummary").textContent="已确认 "+confirmed+" 项奖励";
-          if(r.balance_error)$("growthError").textContent=r.balance_error;
-        }
-      }catch(e){if(active(seq,id))$("growthError").textContent=e.message;}
-      finally{if(active(seq,id)){busy=false;render();}}
+        });
+      }finally{if(active(seq)){busy=false;render();}}
     }
     $("growthRefresh").onclick=load;
-    $("growthClaimAll").onclick=function(){return claim(tasks.filter(claimable).map(function(t){return t.task_code;}));};
+    select.onchange=load;
+    $("growthClaimAll").onclick=function(){
+      var jobs=entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return claimable(e,t);}).map(function(t){return t.task_code;})};}).filter(function(job){return job.codes.length;});
+      return claim(jobs);
+    };
     $("growthClose").onclick=function(){dialog.close();};
-    dialog.addEventListener("close",function(){sequence++;account=null;tasks=[];busy=false;loaded=false;blocked.clear();});
-    return {open:function(a){
-      sequence++;account={id:a.id,enabled:a.enabled};tasks=[];busy=false;loaded=false;blocked.clear();
-      $("growthAccountName").textContent=a.name||"WorkBuddy";
+    dialog.addEventListener("close",function(){sequence++;accounts=[];entries=[];busy=false;});
+    function openAccounts(list){
+      sequence++;busy=false;entries=[];
+      accounts=list.map(function(a){return {id:a.id,name:a.name,enabled:a.enabled};});
+      select.textContent="";
+      if(accounts.length>1){var all=ui.mk("option","","全部账号（"+accounts.length+"）");all.value="";select.appendChild(all);}
+      accounts.forEach(function(a){var option=ui.mk("option","",a.name||"WorkBuddy");option.value=a.id;select.appendChild(option);});
+      $("growthAccountPicker").classList.toggle("hidden",accounts.length<2);
       if(!dialog.open)dialog.showModal();
       return load();
-    }};
+    }
+    return {open:function(a){return openAccounts([a]);},openAccounts:openAccounts};
   };
 })();
