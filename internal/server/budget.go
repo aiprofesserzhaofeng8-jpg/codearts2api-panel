@@ -1,6 +1,7 @@
 package server
 
 import (
+	"codearts2api/internal/apierr"
 	"codearts2api/internal/store"
 	"context"
 	"encoding/json"
@@ -18,10 +19,11 @@ func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.Handl
 		key := extractKey(r)
 		release, err := s.Store.BeginKeyBudget(key)
 		if err != nil {
+			mapped := apierr.From(err)
 			if style == errAnthropic {
-				writeAnthropicErr(w, 402, "permission_error", err.Error())
+				writeAnthropicErr(w, mapped.Status, mapped.Anthropic, err.Error())
 			} else {
-				writeErr(w, 402, err.Error(), "budget_exceeded")
+				writeErr(w, mapped.Status, err.Error(), mapped.OpenAI)
 			}
 			return
 		}

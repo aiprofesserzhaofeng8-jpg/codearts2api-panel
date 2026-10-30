@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -583,7 +584,9 @@ func (s *Server) record(ctx context.Context, key string, acct *codearts.Account,
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		e.FirstTokenMS = c.firstTokenMS
 	}
-	s.Store.Record(e, outLen, key)
+	if err := s.Store.Record(e, outLen, key); err != nil {
+		log.Printf("保存请求 %s 的用量账本失败: %v", e.RequestID, err)
+	}
 }
 
 // completionLen 统计非流式响应里的输出字符数。

@@ -175,10 +175,12 @@ type Stats struct {
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 4
+const StateVersion = 5
 
 // State 是全部持久化状态。
 type State struct {
+	// UsageSequence is the journal checkpoint included in this snapshot.
+	UsageSequence           uint64                            `json:"usage_sequence,omitempty"`
 	Groups                  []AccountGroup                    `json:"groups,omitempty"`
 	ModelHealth             map[string]map[string]ModelHealth `json:"model_health,omitempty"`
 	Audit                   []AuditEvent                      `json:"audit,omitempty"`
@@ -205,12 +207,18 @@ type Store struct {
 	// 而失败（调用方多半忽略错误 → 状态静默不落盘），Linux 上则可能把写了一半
 	// 的临时文件 rename 成正式状态文件（含 refresh_token 的账号全部丢失）。
 	// 因此落盘必须串行，并且临时文件名要唯一。
-	saveMu       sync.Mutex
-	path         string
-	st           *State
-	rotate       int
-	pool         poolRuntime
-	budgetActive map[string]int
+	saveMu sync.Mutex
+	// journalMu serializes settlement and compaction, without holding it during
+	// full-snapshot disk I/O. Lock order: saveMu -> journalMu -> mu.
+	journalMu      sync.Mutex
+	journalSize    int64 // protected by journalMu
+	journalErr     error // protected by mu; blocks inference until a successful save
+	usageBaseReady bool  // protected by mu
+	path           string
+	st             *State
+	rotate         int
+	pool           poolRuntime
+	budgetActive   map[string]int
 }
 
 // DefaultSettings 返回默认设置。
@@ -251,29 +259,36 @@ func DefaultSettings() Settings {
 // Open 载入（或初始化）状态文件。
 func Open(path string) (*Store, error) {
 	s := &Store{path: path, st: &State{Settings: DefaultSettings()}}
+	migrated := false
 	raw, err := os.ReadFile(path)
 	switch {
 	case err == nil:
 		if err := json.Unmarshal(raw, &s.st); err != nil {
 			return nil, fmt.Errorf("状态文件解析失败: %w", err)
 		}
+		migrated = s.st.Version != StateVersion
 		if err := s.migrate(); err != nil {
 			return nil, err
 		}
 		s.applyDefaults()
+		s.usageBaseReady = true
 		// 收紧已存在状态文件的权限：里面是 STS 凭据与 refresh_token。
 		// 旧版本或手工拷贝来的文件可能是 0644，这里纠正一次（Windows 上只影响只读属性）。
 		_ = os.Chmod(path, 0o600)
-		if s.st.Settings.AdminPassword != "" {
-			if err := s.Save(); err != nil {
-				return nil, err
-			}
-		}
 	case errors.Is(err, os.ErrNotExist):
 		s.st.Version = StateVersion
 		s.st.Stats.StartedAt = time.Now().Unix()
 	default:
 		return nil, err
+	}
+	checkpoint := s.st.UsageSequence
+	if err := s.replayUsageJournal(); err != nil {
+		return nil, fmt.Errorf("恢复用量账本失败: %w", err)
+	}
+	if migrated || s.st.UsageSequence != checkpoint || s.st.Settings.AdminPassword != "" {
+		if err := s.Save(); err != nil {
+			return nil, err
+		}
 	}
 	return s, nil
 }
@@ -289,6 +304,9 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 4:
+			// Older binaries must not discard the journal checkpoint.
+			s.st.Version = 5
 		case 3:
 			s.st.Version = 4
 		case 0:
@@ -414,17 +432,40 @@ func (s *Store) Save() error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 
+	s.journalMu.Lock()
 	s.mu.Lock()
 	if err := s.hashPasswordLocked(); err != nil {
 		s.mu.Unlock()
+		s.journalMu.Unlock()
 		return err
 	}
 	raw, err := json.MarshalIndent(s.st, "", "  ")
+	sequence, offset := s.st.UsageSequence, s.journalSize
 	s.mu.Unlock()
+	s.journalMu.Unlock()
 	if err != nil {
 		return err
 	}
-	return s.writeState(raw)
+	if err := s.writeState(raw); err != nil {
+		return err
+	}
+	// The snapshot's rename must be durable before removing its journal prefix.
+	if err := syncUsageDirectory(filepath.Dir(s.path)); err != nil {
+		return err
+	}
+	s.journalMu.Lock()
+	defer s.journalMu.Unlock()
+	err = s.compactUsageJournal(offset)
+	s.mu.Lock()
+	s.usageBaseReady = true
+	if err != nil {
+		s.journalErr = err
+	} else if s.st.UsageSequence == sequence {
+		// A later failed settlement must not be cleared by an older snapshot.
+		s.journalErr = nil
+	}
+	s.mu.Unlock()
+	return err
 }
 
 // writeState requires saveMu. Callers may additionally hold mu for a transaction.
@@ -803,23 +844,20 @@ func (s *Store) Logs(limit int) []LogEntry {
 	return out
 }
 
-// Record 记录一次请求结果并更新统计。
-func (s *Store) Record(e LogEntry, outChars int, keys ...string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// recordPreparedLocked applies one priced settlement. Recovery uses the stored
+// price, never today's model configuration. Caller holds mu.
+func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 	s.initUsageHistoryLocked()
-	// Snapshot the exact price at completion; future edits never reprice history.
 	if e.Usage.Known {
-		e.EstimatedCost = s.costForEntryLocked(&e)
 		if e.EstimatedCost != nil {
 			s.st.Stats.PricedRequests++
 			s.st.Stats.EstimatedUSD += e.EstimatedCost.Amount
 			s.st.Stats.PricedUSDRequests++
 		}
 	}
-	if len(keys) > 0 && e.Attempts > 0 {
+	if key != "" && e.Attempts > 0 {
 		for _, k := range s.st.Keys {
-			if k.Key == keys[0] {
+			if k.Key == key {
 				k.BudgetUsage.Requests++
 				k.BudgetUsage.Tokens += e.Usage.InputTokens + e.Usage.OutputTokens
 				if e.EstimatedCost != nil {

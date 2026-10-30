@@ -134,6 +134,14 @@ def disk_snapshot(path):
     return snapshot(state, state.get("logs") or [], len(state.get("usage_records") or []))
 
 
+def journal_snapshot(path):
+    journal = path.with_name(path.name + ".usage.jsonl")
+    if not journal.exists():
+        return {"bytes": 0, "records": 0}
+    raw = journal.read_bytes()
+    return {"bytes": len(raw), "records": raw.count(b"\n")}
+
+
 def live_snapshot(port):
     code, state = api(port, "/admin/api/state")
     require(code == 200, "cannot read isolated admin state")
@@ -253,12 +261,15 @@ def scenario(binary, directory, env, name):
         elif name == "kill_before_flush":
             require(time.monotonic() - gateway.started < 20,
                     "quick-kill test took too long to isolate the periodic window")
+        journal_before_stop = journal_snapshot(gateway.state)
         stop_after = round(time.monotonic() - gateway.started, 3)
         exit_code = gateway.stop(signal.SIGTERM if name == "graceful" else signal.SIGKILL)
         after_stop = disk_snapshot(gateway.state)
         gateway.start()
         recovered = live_snapshot(gateway.port)
-        require(recovered == after_stop, "restart did not faithfully load persisted accounting")
+        # A durable append journal may legitimately recover newer accounting
+        # than the periodic JSON snapshot. The old binary has no journal.
+        require(recovered in (after_stop, live), "restart recovered inconsistent accounting")
         lost_ids = sorted(set(live["request_ids"]) - set(recovered["request_ids"]))
         replay = {budget: gateway.infer(budget)[0] for budget in LIMITS}
         expected_replay = 200 if lost_ids else 402
@@ -271,6 +282,7 @@ def scenario(binary, directory, env, name):
         return {"name": name, "stop_after_start_sec": stop_after, "exit_code": exit_code,
                 "initial_disk": initial, "completed_in_memory": live,
                 "live_budget_rejection_status": blocked, "disk_before_stop": before_stop,
+                "journal_before_stop": journal_before_stop,
                 "disk_after_stop": after_stop, "recovered_before_replay": recovered,
                 "lost_request_ids": lost_ids, "post_restart_status": replay,
                 "completed_accounting_survived": durable}
@@ -282,6 +294,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=pathlib.Path, default=ROOT / "bin/codearts2api-panel")
     parser.add_argument("--output", type=pathlib.Path, required=True)
+    parser.add_argument("--require-durable", action="store_true",
+                        help="fail if any completed accounting is lost on restart")
     args = parser.parse_args()
     os.umask(0o077)
     binary = args.binary.resolve(strict=True)
@@ -330,6 +344,9 @@ def main():
                 "upstream": "loopback TLS fixture; CONNECT has no outbound forwarding",
                 "real_provider_requests": 0, "fixture_inferences": len(proxy.inferences),
                 "scenarios": results})
+            if args.require_durable:
+                require(all(r["completed_accounting_survived"] for r in results),
+                        "completed request accounting was lost across restart")
         finally:
             proxy.shutdown()
             proxy.server_close()

@@ -48,6 +48,9 @@ func budgetCheck(b KeyBudget, u BudgetUsage) error {
 func (s *Store) BeginKeyBudget(key string) (func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.journalErr != nil {
+		return nil, ErrUsagePersistence
+	}
 	for _, k := range s.st.Keys {
 		if k.Key == key {
 			if !k.Enabled {
@@ -86,6 +89,9 @@ func (s *Store) BeginKeyBudget(key string) (func(), error) {
 func (s *Store) CheckKeyBudgetProgress(key, model string, attempts []RequestAttempt) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	if s.journalErr != nil {
+		return ErrUsagePersistence
+	}
 	for _, k := range s.st.Keys {
 		if k.Key == key {
 			if !k.Enabled {

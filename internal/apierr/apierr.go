@@ -94,6 +94,10 @@ func From(err error) Error {
 	if err == nil {
 		return Error{Status: http.StatusOK}
 	}
+	var unavailable interface{ ServiceUnavailable() bool }
+	if errors.As(err, &unavailable) && unavailable.ServiceUnavailable() {
+		return Error{Status: http.StatusServiceUnavailable, OpenAI: "server_error", Anthropic: "overloaded_error"}
+	}
 	var budget interface{ BudgetExceeded() bool }
 	if errors.As(err, &budget) && budget.BudgetExceeded() {
 		return Error{Status: http.StatusPaymentRequired, OpenAI: "budget_exceeded", Anthropic: "permission_error"}
