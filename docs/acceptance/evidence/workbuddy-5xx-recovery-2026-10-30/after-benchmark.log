@@ -1,0 +1,21 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/server
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkGatewayStreamTiming      	    1256	    342525 ns/op	  143002 B/op	    1100 allocs/op
+BenchmarkGatewayStreamTiming      	    1250	    335971 ns/op	  143010 B/op	    1100 allocs/op
+BenchmarkGatewayStreamTiming      	    1300	    332868 ns/op	  142939 B/op	    1100 allocs/op
+BenchmarkGatewayStreamTiming      	    1314	    333437 ns/op	  142920 B/op	    1100 allocs/op
+BenchmarkGatewayStreamTiming      	    1304	    335075 ns/op	  142934 B/op	    1100 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=false         	     662	    647645 ns/op	  258958 B/op	    3110 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=false         	     673	    643281 ns/op	  258980 B/op	    3110 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=false         	     666	    642028 ns/op	  258946 B/op	    3110 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=false         	     673	    653997 ns/op	  258924 B/op	    3110 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=false         	     660	    643049 ns/op	  258963 B/op	    3110 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=true          	     651	    659374 ns/op	  268774 B/op	    3068 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=true          	     646	    657737 ns/op	  268791 B/op	    3068 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=true          	     644	    668119 ns/op	  268798 B/op	    3068 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=true          	     626	    662103 ns/op	  268856 B/op	    3068 allocs/op
+BenchmarkWorkBuddyRecoverySuccess/stream=true          	     649	    659528 ns/op	  268781 B/op	    3068 allocs/op
+PASS
+ok  	codearts2api/internal/server	7.292s

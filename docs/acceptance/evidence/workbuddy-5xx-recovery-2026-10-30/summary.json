@@ -1,0 +1,20 @@
+{
+  "baseline": "8aa2dd274940878b032b8d151ca7fe5d7a6b5343",
+  "precision_fix_commit": "e8cec8f",
+  "recovery_fix_commit": "bbc7c98",
+  "controlled_leaf_cases_passed": 70,
+  "real_requests": 7,
+  "real_attempts": 7,
+  "real_statuses": {
+    "200": 7
+  },
+  "real_5xx_reproduced": false,
+  "real_tool_loops_passed": 2,
+  "workbuddy_latency_ms_range": [
+    1398,
+    1896
+  ],
+  "reference_commit": "a3298b46ebe239fb0720b068a1eb3383955bdac2",
+  "settings_unchanged": true,
+  "temporary_keys_removed": true
+}

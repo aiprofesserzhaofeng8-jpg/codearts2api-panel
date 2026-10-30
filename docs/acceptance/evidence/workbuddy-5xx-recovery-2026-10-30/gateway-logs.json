@@ -1,0 +1,270 @@
+[
+  {
+    "time": 1793356567,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "chat",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1896,
+    "first_token_ms": 1625,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 911,
+      "output_tokens": 59,
+      "cached_tokens": 768,
+      "reasoning_tokens": 0
+    },
+    "request_id": "fa7be69734e9b77662cbf6b5",
+    "finish_reason": "tool_calls",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "duration_ms": 1896,
+        "first_token_ms": 1625,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 911,
+          "output_tokens": 59,
+          "cached_tokens": 768,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793356569,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "chat",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1398,
+    "first_token_ms": 1261,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 995,
+      "output_tokens": 12,
+      "cached_tokens": 768,
+      "reasoning_tokens": 0
+    },
+    "request_id": "eaf87347f6b9de49d26837f1",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1398,
+        "first_token_ms": 1261,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 995,
+          "output_tokens": 12,
+          "cached_tokens": 768,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793356571,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1544,
+    "first_token_ms": 1423,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 1055,
+      "output_tokens": 39,
+      "cached_tokens": 896,
+      "reasoning_tokens": 0
+    },
+    "request_id": "ec4d3bdcd971d4d9f2dc5fc9",
+    "finish_reason": "tool_calls",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "duration_ms": 1544,
+        "first_token_ms": 1423,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 1055,
+          "output_tokens": 39,
+          "cached_tokens": 896,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793356572,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1835,
+    "first_token_ms": 1372,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 565,
+      "output_tokens": 39,
+      "cached_tokens": 384,
+      "reasoning_tokens": 0
+    },
+    "request_id": "8bb8859eec0031e75ce881c4",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1834,
+        "first_token_ms": 1371,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 565,
+          "output_tokens": 39,
+          "cached_tokens": 384,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793356573,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1479,
+    "first_token_ms": 1377,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 1124,
+      "output_tokens": 13,
+      "cached_tokens": 896,
+      "reasoning_tokens": 0
+    },
+    "request_id": "39b41cae8fc14ef57adbe693",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1479,
+        "first_token_ms": 1377,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 1124,
+          "output_tokens": 13,
+          "cached_tokens": 896,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793356610,
+    "provider": "codearts",
+    "model": "deepseek-v4.1-flash",
+    "protocol": "chat",
+    "status": 200,
+    "stream": false,
+    "latency_ms": 1230,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 36,
+      "output_tokens": 20,
+      "cached_tokens": 0,
+      "reasoning_tokens": 16
+    },
+    "request_id": "9401caf460b876066b04bf57",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1229,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 36,
+          "output_tokens": 20,
+          "cached_tokens": 0,
+          "reasoning_tokens": 16
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793356612,
+    "provider": "trae",
+    "scope": "cn",
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "protocol": "chat",
+    "status": 200,
+    "stream": false,
+    "latency_ms": 1141,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 36,
+      "output_tokens": 17,
+      "cached_tokens": 0,
+      "reasoning_tokens": 13
+    },
+    "request_id": "3ab3d180682bc20b2e3d0e61",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1140,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 36,
+          "output_tokens": 17,
+          "cached_tokens": 0,
+          "reasoning_tokens": 13
+        }
+      }
+    ]
+  }
+]

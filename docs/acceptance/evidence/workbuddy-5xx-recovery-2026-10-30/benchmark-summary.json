@@ -1,0 +1,61 @@
+{
+  "baseline": "8aa2dd2",
+  "command": "go test ./internal/server -run ^$ -bench Benchmark(WorkBuddyRecoverySuccess|GatewayStreamTiming)$ -cpu=1 -benchtime=350ms -count=5",
+  "before": {
+    "BenchmarkGatewayStreamTiming": {
+      "samples": 5,
+      "ns_per_op": 334851,
+      "bytes_per_op": 142910,
+      "allocs_per_op": 1100
+    },
+    "BenchmarkWorkBuddyRecoverySuccess/stream=false": {
+      "samples": 5,
+      "ns_per_op": 639996,
+      "bytes_per_op": 258942,
+      "allocs_per_op": 3110
+    },
+    "BenchmarkWorkBuddyRecoverySuccess/stream=true": {
+      "samples": 5,
+      "ns_per_op": 652195,
+      "bytes_per_op": 268739,
+      "allocs_per_op": 3068
+    }
+  },
+  "after": {
+    "BenchmarkGatewayStreamTiming": {
+      "samples": 5,
+      "ns_per_op": 335075,
+      "bytes_per_op": 142939,
+      "allocs_per_op": 1100
+    },
+    "BenchmarkWorkBuddyRecoverySuccess/stream=false": {
+      "samples": 5,
+      "ns_per_op": 643281,
+      "bytes_per_op": 258958,
+      "allocs_per_op": 3110
+    },
+    "BenchmarkWorkBuddyRecoverySuccess/stream=true": {
+      "samples": 5,
+      "ns_per_op": 659528,
+      "bytes_per_op": 268791,
+      "allocs_per_op": 3068
+    }
+  },
+  "changes": {
+    "BenchmarkGatewayStreamTiming": {
+      "time_percent": 0.07,
+      "bytes_percent": 0.02,
+      "allocs_delta": 0
+    },
+    "BenchmarkWorkBuddyRecoverySuccess/stream=false": {
+      "time_percent": 0.51,
+      "bytes_percent": 0.01,
+      "allocs_delta": 0
+    },
+    "BenchmarkWorkBuddyRecoverySuccess/stream=true": {
+      "time_percent": 1.12,
+      "bytes_percent": 0.02,
+      "allocs_delta": 0
+    }
+  }
+}

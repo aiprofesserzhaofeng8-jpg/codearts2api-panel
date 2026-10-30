@@ -1,0 +1,13 @@
+{
+  "baseline": "8aa2dd2",
+  "test": "TestFromOpenAIPreservesToolArgumentNumbers",
+  "old_version_reproduced": true,
+  "baseline_changes": {
+    "9007199254740993": "9007199254740992",
+    "18446744073709551615": "18446744073709552000",
+    "1.234567890123456789": "1.2345678901234567"
+  },
+  "fixed_test_passed": true,
+  "fix": "validate and retain tool argument JSON instead of decoding into float64",
+  "scope": "buffered OpenAI to Anthropic response conversion"
+}

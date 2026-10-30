@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "provider": "codearts",
+      "model": "deepseek-v4.1-flash",
+      "status": 200,
+      "passed": true,
+      "request_id": "9401caf460b876066b04bf57",
+      "duration_ms": 1231.025
+    },
+    {
+      "provider": "trae",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "status": 200,
+      "passed": true,
+      "request_id": "3ab3d180682bc20b2e3d0e61",
+      "duration_ms": 1142.317
+    }
+  ],
+  "temporary_key_removed": true,
+  "log_count": 2
+}
