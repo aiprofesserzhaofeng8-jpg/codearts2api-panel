@@ -1,0 +1,6 @@
+AssertionError [ERR_ASSERTION]: operation error scrolled out of view or covered by footer
+
+false !== true
+
+    at visibleError (/home/white/codearts2api-panel/scripts/growth-feedback-smoke.cjs:49:11)
+    at async /home/white/codearts2api-panel/scripts/growth-feedback-smoke.cjs:51:3

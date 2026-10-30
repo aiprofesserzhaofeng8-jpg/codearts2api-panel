@@ -1,0 +1,11 @@
+{
+  "error_visible_after_long_list_scroll": true,
+  "refresh_result_visible": true,
+  "partial_enrollment_read_back": true,
+  "confirmed_enrollment_not_blocked": true,
+  "first_buddy_guidance_first": true,
+  "dialog_task_scope_explicit": true,
+  "no_ineligible_claims": true,
+  "light_dark_desktop_mobile_short_viewport": true,
+  "javascript_errors": []
+}

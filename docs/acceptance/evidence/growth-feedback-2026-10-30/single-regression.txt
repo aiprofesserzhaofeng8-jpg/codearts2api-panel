@@ -1,0 +1,1 @@
+PASS: provider isolation; explicit reads; eligible-only/bulk claims; confirmed balance; pending protection; query failure; late-response account isolation; text escaping; dark/light desktop/mobile; no background polling.

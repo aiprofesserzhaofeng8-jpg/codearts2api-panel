@@ -1,0 +1,20 @@
+{
+  "task_count": 19,
+  "enrollment_http_status": 409,
+  "enrollment_posts": 1,
+  "readback_after_error": true,
+  "error_visible_at_bottom": true,
+  "first_buddy_message_visible": true,
+  "first_buddy_guidance_first": true,
+  "operation_result_visible": true,
+  "refresh_result_visible": true,
+  "accepted_tasks_before": 1,
+  "accepted_tasks_after": 1,
+  "claimable_tasks_after": 0,
+  "run_posts": 0,
+  "claim_posts": 0,
+  "model_requests_added": 0,
+  "settings_keys_groups_stats_and_account_state_unchanged": true,
+  "javascript_errors": [],
+  "temporary_session_logged_out": true
+}
