@@ -1,0 +1,41 @@
+{
+  "core_commit": "e22edfc85eb2484973da71e50881296cc5c19c74",
+  "full_race": {
+    "command": "go test -race ./...",
+    "exit_code": 0,
+    "server_seconds": 247.698,
+    "workbuddy_seconds": 1.085,
+    "note": "Other packages passed from Go test cache."
+  },
+  "targeted_prerequisite_race": {
+    "exit_code": 0,
+    "server_seconds": 14.096,
+    "workbuddy_seconds": 1.048
+  },
+  "go_vet": "passed",
+  "linux_build": "passed_and_deployed",
+  "windows_amd64_cross_build": "passed_not_run_on_windows",
+  "javascript_syntax": "passed",
+  "diff_whitespace": "passed",
+  "browser_regressions": {
+    "growth_actions": "passed",
+    "single_account_growth_query_claim": "passed",
+    "multi_account_growth_query_claim": "passed",
+    "account_concurrency": "passed",
+    "usage": "passed",
+    "groups_keys_models": "passed"
+  },
+  "real_acceptance": {
+    "status": "blocked_by_official_first_buddy_prerequisite",
+    "gateway_http_status": 409,
+    "upstream_enrollment_http_status": 200,
+    "upstream_item_status": "error",
+    "model_calls": 0,
+    "reward_posts": 0,
+    "real_task_completion_verified": false,
+    "real_reward_receipt_verified": false,
+    "real_multi_account_execution_verified": false
+  },
+  "performance_benchmark": "not_performed",
+  "state_and_deployment_invariants": "passed"
+}

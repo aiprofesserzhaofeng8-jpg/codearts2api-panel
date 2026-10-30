@@ -1,0 +1,31 @@
+{
+  "task_count": 19,
+  "tested_task": "chat_5",
+  "http_status": 409,
+  "prerequisite_message_visible": true,
+  "action_posts": 1,
+  "state": "blocked_prerequisite",
+  "completed_calls": 0,
+  "model_attempts": 0,
+  "successful_chat_logs": 0,
+  "measured_usage_logs": 0,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "final_current": 0,
+  "final_target": 0,
+  "final_claimed": false,
+  "execution_pending": false,
+  "reward_confirmed": false,
+  "reward": null,
+  "credit_balance_refreshed": false,
+  "keys_budgets_settings_groups_daily_health_unchanged": true,
+  "all_actual_attempts_accounted": true,
+  "light_dark_desktop_mobile": true,
+  "javascript_errors": [],
+  "real_multi_account_execution": "not_verified_only_one_supported_account",
+  "model_specific_task": "not_issued_to_current_account",
+  "temporary_session_logged_out": true,
+  "real_supported_action_codes": [
+    "chat_5"
+  ]
+}

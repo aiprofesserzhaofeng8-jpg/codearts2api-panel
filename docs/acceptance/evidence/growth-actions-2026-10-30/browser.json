@@ -1,0 +1,17 @@
+{
+  "explicit_actions_only": true,
+  "bulk_enrollment_no_model_calls": true,
+  "real_action_allowlist": true,
+  "manual_instructions_visible": true,
+  "disabled_accounts_not_mutated": true,
+  "account_concurrency_peak": 2,
+  "same_account_serial": true,
+  "model_task_before_chat_deficit": true,
+  "pending_stops_account_queue": true,
+  "prerequisite_error_visible": true,
+  "pending_task_disabled": true,
+  "close_aborts_run_requests": true,
+  "close_stops_queued_tasks": true,
+  "light_dark_desktop_mobile": true,
+  "javascript_errors": []
+}

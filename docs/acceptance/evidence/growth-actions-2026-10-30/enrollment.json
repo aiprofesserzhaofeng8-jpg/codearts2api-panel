@@ -1,0 +1,14 @@
+{
+  "upstream_http_status": 200,
+  "envelope_code": 0,
+  "result": {
+    "task_code": "chat_5",
+    "status": "error",
+    "message": "prerequisite not met: first_buddy"
+  },
+  "readback_accept_status": "not_accepted",
+  "gateway_http_status_after_fix": 409,
+  "model_calls": 0,
+  "reward_posts": 0,
+  "resolution": "Complete first_buddy in the official application before running chat_5."
+}
