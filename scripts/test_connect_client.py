@@ -65,6 +65,19 @@ class ClientSetupTests(unittest.TestCase):
             self.assertIn('sandbox',runner.call_args.args[0])
             self.assertNotIn('danger-full-access',str(runner.call_args))
 
+    def test_claude_automatically_omits_unsupported_controls(self):
+        for model in ['deepseek-v4.1-flash', 'workbuddy/cn/deepseek-v4.1-flash', 'trae/cn/deepseek-v4.1-flash']:
+            profile = {**self.profile, 'model': model}
+            env = {'CODEARTS_API_KEY': 'private-canary', 'CLAUDE_CODE_EFFORT_LEVEL': 'high', 'MAX_THINKING_TOKENS': '4096'}
+            connect.build_launch('claude', 'http://127.0.0.1:10087', profile, Path('/tmp'), env)
+            self.assertEqual(env['CLAUDE_CODE_EFFORT_LEVEL'], 'auto')
+            self.assertEqual(env['MAX_THINKING_TOKENS'], '0')
+        profile = {**self.profile, 'claude_code': {'thinking_control': True, 'effort_control': True}}
+        env = {'CODEARTS_API_KEY': 'private-canary', 'CLAUDE_CODE_EFFORT_LEVEL': 'medium', 'MAX_THINKING_TOKENS': '2048'}
+        connect.build_launch('claude', 'http://127.0.0.1:10087', profile, Path('/tmp'), env)
+        self.assertEqual(env['CLAUDE_CODE_EFFORT_LEVEL'], 'medium')
+        self.assertEqual(env['MAX_THINKING_TOKENS'], '2048')
+
     def test_codex_working_native_sandbox_is_accepted(self):
         with mock.patch.object(connect.sys,'platform','linux'), mock.patch.object(connect.subprocess,'run',return_value=SimpleNamespace(returncode=0)):
             connect.check_codex_sandbox()

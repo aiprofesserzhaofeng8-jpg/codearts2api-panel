@@ -906,9 +906,14 @@
       st.appendChild(pill(l.status, l.status >= 500 ? "err" : (l.status >= 400 ? "warn" : "ok")));
       var errCell = cell(l.err || "", "muted trunc");
       if (l.err) errCell.title = l.err;
+      var elapsed = cell((l.first_token_ms == null ? "—" : l.first_token_ms + "ms") + " / " + l.latency_ms + "ms", "mono");
+      elapsed.title = (l.attempt_details || []).map(function(a){
+        return "第 " + a.number + " 次：" + (a.duration_ms == null ? "—" : a.duration_ms + "ms") +
+          (a.status ? " · " + a.status : "") + (a.error_kind ? " · " + a.error_kind : "");
+      }).join("\n");
       tb.appendChild(row([
         cell(fmtTime(l.time), "muted"), cell(l.model, "mono"), cell(l.stream ? "是" : "否", "mono"),
-        st, cell(l.latency_ms + "ms", "mono"), cell(l.prompt_len + " / " + l.output_len, "mono"),
+        st, elapsed, cell(l.prompt_len + " / " + l.output_len, "mono"),
         cell(l.account, "mono"), cell(l.key, "mono"), errCell
       ]));
     });

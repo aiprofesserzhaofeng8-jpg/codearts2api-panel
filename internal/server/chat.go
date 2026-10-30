@@ -38,31 +38,37 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 	r = beginInference(w, r, "chat")
 	start := time.Now()
+	var req chatRequest
+	reject := func(status int, message, kind string) {
+		s.recordRejectedInference(r, req.Model, req.Stream, start, status, message)
+		writeErr(w, status, message, kind)
+	}
 
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
 	if err != nil {
-		writeErr(w, http.StatusBadRequest, "读取请求体失败: "+err.Error(), "invalid_request_error")
+		reject(http.StatusBadRequest, "读取请求体失败: "+err.Error(), "invalid_request_error")
 		return
 	}
 
-	var req chatRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeErr(w, http.StatusBadRequest, "请求体解析失败: "+err.Error(), "invalid_request_error")
+		reject(http.StatusBadRequest, "请求体解析失败: "+err.Error(), "invalid_request_error")
 		return
 	}
+	configureInference(r.Context(), start, req.Stream)
 	if len(req.Messages) == 0 {
-		writeErr(w, http.StatusBadRequest, "messages 不能为空", "invalid_request_error")
+		reject(http.StatusBadRequest, "messages 不能为空", "invalid_request_error")
 		return
 	}
 
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
-		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
+		reject(apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return
 	}
+	req.Model = model.ID
 	if !settings.AllowCreditModels {
-		writeErr(w, http.StatusForbidden,
+		reject(http.StatusForbidden,
 			"模型 "+model.ID+" 会真实消耗积分，当前已在控制台关闭。如需使用请开启「允许计费模型」。",
 			"invalid_request_error")
 		return
@@ -70,7 +76,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 
 	upBody, err := rewriteModel(body, model.ID, req.Stream)
 	if err != nil {
-		writeErr(w, http.StatusBadRequest, "请求体改写失败: "+err.Error(), "invalid_request_error")
+		reject(http.StatusBadRequest, "请求体改写失败: "+err.Error(), "invalid_request_error")
 		return
 	}
 
@@ -399,6 +405,7 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		}
 		used = acct
 		err := func() error { defer release(); return fn(ctx, acct) }()
+		finishAttempt(ctx, err)
 
 		if err == nil {
 			s.Store.MarkModelResult(acct.ID, model, true, "", 0)
@@ -556,9 +563,17 @@ func (s *Server) record(ctx context.Context, key string, acct *codearts.Account,
 		e.Account = acct.DisplayName()
 		e.Provider = acct.ProviderID()
 		e.Scope = acct.Scope
+	} else if s.Reg != nil {
+		if resolved, ok := s.Reg.Resolve(model, s.Store.Settings().ModelAliases); ok {
+			e.Provider, e.Scope = modelProvider(resolved), resolved.Scope
+		}
 	}
 	if err != nil {
 		e.Err = err.Error()
+		e.ErrorKind = failureKind(ctx, err)
+	}
+	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
+		e.FirstTokenMS = c.firstTokenMS
 	}
 	s.Store.Record(e, outLen, key)
 }

@@ -102,6 +102,10 @@ type TokenUsage struct {
 
 // LogEntry 是一条请求日志（只记元信息，不落对话内容）。
 type RequestAttempt struct {
+	DurationMS    *int64       `json:"duration_ms,omitempty"`
+	FirstTokenMS  *int64       `json:"first_token_ms,omitempty"`
+	Status        int          `json:"status,omitempty"`
+	ErrorKind     string       `json:"error_kind,omitempty"`
 	EstimatedCost *RequestCost `json:"estimated_cost,omitempty"`
 	Number        int          `json:"number"`
 	Account       string       `json:"account"`
@@ -111,6 +115,8 @@ type RequestAttempt struct {
 }
 
 type LogEntry struct {
+	FirstTokenMS    *int64           `json:"first_token_ms,omitempty"`
+	ErrorKind       string           `json:"error_kind,omitempty"`
 	Provider        string           `json:"provider,omitempty"`
 	Scope           string           `json:"scope,omitempty"`
 	UsageIncomplete bool             `json:"usage_incomplete,omitempty"`

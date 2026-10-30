@@ -27,6 +27,9 @@ func DefaultModelPolicies() map[string]ModelPolicy {
 		ContextWindow: 65536, MaxOutputTokens: 8192, ReserveTokens: 16384, KeepRecentTokens: 12000, TriggerTokens: 45000,
 		SummaryEnabled: true, SummaryRetry: true, SummaryMaxTokens: 8192, DisableSummaryThinking: true,
 		Source: "保守推荐；已验证 65918 输入 Token，未验证上游最大上下文",
+	}, "trae/cn/deepseek-v4.1-flash": {
+		ContextWindow: 65536, MaxOutputTokens: 4096, ReserveTokens: 16384, KeepRecentTokens: 12000, TriggerTokens: 45000,
+		SummaryMaxTokens: 4096, Source: "Trae 客户端保守推荐，非上游最大能力声明",
 	}}
 }
 func (p ModelPolicy) Validate() error {

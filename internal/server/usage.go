@@ -6,22 +6,31 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 type usageContextKey struct{}
 type usageCapture struct {
-	accountID       string
-	details         []store.RequestAttempt
-	account         string
-	model           string
-	usage           store.TokenUsage
-	protocol        string
-	id              string
-	finish          string
-	kind            string
-	attempts        int
-	summaryAttempts int
-	previous        store.TokenUsage
+	started           time.Time
+	stream            bool
+	firstTokenMS      *int64
+	attemptStarted    time.Time
+	attemptDurationMS *int64
+	attemptFirstMS    *int64
+	attemptStatus     int
+	attemptErrorKind  string
+	accountID         string
+	details           []store.RequestAttempt
+	account           string
+	model             string
+	usage             store.TokenUsage
+	protocol          string
+	id                string
+	finish            string
+	kind              string
+	attempts          int
+	summaryAttempts   int
+	previous          store.TokenUsage
 }
 
 func withUsageCapture(ctx context.Context, protocol string) context.Context {
@@ -30,12 +39,16 @@ func withUsageCapture(ctx context.Context, protocol string) context.Context {
 func resetUsage(ctx context.Context) {
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		if c.attempts > 0 {
-			c.details = append(c.details, store.RequestAttempt{Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage})
+			finishAttempt(ctx, nil)
+			c.details = append(c.details, c.attemptDetail())
 		}
 		addUsage(&c.previous, c.usage)
 		c.usage = store.TokenUsage{}
 		c.finish = ""
 		c.attempts++
+		c.attemptStarted = time.Now()
+		c.attemptDurationMS, c.attemptFirstMS = nil, nil
+		c.attemptStatus, c.attemptErrorKind = 0, ""
 	}
 }
 
@@ -46,35 +59,38 @@ func captureUsage(ctx context.Context, raw []byte) {
 	if !ok {
 		return
 	}
-	var ending struct {
-		Choices []struct {
-			Finish string `json:"finish_reason"`
-		} `json:"choices"`
-	}
-	if json.Unmarshal(raw, &ending) == nil {
-		for _, choice := range ending.Choices {
+	// Parse finish and usage together. Only until the first useful delta of an
+	// attempt do we inspect delta fields; later chunks retain the small decoder.
+	var u *usageSnapshot
+	if c.stream && c.attemptFirstMS == nil {
+		var frame initialUsageFrame
+		if json.Unmarshal(raw, &frame) != nil {
+			return
+		}
+		for _, choice := range frame.Choices {
+			if choice.Finish != "" {
+				c.finish = choice.Finish
+			}
+			if choice.Delta.meaningful() {
+				captureFirstToken(c)
+			}
+		}
+		u = frame.Usage
+	} else {
+		var frame usageFrame
+		if json.Unmarshal(raw, &frame) != nil {
+			return
+		}
+		for _, choice := range frame.Choices {
 			if choice.Finish != "" {
 				c.finish = choice.Finish
 			}
 		}
+		u = frame.Usage
 	}
-	var v struct {
-		Usage *struct {
-			Prompt        *int64 `json:"prompt_tokens"`
-			Completion    *int64 `json:"completion_tokens"`
-			CacheHit      int64  `json:"prompt_cache_hit_tokens"`
-			PromptDetails struct {
-				Cached int64 `json:"cached_tokens"`
-			} `json:"prompt_tokens_details"`
-			CompletionDetails struct {
-				Reasoning int64 `json:"reasoning_tokens"`
-			} `json:"completion_tokens_details"`
-		} `json:"usage"`
-	}
-	if json.Unmarshal(raw, &v) != nil || v.Usage == nil || v.Usage.Prompt == nil || v.Usage.Completion == nil {
+	if u == nil || u.Prompt == nil || u.Completion == nil {
 		return
 	}
-	u := v.Usage
 	cached := u.PromptDetails.Cached
 	if cached == 0 {
 		cached = u.CacheHit
@@ -189,7 +205,7 @@ func requestAttemptDetails(ctx context.Context) []store.RequestAttempt {
 		return nil
 	}
 	out := append([]store.RequestAttempt(nil), c.details...)
-	return append(out, store.RequestAttempt{Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage})
+	return append(out, c.attemptDetail())
 }
 
 func currentAttemptUsage(ctx context.Context) store.TokenUsage {

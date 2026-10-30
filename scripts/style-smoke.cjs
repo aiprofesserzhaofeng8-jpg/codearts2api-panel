@@ -20,7 +20,10 @@ await context.route('**/admin/api/**',route=>{
    const path=new URL(route.request().url()).pathname;
    if(path.endsWith('/state'))return route.fulfill({json:snapshot});
    if(path.endsWith('/credits'))return route.fulfill({json:{accounts:accounts.map((a,i)=>({id:a.id,ok:true,credit:{available:true,total:10000,remaining:[8240,4670,1260,6000][i],used:[1760,5330,8740,4000][i],status:'active',reset_date:'2026-11-01'}}))}});
-   if(path.endsWith('/logs'))return route.fulfill({json:{logs:[{time:now,model:'glm-5.3',stream:true,status:200,latency_ms:1240,prompt_len:45,output_len:126,account:'主力开发账号',key:'sk-ca-…fixture'}]}});
+   if(path.endsWith('/logs'))return route.fulfill({json:{logs:[
+    {time:now,model:'glm-5.3',stream:true,status:200,first_token_ms:123,latency_ms:1240,attempt_details:[{number:1,duration_ms:1200,status:200}],prompt_len:45,output_len:126,account:'界面测试账号',key:'fixture'},
+    {time:now,model:'glm-5.3',stream:false,status:200,latency_ms:1240,prompt_len:45,output_len:126,account:'旧日志测试',key:'fixture'}
+   ]}});
    if(path.endsWith('/settings'))return route.fulfill({json:{ok:true,settings}});
    return route.fulfill({json:{campaigns:[],accounts:[],ok:true}});
   });
@@ -87,6 +90,12 @@ await context.route('**/admin/api/**',route=>{
   for(const tab of ['overview','keys','logs','settings']){
    await page.locator('#nav-'+tab).click();
    assert.equal(await page.locator('#tab-'+tab).isVisible(),true);
+   if(tab==='logs'){
+    await page.locator('#logs tr').nth(1).waitFor();
+    assert.equal(await page.locator('#logs tr').first().locator('td').nth(4).textContent(),'123ms / 1240ms');
+    assert.match(await page.locator('#logs tr').first().locator('td').nth(4).getAttribute('title'),/1200ms.*200/);
+    assert.equal(await page.locator('#logs tr').nth(1).locator('td').nth(4).textContent(),'— / 1240ms');
+   }
    await page.evaluate(()=>window.scrollTo(0,0));
    await page.screenshot({animations:'disabled',path:'artifacts/panel-'+tab+'-light.png',fullPage:tab!=='settings'});
   }

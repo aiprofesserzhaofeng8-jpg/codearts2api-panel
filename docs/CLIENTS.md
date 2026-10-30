@@ -5,6 +5,7 @@
 服务端统一提供三种推理协议和账号池，客户端只使用网关 API key，不接触华为账号凭据。
 `GET /v1/client-profile?model=deepseek-v4.1-flash` 返回版本化的推荐参数，启动器每次运行时读取它。
 默认 DeepSeek 配置为 65,536 上下文、8,192 输出；这是保守的已验证配置，不是上游最大上下文声明。
+Trae CN 的 `deepseek-v4.1-flash` 自动提供 65,536 上下文、4,096 输出的保守客户端建议；未开启服务端摘要保护，也不代表已验证 Trae 的最大上下文。
 
 Pi 的摘要适配已经迁到服务端：在标准摘要 system 提示且没有工具定义时关闭 DeepSeek 额外思考并加入精简约束。普通编程请求不改写。这个逻辑在协议转换之后应用，作用于收到的标准 Chat 消息，标准请求由服务端处理；大段历史的客户端恢复适配由启动器自动安装，无需手工复制扩展。
 
@@ -45,11 +46,12 @@ python3 connect-client.py claude -- --print '你好'
 | --- | --- | --- |
 | Pi | `/v1/chat/completions` | 专用 `codearts` provider、上下文/输出上限、每模型压缩 reserve=16384/keep=12000，自动安装受控分段摘要恢复适配 |
 | Codex | `/v1/responses` | 自定义 provider、API key 环境变量、关闭 WebSocket、上下文 65536、自动压缩阈值 45000、禁用托管网页搜索 |
-| Claude Code | `/v1/messages` | 基础地址、模型及子模型映射、上下文/输出限制、关闭 1M 假定、清除继承的其他供应商路由标志 |
+| Claude Code | `/v1/messages` | 基础地址、模型及子模型映射、上下文/输出限制、关闭 1M 假定、清除继承的其他供应商路由标志；自动省略当前不支持的 adaptive / effort 控制 |
 
 Pi 配置和会话保存在 `~/.config/codearts2api/clients/<服务地址哈希>/pi/`，不会覆盖原来的 `~/.pi/agent/`。配置文件只引用环境变量，不含密钥。
 Codex 使用进程级 `-c` 参数，不改写原 config.toml 或认证文件。
 Claude Code 使用 `--setting-sources ''`，防止旧的用户/项目配置把请求转到其他服务；管理员策略仍由客户端处理。其原有项目 hooks、个人设置不会自动载入这一专用启动过程。未增加权限绕过参数。
+启动器根据 profile 的 `claude_code` 能力声明，在子进程中自动设置 `CLAUDE_CODE_EFFORT_LEVEL=auto`、`MAX_THINKING_TOKENS=0`，不要求用户手动设置或修改全局配置。含义是客户端不要求网关尚不支持的思考控制，上游仍采用原有默认行为；不保证上游关闭思考。绕过启动器、直接显式发送不支持的参数仍返回 400，不静默丢弃用户意图。
 
 ## 部署与功能边界
 

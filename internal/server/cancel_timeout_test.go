@@ -196,6 +196,13 @@ func runHTTPInterruption(t *testing.T, upstream, path string, stream bool, cause
 	if log.Attempts != 1 || log.Status < 400 || log.Usage.Known || s.Store.Stats().FailedRequests != 1 {
 		t.Fatalf("interruption accounting invalid: %+v", log)
 	}
+	wantKind := "timeout"
+	if cause == "cancel" {
+		wantKind = "canceled"
+	}
+	if log.ErrorKind != wantKind || len(log.AttemptDetails) != 1 || log.AttemptDetails[0].ErrorKind != wantKind || log.AttemptDetails[0].DurationMS == nil {
+		t.Fatalf("interruption timing/classification invalid: %+v", log)
+	}
 	// A second request with the same key/model must succeed immediately. This
 	// catches leaked account leases, rate-limit permits and hidden model cooldown.
 	recovery, _ := http.NewRequest(http.MethodPost, gateway.URL+path, strings.NewReader(body))

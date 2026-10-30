@@ -89,6 +89,12 @@ func TestUsageRecordedAcrossProtocols(t *testing.T) {
 				if !log.Usage.Known || log.Protocol != protocol {
 					t.Fatalf("bad log: %+v", log)
 				}
+				if stream != (log.FirstTokenMS != nil) || log.FirstTokenMS != nil && *log.FirstTokenMS > log.LatencyMS {
+					t.Fatalf("wrong first delta timing: %+v", log)
+				}
+				if len(log.AttemptDetails) != 1 || log.AttemptDetails[0].DurationMS == nil || log.AttemptDetails[0].Status != 200 || log.AttemptDetails[0].ErrorKind != "" {
+					t.Fatalf("wrong attempt timing: %+v", log.AttemptDetails)
+				}
 			})
 		}
 	}

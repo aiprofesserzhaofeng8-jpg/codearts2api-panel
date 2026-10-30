@@ -102,6 +102,14 @@ def build_launch(client, base, profile, config_dir, env):
         'CLAUDE_CODE_MAX_OUTPUT_TOKENS': str(output),
         'CLAUDE_CODE_DISABLE_1M_CONTEXT': '1',
     })
+    # The native providers do not yet support Messages adaptive/effort control.
+    # Configure the child process automatically; do not change global settings
+    # or discard explicit request fields at the gateway's protocol boundary.
+    compatibility = profile.get('claude_code', {})
+    if not compatibility.get('effort_control', False):
+        env['CLAUDE_CODE_EFFORT_LEVEL'] = 'auto'
+    if not compatibility.get('thinking_control', False):
+        env['MAX_THINKING_TOKENS'] = '0'
     return ['claude', '--setting-sources', '', '--model', model]
 
 def check_codex_sandbox():

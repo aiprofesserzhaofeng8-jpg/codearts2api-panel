@@ -34,6 +34,7 @@ func (s *Server) runRequestPolicy(ctx context.Context, acct *codearts.Account, m
 	if policy.PromptMode != "passthrough" || !policy.PromptFallback || emitted || !promptBlocked(err) || ctx.Err() != nil {
 		return err
 	}
+	finishAttempt(ctx, err)
 	if err = s.checkRequestBudget(ctx, model.ID); err != nil {
 		return err
 	}

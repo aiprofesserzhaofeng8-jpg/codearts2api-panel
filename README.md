@@ -182,7 +182,7 @@ python3 scripts/connect-client.py codex --url http://127.0.0.1:10087
 python3 scripts/connect-client.py claude --url http://127.0.0.1:10087
 ```
 
-密钥通过隐藏输入或 `CODEARTS_API_KEY` 环境变量提供。启动器读取模型推荐参数，为 Pi 自动安装受控摘要恢复适配；Codex 在 Linux 上先检查本机沙箱。只验证配置可加 `--check`。
+密钥通过隐藏输入或 `CODEARTS_API_KEY` 环境变量提供。启动器读取模型推荐参数，为 Pi 自动安装受控摘要恢复适配，为 Claude Code 自动省略尚不支持的思考控制参数；Codex 在 Linux 上先检查本机沙箱。只验证配置可加 `--check`。
 
 详见 [客户端接入说明](docs/CLIENTS.md)。客户端版本及本机权限会影响实际兼容性，完整结果见 [验收快照](docs/acceptance/QUALITY-SNAPSHOT.md)。
 

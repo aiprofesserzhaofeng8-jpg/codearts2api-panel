@@ -255,7 +255,7 @@ func (c *Client) doJSON(ctx context.Context, a Credentials, method, endpoint str
 	}
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("WorkBuddy 请求失败：%T", err)
+		return nil, provider.NewTransportError("WorkBuddy", err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
@@ -333,7 +333,7 @@ func (c *Client) Stream(ctx context.Context, credentials json.RawMessage, input 
 	c.conversationHeaders(req, input.SessionID, input.RequestID)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
-		return fmt.Errorf("WorkBuddy 连接失败：%T", err)
+		return provider.NewTransportError("WorkBuddy", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {

@@ -287,7 +287,7 @@ func (c *Client) request(ctx context.Context, a Credentials, kind, endpoint stri
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, fmt.Errorf("Trae 网络请求失败：%T", err)
+		return nil, provider.NewTransportError("Trae", err)
 	}
 	return resp, nil
 }

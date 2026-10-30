@@ -26,6 +26,11 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	}
 	r = beginInference(w, r, "responses")
 	start := time.Now()
+	var req apicompat.ResponsesRequest
+	reject := func(status int, message, kind string) {
+		s.recordRejectedInference(r, req.Model, req.Stream, start, status, message)
+		writeErr(w, status, message, kind)
+	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
 	if err != nil {
 		status := 400
@@ -33,16 +38,16 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		if errors.As(err, &tooLarge) {
 			status = 413
 		}
-		writeErr(w, status, "读取请求体失败: "+err.Error(), "invalid_request_error")
+		reject(status, "读取请求体失败: "+err.Error(), "invalid_request_error")
 		return
 	}
-	var req apicompat.ResponsesRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeErr(w, 400, "请求体解析失败: "+err.Error(), "invalid_request_error")
+		reject(400, "请求体解析失败: "+err.Error(), "invalid_request_error")
 		return
 	}
+	configureInference(r.Context(), start, req.Stream)
 	if err := validateResponsesRequest(body, &req); err != nil {
-		writeErr(w, 400, err.Error(), "invalid_request_error")
+		reject(400, err.Error(), "invalid_request_error")
 		return
 	}
 	key := extractKey(r)
@@ -52,26 +57,27 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		ReasoningContentByID: func(id string) string { return s.responsesReasoning.get(scope, id, time.Now()) },
 	})
 	if err != nil {
-		writeErr(w, 400, err.Error(), "invalid_request_error")
+		reject(400, err.Error(), "invalid_request_error")
 		return
 	}
 	if len(chat.Messages) == 0 {
-		writeErr(w, 400, "input 不能为空", "invalid_request_error")
+		reject(400, "input 不能为空", "invalid_request_error")
 		return
 	}
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
-		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
+		reject(apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return
 	}
+	req.Model = model.ID
 	if !settings.AllowCreditModels {
-		writeErr(w, 403, "当前已关闭允许计费模型", "invalid_request_error")
+		reject(403, "当前已关闭允许计费模型", "invalid_request_error")
 		return
 	}
 	tools, err := apicompat.EffectiveResponsesTools(&req)
 	if err != nil {
-		writeErr(w, 400, err.Error(), "invalid_request_error")
+		reject(400, err.Error(), "invalid_request_error")
 		return
 	}
 	custom := apicompat.CustomToolNames(tools)
@@ -87,7 +93,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	chat.StreamOptions = &apicompat.ChatStreamOptions{IncludeUsage: true}
 	upBody, err := json.Marshal(chat)
 	if err != nil {
-		writeErr(w, 400, err.Error(), "invalid_request_error")
+		reject(400, err.Error(), "invalid_request_error")
 		return
 	}
 	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))

@@ -32,46 +32,52 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	}
 	r = beginInference(w, r, "messages")
 	start := time.Now()
+	var req protocol.Request
+	reject := func(status int, kind, message string) {
+		s.recordRejectedInference(r, req.Model, req.Stream, start, status, message)
+		writeAnthropicErr(w, status, kind, message)
+	}
 
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
 	if err != nil {
-		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", "读取请求体失败: "+err.Error())
+		reject(http.StatusBadRequest, "invalid_request_error", "读取请求体失败: "+err.Error())
 		return
 	}
-	var req protocol.Request
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", "请求体解析失败: "+err.Error())
+		reject(http.StatusBadRequest, "invalid_request_error", "请求体解析失败: "+err.Error())
 		return
 	}
+	configureInference(r.Context(), start, req.Stream)
 	if len(req.Messages) == 0 {
-		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", "messages 不能为空")
+		reject(http.StatusBadRequest, "invalid_request_error", "messages 不能为空")
 		return
 	}
 
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
-		writeAnthropicErr(w, apierr.From(err).Status, "invalid_request_error", err.Error())
+		reject(apierr.From(err).Status, "invalid_request_error", err.Error())
 		return
 	}
+	req.Model = model.ID
 	if !settings.AllowCreditModels {
-		writeAnthropicErr(w, http.StatusForbidden, "invalid_request_error",
+		reject(http.StatusForbidden, "invalid_request_error",
 			"模型 "+model.ID+" 会真实消耗积分，当前已在控制台关闭。如需使用请开启「允许计费模型」。")
 		return
 	}
 
 	upReq, err := protocol.ToOpenAI(&req, model.ID)
 	if err != nil {
-		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", err.Error())
+		reject(http.StatusBadRequest, "invalid_request_error", err.Error())
 		return
 	}
 	if model.Provider == provider.Trae && upReq["thinking"] != nil {
-		writeAnthropicErr(w, http.StatusBadRequest, "invalid_request_error", "当前网关暂不支持 Trae 的 Messages 思考控制映射，请省略 thinking 参数")
+		reject(http.StatusBadRequest, "invalid_request_error", "当前网关暂不支持 Trae 的 Messages 思考控制映射，请省略 thinking 参数")
 		return
 	}
 	upBody, err := json.Marshal(upReq)
 	if err != nil {
-		writeAnthropicErr(w, http.StatusInternalServerError, "api_error", "请求体序列化失败")
+		reject(http.StatusInternalServerError, "api_error", "请求体序列化失败")
 		return
 	}
 
