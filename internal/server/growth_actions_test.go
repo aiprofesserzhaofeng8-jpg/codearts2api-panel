@@ -124,7 +124,7 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 	case workbuddy.GrowthBuddyInfoPath:
 		var buddy any
 		if f.owned {
-			buddy = map[string]any{"id": 42, "name": "fixture"}
+			buddy = map[string]any{"instance_id": 42, "name": "fixture"}
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{"code": 0, "data": map[string]any{"buddy": buddy}})
 	case workbuddy.GrowthBuddyAgreementPath:

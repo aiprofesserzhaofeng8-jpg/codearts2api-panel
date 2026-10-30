@@ -34,12 +34,19 @@ func (c *Client) GrowthBuddyStatus(ctx context.Context, raw json.RawMessage) (pr
 	}
 	if !bytes.Equal(bytes.TrimSpace(info.Buddy), []byte("null")) {
 		var buddy struct {
-			ID json.RawMessage `json:"id"`
+			ID         json.RawMessage `json:"id"`
+			InstanceID json.RawMessage `json:"instance_id"`
 		}
 		if json.Unmarshal(info.Buddy, &buddy) != nil {
 			return status, fmt.Errorf("Buddy 档案格式无效")
 		}
-		id, err := strconv.ParseInt(string(bytes.Trim(buddy.ID, `"`)), 10, 64)
+		// Current profiles identify the owned Buddy by instance_id; older
+		// responses used id. A nonempty object alone is not ownership proof.
+		identifier := buddy.InstanceID
+		if len(identifier) == 0 || bytes.Equal(bytes.TrimSpace(identifier), []byte("null")) {
+			identifier = buddy.ID
+		}
+		id, err := strconv.ParseInt(string(bytes.Trim(identifier, `"`)), 10, 64)
 		if err != nil || id <= 0 {
 			return status, fmt.Errorf("Buddy 档案标识无效，领养尚未确认")
 		}
