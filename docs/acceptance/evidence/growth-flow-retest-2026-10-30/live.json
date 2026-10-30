@@ -1,0 +1,16 @@
+{
+  "run_posts": 1,
+  "http_status": 200,
+  "state": "pending",
+  "message": "上游尚未确认领养前置已满足，已停止后续对话；请稍后刷新",
+  "seconds": 4.798,
+  "new_model_attempts": 0,
+  "persistent_checkpoint_prevented_replay": true,
+  "buddy_owned": false,
+  "agreement_confirmed": true,
+  "first_buddy_claimed": false,
+  "reward": null,
+  "settings_keys_groups_unchanged": true,
+  "javascript_errors": [],
+  "credit_remaining": 2198
+}

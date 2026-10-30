@@ -1,0 +1,29 @@
+{
+  "runtime_matches": true,
+  "buddy": {
+    "owned": false,
+    "agreed": true
+  },
+  "auto_tasks": [
+    {
+      "task_code": "first_buddy",
+      "claimed": false,
+      "claimable": false,
+      "current": 0,
+      "target": 0,
+      "accept_not_required": true,
+      "execution_pending": true
+    },
+    {
+      "task_code": "chat_5",
+      "claimed": false,
+      "claimable": false,
+      "current": 0,
+      "target": 0,
+      "accept_not_required": null,
+      "execution_pending": null
+    }
+  ],
+  "credit_remaining": 2198,
+  "existing_growth_attempts": 1
+}
