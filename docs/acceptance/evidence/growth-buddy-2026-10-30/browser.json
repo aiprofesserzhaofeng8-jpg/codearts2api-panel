@@ -1,0 +1,14 @@
+{
+  "explicit_consent_before_execution": true,
+  "dependency_order_before_chat": true,
+  "confirmed_ownership_allows_dependents": true,
+  "reward_not_invented_by_prepared_state": true,
+  "account_concurrency_peak": 2,
+  "same_account_serial": true,
+  "account_failure_isolated": true,
+  "pending_onboarding_can_resume": true,
+  "existing_agreement_respected": true,
+  "consent_reset_on_reopen": true,
+  "light_dark_mobile_short_viewport": true,
+  "javascript_errors": []
+}

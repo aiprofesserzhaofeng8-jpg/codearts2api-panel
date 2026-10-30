@@ -1,0 +1,35 @@
+{
+  "task_count": 19,
+  "auto_task_codes": [
+    "first_buddy",
+    "chat_5"
+  ],
+  "unchecked_consent_prevents_posts": true,
+  "run_posts": 1,
+  "replies": [
+    {
+      "task": "first_buddy",
+      "http": 200,
+      "state": "pending",
+      "completed_calls": 0,
+      "owned": false,
+      "message": "WorkBuddy 网络请求失败（response_header_timeout）",
+      "seconds": 30.782,
+      "reward": null
+    }
+  ],
+  "buddy_owned_after": false,
+  "first_buddy_claimed": false,
+  "chat_5_claimed": false,
+  "model_attempts": 1,
+  "successful_attempts": 0,
+  "usage_known": 0,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "all_calls_accounted": true,
+  "leases_released": true,
+  "settings_keys_groups_and_daily_state_unchanged": true,
+  "other_providers_unused": true,
+  "temporary_session_logged_out": true,
+  "javascript_errors": []
+}

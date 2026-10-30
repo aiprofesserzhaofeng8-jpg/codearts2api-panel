@@ -1,0 +1,11 @@
+{
+  "go_vet_exit_code": 0,
+  "linux_build": true,
+  "state_schema": 5,
+  "execution_sidecar_mode": "0o600",
+  "credit_remaining_before": 2198,
+  "credit_remaining_after_first_readback": 2198,
+  "credit_usage_before": 2,
+  "credit_usage_after_first_readback": 2,
+  "note": "A timeout has unknown model usage; unchanged immediate balance is not proof of no eventual charge."
+}

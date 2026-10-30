@@ -1,0 +1,16 @@
+{
+  "provider_button_visibility": true,
+  "multi_account_queries": true,
+  "read_concurrency_peak": 2,
+  "claim_concurrency_peak": 2,
+  "same_account_serial": true,
+  "disabled_and_unsupported_accounts_excluded": true,
+  "account_scope_switch": true,
+  "partial_error_isolation": true,
+  "pending_stops_same_account": true,
+  "close_stops_queued_reads_and_claims": true,
+  "no_background_polling": true,
+  "empty_supported_accounts_disabled": true,
+  "light_dark_desktop_mobile": true,
+  "javascript_errors": []
+}

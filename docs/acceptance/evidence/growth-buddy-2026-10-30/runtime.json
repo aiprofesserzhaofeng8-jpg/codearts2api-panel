@@ -1,0 +1,12 @@
+{
+  "growth.js": true,
+  "console.css": true,
+  "runtime_binary_matches": true,
+  "runtime_cwd_matches": true,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 83
+  }
+}
