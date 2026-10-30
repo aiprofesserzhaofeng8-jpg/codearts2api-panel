@@ -1,0 +1,66 @@
+{
+  "tasks": {
+    "passed": true,
+    "summary": "PASS: provider isolation; explicit reads; eligible-only/bulk claims; confirmed balance; pending protection; query failure; late-response account isolation; text escaping; dark/light desktop/mobile; no background polling."
+  },
+  "multi": {
+    "provider_button_visibility": true,
+    "multi_account_queries": true,
+    "read_concurrency_peak": 2,
+    "claim_concurrency_peak": 2,
+    "same_account_serial": true,
+    "disabled_and_unsupported_accounts_excluded": true,
+    "account_scope_switch": true,
+    "partial_error_isolation": true,
+    "pending_stops_same_account": true,
+    "close_stops_queued_reads_and_claims": true,
+    "no_background_polling": true,
+    "empty_supported_accounts_disabled": true,
+    "light_dark_desktop_mobile": true,
+    "javascript_errors": []
+  },
+  "actions": {
+    "explicit_actions_only": true,
+    "bulk_enrollment_no_model_calls": true,
+    "real_action_allowlist": true,
+    "manual_instructions_visible": true,
+    "disabled_accounts_not_mutated": true,
+    "account_concurrency_peak": 2,
+    "same_account_serial": true,
+    "model_task_before_chat_deficit": true,
+    "pending_stops_account_queue": true,
+    "prerequisite_error_visible": true,
+    "pending_task_disabled": true,
+    "close_aborts_run_requests": true,
+    "close_stops_queued_tasks": true,
+    "light_dark_desktop_mobile": true,
+    "javascript_errors": []
+  },
+  "feedback": {
+    "error_visible_after_long_list_scroll": true,
+    "refresh_result_visible": true,
+    "partial_enrollment_read_back": true,
+    "confirmed_enrollment_not_blocked": true,
+    "first_buddy_guidance_first": true,
+    "dialog_task_scope_explicit": true,
+    "no_ineligible_claims": true,
+    "light_dark_desktop_mobile_short_viewport": true,
+    "javascript_errors": []
+  },
+  "buddy": {
+    "no_enrollment_for_automatic_buddy_task": true,
+    "enrollment_failure_does_not_disable_execution": true,
+    "explicit_consent_before_execution": true,
+    "dependency_order_before_chat": true,
+    "confirmed_ownership_allows_dependents": true,
+    "reward_not_invented_by_prepared_state": true,
+    "account_concurrency_peak": 2,
+    "same_account_serial": true,
+    "account_failure_isolated": true,
+    "pending_onboarding_can_resume": true,
+    "existing_agreement_respected": true,
+    "consent_reset_on_reopen": true,
+    "light_dark_mobile_short_viewport": true,
+    "javascript_errors": []
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "actions": [
+    {
+      "task_code": "first_buddy",
+      "http": 200,
+      "elapsed_ms": 756,
+      "state": "already_claimed",
+      "message": "Buddy 领养及成长奖励均已确认",
+      "completed_calls": 0,
+      "completed_reports": 0,
+      "buddy": {
+        "owned": true,
+        "agreed": false
+      },
+      "tasks": [
+        {
+          "task_code": "first_buddy",
+          "activity_only": true,
+          "execution_pending": false,
+          "accept_status": "claimed",
+          "current": 1,
+          "target": 1,
+          "claimed": true,
+          "claimable": false
+        },
+        {
+          "task_code": "chat_5",
+          "activity_only": true,
+          "execution_pending": false,
+          "accept_status": "not_accepted",
+          "current": 0,
+          "target": 0,
+          "claimed": false,
+          "claimable": false
+        }
+      ]
+    },
+    {
+      "task_code": "chat_5",
+      "http": 200,
+      "elapsed_ms": 8846,
+      "state": "claimed",
+      "message": "成长奖励已由上游确认",
+      "completed_calls": 0,
+      "completed_reports": 5,
+      "reward": {
+        "already_claimed": false,
+        "credit": 100,
+        "energy": 5
+      },
+      "tasks": [
+        {
+          "task_code": "first_buddy",
+          "activity_only": true,
+          "execution_pending": false,
+          "accept_status": "claimed",
+          "current": 1,
+          "target": 1,
+          "claimed": true,
+          "claimable": false
+        },
+        {
+          "task_code": "chat_5",
+          "activity_only": true,
+          "execution_pending": false,
+          "accept_status": "claimed",
+          "current": 5,
+          "target": 5,
+          "claimed": true,
+          "claimable": false
+        }
+      ]
+    }
+  ],
+  "before": {
+    "tasks": [
+      {
+        "task_code": "first_buddy",
+        "activity_only": true,
+        "execution_pending": false,
+        "accept_status": "claimed",
+        "current": 1,
+        "target": 1,
+        "claimed": true,
+        "claimable": false
+      },
+      {
+        "task_code": "chat_5",
+        "activity_only": true,
+        "execution_pending": false,
+        "accept_status": "not_accepted",
+        "current": 0,
+        "target": 0,
+        "claimed": false,
+        "claimable": false
+      }
+    ],
+    "remaining": 2498,
+    "credit_ok": true
+  },
+  "after": {
+    "tasks": [
+      {
+        "task_code": "first_buddy",
+        "activity_only": true,
+        "execution_pending": false,
+        "accept_status": "claimed",
+        "current": 1,
+        "target": 1,
+        "claimed": true,
+        "claimable": false
+      },
+      {
+        "task_code": "chat_5",
+        "activity_only": true,
+        "execution_pending": false,
+        "accept_status": "claimed",
+        "current": 5,
+        "target": 5,
+        "claimed": true,
+        "claimable": false
+      }
+    ],
+    "remaining": 2598,
+    "credit_ok": true
+  },
+  "credit_delta": 100,
+  "new_model_attempts": 0,
+  "paid_checkpoint_unchanged": true,
+  "usage_file_unchanged": true,
+  "settings_keys_groups_unchanged": true,
+  "all_provider_daily_health_last_used_concurrency_unchanged": true,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 83
+  },
+  "javascript_errors": [],
+  "temporary_session_logged_out": true
+}

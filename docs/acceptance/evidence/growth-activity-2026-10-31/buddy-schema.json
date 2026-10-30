@@ -1,0 +1,10 @@
+{
+  "source": "current authenticated GET /activity/growth/buddy/info",
+  "http": 200,
+  "upstream_code": 0,
+  "buddy_non_null": true,
+  "identity_field": "instance_id",
+  "identity_type": "positive integer",
+  "legacy_identity_field": "id",
+  "personal_fields_omitted": true
+}

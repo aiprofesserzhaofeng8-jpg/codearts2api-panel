@@ -1,0 +1,27 @@
+{
+  "core_commit": "9d80bb769e287dfaa02c920407044bcf31394278",
+  "pid": 4104746,
+  "binary_sha256": "00d8d30e148482c883e272d3a7f822e5778c8cd2159e94de66ba67d89c1134b2",
+  "runtime_matches": true,
+  "served_assets": {
+    "growth.js": "03d96a52207b7011adc31bed3ec8eead800c8b2e68c08d79f63d7fba022086af",
+    "console.css": "c5cbc4197f2d8d0f64f9f701ffc345b71b179a3ffe0e06d07580ea7e2e00ac51"
+  },
+  "schema": 5,
+  "persisted_state_unchanged_except_expected_admin_audit": true,
+  "old_paid_checkpoint_unchanged": true,
+  "model_usage_file_unchanged": true,
+  "remaining_before": 2198,
+  "remaining_after": 2598,
+  "credit_delta": 400,
+  "new_model_calls": 0,
+  "confirmed_activity_reports": 6,
+  "both_growth_rewards_claimed": true,
+  "buddy_ownership_confirmed": true,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 83
+  }
+}
