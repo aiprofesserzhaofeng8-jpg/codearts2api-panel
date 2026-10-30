@@ -317,6 +317,20 @@ func (a *anthropicStream) consumeTool(index int, id, name, args string) error {
 	return nil
 }
 
+func (a *anthropicStream) textDelta(text string) int {
+	if text == "" {
+		return 0
+	}
+	a.openBlock("text")
+	n := len([]rune(text))
+	a.outTok += n
+	a.send("content_block_delta", map[string]any{
+		"type": "content_block_delta", "index": a.index,
+		"delta": map[string]any{"type": "text_delta", "text": text},
+	})
+	return n
+}
+
 // consume 处理一个上游分片，返回新增的输出字符数。
 func (a *anthropicStream) consume(chunk []byte) (int, error) {
 	var c struct {
@@ -324,6 +338,7 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 			Delta struct {
 				Content          string `json:"content"`
 				ReasoningContent string `json:"reasoning_content"`
+				Refusal          string `json:"refusal"`
 				ToolCalls        []struct {
 					Index    int    `json:"index"`
 					ID       string `json:"id"`
@@ -350,15 +365,8 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 				"delta": map[string]any{"type": "thinking_delta", "thinking": ch.Delta.ReasoningContent},
 			})
 		}
-		if ch.Delta.Content != "" {
-			a.openBlock("text")
-			n += len([]rune(ch.Delta.Content))
-			a.outTok += len([]rune(ch.Delta.Content))
-			a.send("content_block_delta", map[string]any{
-				"type": "content_block_delta", "index": a.index,
-				"delta": map[string]any{"type": "text_delta", "text": ch.Delta.Content},
-			})
-		}
+		n += a.textDelta(ch.Delta.Content)
+		n += a.textDelta(ch.Delta.Refusal)
 		for _, tc := range ch.Delta.ToolCalls {
 			if err := a.consumeTool(tc.Index, tc.ID, tc.Function.Name, tc.Function.Arguments); err != nil {
 				return n, err

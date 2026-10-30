@@ -292,6 +292,7 @@ func FromOpenAI(raw []byte, model string) Reply {
 			Message struct {
 				Content          string `json:"content"`
 				ReasoningContent string `json:"reasoning_content"`
+				Refusal          string `json:"refusal"`
 				ToolCalls        []struct {
 					ID       string `json:"id"`
 					Function struct {
@@ -303,8 +304,12 @@ func FromOpenAI(raw []byte, model string) Reply {
 			FinishReason string `json:"finish_reason"`
 		} `json:"choices"`
 		Usage struct {
-			PromptTokens     int `json:"prompt_tokens"`
-			CompletionTokens int `json:"completion_tokens"`
+			PromptTokens     *int `json:"prompt_tokens"`
+			CompletionTokens *int `json:"completion_tokens"`
+			CacheHit         *int `json:"prompt_cache_hit_tokens"`
+			PromptDetails    struct {
+				Cached *int `json:"cached_tokens"`
+			} `json:"prompt_tokens_details"`
 		} `json:"usage"`
 	}
 	_ = json.Unmarshal(raw, &resp)
@@ -321,6 +326,10 @@ func FromOpenAI(raw []byte, model string) Reply {
 		}
 		if text != "" {
 			content = append(content, map[string]any{"type": "text", "text": text})
+		}
+		if ch.Message.Refusal != "" {
+			content = append(content, map[string]any{"type": "text", "text": ch.Message.Refusal})
+			text += ch.Message.Refusal
 		}
 		for _, tc := range ch.Message.ToolCalls {
 			input := json.RawMessage(tc.Function.Arguments)
@@ -344,13 +353,32 @@ func FromOpenAI(raw []byte, model string) Reply {
 		content = append(content, map[string]any{"type": "text", "text": ""})
 	}
 
-	in := resp.Usage.PromptTokens
-	if in == 0 {
+	in := 0
+	if resp.Usage.PromptTokens != nil {
+		in = max(0, *resp.Usage.PromptTokens)
+	} else {
 		in = EstimatePromptLen(raw)
 	}
-	out := resp.Usage.CompletionTokens
-	if out == 0 {
+	out := 0
+	if resp.Usage.CompletionTokens != nil {
+		out = max(0, *resp.Usage.CompletionTokens)
+	} else {
 		out = len([]rune(text)) + len([]rune(thinking))
+	}
+	usage := map[string]any{"input_tokens": in, "output_tokens": out}
+	// OpenAI includes cache hits in prompt_tokens; Messages reports them
+	// separately. Match the gateway's existing cache-alias precedence.
+	cached := 0
+	if resp.Usage.PromptDetails.Cached != nil {
+		cached = *resp.Usage.PromptDetails.Cached
+	}
+	if cached == 0 && resp.Usage.CacheHit != nil {
+		cached = *resp.Usage.CacheHit
+	}
+	if resp.Usage.PromptDetails.Cached != nil || resp.Usage.CacheHit != nil {
+		cached = min(max(0, cached), in)
+		usage["input_tokens"] = in - cached
+		usage["cache_read_input_tokens"] = cached
 	}
 
 	return Reply{
@@ -364,7 +392,7 @@ func FromOpenAI(raw []byte, model string) Reply {
 			"content":       content,
 			"stop_reason":   stopReason,
 			"stop_sequence": nil,
-			"usage":         map[string]any{"input_tokens": in, "output_tokens": out},
+			"usage":         usage,
 		},
 	}
 }
