@@ -1,0 +1,15 @@
+{
+  "settings_unchanged": true,
+  "keys_and_budgets_unchanged": true,
+  "stats_unchanged": true,
+  "daily_and_account_state_unchanged": true,
+  "account_count": 12,
+  "growth_supported_count": 1,
+  "inflight": 0,
+  "health": {
+    "status": "ok",
+    "accounts": 12,
+    "ready": 12,
+    "models": 81
+  }
+}

@@ -1,0 +1,16 @@
+ok  	codearts2api	(cached)
+?   	codearts2api/artifacts/growth-tasks-20261030	[no test files]
+?   	codearts2api/cmd/probe	[no test files]
+ok  	codearts2api/internal/apierr	1.010s
+ok  	codearts2api/internal/codearts	(cached)
+ok  	codearts2api/internal/protocol	(cached)
+ok  	codearts2api/internal/provider	1.009s
+ok  	codearts2api/internal/ratelimit	(cached)
+ok  	codearts2api/internal/registry	(cached)
+ok  	codearts2api/internal/requestpolicy	(cached)
+?   	codearts2api/internal/responsescompat	[no test files]
+ok  	codearts2api/internal/server	237.095s
+ok  	codearts2api/internal/store	50.401s
+ok  	codearts2api/internal/trae	1.094s
+ok  	codearts2api/internal/websearch	1.061s
+ok  	codearts2api/internal/workbuddy	1.110s

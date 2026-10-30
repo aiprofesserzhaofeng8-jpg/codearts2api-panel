@@ -1,0 +1,17 @@
+{
+  "race": "passed",
+  "vet": "passed",
+  "linux_build": "passed",
+  "windows_cross_build": "passed",
+  "javascript_syntax": "passed",
+  "browser_growth_tasks": "passed",
+  "browser_account_concurrency": "passed",
+  "browser_account_creation_and_delete": "passed",
+  "browser_groups_keys_models": "passed",
+  "test_upstream": "local fixtures",
+  "real_query_task_count": 19,
+  "real_claim_writes": 0,
+  "real_model_requests": 0,
+  "real_claim_success": "not_verified_no_eligible_tasks",
+  "performance": "No throughput or TTFT benchmark claimed; fixture proves a waiting task claim does not hold inference credential lock."
+}
