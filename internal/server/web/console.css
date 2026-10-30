@@ -1134,6 +1134,7 @@ code{
 #growthDialog .growth-task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;font-size:12px;color:var(--text-3)}
 #growthDialog .growth-task-reward{color:var(--accent-text)}
 #growthDialog .growth-task>.btn{flex-shrink:0}
+#growthDialog .growth-task-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0;align-items:flex-end}
 @media(max-width:600px){#growthDialog .growth-task{align-items:flex-start;gap:12px}#growthDialog .growth-task-meta{gap:6px}}
 .key-create-modal{width:min(500px,calc(100vw - 32px))}
 .key-create-fields{display:flex;flex-direction:column;gap:22px}

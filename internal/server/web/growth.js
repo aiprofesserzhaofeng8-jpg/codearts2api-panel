@@ -4,10 +4,19 @@
   "use strict";
   window.CodeArtsGrowth=function(ui){
     var $=function(id){return document.getElementById(id);};
-    var dialog=$("growthDialog"),sequence=0,accounts=[],entries=[],busy=false;
+    var dialog=$("growthDialog"),sequence=0,accounts=[],entries=[],busy=false,controller=null;
     var select=$("growthAccountSelect");
     function active(seq){return sequence===seq&&dialog.open;}
     function claimable(entry,task){return entry.account.enabled&&entry.loaded&&task.claimable&&!entry.blocked.has(task.task_code);}
+    function eligible(entry,task,kind){
+      if(!entry.account.enabled||!entry.loaded||entry.blocked.has(task.task_code))return false;
+      if(kind==="claim")return task.claimable;
+      if(task.claimed||task.locked)return false;
+      return kind==="accept"?task.accept_status==="not_accepted":task.auto_supported&&!task.execution_pending;
+    }
+    function selectedJobs(kind){
+      return entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return eligible(e,t,kind);}).map(function(t){return t.task_code;}).sort(function(a,b){return (a==="Model_chat_GLM5.2"?-1:0)-(b==="Model_chat_GLM5.2"?-1:0);})};}).filter(function(job){return job.codes.length;});
+    }
     async function workers(items,seq,run){
       var next=0;
       async function work(){
@@ -19,6 +28,8 @@
       $("growthRefresh").disabled=busy;
       select.disabled=busy;
       $("growthClaimAll").disabled=busy||!entries.some(function(e){return e.tasks.some(function(t){return claimable(e,t);});});
+      $("growthAcceptAll").disabled=busy||!selectedJobs("accept").length;
+      $("growthRunAll").disabled=busy||!selectedJobs("run").length;
       var all=entries.flatMap(function(e){return e.tasks;}),failed=entries.filter(function(e){return e.error;});
       $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取";
       $("growthError").textContent=failed.length===1&&entries.length===1?failed[0].error:(failed.length?failed.length+" 个账号出现错误，请查看对应账号结果":"");
@@ -39,6 +50,7 @@
           content.appendChild(ui.mk("strong","growth-task-title",task.title||task.task_code));
           var description=[task.task_desc,task.description].filter(function(s,i,a){return s&&a.indexOf(s)===i;}).join("；");
           if(description)content.appendChild(ui.mk("p","growth-task-description",description));
+          if(!task.claimed&&(task.action_description||task.manual_instruction))content.appendChild(ui.mk("p","growth-task-description",task.action_description||task.manual_instruction));
           var meta=ui.mk("div","growth-task-meta");
           meta.appendChild(ui.mk("span","",task.target>0?"进度 "+task.current+" / "+task.target:"进度待确认"));
           var rewards=[];
@@ -46,11 +58,20 @@
           if(task.energy)rewards.push("+"+task.energy+" 能量");
           if(task.reward_buddy)rewards.push("Buddy 奖励");
           meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||"奖励以上游活动为准"));
-          var status=task.claimed?"已领取":(task.locked?"未解锁":(entry.blocked.has(task.task_code)?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"?"未报名":"未完成"))));
+          var status=task.claimed?"已领取":(task.locked?"未解锁":(entry.running===task.task_code?"执行中":(entry.blocked.has(task.task_code)||task.execution_pending?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"?"未报名":"未完成")))));
           meta.appendChild(ui.pill(status,task.claimed?"ok":(task.claimable&&!entry.blocked.has(task.task_code)?"warn":"")));
           content.appendChild(meta);item.appendChild(content);
-          var button=ui.btn("领取奖励","xs",function(){return claim([{entry:entry,codes:[task.task_code]}]);});
-          button.disabled=busy||!claimable(entry,task);item.appendChild(button);group.appendChild(item);
+          var actions=ui.mk("div","growth-task-actions");
+          if(task.accept_status==="not_accepted"){
+            var accept=ui.btn("接取任务","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"accept");});
+            accept.disabled=busy||!eligible(entry,task,"accept");actions.appendChild(accept);
+          }
+          if(task.auto_supported){
+            var run=ui.btn("执行任务","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"run");});
+            run.disabled=busy||!eligible(entry,task,"run");actions.appendChild(run);
+          }
+          var button=ui.btn("领取奖励","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"claim");});
+          button.disabled=busy||!claimable(entry,task);actions.appendChild(button);item.appendChild(actions);group.appendChild(item);
         });
         list.appendChild(group);
       });
@@ -69,39 +90,42 @@
         if(active(seq))render();
       }).finally(function(){if(active(seq)){busy=false;render();}});
     }
-    async function claim(jobs){
+    async function operate(jobs,kind){
       if(busy)return;
-      var seq=sequence;busy=true;jobs.forEach(function(job){job.entry.error="";});render();
+      var seq=sequence;busy=true;controller=kind==="run"?new AbortController():null;
+      var signal=controller?controller.signal:undefined;
+      jobs.forEach(function(job){job.entry.error="";});render();
       try{
         await workers(jobs,seq,async function(job){
           var entry=job.entry,id=entry.account.id;
-          for(var i=0;i<job.codes.length&&active(seq);i++){
-            var code=job.codes[i];
+          for(var i=0;i<job.codes.length&&active(seq);i+=kind==="accept"?20:1){
+            var codes=kind==="accept"?job.codes.slice(i,i+20):[job.codes[i]],code=codes[0];
+            entry.running=kind==="run"?code:"";render();
             try{
-              var r=await ui.api("/admin/api/workbuddy/tasks/claim",{method:"POST",body:{id:id,task_code:code}});
+              var body=kind==="accept"?{id:id,task_codes:codes}:{id:id,task_code:code};
+              var r=await ui.api("/admin/api/workbuddy/tasks/"+kind,{method:"POST",body:body,signal:signal});
               if(r.balance)ui.onBalance(id,r.balance);
               if(!active(seq))break;
               entry.tasks=r.tasks||entry.tasks;
-              if(r.state!=="claimed"&&r.state!=="already_claimed"){
-                entry.blocked.add(code);entry.error=r.message||"领取结果待确认，请刷新任务进度";break;
+              if(r.state!=="claimed"&&r.state!=="already_claimed"&&!(kind==="accept"&&r.state==="accepted")){
+                codes.forEach(function(c){entry.blocked.add(c);});entry.error=r.message||"操作结果待确认，请刷新任务进度";break;
               }
               if(r.balance_error)entry.error=r.balance_error;
             }catch(e){
-              if(active(seq)){entry.blocked.add(code);entry.error=e.message;}
+              if(active(seq)){codes.forEach(function(c){entry.blocked.add(c);});entry.error=e.message;}
               break;
-            }finally{if(active(seq))render();}
+            }finally{entry.running="";if(active(seq))render();}
           }
         });
-      }finally{if(active(seq)){busy=false;render();}}
+      }finally{if(active(seq)){busy=false;controller=null;render();}}
     }
     $("growthRefresh").onclick=load;
     select.onchange=load;
-    $("growthClaimAll").onclick=function(){
-      var jobs=entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return claimable(e,t);}).map(function(t){return t.task_code;})};}).filter(function(job){return job.codes.length;});
-      return claim(jobs);
-    };
+    $("growthClaimAll").onclick=function(){return operate(selectedJobs("claim"),"claim");};
+    $("growthAcceptAll").onclick=function(){return operate(selectedJobs("accept"),"accept");};
+    $("growthRunAll").onclick=function(){return operate(selectedJobs("run"),"run");};
     $("growthClose").onclick=function(){dialog.close();};
-    dialog.addEventListener("close",function(){sequence++;accounts=[];entries=[];busy=false;});
+    dialog.addEventListener("close",function(){sequence++;if(controller)controller.abort();controller=null;accounts=[];entries=[];busy=false;});
     function openAccounts(list){
       sequence++;busy=false;entries=[];
       accounts=list.map(function(a){return {id:a.id,name:a.name,enabled:a.enabled};});

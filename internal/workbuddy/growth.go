@@ -27,6 +27,10 @@ func (c *Client) SupportsGrowthTasks(raw json.RawMessage) bool {
 }
 
 func (c *Client) growthJSON(ctx context.Context, raw json.RawMessage, method, path string) (json.RawMessage, error) {
+	return c.growthRequest(ctx, raw, method, path, nil, method == http.MethodPost)
+}
+
+func (c *Client) growthRequest(ctx context.Context, raw json.RawMessage, method, path string, payload []byte, web bool) (json.RawMessage, error) {
 	if !c.SupportsGrowthTasks(raw) {
 		return nil, fmt.Errorf("成长任务仅支持 WorkBuddy 国内个人账号")
 	}
@@ -36,15 +40,19 @@ func (c *Client) growthJSON(ctx context.Context, raw json.RawMessage, method, pa
 	}
 	a, _ := decode(normalized)
 	base := c.CNBase
-	if method == http.MethodPost {
+	if web {
 		base = c.CNWeb
 	}
-	req, err := http.NewRequestWithContext(ctx, method, base+path, nil)
+	var bodyReader io.Reader
+	if payload != nil {
+		bodyReader = bytes.NewReader(payload)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, base+path, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("WorkBuddy 成长任务请求无效")
 	}
 	c.headers(req, a)
-	if method == http.MethodPost {
+	if web {
 		req.Header.Set("Origin", "https://www.workbuddy.cn")
 		req.Header.Set("Referer", "https://www.workbuddy.cn/profile/growth-center")
 		req.Header.Set("X-Client-Platform", "web")
@@ -65,8 +73,13 @@ func (c *Client) growthJSON(ctx context.Context, raw json.RawMessage, method, pa
 		Code *int            `json:"code"`
 		Data json.RawMessage `json:"data"`
 	}
-	if resp.StatusCode != http.StatusOK || json.Unmarshal(body, &envelope) != nil || envelope.Code == nil || *envelope.Code != 0 || !bytes.HasPrefix(bytes.TrimSpace(envelope.Data), []byte("{")) {
+	if resp.StatusCode != http.StatusOK || json.Unmarshal(body, &envelope) != nil || envelope.Code == nil || *envelope.Code != 0 {
 		return nil, fmt.Errorf("WorkBuddy 成长任务响应缺少明确业务结果")
+	}
+	data := bytes.TrimSpace(envelope.Data)
+	commandAck := !web && method == http.MethodPost && (path == GrowthAcceptPath || path == "/v2/report") && (len(data) == 0 || bytes.Equal(data, []byte("null")))
+	if !bytes.HasPrefix(data, []byte("{")) && !commandAck {
+		return nil, fmt.Errorf("WorkBuddy 成长任务响应结构无效")
 	}
 	return envelope.Data, nil
 }
@@ -127,6 +140,7 @@ func parseGrowthTasks(data json.RawMessage) ([]provider.GrowthTask, error) {
 		}
 		t.Claimed = t.AcceptStatus == "claimed" || t.Status == "claimed"
 		t.Claimable = !t.Locked && !t.Claimed && t.AcceptStatus != "not_accepted" && t.Target > 0 && t.Current >= t.Target
+		annotateGrowthTask(&t)
 		out = append(out, t)
 	}
 	return out, nil

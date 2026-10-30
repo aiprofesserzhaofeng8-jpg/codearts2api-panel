@@ -548,7 +548,7 @@ func rewriteStream(body []byte, stream bool) ([]byte, error) {
 }
 
 // record 记录一次请求结果。
-func (s *Server) record(ctx context.Context, key string, acct *codearts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) {
+func (s *Server) record(ctx context.Context, key string, acct *codearts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) error {
 	e := store.LogEntry{
 		AttemptDetails:  requestAttemptDetails(ctx),
 		UsageIncomplete: requestUsageIncomplete(ctx),
@@ -586,7 +586,9 @@ func (s *Server) record(ctx context.Context, key string, acct *codearts.Account,
 	}
 	if err := s.Store.Record(e, outLen, key); err != nil {
 		log.Printf("保存请求 %s 的用量账本失败: %v", e.RequestID, err)
+		return err
 	}
+	return nil
 }
 
 // completionLen 统计非流式响应里的输出字符数。

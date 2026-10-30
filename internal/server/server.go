@@ -33,6 +33,7 @@ type Server struct {
 	Search             *websearch.Client
 	rewardRuntime      providerRuntime
 	growthRuntime      providerRuntime
+	growthExecution    growthExecutionState
 	Providers          *provider.Registry
 	providerRuntime    providerRuntime
 	providerLogins     providerLoginRuntime
@@ -139,6 +140,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/welfare", s.withAdminAuth(s.handleAdminWelfare))
 	mux.HandleFunc("/admin/api/workbuddy/tasks", s.withAdminAuth(s.handleGrowthTasks))
 	mux.HandleFunc("/admin/api/workbuddy/tasks/claim", s.withAdminAuth(s.handleGrowthClaim))
+	mux.HandleFunc("/admin/api/workbuddy/tasks/accept", s.withAdminAuth(s.handleGrowthAccept))
+	mux.HandleFunc("/admin/api/workbuddy/tasks/run", s.withAdminAuth(s.handleGrowthRun))
 	mux.HandleFunc("/admin/api/invite", s.withAdminAuth(s.handleAdminInvite))
 	mux.HandleFunc("/admin/api/login/start", s.withAdminAuth(s.handleAdminLoginStart))
 	mux.HandleFunc("/admin/api/login/poll", s.withAdminAuth(s.handleAdminLoginPoll))

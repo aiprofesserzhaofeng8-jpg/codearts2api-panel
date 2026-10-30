@@ -13,21 +13,38 @@ type GrowthTasks interface {
 	ClaimGrowthReward(context.Context, json.RawMessage, string) (GrowthReward, error)
 }
 
+// GrowthActions is separate from listing/claiming. Actions must perform the
+// underlying operation; synthetic completion events are not an implementation.
+type GrowthActions interface {
+	AcceptGrowthTasks(context.Context, json.RawMessage, []string) error
+	GrowthAction(string) (GrowthAction, bool)
+	RunGrowthChat(context.Context, json.RawMessage, string, func([]byte) error) (bool, error)
+}
+
+type GrowthAction struct {
+	Model    string
+	MaxCalls int64
+}
+
 type GrowthTask struct {
-	Code         string `json:"task_code"`
-	Title        string `json:"title"`
-	Description  string `json:"description,omitempty"`
-	TaskDesc     string `json:"task_desc,omitempty"`
-	Credit       int64  `json:"credit"`
-	Energy       int64  `json:"energy"`
-	RewardBuddy  bool   `json:"reward_buddy,omitempty"`
-	Current      int64  `json:"current"`
-	Target       int64  `json:"target"`
-	AcceptStatus string `json:"accept_status,omitempty"`
-	Status       string `json:"status,omitempty"`
-	Locked       bool   `json:"locked"`
-	Claimed      bool   `json:"claimed"`
-	Claimable    bool   `json:"claimable"`
+	Code              string `json:"task_code"`
+	Title             string `json:"title"`
+	Description       string `json:"description,omitempty"`
+	TaskDesc          string `json:"task_desc,omitempty"`
+	Credit            int64  `json:"credit"`
+	Energy            int64  `json:"energy"`
+	RewardBuddy       bool   `json:"reward_buddy,omitempty"`
+	Current           int64  `json:"current"`
+	Target            int64  `json:"target"`
+	AcceptStatus      string `json:"accept_status,omitempty"`
+	Status            string `json:"status,omitempty"`
+	Locked            bool   `json:"locked"`
+	Claimed           bool   `json:"claimed"`
+	Claimable         bool   `json:"claimable"`
+	AutoSupported     bool   `json:"auto_supported,omitempty"`
+	ActionDescription string `json:"action_description,omitempty"`
+	ManualInstruction string `json:"manual_instruction,omitempty"`
+	ExecutionPending  bool   `json:"execution_pending,omitempty"`
 }
 
 type GrowthReward struct {

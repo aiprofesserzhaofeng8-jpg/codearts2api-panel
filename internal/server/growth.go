@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -12,17 +13,18 @@ import (
 	"codearts2api/internal/provider"
 )
 
-// Growth progress is authoritative upstream state. It never uses daily claim
-// markers, inference health, key budgets, or the usage settlement journal.
+// Growth progress is authoritative upstream state. Listing/claiming never use
+// daily markers or inference accounting. Real chat actions account separately.
 type growthReply struct {
-	OK           bool                   `json:"ok"`
-	ID           string                 `json:"id"`
-	Tasks        []provider.GrowthTask  `json:"tasks"`
-	State        string                 `json:"state,omitempty"`
-	Message      string                 `json:"message,omitempty"`
-	Reward       *provider.GrowthReward `json:"reward,omitempty"`
-	Balance      *codearts.CreditInfo   `json:"balance,omitempty"`
-	BalanceError string                 `json:"balance_error,omitempty"`
+	OK             bool                   `json:"ok"`
+	ID             string                 `json:"id"`
+	Tasks          []provider.GrowthTask  `json:"tasks"`
+	State          string                 `json:"state,omitempty"`
+	Message        string                 `json:"message,omitempty"`
+	Reward         *provider.GrowthReward `json:"reward,omitempty"`
+	Balance        *codearts.CreditInfo   `json:"balance,omitempty"`
+	BalanceError   string                 `json:"balance_error,omitempty"`
+	CompletedCalls int                    `json:"completed_calls,omitempty"`
 }
 
 func (s *Server) growthAccount(w http.ResponseWriter, id string, claim bool) *codearts.Account {
@@ -71,6 +73,7 @@ func (s *Server) handleGrowthTasks(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 502, err.Error(), "upstream_error")
 		return
 	}
+	s.decorateGrowthTasks(a.ID, tasks)
 	writeJSON(w, 200, growthReply{OK: true, ID: a.ID, Tasks: tasks})
 }
 
@@ -142,22 +145,32 @@ func (s *Server) handleGrowthClaim(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 409, "任务尚未达标或尚未解锁，请刷新任务进度", "invalid_request_error")
 		return
 	}
-	reward, claimErr := growth.ClaimGrowthReward(ctx, raw, task.Code)
+	reply, err = s.claimGrowthReward(ctx, a, adapter, raw, tasks, task.Code)
+	if err != nil {
+		writeErr(w, 502, err.Error(), "upstream_error")
+		return
+	}
+	writeJSON(w, 200, reply)
+}
+
+// Manual and action-driven claims share the existing account lock and confirmation.
+func (s *Server) claimGrowthReward(ctx context.Context, a *codearts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, code string) (growthReply, error) {
+	growth := adapter.(provider.GrowthTasks)
+	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks}
+	reward, claimErr := growth.ClaimGrowthReward(ctx, raw, code)
 	s.creditMu.Lock()
 	delete(s.creditCache, a.ID)
 	s.creditMu.Unlock()
 	if claimErr != nil {
 		// Never retry a write whose outcome may already have reached upstream.
-		writeErr(w, 502, "成长奖励结果未确认，请刷新任务后核对；"+claimErr.Error(), "upstream_error")
-		return
+		return reply, fmt.Errorf("成长奖励结果未确认，请刷新任务后核对；%w", claimErr)
 	}
 	reply.State, reply.Message = "pending", "领取已提交，等待上游确认；请刷新任务进度"
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
 			select {
 			case <-ctx.Done():
-				writeJSON(w, 200, reply)
-				return
+				return reply, nil
 			case <-time.After(300 * time.Millisecond):
 			}
 		}
@@ -166,7 +179,7 @@ func (s *Server) handleGrowthClaim(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		reply.Tasks = updated
-		if task := growthTask(updated, body.TaskCode); task != nil && task.Claimed {
+		if task := growthTask(updated, code); task != nil && task.Claimed {
 			reply.State, reply.Message, reply.Reward = "claimed", "成长奖励已由上游确认", &reward
 			if reward.AlreadyClaimed {
 				reply.State, reply.Message = "already_claimed", "该任务奖励此前已领取"
@@ -180,5 +193,5 @@ func (s *Server) handleGrowthClaim(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	writeJSON(w, 200, reply)
+	return reply, nil
 }

@@ -51,6 +51,7 @@
     return fetch(path, {
       method: opts.method || "GET",
       headers: h,
+      signal: opts.signal,
       body: opts.body ? JSON.stringify(opts.body) : undefined
     }).then(function(r){
       return r.text().then(function(txt){
@@ -265,7 +266,7 @@
   function usageMetricText(value,metric){return metric==="cost"?"$"+Number(value).toFixed(4):usageNumber(value);}
   function usageSeriesName(name,kind){
     var providers={codearts:"华为云码道",workbuddy:"WorkBuddy",trae:"Trae"};
-    var protocols={chat_completions:"Chat Completions",responses:"Responses",messages:"Messages",anthropic_messages:"Messages",search:"联网搜索",unknown:"未记录接口"};
+    var protocols={chat_completions:"Chat Completions",responses:"Responses",messages:"Messages",anthropic_messages:"Messages",search:"联网搜索",growth:"成长任务",unknown:"未记录接口"};
     return kind==="providers"?(providers[name] || name):kind==="protocols"?(protocols[name] || name):name;
   }
   function renderUsageDistribution(kind,holder){

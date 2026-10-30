@@ -85,7 +85,7 @@
     <p id="growthError" class="err-text" role="alert"></p>
     <div id="growthTaskList" aria-busy="false"></div>
   </div>
-  <div class="modal-actions"><button class="btn" id="growthRefresh" type="button">刷新进度</button><button class="btn primary" id="growthClaimAll" type="button" disabled>领取可领奖励</button></div>
+  <div class="modal-actions"><button class="btn" id="growthRefresh" type="button">刷新进度</button><button class="btn" id="growthAcceptAll" type="button" disabled>接取未报名任务</button><button class="btn" id="growthRunAll" type="button" disabled>完成可执行任务</button><button class="btn primary" id="growthClaimAll" type="button" disabled>领取可领奖励</button></div>
 </dialog>
 <dialog id="addAccountDialog" class="modal account-create-modal" aria-labelledby="addAccountTitle">
   <div class="modal-head"><h2 id="addAccountTitle">添加账号</h2><button class="btn ghost" id="addAccountClose" aria-label="关闭添加账号窗口">关闭</button></div>
@@ -348,7 +348,7 @@
           <div class="usage-record-fields">
             <label>上游<select id="usageProvider" aria-label="按上游筛选用量"><option value="">全部上游</option><option value="codearts">华为云码道</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option></select></label>
             <label>模型<select id="usageModel" aria-label="按模型筛选用量"><option value="">全部模型</option></select></label>
-            <label>接口<select id="usageProtocol" aria-label="按接口筛选用量"><option value="">全部接口</option><option value="chat_completions">Chat Completions</option><option value="responses">Responses</option><option value="messages">Messages</option><option value="search">联网搜索</option></select></label>
+            <label>接口<select id="usageProtocol" aria-label="按接口筛选用量"><option value="">全部接口</option><option value="chat_completions">Chat Completions</option><option value="responses">Responses</option><option value="messages">Messages</option><option value="search">联网搜索</option><option value="growth">成长任务</option></select></label>
             <label>请求状态<select id="usageStatus" aria-label="按请求状态筛选用量"><option value="">全部状态</option><option value="success">成功</option><option value="error">失败</option></select></label>
           </div>
           <div class="usage-record-actions"><button class="btn primary" id="reloadUsage"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5"/></svg>刷新</button><button class="btn" id="resetUsageFilters"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7"/></svg>重置</button></div>
