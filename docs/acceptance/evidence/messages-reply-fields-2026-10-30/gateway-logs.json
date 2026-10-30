@@ -1,0 +1,345 @@
+[
+  {
+    "time": 1793358205,
+    "provider": "codearts",
+    "model": "deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": false,
+    "latency_ms": 1135,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 41,
+      "output_tokens": 27,
+      "cached_tokens": 0,
+      "reasoning_tokens": 20
+    },
+    "request_id": "50a909485b0c6a4abe6864b6",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1134,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 41,
+          "output_tokens": 27,
+          "cached_tokens": 0,
+          "reasoning_tokens": 20
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358207,
+    "provider": "codearts",
+    "model": "deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 2683,
+    "first_token_ms": 1538,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 42,
+      "output_tokens": 51,
+      "cached_tokens": 0,
+      "reasoning_tokens": 43
+    },
+    "request_id": "73ad938159f12b5e138578f1",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 2683,
+        "first_token_ms": 1537,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 42,
+          "output_tokens": 51,
+          "cached_tokens": 0,
+          "reasoning_tokens": 43
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358209,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": false,
+    "latency_ms": 1575,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 510,
+      "output_tokens": 9,
+      "cached_tokens": 256,
+      "reasoning_tokens": 0
+    },
+    "request_id": "2ceeee3cb103d1e189f5305b",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1575,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 510,
+          "output_tokens": 9,
+          "cached_tokens": 256,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358211,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 2123,
+    "first_token_ms": 1938,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 508,
+      "output_tokens": 7,
+      "cached_tokens": 256,
+      "reasoning_tokens": 0
+    },
+    "request_id": "34d37f800d628065ff5efcd2",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 2123,
+        "first_token_ms": 1938,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 508,
+          "output_tokens": 7,
+          "cached_tokens": 256,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358213,
+    "provider": "trae",
+    "scope": "cn",
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": false,
+    "latency_ms": 1493,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 40,
+      "output_tokens": 29,
+      "cached_tokens": 0,
+      "reasoning_tokens": 23
+    },
+    "request_id": "d8954d486d6a41bc5400565e",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1493,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 40,
+          "output_tokens": 29,
+          "cached_tokens": 0,
+          "reasoning_tokens": 23
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358214,
+    "provider": "trae",
+    "scope": "cn",
+    "model": "trae/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1279,
+    "first_token_ms": 853,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 42,
+      "output_tokens": 31,
+      "cached_tokens": 0,
+      "reasoning_tokens": 23
+    },
+    "request_id": "9b49cd78eaebc8e02b590d08",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1279,
+        "first_token_ms": 853,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 42,
+          "output_tokens": 31,
+          "cached_tokens": 0,
+          "reasoning_tokens": 23
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358237,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1897,
+    "first_token_ms": 1787,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 1055,
+      "output_tokens": 39,
+      "cached_tokens": 896,
+      "reasoning_tokens": 0
+    },
+    "request_id": "52e6a2238bcef8e908c429c2",
+    "finish_reason": "tool_calls",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "tool_calls",
+        "duration_ms": 1897,
+        "first_token_ms": 1787,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 1055,
+          "output_tokens": 39,
+          "cached_tokens": 896,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358238,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 2407,
+    "first_token_ms": 1604,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 565,
+      "output_tokens": 119,
+      "cached_tokens": 384,
+      "reasoning_tokens": 0
+    },
+    "request_id": "4ed0b62a541ab22d923dd320",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 2407,
+        "first_token_ms": 1603,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 565,
+          "output_tokens": 119,
+          "cached_tokens": 384,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  },
+  {
+    "time": 1793358239,
+    "provider": "workbuddy",
+    "scope": "cn",
+    "model": "workbuddy/cn/deepseek-v4.1-flash",
+    "protocol": "messages",
+    "status": 200,
+    "stream": true,
+    "latency_ms": 1673,
+    "first_token_ms": 1514,
+    "attempts": 1,
+    "usage": {
+      "known": true,
+      "input_tokens": 1124,
+      "output_tokens": 13,
+      "cached_tokens": 896,
+      "reasoning_tokens": 0
+    },
+    "request_id": "fcb77b33cf768e56a07da478",
+    "finish_reason": "stop",
+    "request_kind": "inference",
+    "attempt_details": [
+      {
+        "number": 1,
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "finish_reason": "stop",
+        "duration_ms": 1673,
+        "first_token_ms": 1514,
+        "status": 200,
+        "usage": {
+          "known": true,
+          "input_tokens": 1124,
+          "output_tokens": 13,
+          "cached_tokens": 896,
+          "reasoning_tokens": 0
+        }
+      }
+    ]
+  }
+]

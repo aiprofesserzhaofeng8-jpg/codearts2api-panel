@@ -1,0 +1,71 @@
+{
+  "started_at": "2026-10-30T11:03:54.787188+00:00",
+  "ended_at": "2026-10-30T11:04:00.174795+00:00",
+  "clients": [
+    {
+      "case": "workbuddy-claude",
+      "provider": "workbuddy",
+      "client": "claude",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 5.098,
+      "profile_source": "gateway; no overrides",
+      "event_count": 5,
+      "request_count": 3
+    }
+  ],
+  "requests": [
+    {
+      "index": 1,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "status": 200,
+      "request_id": "4ed0b62a541ab22d923dd320",
+      "headers_ms": 1605.433,
+      "first_meaningful_ms": 1606.007,
+      "duration_ms": 2409.754,
+      "response_bytes": 14953,
+      "tool_count": 0,
+      "tool_result_count": 0
+    },
+    {
+      "index": 2,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "status": 200,
+      "request_id": "52e6a2238bcef8e908c429c2",
+      "headers_ms": 1788.581,
+      "first_meaningful_ms": 1789.123,
+      "duration_ms": 1898.708,
+      "response_bytes": 2087,
+      "tool_count": 1,
+      "tool_result_count": 0
+    },
+    {
+      "index": 3,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "status": 200,
+      "request_id": "fcb77b33cf768e56a07da478",
+      "headers_ms": 1515.809,
+      "first_meaningful_ms": 1516.322,
+      "duration_ms": 1675.333,
+      "response_bytes": 2227,
+      "tool_count": 1,
+      "tool_result_count": 0
+    }
+  ],
+  "cleanup": {
+    "key_removed": true,
+    "health": 200,
+    "inflight": 0,
+    "account_count_before": 12,
+    "account_count_after": 12,
+    "settings_unchanged": true
+  },
+  "log_count": 3
+}

@@ -1,0 +1,37 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/protocol
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkFromOpenAIReply/text         	   76117	      5101 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/text         	   77690	      5114 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/text         	   80810	      5169 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/text         	   82546	      5300 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/text         	   80402	      5107 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/cache        	   79084	      5382 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/cache        	   78145	      5352 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/cache        	   77859	      5431 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/cache        	   78594	      5366 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/cache        	   78164	      5415 ns/op	    1960 B/op	      44 allocs/op
+BenchmarkFromOpenAIReply/tools        	   61141	      6656 ns/op	    2248 B/op	      54 allocs/op
+BenchmarkFromOpenAIReply/tools        	   63402	      6679 ns/op	    2248 B/op	      54 allocs/op
+BenchmarkFromOpenAIReply/tools        	   63550	      6660 ns/op	    2248 B/op	      54 allocs/op
+BenchmarkFromOpenAIReply/tools        	   62149	      6593 ns/op	    2248 B/op	      54 allocs/op
+BenchmarkFromOpenAIReply/tools        	   61009	      6753 ns/op	    2248 B/op	      54 allocs/op
+PASS
+ok  	codearts2api/internal/protocol	7.141s
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/server
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkAnthropicStreaming/tools=false         	    1452	    275771 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=false         	    1521	    280757 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=false         	    1509	    277142 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=false         	    1527	    280722 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=false         	    1460	    278247 ns/op	  145369 B/op	    2098 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1178	    356110 ns/op	  201531 B/op	    2219 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1190	    348415 ns/op	  201530 B/op	    2219 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1204	    350600 ns/op	  201530 B/op	    2219 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1202	    351261 ns/op	  201531 B/op	    2219 allocs/op
+BenchmarkAnthropicStreaming/tools=true          	    1208	    348768 ns/op	  201531 B/op	    2219 allocs/op
+PASS
+ok  	codearts2api/internal/server	4.520s

@@ -1,0 +1,46 @@
+--- FAIL: TestFromOpenAIRefusalAndCacheUsage (0.00s)
+    anthropic_reply_test.go:18: text/refusal or reasoning lost: text="prefix" reasoning="reason"
+--- FAIL: TestFromOpenAIUsageCounts (0.00s)
+    --- FAIL: TestFromOpenAIUsageCounts/cache (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":4,"cache_read_input_tokens":8,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/alias (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":4,"cache_read_input_tokens":8,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/prefer_details (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":4,"cache_read_input_tokens":8,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/zero_details_alias (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":4,"cache_read_input_tokens":8,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/explicit_zero (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":29,"output_tokens":4}
+            want: {"input_tokens":0,"output_tokens":0}
+    --- FAIL: TestFromOpenAIUsageCounts/all_cached (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":0,"cache_read_input_tokens":12,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/reported_zero_cache (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":12,"cache_read_input_tokens":0,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/negative_cache (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":12,"cache_read_input_tokens":0,"output_tokens":2}
+    --- FAIL: TestFromOpenAIUsageCounts/oversized_cache (0.00s)
+        anthropic_reply_test.go:42: 结构不一致
+             got: {"input_tokens":12,"output_tokens":2}
+            want: {"input_tokens":0,"cache_read_input_tokens":12,"output_tokens":2}
+    anthropic_reply_test.go:49: 结构不一致
+         got: {"input_tokens":20,"output_tokens":0}
+        want: {"input_tokens":20,"output_tokens":2}
+    anthropic_reply_test.go:51: missing usage hid refusal or changed stop semantics
+FAIL
+FAIL	codearts2api/internal/protocol	0.004s
+FAIL

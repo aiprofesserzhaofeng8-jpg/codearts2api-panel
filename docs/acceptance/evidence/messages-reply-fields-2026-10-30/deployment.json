@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-30T11:03:23.776773+00:00",
+  "commit": "de661cc7f9579de365e6faea7137d42a5b9c4c90",
+  "pid": 3711734,
+  "cwd": "/home/white/codearts2api-panel",
+  "binary_sha256": "1ccff01a3bd4c0237925bbbbdd38eb8ff2745f9d680d7d3ab018a4620e3da8fd",
+  "running_matches_build": true,
+  "health_status": 200,
+  "inflight": 0,
+  "accounts": 12,
+  "settings_unchanged": true,
+  "backup_available": true
+}

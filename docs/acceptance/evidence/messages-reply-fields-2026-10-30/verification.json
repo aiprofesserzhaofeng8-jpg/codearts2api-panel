@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-30T11:04:51.151896+00:00",
+  "health": 200,
+  "accounts": 12,
+  "pool_states": {
+    "ready": 12
+  },
+  "inflight": 0,
+  "settings_unchanged": true,
+  "key_count_unchanged": true,
+  "temporary_keys_removed": true,
+  "running_matches_build": true,
+  "pid": 3711734,
+  "cwd": "/home/white/codearts2api-panel"
+}

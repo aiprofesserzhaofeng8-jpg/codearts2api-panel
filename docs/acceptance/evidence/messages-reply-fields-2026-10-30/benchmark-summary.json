@@ -1,0 +1,100 @@
+{
+  "baseline": "15cedc0",
+  "command": "go test ./internal/protocol ./internal/server -p=1 -run ^$ -bench Benchmark(FromOpenAIReply|AnthropicStreaming)$ -cpu=1 -benchtime=350ms -count=5",
+  "before": {
+    "BenchmarkFromOpenAIReply/text": {
+      "samples": 5,
+      "ns_per_op": 5114,
+      "bytes_per_op": 1960,
+      "allocs_per_op": 44
+    },
+    "BenchmarkFromOpenAIReply/cache": {
+      "samples": 5,
+      "ns_per_op": 5382,
+      "bytes_per_op": 1960,
+      "allocs_per_op": 44
+    },
+    "BenchmarkFromOpenAIReply/tools": {
+      "samples": 5,
+      "ns_per_op": 6660,
+      "bytes_per_op": 2248,
+      "allocs_per_op": 54
+    },
+    "BenchmarkAnthropicStreaming/tools=false": {
+      "samples": 5,
+      "ns_per_op": 278247,
+      "bytes_per_op": 145369,
+      "allocs_per_op": 2098
+    },
+    "BenchmarkAnthropicStreaming/tools=true": {
+      "samples": 5,
+      "ns_per_op": 350600,
+      "bytes_per_op": 201531,
+      "allocs_per_op": 2219
+    }
+  },
+  "after": {
+    "BenchmarkFromOpenAIReply/text": {
+      "samples": 5,
+      "ns_per_op": 5137,
+      "bytes_per_op": 2008,
+      "allocs_per_op": 46
+    },
+    "BenchmarkFromOpenAIReply/cache": {
+      "samples": 5,
+      "ns_per_op": 5691,
+      "bytes_per_op": 2072,
+      "allocs_per_op": 48
+    },
+    "BenchmarkFromOpenAIReply/tools": {
+      "samples": 5,
+      "ns_per_op": 6911,
+      "bytes_per_op": 2296,
+      "allocs_per_op": 56
+    },
+    "BenchmarkAnthropicStreaming/tools=false": {
+      "samples": 5,
+      "ns_per_op": 281698,
+      "bytes_per_op": 146969,
+      "allocs_per_op": 2098
+    },
+    "BenchmarkAnthropicStreaming/tools=true": {
+      "samples": 5,
+      "ns_per_op": 353649,
+      "bytes_per_op": 203131,
+      "allocs_per_op": 2219
+    }
+  },
+  "changes": {
+    "BenchmarkFromOpenAIReply/text": {
+      "time_percent": 0.45,
+      "absolute_ns": 23,
+      "bytes_percent": 2.45,
+      "allocs_delta": 2
+    },
+    "BenchmarkFromOpenAIReply/cache": {
+      "time_percent": 5.74,
+      "absolute_ns": 309,
+      "bytes_percent": 5.71,
+      "allocs_delta": 4
+    },
+    "BenchmarkFromOpenAIReply/tools": {
+      "time_percent": 3.77,
+      "absolute_ns": 251,
+      "bytes_percent": 2.14,
+      "allocs_delta": 2
+    },
+    "BenchmarkAnthropicStreaming/tools=false": {
+      "time_percent": 1.24,
+      "absolute_ns": 3451,
+      "bytes_percent": 1.1,
+      "allocs_delta": 0
+    },
+    "BenchmarkAnthropicStreaming/tools=true": {
+      "time_percent": 0.87,
+      "absolute_ns": 3049,
+      "bytes_percent": 0.79,
+      "allocs_delta": 0
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "baseline": "15cedc059d10442eeca2e1c3492f8700f1d9352c",
+  "fix_commit": "de661cc7f9579de365e6faea7137d42a5b9c4c90",
+  "controlled_leaf_cases_passed": 33,
+  "real_requests": 9,
+  "real_attempts": 9,
+  "real_messages_matrix_passed": 6,
+  "real_claude_tool_loop_passed": true,
+  "actual_cache_hit_seen": true,
+  "real_refusal_field_observed": false,
+  "settings_unchanged": true,
+  "temporary_keys_removed": true
+}
