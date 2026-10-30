@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"codearts2api/internal/provider"
 )
@@ -70,3 +71,17 @@ func (c *Client) AdoptGrowthBuddy(ctx context.Context, raw json.RawMessage) erro
 }
 
 var _ provider.GrowthBuddyOperations = (*Client)(nil)
+
+func buddyTaskIncomplete(body []byte) bool {
+	var envelope struct {
+		Message string `json:"message"`
+		Msg     string `json:"msg"`
+		Error   struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if json.Unmarshal(body, &envelope) != nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(envelope.Message+" "+envelope.Msg+" "+envelope.Error.Message), "first_buddy task not completed yet")
+}

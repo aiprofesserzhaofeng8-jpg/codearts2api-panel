@@ -46,7 +46,7 @@ func TestGrowthBuddyStatusRequiresExplicitOwnershipAndAgreement(t *testing.T) {
 	}
 }
 
-func TestGrowthBuddyCommandsAndRealActivityUseCorrectDomains(t *testing.T) {
+func TestGrowthBuddyCommandsAndActivityUseCorrectDomains(t *testing.T) {
 	var chat, report, agree, adopt int
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v2/report" {
@@ -83,8 +83,8 @@ func TestGrowthBuddyCommandsAndRealActivityUseCorrectDomains(t *testing.T) {
 	c.CNBase = up.URL
 	c.CNBilling = billing.URL
 	c.CNWeb = "http://invalid.invalid"
-	if completed, err := c.RunGrowthChat(context.Background(), fixtureAuth("cn"), "first_buddy", func([]byte) error { return nil }); err != nil || !completed {
-		t.Fatal(completed, err)
+	if err := c.ReportGrowthActivity(context.Background(), fixtureAuth("cn"), "first_buddy"); err != nil {
+		t.Fatal(err)
 	}
 	if err := c.AgreeGrowthBuddy(context.Background(), fixtureAuth("cn")); err != nil {
 		t.Fatal(err)
@@ -92,7 +92,7 @@ func TestGrowthBuddyCommandsAndRealActivityUseCorrectDomains(t *testing.T) {
 	if err := c.AdoptGrowthBuddy(context.Background(), fixtureAuth("cn")); err != nil {
 		t.Fatal(err)
 	}
-	if chat != 1 || report != 1 || agree != 1 || adopt != 1 {
+	if chat != 0 || report != 1 || agree != 1 || adopt != 1 {
 		t.Fatal(chat, report, agree, adopt)
 	}
 }

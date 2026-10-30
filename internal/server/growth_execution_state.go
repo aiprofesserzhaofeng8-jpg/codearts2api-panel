@@ -140,7 +140,7 @@ func (g *growthExecutionState) checkpoint(path, id string, task provider.GrowthT
 func (s *Server) growthExecutionPath() string { return s.Store.Path() + ".growth.json" }
 func (s *Server) decorateGrowthTasks(id string, tasks []provider.GrowthTask) {
 	for i := range tasks {
-		if tasks[i].AutoSupported {
+		if tasks[i].AutoSupported && !tasks[i].ActivityOnly {
 			pending, err := s.growthExecution.pending(s.growthExecutionPath(), id, tasks[i])
 			tasks[i].ExecutionPending = pending
 			if err != nil {

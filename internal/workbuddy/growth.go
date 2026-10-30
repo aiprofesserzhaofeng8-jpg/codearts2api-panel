@@ -57,7 +57,11 @@ func (c *Client) growthRequestAt(ctx context.Context, raw json.RawMessage, metho
 	if err != nil {
 		return nil, fmt.Errorf("WorkBuddy 成长任务请求无效")
 	}
-	c.headers(req, a)
+	if !web && (path == "/v2/report" || path == GrowthBuddyInfoPath || path == GrowthBuddyAgreementPath || path == GrowthBuddyFirstPath) {
+		c.growthMaintenanceHeaders(req, a)
+	} else {
+		c.headers(req, a)
+	}
 	if web {
 		req.Header.Set("Origin", "https://www.workbuddy.cn")
 		req.Header.Set("Referer", "https://www.workbuddy.cn/profile/growth-center")
@@ -71,6 +75,9 @@ func (c *Client) growthRequestAt(ctx context.Context, raw json.RawMessage, metho
 	body, err := io.ReadAll(io.LimitReader(resp.Body, (2<<20)+1))
 	if err != nil || len(body) > 2<<20 {
 		return nil, fmt.Errorf("WorkBuddy 成长任务响应读取失败，结果未确认")
+	}
+	if path == GrowthBuddyFirstPath && resp.StatusCode == http.StatusBadRequest && buddyTaskIncomplete(body) {
+		return nil, &provider.Error{Status: http.StatusBadRequest, Message: "领养门槛尚未达标（first_buddy task not completed yet），本轮已停止，请稍后刷新"}
 	}
 	if err = upstreamError(resp.StatusCode, body); err != nil {
 		return nil, err

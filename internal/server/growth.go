@@ -16,17 +16,18 @@ import (
 // Growth progress is authoritative upstream state. Listing/claiming never use
 // daily markers or inference accounting. Real chat actions account separately.
 type growthReply struct {
-	OK             bool                        `json:"ok"`
-	ID             string                      `json:"id"`
-	Tasks          []provider.GrowthTask       `json:"tasks"`
-	State          string                      `json:"state,omitempty"`
-	Message        string                      `json:"message,omitempty"`
-	Reward         *provider.GrowthReward      `json:"reward,omitempty"`
-	Balance        *codearts.CreditInfo        `json:"balance,omitempty"`
-	BalanceError   string                      `json:"balance_error,omitempty"`
-	CompletedCalls int                         `json:"completed_calls,omitempty"`
-	Buddy          *provider.GrowthBuddyStatus `json:"buddy,omitempty"`
-	BuddyError     string                      `json:"buddy_error,omitempty"`
+	OK               bool                        `json:"ok"`
+	ID               string                      `json:"id"`
+	Tasks            []provider.GrowthTask       `json:"tasks"`
+	State            string                      `json:"state,omitempty"`
+	Message          string                      `json:"message,omitempty"`
+	Reward           *provider.GrowthReward      `json:"reward,omitempty"`
+	Balance          *codearts.CreditInfo        `json:"balance,omitempty"`
+	BalanceError     string                      `json:"balance_error,omitempty"`
+	CompletedCalls   int                         `json:"completed_calls,omitempty"`
+	CompletedReports int                         `json:"completed_reports,omitempty"`
+	Buddy            *provider.GrowthBuddyStatus `json:"buddy,omitempty"`
+	BuddyError       string                      `json:"buddy_error,omitempty"`
 }
 
 func (s *Server) growthAccount(w http.ResponseWriter, id string, claim bool) *codearts.Account {

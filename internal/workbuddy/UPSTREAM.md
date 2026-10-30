@@ -8,7 +8,7 @@
 
 本目录是适配本项目 provider 接口的新实现，仅依赖标准库；没有引入原项目的 Redis 或活动任务调度。搜索、系统提示词与指纹清洗已按当前网关架构接入，见 `docs/WORKBUDDY-FEATURES.md`。保留原项目的 MIT 许可和版权声明，见根目录 `LICENSE.workbuddy`。
 
-现阶段连接 `/v3/config` 模型目录、`/v2/chat/completions` 推理、设备授权、令牌续期、个人积分包查询与每日签到。成长任务支持国内个人账号默认列表查询、接取、领养前置与依赖编排、达标奖励领取，以及 GLM-5.2 体验和对话次数任务的真实对话执行，见 `docs/WORKBUDDY-GROWTH.md`。接取与对话报告协议参考 `internal/upstream/tasks.go`、`internal/upstream/report.go`；Buddy 档案/协议/领养参考 `internal/upstream/travel.go` 与 `internal/panel/autotask.go`。报告要求对应真实完成的对话及上游响应标识，不复用参考项目的合成桌面完成事件。首次领养需要明确确认协议；未确认不会产生付费对话。企业额度和其他活动接口未接入。2026-10-29 已实测个人账号签到成功并增加 100 积分；此结果不代替真实模型调用验收。
+现阶段连接 `/v3/config` 模型目录、`/v2/chat/completions` 推理、设备授权、令牌续期、个人积分包查询与每日签到。成长任务支持国内个人账号默认列表查询、接取、领养前置与依赖编排、达标奖励领取，以及活动事件与 GLM-5.2 真实体验两类执行方式，见 `docs/WORKBUDDY-GROWTH.md`。接取与对话报告协议参考 `internal/upstream/tasks.go`、`internal/upstream/report.go`；Buddy 档案/协议/领养参考 `internal/upstream/travel.go` 与 `internal/panel/autotask.go`。`first_buddy` 和 `chat_5` 使用参考项目的完整 `chat_request_send` 活跃事件，通过 billing 域发送，不调用模型；指定模型任务才要求真实对话与响应标识。Buddy 维护请求使用独立 billing 请求头，普通推理不变。首次领养需要明确确认协议；历史付费检查点不阻塞活动任务，只有上游回读才确认领养和领奖。企业额度和其他活动接口未接入。2026-10-29 已实测个人账号签到成功并增加 100 积分；此结果不代替真实模型调用验收。
 
 搜索参考 `internal/upstream/search.go`、`internal/server/messages.go`；提示词和清洗参考 `internal/prompt/*`、`internal/upstream/sanitize.go`。清洗仅作用于系统提示词中的明确模板，全部业务消息和工具参数原样保留；降级重试限定当前请求、同一账号且没有输出分片，不使用参考项目的全局降级窗口。
 

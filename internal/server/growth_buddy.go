@@ -13,7 +13,7 @@ import (
 	"codearts2api/internal/provider"
 )
 
-func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, adapter provider.Adapter, actions provider.GrowthActions, raw json.RawMessage, tasks []provider.GrowthTask, consent bool) (growthReply, bool, error) {
+func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, consent bool) (growthReply, bool, error) {
 	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks, State: "pending"}
 	ops, ok := adapter.(provider.GrowthBuddyOperations)
 	if !ok {
@@ -32,32 +32,17 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, ad
 		if !status.Agreed && !consent {
 			return reply, false, &provider.Error{Status: 409, Message: "首次领养需阅读官方活动规则，并勾选同意领养协议后再执行"}
 		}
-		// Unaccepted tasks have target=0. The onboarding real chat has its own
-		// fixed one-call checkpoint; it does not invent upstream task progress.
-		mark := *first
-		if mark.Target <= 0 {
-			mark.Target = 1
-		}
-		pending, stateErr := s.growthExecution.pending(s.growthExecutionPath(), a.ID, mark)
-		if stateErr != nil {
-			return reply, false, stateErr
-		}
-		if !pending && !first.Claimed && !first.Claimable && first.Current == 0 {
-			if !s.Store.Settings().AllowCreditModels {
-				return reply, false, &provider.Error{Status: 403, Message: "积分模型调用已关闭，未开始领养前置对话"}
+		if !first.Claimed && !first.Claimable {
+			activity, supported := adapter.(provider.GrowthActivityActions)
+			if !supported {
+				return reply, false, fmt.Errorf("当前上游不支持领养前置活跃上报")
 			}
-			action, _ := actions.GrowthAction("first_buddy")
-			model := provider.ModelID(provider.WorkBuddy, "cn", action.Model)
-			if _, available := s.Reg.Resolve(model, nil); !available {
-				return reply, false, &provider.Error{Status: 409, Message: "领养前置所需模型当前不可用，未开始付费对话"}
+			// Activity has no billable model call. Historical uncertain-chat
+			// checkpoints remain intact and must not block explicit onboarding.
+			if err := activity.ReportGrowthActivity(ctx, raw, "first_buddy"); err != nil {
+				return reply, false, fmt.Errorf("领养前置活跃上报未确认：%w", err)
 			}
-			completed, chatErr := s.runGrowthChat(ctx, a, actions, raw, mark, model)
-			if completed {
-				reply.CompletedCalls = 1
-			}
-			if chatErr != nil {
-				return reply, false, chatErr
-			}
+			reply.CompletedReports = 1
 			select {
 			case <-ctx.Done():
 				return reply, false, ctx.Err()
@@ -69,7 +54,7 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, ad
 		}
 		if !status.Agreed {
 			if err = ops.AgreeGrowthBuddy(ctx, raw); err != nil {
-				return reply, false, fmt.Errorf("领养协议提交未确认，请刷新核对；不会重新执行付费对话")
+				return reply, false, fmt.Errorf("领养协议提交未确认，请刷新核对：%w", err)
 			}
 			status, err = ops.GrowthBuddyStatus(ctx, raw)
 			if err != nil || !status.Owned && !status.Agreed {
@@ -98,9 +83,9 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, ad
 				}
 			}
 			if err != nil || !status.Owned {
-				message := "领养尚未由上游确认，已停止后续对话；请稍后刷新，不会重复付费解锁"
+				message := "领养尚未由上游确认，已停止后续任务；请稍后刷新"
 				if adoptErr != nil {
-					message = "上游尚未确认领养前置已满足，已停止后续对话；请稍后刷新"
+					return reply, false, fmt.Errorf("领养未确认：%w", adoptErr)
 				}
 				return reply, false, fmt.Errorf("%s", message)
 			}
@@ -120,7 +105,7 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, ad
 	} else if first != nil && first.Claimable {
 		claimed, claimErr := s.claimGrowthReward(ctx, a, adapter, raw, updated, "first_buddy")
 		if claimErr == nil {
-			claimed.Buddy, claimed.CompletedCalls = reply.Buddy, reply.CompletedCalls
+			claimed.Buddy, claimed.CompletedReports = reply.Buddy, reply.CompletedReports
 			return claimed, true, nil
 		}
 		reply.Message = "Buddy 领养已确认，奖励领取结果待刷新核对"

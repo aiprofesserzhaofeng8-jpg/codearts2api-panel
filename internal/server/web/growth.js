@@ -50,9 +50,10 @@
       $("growthBuddyAgree").disabled=busy;
       $("growthRefresh").textContent=busyKind==="refresh"?"刷新中…":"刷新进度";
       $("growthAcceptAll").textContent=busyKind==="accept"?"接取中…":"接取未报名任务";
-      $("growthRunAll").textContent=busyKind==="run"?"执行中…":(entries.some(needsBuddy)?"执行成长任务":"执行对话任务")+(runCount?"（"+runCount+"）":"");
+      var hasActivity=entries.some(function(e){return e.tasks.some(function(t){return t.activity_only&&eligible(e,t,"run");});});
+      $("growthRunAll").textContent=busyKind==="run"?"执行中…":(entries.some(needsBuddy)||hasActivity?"执行成长任务":"执行对话任务")+(runCount?"（"+runCount+"）":"");
       $("growthClaimAll").textContent=busyKind==="claim"?"领取中…":"领取可领奖励";
-      $("growthRunAll").title=runCount?"按依赖顺序完成领养与已接入的真实对话任务，会消耗积分":"当前没有可执行的任务；其他任务需在官方应用完成";
+      $("growthRunAll").title=runCount?"按依赖顺序执行；活跃和领养不调用模型，指定模型体验任务会消耗积分":"当前没有可执行的任务；其他任务需在官方应用完成";
       $("growthClaimAll").title=$("growthClaimAll").disabled&&!busy?"当前没有可领取的奖励，请先完成任务并刷新进度":"只领取上游已确认达标的奖励";
       var all=entries.flatMap(function(e){return e.tasks;}),failed=entries.filter(function(e){return e.error;});
       $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取 · "+all.filter(function(t){return t.auto_supported&&!t.claimed;}).length+" 项支持自动执行";
@@ -125,7 +126,7 @@
       if(busy||!jobs.length)return;
       if(kind==="run"&&!$("growthBuddyAgree").checked&&jobs.some(function(job){return needsConsent(job.entry);})){jobs.forEach(function(job){if(needsConsent(job.entry))job.entry.error="请先阅读官方活动规则，并勾选同意领养协议";});notice="尚未开始执行，未产生对话消耗。";render();$("growthBuddyAgree").focus();return;}
       var seq=sequence,confirmed=0,total=jobs.reduce(function(n,job){return n+job.codes.length;},0);
-      busy=true;busyKind=kind;notice=kind==="accept"?"正在接取任务…":(kind==="run"?"正在执行真实对话并核对进度，请稍候…":"正在领取已达标奖励…");
+      busy=true;busyKind=kind;notice=kind==="accept"?"正在接取任务…":(kind==="run"?"正在执行成长任务并核对进度，请稍候…":"正在领取已达标奖励…");
       controller=kind==="run"?new AbortController():null;
       var signal=controller?controller.signal:undefined;
       jobs.forEach(function(job){job.entry.error="";});render();

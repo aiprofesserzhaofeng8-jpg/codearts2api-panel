@@ -13,8 +13,8 @@ type GrowthTasks interface {
 	ClaimGrowthReward(context.Context, json.RawMessage, string) (GrowthReward, error)
 }
 
-// GrowthActions is separate from listing/claiming. Actions must perform the
-// underlying operation; synthetic completion events are not an implementation.
+// GrowthActions is separate from listing/claiming. Model tasks and activity
+// tasks have independent limits; only model tasks use billable checkpoints.
 type GrowthActions interface {
 	AcceptGrowthTasks(context.Context, json.RawMessage, []string) error
 	GrowthAction(string) (GrowthAction, bool)
@@ -24,7 +24,14 @@ type GrowthActions interface {
 type GrowthAction struct {
 	Model        string
 	MaxCalls     int64
+	MaxReports   int64
 	Prerequisite string
+}
+
+// GrowthActivityActions is optional. WorkBuddy growth activity uses a separate
+// maintenance protocol, never the normal inference request path.
+type GrowthActivityActions interface {
+	ReportGrowthActivity(context.Context, json.RawMessage, string) error
 }
 
 // GrowthBuddyOperations is optional and only used by explicit WorkBuddy task
@@ -57,6 +64,7 @@ type GrowthTask struct {
 	Claimed           bool   `json:"claimed"`
 	Claimable         bool   `json:"claimable"`
 	AutoSupported     bool   `json:"auto_supported,omitempty"`
+	ActivityOnly      bool   `json:"activity_only,omitempty"`
 	ActionDescription string `json:"action_description,omitempty"`
 	ManualInstruction string `json:"manual_instruction,omitempty"`
 	ExecutionPending  bool   `json:"execution_pending,omitempty"`

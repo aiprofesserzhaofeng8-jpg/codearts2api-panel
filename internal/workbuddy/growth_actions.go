@@ -1,7 +1,8 @@
 package workbuddy
 
 // Enrollment/report wire shapes reference workbuddy2api-panel (MIT;
-// LICENSE.workbuddy). Completion reports here require a successful real chat.
+// LICENSE.workbuddy). Model-task reports require a successful real chat;
+// activity-only tasks use the separate growth_activity.go protocol.
 import (
 	"context"
 	"crypto/sha256"
@@ -22,11 +23,11 @@ const growthPrompt = "请用一句话介绍你自己。"
 func (c *Client) GrowthAction(code string) (provider.GrowthAction, bool) {
 	switch code {
 	case "first_buddy":
-		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 1}, true
+		return provider.GrowthAction{MaxReports: 1}, true
 	case "Model_chat_GLM5.2":
 		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 1, Prerequisite: "first_buddy"}, true
 	case "chat_5":
-		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 5, Prerequisite: "first_buddy"}, true
+		return provider.GrowthAction{MaxReports: 5, Prerequisite: "first_buddy"}, true
 	default:
 		return provider.GrowthAction{}, false
 	}
@@ -36,17 +37,20 @@ func annotateGrowthTask(t *provider.GrowthTask) {
 	// Never trust upstream fields that advertise local execution capabilities.
 	t.AutoSupported, t.ActionDescription, t.ManualInstruction, t.ExecutionPending = false, "", "", false
 	t.AcceptNotRequired = false
+	t.ActivityOnly = false
 	switch t.Code {
 	case "Model_chat_GLM5.2":
 		t.AutoSupported = true
 		t.ActionDescription = "进行一次 GLM-5.2 真实对话，最多输出 32 Token，会消耗积分"
 	case "chat_5":
 		t.AutoSupported = true
-		t.ActionDescription = "使用 GLM-5.2 按差额进行真实对话，最多 5 次，每次最多输出 32 Token，会消耗积分"
+		t.ActivityOnly = true
+		t.ActionDescription = "按上游进度补足活跃上报，最多 5 次；不调用模型，奖励以上游确认为准"
 	case "first_buddy":
 		t.AcceptNotRequired = true
 		t.AutoSupported = true
-		t.ActionDescription = "先完成一次真实对话解锁，再按已确认的协议领养 Buddy；最多一次对话，会消耗积分"
+		t.ActivityOnly = true
+		t.ActionDescription = "活跃上报解锁后，按已确认的协议领养 Buddy；不调用模型，领养及奖励分别核对"
 	case "Expert_Philanthropy":
 		t.ManualInstruction = "涉及捐款，请在官方应用自行决定是否参与"
 	default:
@@ -122,7 +126,7 @@ func validateGrowthEnrollment(data json.RawMessage, codes []string) error {
 // The bool reports whether the chat completed even if reporting subsequently fails.
 func (c *Client) RunGrowthChat(ctx context.Context, raw json.RawMessage, code string, onChunk func([]byte) error) (bool, error) {
 	action, ok := c.GrowthAction(code)
-	if !ok || !c.SupportsGrowthTasks(raw) {
+	if !ok || action.MaxCalls == 0 || !c.SupportsGrowthTasks(raw) {
 		return false, fmt.Errorf("该任务需要在官方应用完成")
 	}
 	normalized, _, err := c.Normalize(raw)
@@ -178,13 +182,7 @@ func (c *Client) RunGrowthChat(ctx context.Context, raw json.RawMessage, code st
 	now := time.Now().UnixMilli()
 	event := map[string]any{"eventCode": "chat_request_send", "timestamp": now, "presentAt": now, "reportDelay": 0, "mode": "craft", "conversationId": conversationID, "parentConversationId": conversationID, "requestId": responseID, "rootRequestId": responseID, "inputLength": utf8.RuneCountInString(growthPrompt), "requestModelId": action.Model, "requestModelName": "GLM-5.2", "maxToken": 32, "maxRetries": 0, "userId": a.UID, "agentName": "default", "agentType": "conversation"}
 	payload, _ := json.Marshal([]any{event})
-	base := ""
-	if code == "first_buddy" {
-		// The onboarding gate consumes billing-domain activity, as the official
-		// client does. This receipt describes the real chat above.
-		base = c.CNBilling
-	}
-	_, err = c.growthRequestAt(ctx, normalized, http.MethodPost, "/v2/report", payload, false, base)
+	_, err = c.growthRequestAt(ctx, normalized, http.MethodPost, "/v2/report", payload, false, c.CNBilling)
 	if err != nil {
 		return true, fmt.Errorf("真实对话已完成，进度上报未确认：%w", err)
 	}

@@ -26,7 +26,7 @@ func TestGrowthActionsRequireRealChatAndCorrectWire(t *testing.T) {
 				Codes []string `json:"task_codes"`
 			}
 			_ = json.NewDecoder(r.Body).Decode(&body)
-			if !reflect.DeepEqual(body.Codes, []string{"chat_5"}) {
+			if !reflect.DeepEqual(body.Codes, []string{"Model_chat_GLM5.2"}) {
 				t.Error("wrong enrollment body")
 			}
 			io.WriteString(w, `{"code":0,"data":null}`)
@@ -58,12 +58,13 @@ func TestGrowthActionsRequireRealChatAndCorrectWire(t *testing.T) {
 	defer up.Close()
 	c := New()
 	c.CNBase = up.URL
+	c.CNBilling = up.URL
 	c.CNWeb = "http://web-must-not-be-used.invalid"
-	if err := c.AcceptGrowthTasks(context.Background(), fixtureAuth("cn"), []string{"chat_5"}); err != nil {
+	if err := c.AcceptGrowthTasks(context.Background(), fixtureAuth("cn"), []string{"Model_chat_GLM5.2"}); err != nil {
 		t.Fatal(err)
 	}
 	chunks := 0
-	completed, err := c.RunGrowthChat(context.Background(), fixtureAuth("cn"), "chat_5", func([]byte) error { chunks++; return nil })
+	completed, err := c.RunGrowthChat(context.Background(), fixtureAuth("cn"), "Model_chat_GLM5.2", func([]byte) error { chunks++; return nil })
 	if err != nil || !completed || chunks != 1 || len(calls) != 3 {
 		t.Fatal(completed, err, calls, chunks)
 	}
@@ -110,12 +111,12 @@ func TestGrowthEnrollmentValidationAndLocalCapabilities(t *testing.T) {
 			t.Error("invalid enrollment accepted")
 		}
 	}
-	tasks, err := parseGrowthTasks([]byte(`{"tasks":[{"task_code":"automation_1","auto_supported":true,"action_description":"untrusted"},{"task_code":"Model_chat_GLM5.2","auto_supported":false}]}`))
-	if err != nil || tasks[0].AutoSupported || !tasks[1].AutoSupported || strings.Contains(tasks[0].ActionDescription, "untrusted") {
+	tasks, err := parseGrowthTasks([]byte(`{"tasks":[{"task_code":"automation_1","auto_supported":true,"activity_only":true,"action_description":"untrusted"},{"task_code":"Model_chat_GLM5.2","auto_supported":false,"activity_only":true}]}`))
+	if err != nil || tasks[0].AutoSupported || tasks[0].ActivityOnly || !tasks[1].AutoSupported || tasks[1].ActivityOnly || strings.Contains(tasks[0].ActionDescription, "untrusted") {
 		t.Fatal("local capability trusted upstream metadata", tasks, err)
 	}
 	tasks, err = parseGrowthTasks([]byte(`{"tasks":[{"task_code":"first_buddy","accept_not_required":false},{"task_code":"chat_5","accept_not_required":true}]}`))
-	if err != nil || !tasks[0].AcceptNotRequired || tasks[1].AcceptNotRequired {
+	if err != nil || !tasks[0].AcceptNotRequired || tasks[1].AcceptNotRequired || !tasks[0].ActivityOnly || !tasks[1].ActivityOnly {
 		t.Fatal("local enrollment capability trusted upstream metadata", tasks, err)
 	}
 	err = validateGrowthEnrollment([]byte(`{"results":[{"task_code":"first_buddy","status":"error","message":"task does not require acceptance"}]}`), []string{"first_buddy"})

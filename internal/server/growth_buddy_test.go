@@ -70,11 +70,11 @@ func TestGrowthBuddyPreparesDependencyBeforeEnrollingAndExecuting(t *testing.T) 
 		t.Fatal("fixture must start with a rejected dependency")
 	}
 	reply := runBuddyFixture(t, s, "chat_5", true)
-	if reply.State != "claimed" || reply.Buddy == nil || !reply.Buddy.Owned || reply.CompletedCalls != 6 || f.chats != 6 || f.reports != 6 || f.agreements != 1 || f.adoptions != 1 || f.claims != 2 {
+	if reply.State != "claimed" || reply.Buddy == nil || !reply.Buddy.Owned || reply.CompletedCalls != 0 || reply.CompletedReports != 6 || f.chats != 0 || f.reports != 6 || f.agreements != 1 || f.adoptions != 1 || f.claims != 2 {
 		t.Fatal("dependency did not complete once before real task", reply, f.chats, f.reports, f.agreements, f.adoptions, f.claims)
 	}
 	logs := s.Store.Logs(20)
-	if len(logs) != 6 || !reflect.DeepEqual(budget, s.Store.Keys()[0].BudgetUsage) {
+	if len(logs) != 0 || !reflect.DeepEqual(budget, s.Store.Keys()[0].BudgetUsage) {
 		t.Fatal("real calls not isolated from client key budget", len(logs))
 	}
 	for _, log := range logs {
@@ -95,7 +95,7 @@ func TestGrowthBuddyConcurrentActionsAdoptOnlyOnce(t *testing.T) {
 		go func() { defer wg.Done(); runBuddyFixture(t, s, "first_buddy", true) }()
 	}
 	wg.Wait()
-	if f.chats != 1 || f.reports != 1 || f.agreements != 1 || f.adoptions != 1 || f.claims != 1 {
+	if f.chats != 0 || f.reports != 1 || f.agreements != 1 || f.adoptions != 1 || f.claims != 1 {
 		t.Fatal("same account performed duplicate onboarding", f.chats, f.agreements, f.adoptions, f.claims)
 	}
 }
@@ -104,7 +104,7 @@ func TestGrowthBuddyUnknownAdoptionRecoversWithoutAnotherPaidChat(t *testing.T) 
 	s, f := buddyFixture(t)
 	f.ignoreAdoption = true
 	first := runBuddyFixture(t, s, "first_buddy", true)
-	if first.State != "pending" || first.CompletedCalls != 1 || f.chats != 1 || f.adoptions != 1 || f.claims != 0 {
+	if first.State != "pending" || first.CompletedCalls != 0 || first.CompletedReports != 1 || f.chats != 0 || f.adoptions != 1 || f.claims != 0 {
 		t.Fatal("unconfirmed ownership treated as success", first)
 	}
 	f.mu.Lock()
@@ -113,23 +113,23 @@ func TestGrowthBuddyUnknownAdoptionRecoversWithoutAnotherPaidChat(t *testing.T) 
 	restarted := New(s.Store)
 	restarted.Providers, restarted.Reg = s.Providers, s.Reg
 	second := runBuddyFixture(t, restarted, "first_buddy", true)
-	if second.State != "claimed" || second.CompletedCalls != 0 || f.chats != 1 || f.reports != 1 || f.agreements != 1 || f.adoptions != 2 || f.claims != 1 {
+	if second.State != "claimed" || second.CompletedCalls != 0 || f.chats != 0 || f.reports != 2 || f.agreements != 1 || f.adoptions != 2 || f.claims != 1 {
 		t.Fatal("explicit recovery repeated the paid prerequisite", second, f.chats, f.reports, f.adoptions)
 	}
 }
 
-func TestGrowthBuddyDoesNotAdoptAfterUnverifiedAgreementOrChat(t *testing.T) {
+func TestGrowthBuddyDoesNotAdoptAfterUnverifiedAgreementOrReport(t *testing.T) {
 	for _, broken := range []bool{false, true} {
 		t.Run(fmt.Sprint(broken), func(t *testing.T) {
 			s, f := buddyFixture(t)
 			f.ignoreAgreement = !broken
-			f.brokenStream = broken
+			f.reportFailure = broken
 			reply := runBuddyFixture(t, s, "chat_5", true)
-			if reply.State != "pending" || f.chats != 1 || f.adoptions != 0 || f.claims != 0 || f.accepts != 0 {
+			if reply.State != "pending" || f.chats != 0 || f.adoptions != 0 || f.claims != 0 || f.accepts != 0 {
 				t.Fatal("unknown prerequisite started dependent work", reply, f.chats, f.adoptions, f.accepts)
 			}
-			if broken && f.reports != 0 {
-				t.Fatal("broken chat produced a completion report")
+			if broken && f.agreements != 0 {
+				t.Fatal("failed activity report submitted an agreement")
 			}
 		})
 	}
@@ -149,26 +149,32 @@ func TestGrowthBuddyExistingOwnershipAndLostAcknowledgement(t *testing.T) {
 		s, f := buddyFixture(t)
 		f.adoptErrorAfterCommit = true
 		reply := runBuddyFixture(t, s, "first_buddy", true)
-		if reply.State != "claimed" || reply.Buddy == nil || !reply.Buddy.Owned || f.adoptions != 1 || f.chats != 1 {
+		if reply.State != "claimed" || reply.Buddy == nil || !reply.Buddy.Owned || f.adoptions != 1 || f.chats != 0 {
 			t.Fatal("lost acknowledgement repeated or concealed adoption", reply)
 		}
 	})
 }
 
-func TestGrowthBuddyCreditSwitchAndCheckpointFailureStopBeforeWrites(t *testing.T) {
+func TestGrowthBuddyActivityDoesNotUsePaidSwitchOrCheckpoint(t *testing.T) {
 	for _, corrupt := range []bool{false, true} {
 		t.Run(fmt.Sprint(corrupt), func(t *testing.T) {
 			s, f := buddyFixture(t)
+			s.Store.UpdateSettings(func(settings *store.Settings) { settings.AllowCreditModels = false })
+			s.Reg.ReplaceProvider("workbuddy", "cn", nil)
 			if corrupt {
 				if err := os.WriteFile(s.growthExecutionPath(), []byte("invalid"), 0600); err != nil {
 					t.Fatal(err)
 				}
 			} else {
-				s.Store.UpdateSettings(func(settings *store.Settings) { settings.AllowCreditModels = false })
+				if err := s.growthExecution.checkpoint(s.growthExecutionPath(), "wb-cn", provider.GrowthTask{Code: "first_buddy", Target: 1}, false); err != nil {
+					t.Fatal(err)
+				}
 			}
-			w := growthRequest(s, "POST", "/admin/api/workbuddy/tasks/run", `{"id":"wb-cn","task_code":"first_buddy","agree_buddy":true}`)
-			if !corrupt && w.Code != 403 || corrupt && w.Code != 200 || f.chats+f.reports+f.agreements+f.adoptions+f.claims != 0 {
-				t.Fatal("unsafe onboarding write", w.Code, w.Body.String())
+			before, _ := os.ReadFile(s.growthExecutionPath())
+			reply := runBuddyFixture(t, s, "chat_5", true)
+			after, _ := os.ReadFile(s.growthExecutionPath())
+			if reply.State != "claimed" || reply.CompletedCalls != 0 || reply.CompletedReports != 6 || f.chats != 0 || f.reports != 6 || f.claims != 2 || !reflect.DeepEqual(before, after) || len(s.Store.Logs(10)) != 0 {
+				t.Fatal("activity depended on or changed billable state", reply, f.chats, f.reports)
 			}
 		})
 	}

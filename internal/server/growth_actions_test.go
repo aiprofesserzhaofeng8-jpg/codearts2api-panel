@@ -26,6 +26,7 @@ type growthActionFixture struct {
 	targets                                    map[string]int64
 	chats, reports, claims, accepts            int
 	ignoreAccept, ignoreProgress, brokenStream bool
+	reportFailure                              bool
 	prerequisite                               bool
 	buddies, owned, agreed, activity           bool
 	ignoreAdoption, ignoreAgreement            bool
@@ -102,14 +103,19 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 		f.reports++
 		var events []map[string]any
 		_ = json.NewDecoder(r.Body).Decode(&events)
-		if len(events) != 1 || events[0]["requestId"] != fmt.Sprintf("real-response-%d", f.chats) {
+		if f.reportFailure {
+			http.Error(w, `{"code":10000,"msg":"report unavailable"}`, 500)
+			return
+		}
+		activity := len(events) == 1 && strings.HasPrefix(fmt.Sprint(events[0]["requestId"]), "wb2api-")
+		if len(events) != 1 || !activity && events[0]["requestId"] != fmt.Sprintf("real-response-%d", f.chats) {
 			http.Error(w, "no real receipt", 400)
 			return
 		}
 		if !f.ignoreProgress {
 			f.activity = true
 			for _, code := range []string{"Model_chat_GLM5.2", "chat_5"} {
-				if f.accepted[code] && f.progress[code] < f.targets[code] {
+				if (!activity || code == "chat_5") && f.accepted[code] && f.progress[code] < f.targets[code] {
 					f.progress[code]++
 				}
 			}
@@ -225,7 +231,7 @@ func TestGrowthActionsOnlyFillConfirmedDeficit(t *testing.T) {
 	w := runGrowthFixture(s, "chat_5")
 	var reply growthReply
 	_ = json.Unmarshal(w.Body.Bytes(), &reply)
-	if w.Code != 200 || reply.State != "claimed" || reply.CompletedCalls != 2 || f.chats != 2 || f.reports != 2 || f.claims != 1 {
+	if w.Code != 200 || reply.State != "claimed" || reply.CompletedCalls != 0 || reply.CompletedReports != 2 || f.chats != 0 || f.reports != 2 || f.claims != 1 {
 		t.Fatal(w.Code, w.Body.String(), f.chats)
 	}
 }
@@ -233,18 +239,18 @@ func TestGrowthActionsPendingAndPartialFailureDoNotReplayAfterRestart(t *testing
 	for _, broken := range []bool{false, true} {
 		t.Run(fmt.Sprint(broken), func(t *testing.T) {
 			f := newGrowthActionFixture()
-			f.accepted["chat_5"] = true
+			f.accepted["Model_chat_GLM5.2"] = true
 			f.ignoreProgress = true
 			f.brokenStream = broken
 			s := growthActionsServer(t, f)
-			w := runGrowthFixture(s, "chat_5")
+			w := runGrowthFixture(s, "Model_chat_GLM5.2")
 			if w.Code != 200 || !strings.Contains(w.Body.String(), `"state":"pending"`) || f.chats != 1 || f.claims != 0 {
 				t.Fatal(w.Code, w.Body.String(), f.chats)
 			}
 			restarted := New(s.Store)
 			restarted.Providers = s.Providers
 			restarted.Reg = s.Reg
-			w = runGrowthFixture(restarted, "chat_5")
+			w = runGrowthFixture(restarted, "Model_chat_GLM5.2")
 			if w.Code != 200 || f.chats != 1 || f.claims != 0 {
 				t.Fatal("uncertain call replayed after restart", w.Code, f.chats)
 			}
@@ -255,10 +261,10 @@ func TestGrowthActionsPendingAndPartialFailureDoNotReplayAfterRestart(t *testing
 			if !broken {
 				f.mu.Lock()
 				f.ignoreProgress = false
-				f.progress["chat_5"] = 1
+				f.progress["Model_chat_GLM5.2"] = 1
 				f.mu.Unlock()
-				w = runGrowthFixture(restarted, "chat_5")
-				if w.Code != 200 || f.chats != 5 || f.claims != 1 {
+				w = runGrowthFixture(restarted, "Model_chat_GLM5.2")
+				if w.Code != 200 || f.chats != 1 || f.claims != 1 {
 					t.Fatal("confirmed progress failed to resume remaining calls", w.Code, w.Body.String(), f.chats)
 				}
 			}
@@ -290,7 +296,7 @@ func TestGrowthActionsPersistenceAndSharedPoolFailuresBeforeBillableCall(t *test
 	for _, kind := range []string{"corrupt", "write_failure", "pool_busy"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newGrowthActionFixture()
-			f.accepted["chat_5"] = true
+			f.accepted["Model_chat_GLM5.2"] = true
 			s := growthActionsServer(t, f)
 			switch kind {
 			case "corrupt":
@@ -309,7 +315,7 @@ func TestGrowthActionsPersistenceAndSharedPoolFailuresBeforeBillableCall(t *test
 				_, release2 := s.Store.AcquireAccountForModel("", "workbuddy/cn/glm-5.2", nil)
 				defer release2()
 			}
-			w := runGrowthFixture(s, "chat_5")
+			w := runGrowthFixture(s, "Model_chat_GLM5.2")
 			if w.Code != 200 || f.chats != 0 || f.reports != 0 || f.claims != 0 || len(s.Store.Logs(10)) != 0 {
 				t.Fatal("precondition failure spent tokens", kind, w.Code, w.Body.String())
 			}
@@ -360,7 +366,7 @@ func TestGrowthActionsMutationGuardsAndEnrollmentIdempotency(t *testing.T) {
 }
 func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 	f := newGrowthActionFixture()
-	f.accepted["chat_5"] = true
+	f.accepted["Model_chat_GLM5.2"] = true
 	f.started = make(chan struct{}, 1)
 	hold := make(chan struct{})
 	f.hold = hold
@@ -369,7 +375,7 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 	defer server.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	req, _ := http.NewRequestWithContext(ctx, "POST", server.URL+"/admin/api/workbuddy/tasks/run", strings.NewReader(`{"id":"wb-cn","task_code":"chat_5"}`))
+	req, _ := http.NewRequestWithContext(ctx, "POST", server.URL+"/admin/api/workbuddy/tasks/run", strings.NewReader(`{"id":"wb-cn","task_code":"Model_chat_GLM5.2"}`))
 	req.Header.Set("X-Admin-Password", "admin-fixture")
 	done := make(chan struct{})
 	go func() {
@@ -404,14 +410,14 @@ func TestGrowthActionsRespectPaidModelSwitchWithoutBlockingEligibleClaims(t *tes
 	f := newGrowthActionFixture()
 	s := growthActionsServer(t, f)
 	s.Store.UpdateSettings(func(settings *store.Settings) { settings.AllowCreditModels = false })
-	if w := runGrowthFixture(s, "chat_5"); w.Code != 403 || f.chats != 0 || f.accepts != 0 {
+	if w := runGrowthFixture(s, "Model_chat_GLM5.2"); w.Code != 403 || f.chats != 0 || f.accepts != 0 {
 		t.Fatal("paid model switch bypassed", w.Code, w.Body.String())
 	}
 	f.mu.Lock()
-	f.accepted["chat_5"] = true
-	f.progress["chat_5"] = 5
+	f.accepted["Model_chat_GLM5.2"] = true
+	f.progress["Model_chat_GLM5.2"] = 1
 	f.mu.Unlock()
-	if w := runGrowthFixture(s, "chat_5"); w.Code != 200 || f.claims != 1 || f.chats != 0 {
+	if w := runGrowthFixture(s, "Model_chat_GLM5.2"); w.Code != 200 || f.claims != 1 || f.chats != 0 {
 		t.Fatal("existing reward incorrectly requires paid calls", w.Code, w.Body.String())
 	}
 }

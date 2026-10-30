@@ -246,9 +246,9 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var claimErr error
-		buddy := reply.Buddy
+		buddy, reports := reply.Buddy, reply.CompletedReports
 		reply, claimErr = s.claimGrowthReward(ctx, a, adapter, raw, reply.Tasks, body.Code)
-		reply.Buddy = buddy
+		reply.Buddy, reply.CompletedReports = buddy, reports
 		if claimErr != nil {
 			reply.State, reply.Message = "pending", claimErr.Error()
 		}
@@ -261,11 +261,11 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if body.Code == "first_buddy" || action.Prerequisite == "first_buddy" && growthTask(tasks, "first_buddy") != nil && !growthTask(tasks, "first_buddy").Claimed {
-		prepared, ready, preparationErr := s.prepareGrowthBuddy(ctx, a, adapter, actions, raw, tasks, body.AgreeBuddy)
+		prepared, ready, preparationErr := s.prepareGrowthBuddy(ctx, a, adapter, raw, tasks, body.AgreeBuddy)
 		reply, preparationCalls = prepared, prepared.CompletedCalls
 		if preparationErr != nil {
 			var rejected *provider.Error
-			if preparationCalls == 0 && errors.As(preparationErr, &rejected) && rejected.Status >= 400 && rejected.Status < 500 {
+			if preparationCalls == 0 && reply.CompletedReports == 0 && errors.As(preparationErr, &rejected) && rejected.Status >= 400 && rejected.Status < 500 {
 				writeErr(w, rejected.Status, rejected.Error(), "invalid_request_error")
 				return
 			}
@@ -289,7 +289,7 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 		}
 		reply.State, reply.Message = "pending", "领养前置已完成，目标任务进度待确认"
 	}
-	if !s.Store.Settings().AllowCreditModels {
+	if action.MaxCalls > 0 && !s.Store.Settings().AllowCreditModels {
 		writeErr(w, 403, "积分模型调用已关闭，未开始真实对话", "invalid_request_error")
 		return
 	}
@@ -313,7 +313,7 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 		reply.Tasks = updated
 		task = growthTask(updated, body.Code)
 		if !enrolledGrowth(task) {
-			reply.Message = "接取尚未由上游确认，未开始付费对话"
+			reply.Message = "接取尚未由上游确认，未开始后续操作"
 			finish()
 			return
 		}
@@ -322,8 +322,23 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if task.Target <= 0 || task.Target-task.Current > action.MaxCalls {
-		writeErr(w, 409, "上游任务目标缺失或超出执行次数上限，未开始付费对话", "invalid_request_error")
+	limit := action.MaxCalls
+	if action.MaxReports > 0 {
+		limit = action.MaxReports
+	}
+	if task.Target <= 0 || task.Target-task.Current > limit {
+		writeErr(w, 409, "上游任务目标缺失或超出本次操作上限，未开始执行", "invalid_request_error")
+		return
+	}
+	if action.MaxReports > 0 {
+		var ready bool
+		reply, ready = s.runGrowthActivity(ctx, adapter, raw, *task, action.MaxReports, reply)
+		if ready {
+			task = growthTask(reply.Tasks, body.Code)
+			claim()
+		} else {
+			finish()
+		}
 		return
 	}
 	modelID := provider.ModelID(provider.WorkBuddy, "cn", action.Model)
