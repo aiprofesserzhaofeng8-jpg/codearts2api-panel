@@ -1,0 +1,317 @@
+{
+  "clients": [
+    {
+      "case": "pi-default",
+      "exit": 0,
+      "seconds": 0.238,
+      "requests": 1
+    },
+    {
+      "case": "codex-default",
+      "exit": 1,
+      "seconds": 0.248,
+      "requests": 1
+    },
+    {
+      "case": "claude-default",
+      "exit": 1,
+      "seconds": 1.477,
+      "requests": 2
+    },
+    {
+      "case": "claude-effort-medium",
+      "exit": 1,
+      "seconds": 1.267,
+      "requests": 2
+    },
+    {
+      "case": "claude-thinking-budget",
+      "exit": 1,
+      "seconds": 1.233,
+      "requests": 2
+    }
+  ],
+  "requests": [
+    {
+      "case": "pi-default",
+      "path": "/v1/chat/completions",
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": null,
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "function"
+      ],
+      "bytes": 1152
+    },
+    {
+      "case": "codex-default",
+      "path": "/v1/responses",
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": null,
+      "reasoning": {
+        "summary": "auto"
+      },
+      "reasoning_effort": null,
+      "max_tokens": null,
+      "max_output_tokens": null,
+      "tool_types": [
+        "function",
+        "function",
+        "function",
+        "function",
+        "namespace",
+        "function",
+        "function",
+        "function"
+      ],
+      "bytes": 40709
+    },
+    {
+      "case": "claude-default",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": {
+        "effort": "high",
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [],
+      "bytes": 4160
+    },
+    {
+      "case": "claude-default",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "high"
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "Read"
+      ],
+      "bytes": 2158
+    },
+    {
+      "case": "claude-effort-medium",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": {
+        "effort": "high",
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [],
+      "bytes": 4160
+    },
+    {
+      "case": "claude-effort-medium",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "Read"
+      ],
+      "bytes": 2160
+    },
+    {
+      "case": "claude-thinking-budget",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": {
+        "effort": "high",
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [],
+      "bytes": 4160
+    },
+    {
+      "case": "claude-thinking-budget",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "high"
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "Read"
+      ],
+      "bytes": 2158
+    }
+  ]
+}

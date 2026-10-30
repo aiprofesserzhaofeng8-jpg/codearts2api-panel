@@ -1,0 +1,1110 @@
+{
+  "started_at": "2026-10-30T08:18:58.647166+00:00",
+  "ended_at": "2026-10-30T08:20:24.799702+00:00",
+  "clients": [
+    {
+      "case": "codearts-pi",
+      "provider": "codearts",
+      "client": "pi",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 3.698,
+      "profile_source": "gateway",
+      "event_count": 40,
+      "request_count": 2
+    },
+    {
+      "case": "codearts-codex",
+      "provider": "codearts",
+      "client": "codex",
+      "status": "FAIL",
+      "exit": 0,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": false,
+      "seconds": 26.729,
+      "profile_source": "gateway",
+      "event_count": 10,
+      "request_count": 6,
+      "classification": "local sandbox blocked; provider response transport succeeded"
+    },
+    {
+      "case": "codearts-claude",
+      "provider": "codearts",
+      "client": "claude",
+      "status": "FAIL",
+      "exit": 1,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": true,
+      "seconds": 1.306,
+      "profile_source": "gateway",
+      "event_count": 3,
+      "request_count": 2
+    },
+    {
+      "case": "workbuddy-pi",
+      "provider": "workbuddy",
+      "client": "pi",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 3.847,
+      "profile_source": "gateway",
+      "event_count": 48,
+      "request_count": 2
+    },
+    {
+      "case": "workbuddy-codex",
+      "provider": "workbuddy",
+      "client": "codex",
+      "status": "FAIL",
+      "exit": 0,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": false,
+      "seconds": 6.116,
+      "profile_source": "gateway",
+      "event_count": 5,
+      "request_count": 3,
+      "classification": "local sandbox blocked; provider response transport succeeded"
+    },
+    {
+      "case": "workbuddy-claude",
+      "provider": "workbuddy",
+      "client": "claude",
+      "status": "FAIL",
+      "exit": 1,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": true,
+      "seconds": 1.299,
+      "profile_source": "gateway",
+      "event_count": 3,
+      "request_count": 2
+    },
+    {
+      "case": "trae-pi",
+      "provider": "trae",
+      "client": "pi",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 3.474,
+      "profile_source": "isolated diagnostic override; production profile missing",
+      "event_count": 43,
+      "request_count": 2
+    },
+    {
+      "case": "trae-codex",
+      "provider": "trae",
+      "client": "codex",
+      "status": "FAIL",
+      "exit": 0,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": false,
+      "seconds": 37.969,
+      "profile_source": "isolated diagnostic override; production profile missing",
+      "event_count": 10,
+      "request_count": 5,
+      "classification": "local sandbox blocked; provider response transport succeeded"
+    },
+    {
+      "case": "trae-claude",
+      "provider": "trae",
+      "client": "claude",
+      "status": "FAIL",
+      "exit": 1,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": true,
+      "seconds": 1.246,
+      "profile_source": "isolated diagnostic override; production profile missing",
+      "event_count": 3,
+      "request_count": 2
+    }
+  ],
+  "requests": [
+    {
+      "index": 1,
+      "case": "codearts-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1182,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1148.646,
+      "first_sse_data_ms": 1148.983,
+      "first_meaningful_ms": 1149.069,
+      "response_bytes": 2825,
+      "duration_ms": 1467.41
+    },
+    {
+      "index": 2,
+      "case": "codearts-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1511,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1768.96,
+      "first_sse_data_ms": 1769.257,
+      "first_meaningful_ms": 1769.324,
+      "response_bytes": 1824,
+      "duration_ms": 1982.073
+    },
+    {
+      "index": 3,
+      "case": "codearts-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 40714,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1430.542,
+      "first_sse_data_ms": 1430.765,
+      "first_meaningful_ms": 1430.93,
+      "response_bytes": 6635,
+      "duration_ms": 4774.104
+    },
+    {
+      "index": 4,
+      "case": "codearts-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 41480,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 1,
+      "status": 200,
+      "headers_ms": 1652.593,
+      "first_sse_data_ms": 1652.849,
+      "first_meaningful_ms": 1653.134,
+      "response_bytes": 27721,
+      "duration_ms": 5390.352
+    },
+    {
+      "index": 5,
+      "case": "codearts-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 43272,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 2,
+      "status": 200,
+      "headers_ms": 5080.067,
+      "first_sse_data_ms": 5080.311,
+      "first_meaningful_ms": 5080.672,
+      "response_bytes": 20467,
+      "duration_ms": 5913.245
+    },
+    {
+      "index": 6,
+      "case": "codearts-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 44757,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 3,
+      "status": 200,
+      "headers_ms": 1354.721,
+      "first_sse_data_ms": 1354.835,
+      "first_meaningful_ms": 1354.944,
+      "response_bytes": 11996,
+      "duration_ms": 2264.604
+    },
+    {
+      "index": 7,
+      "case": "codearts-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 45891,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 4,
+      "status": 200,
+      "headers_ms": 1642.946,
+      "first_sse_data_ms": 1643.206,
+      "first_meaningful_ms": 1643.528,
+      "response_bytes": 11638,
+      "duration_ms": 2639.416
+    },
+    {
+      "index": 8,
+      "case": "codearts-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 47014,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 5,
+      "status": 200,
+      "headers_ms": 2640.8,
+      "first_sse_data_ms": 2641.032,
+      "first_meaningful_ms": 2641.323,
+      "response_bytes": 47143,
+      "duration_ms": 4648.66
+    },
+    {
+      "index": 9,
+      "case": "codearts-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4169,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "effort": "high",
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 400,
+      "headers_ms": 0.698,
+      "error": {
+        "message": "当前网关暂不支持 Messages output_config.effort 映射，请省略该参数",
+        "type": "invalid_request_error"
+      },
+      "response_bytes": 153,
+      "duration_ms": 0.926
+    },
+    {
+      "index": 10,
+      "case": "codearts-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2167,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "thinking": {
+          "type": "adaptive"
+        },
+        "output_config": {
+          "effort": "high"
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 400,
+      "headers_ms": 0.563,
+      "error": {
+        "message": "当前网关暂不支持 Messages output_config.effort 映射，请省略该参数",
+        "type": "invalid_request_error"
+      },
+      "response_bytes": 153,
+      "duration_ms": 0.745
+    },
+    {
+      "index": 11,
+      "case": "workbuddy-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1196,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1596.197,
+      "first_sse_data_ms": 1596.437,
+      "first_meaningful_ms": 1596.696,
+      "response_bytes": 5236,
+      "duration_ms": 1686.526
+    },
+    {
+      "index": 12,
+      "case": "workbuddy-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1478,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1522.367,
+      "first_sse_data_ms": 1522.624,
+      "first_meaningful_ms": 1522.814,
+      "response_bytes": 6013,
+      "duration_ms": 1904.078
+    },
+    {
+      "index": 13,
+      "case": "workbuddy-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 40742,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1481.466,
+      "first_sse_data_ms": 1481.714,
+      "first_meaningful_ms": 1481.872,
+      "response_bytes": 6561,
+      "duration_ms": 1774.68
+    },
+    {
+      "index": 14,
+      "case": "workbuddy-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 41271,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 1,
+      "status": 200,
+      "headers_ms": 1497.776,
+      "first_sse_data_ms": 1498.051,
+      "first_meaningful_ms": 1498.207,
+      "response_bytes": 17960,
+      "duration_ms": 1902.524
+    },
+    {
+      "index": 15,
+      "case": "workbuddy-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 41921,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 2,
+      "status": 200,
+      "headers_ms": 1290.188,
+      "first_sse_data_ms": 1290.467,
+      "first_meaningful_ms": 1290.8,
+      "response_bytes": 15802,
+      "duration_ms": 1750.744
+    },
+    {
+      "index": 16,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4182,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "effort": "high",
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 400,
+      "headers_ms": 0.7,
+      "error": {
+        "message": "当前网关暂不支持 Messages output_config.effort 映射，请省略该参数",
+        "type": "invalid_request_error"
+      },
+      "response_bytes": 153,
+      "duration_ms": 1.017
+    },
+    {
+      "index": 17,
+      "case": "workbuddy-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2180,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "thinking": {
+          "type": "adaptive"
+        },
+        "output_config": {
+          "effort": "high"
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 400,
+      "headers_ms": 0.423,
+      "error": {
+        "message": "当前网关暂不支持 Messages output_config.effort 映射，请省略该参数",
+        "type": "invalid_request_error"
+      },
+      "response_bytes": 153,
+      "duration_ms": 0.65
+    },
+    {
+      "index": 18,
+      "case": "trae-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1186,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1318.067,
+      "first_sse_data_ms": 1318.303,
+      "first_meaningful_ms": 1318.367,
+      "response_bytes": 2324,
+      "duration_ms": 1803.281
+    },
+    {
+      "index": 19,
+      "case": "trae-pi",
+      "path": "/v1/chat/completions",
+      "method": "POST",
+      "bytes": 1517,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "stream",
+        "stream_options",
+        "max_tokens",
+        "tools"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 990.082,
+      "first_sse_data_ms": 990.297,
+      "first_meaningful_ms": 990.348,
+      "response_bytes": 4241,
+      "duration_ms": 1422.411
+    },
+    {
+      "index": 20,
+      "case": "trae-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 40722,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 2068.077,
+      "first_sse_data_ms": 2068.316,
+      "first_meaningful_ms": 2068.614,
+      "response_bytes": 11382,
+      "duration_ms": 4595.568
+    },
+    {
+      "index": 21,
+      "case": "trae-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 41815,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 1,
+      "status": 200,
+      "headers_ms": 1288.301,
+      "first_sse_data_ms": 1288.549,
+      "first_meaningful_ms": 1288.835,
+      "response_bytes": 23120,
+      "duration_ms": 5828.98
+    },
+    {
+      "index": 22,
+      "case": "trae-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 43366,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 2,
+      "status": 200,
+      "headers_ms": 1080.229,
+      "first_sse_data_ms": 1080.497,
+      "first_meaningful_ms": 1080.841,
+      "response_bytes": 17408,
+      "duration_ms": 4617.646
+    },
+    {
+      "index": 23,
+      "case": "trae-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 44742,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 3,
+      "status": 200,
+      "headers_ms": 1718.917,
+      "first_sse_data_ms": 1719.131,
+      "first_meaningful_ms": 1719.372,
+      "response_bytes": 55827,
+      "duration_ms": 10710.891
+    },
+    {
+      "index": 24,
+      "case": "trae-codex",
+      "path": "/v1/responses",
+      "method": "POST",
+      "bytes": 47362,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "reasoning": {
+          "summary": "auto"
+        },
+        "store": false,
+        "parallel_tool_calls": true
+      },
+      "keys": [
+        "model",
+        "stream",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "include",
+        "prompt_cache_key",
+        "client_metadata"
+      ],
+      "tool_count": 8,
+      "tool_result_count": 4,
+      "status": 200,
+      "headers_ms": 1150.96,
+      "first_sse_data_ms": 1151.075,
+      "first_meaningful_ms": 1151.181,
+      "response_bytes": 66658,
+      "duration_ms": 11375.874
+    },
+    {
+      "index": 25,
+      "case": "trae-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4177,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "effort": "high",
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 400,
+      "headers_ms": 0.78,
+      "error": {
+        "message": "当前网关暂不支持 Messages output_config.effort 映射，请省略该参数",
+        "type": "invalid_request_error"
+      },
+      "response_bytes": 153,
+      "duration_ms": 1.103
+    },
+    {
+      "index": 26,
+      "case": "trae-claude",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2175,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "thinking": {
+          "type": "adaptive"
+        },
+        "output_config": {
+          "effort": "high"
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 400,
+      "headers_ms": 0.416,
+      "error": {
+        "message": "当前网关暂不支持 Messages output_config.effort 映射，请省略该参数",
+        "type": "invalid_request_error"
+      },
+      "response_bytes": 153,
+      "duration_ms": 0.633
+    }
+  ],
+  "cleanup": {
+    "key_removed": true,
+    "health": 200,
+    "inflight": 0,
+    "account_count_before": 12,
+    "account_count_after": 12,
+    "settings_unchanged": true
+  }
+}

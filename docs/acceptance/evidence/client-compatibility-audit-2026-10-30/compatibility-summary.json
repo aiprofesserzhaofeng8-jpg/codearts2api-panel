@@ -1,0 +1,528 @@
+{
+  "started_at": "2026-10-30T08:23:02.758424+00:00",
+  "ended_at": "2026-10-30T08:24:55.573235+00:00",
+  "clients": [
+    {
+      "case": "codearts-claude-compatible-v2",
+      "provider": "codearts",
+      "client": "claude",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 5.561,
+      "profile_source": "gateway",
+      "event_count": 40,
+      "request_count": 3
+    },
+    {
+      "case": "workbuddy-claude-compatible-v2",
+      "provider": "workbuddy",
+      "client": "claude",
+      "status": "FAIL",
+      "exit": 143,
+      "actual_tool_execution": false,
+      "marker_in_final": false,
+      "strict_marker": false,
+      "error_event": false,
+      "seconds": 101.991,
+      "profile_source": "gateway",
+      "event_count": 8,
+      "request_count": 8,
+      "classification": "upstream connection failures and HTTP 500; client stopped by diagnosis after retries"
+    },
+    {
+      "case": "trae-claude-compatible-v2",
+      "provider": "trae",
+      "client": "claude",
+      "status": "PASS",
+      "exit": 0,
+      "actual_tool_execution": true,
+      "marker_in_final": true,
+      "strict_marker": true,
+      "error_event": false,
+      "seconds": 4.841,
+      "profile_source": "isolated diagnostic override; production profile missing",
+      "event_count": 25,
+      "request_count": 3
+    }
+  ],
+  "requests": [
+    {
+      "index": 1,
+      "case": "codearts-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4153,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 858.91,
+      "first_sse_data_ms": 859.334,
+      "first_meaningful_ms": 859.764,
+      "response_bytes": 4266,
+      "duration_ms": 1370.242
+    },
+    {
+      "index": 2,
+      "case": "codearts-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2021,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1939.739,
+      "first_sse_data_ms": 1939.86,
+      "first_meaningful_ms": 1939.949,
+      "response_bytes": 5924,
+      "duration_ms": 2915.246
+    },
+    {
+      "index": 3,
+      "case": "codearts-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2762,
+      "params": {
+        "model": "deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1180.227,
+      "first_sse_data_ms": 1180.508,
+      "first_meaningful_ms": 1180.85,
+      "response_bytes": 1064,
+      "duration_ms": 1336.58
+    },
+    {
+      "index": 4,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4166,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 502,
+      "headers_ms": 30128.373,
+      "error": {
+        "message": "WorkBuddy 连接失败：*url.Error",
+        "type": "overloaded_error"
+      },
+      "response_bytes": 101,
+      "duration_ms": 30128.69
+    },
+    {
+      "index": 5,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 502,
+      "headers_ms": 30114.799,
+      "error": {
+        "message": "WorkBuddy 连接失败：*url.Error",
+        "type": "overloaded_error"
+      },
+      "response_bytes": 101,
+      "duration_ms": 30115.18
+    },
+    {
+      "index": 6,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 502,
+      "headers_ms": 1965.378,
+      "error": {
+        "message": "WorkBuddy 上游拒绝请求（HTTP 500，业务码 10000）",
+        "type": "overloaded_error"
+      },
+      "response_bytes": 126,
+      "duration_ms": 1965.959
+    },
+    {
+      "index": 7,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 503,
+      "headers_ms": 1.539,
+      "error": {
+        "message": "没有可用账号，请先在控制台「导入本机桌面端」或在 CodeArts Agent 里登录",
+        "type": "overloaded_error"
+      },
+      "response_bytes": 163,
+      "duration_ms": 2.185
+    },
+    {
+      "index": 8,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 503,
+      "headers_ms": 1.198,
+      "error": {
+        "message": "没有可用账号，请先在控制台「导入本机桌面端」或在 CodeArts Agent 里登录",
+        "type": "overloaded_error"
+      },
+      "response_bytes": 163,
+      "duration_ms": 1.645
+    },
+    {
+      "index": 9,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 503,
+      "headers_ms": 0.671,
+      "error": {
+        "message": "没有可用账号，请先在控制台「导入本机桌面端」或在 CodeArts Agent 里登录",
+        "type": "overloaded_error"
+      },
+      "response_bytes": 163,
+      "duration_ms": 0.946
+    },
+    {
+      "index": 10,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 429,
+      "blocked_by_diagnostic": true,
+      "duration_ms": 0.258
+    },
+    {
+      "index": 11,
+      "case": "workbuddy-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2034,
+      "params": {
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 429,
+      "blocked_by_diagnostic": true,
+      "duration_ms": 0.288
+    },
+    {
+      "index": 12,
+      "case": "trae-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 4161,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "output_config": {
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "tool_count": 0,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1299.073,
+      "first_sse_data_ms": 1299.382,
+      "first_meaningful_ms": 1299.774,
+      "response_bytes": 2841,
+      "duration_ms": 1829.287
+    },
+    {
+      "index": 13,
+      "case": "trae-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2029,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1224.245,
+      "first_sse_data_ms": 1224.546,
+      "first_meaningful_ms": 1224.812,
+      "response_bytes": 1048,
+      "duration_ms": 1525.457
+    },
+    {
+      "index": 14,
+      "case": "trae-claude-compatible-v2",
+      "path": "/v1/messages?beta=true",
+      "method": "POST",
+      "bytes": 2352,
+      "params": {
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "stream": true,
+        "max_tokens": 1024
+      },
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "tool_count": 1,
+      "tool_result_count": 0,
+      "status": 200,
+      "headers_ms": 1193.568,
+      "first_sse_data_ms": 1193.939,
+      "first_meaningful_ms": 1194.233,
+      "response_bytes": 3877,
+      "duration_ms": 2056.132
+    }
+  ],
+  "cleanup": {
+    "key_removed": true,
+    "health": 200,
+    "inflight": 0,
+    "account_count_before": 12,
+    "account_count_after": 12,
+    "settings_unchanged": true
+  }
+}

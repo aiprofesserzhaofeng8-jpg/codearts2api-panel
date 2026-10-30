@@ -1,0 +1,14 @@
+{
+  "bwrap_system": {
+    "returncode": 1,
+    "stderr": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+  },
+  "unshare_user": {
+    "returncode": 1,
+    "stderr": "unshare: write failed /proc/self/uid_map: Operation not permitted"
+  },
+  "unshare_user_network": {
+    "returncode": 1,
+    "stderr": "unshare: write failed /proc/self/uid_map: Operation not permitted"
+  }
+}

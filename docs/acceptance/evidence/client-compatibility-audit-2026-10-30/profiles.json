@@ -1,0 +1,80 @@
+{
+  "codearts": {
+    "status": 200,
+    "profile": {
+      "compaction": {
+        "keep_recent_tokens": 12000,
+        "reserve_tokens": 16384,
+        "trigger_tokens": 45000
+      },
+      "context_basis": "保守推荐；已验证 65918 输入 Token，未验证上游最大上下文",
+      "context_window": 65536,
+      "max_output_tokens": 8192,
+      "model": "deepseek-v4.1-flash",
+      "pi_summary_adapter": true,
+      "protocols": [
+        "chat_completions",
+        "responses",
+        "anthropic_messages"
+      ],
+      "responses_compact": false,
+      "responses_native": false,
+      "responses_store": false,
+      "responses_websocket": false,
+      "summary": {
+        "bounded_retry": true,
+        "buffer_until_complete": true,
+        "enabled": true,
+        "fallback_model": "",
+        "max_attempts": 2,
+        "max_tokens": 8192
+      },
+      "upstream_protocol": "chat_completions",
+      "version": 1
+    }
+  },
+  "workbuddy": {
+    "status": 200,
+    "profile": {
+      "compaction": {
+        "keep_recent_tokens": 12000,
+        "reserve_tokens": 16384,
+        "trigger_tokens": 45000
+      },
+      "context_basis": "基于上游目录的保守建议；此上游未启用服务端摘要适配",
+      "context_window": 1000000,
+      "max_output_tokens": 8192,
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "pi_summary_adapter": false,
+      "protocols": [
+        "chat_completions",
+        "responses",
+        "anthropic_messages"
+      ],
+      "responses_compact": false,
+      "responses_native": false,
+      "responses_store": false,
+      "responses_websocket": false,
+      "summary": {
+        "bounded_retry": false,
+        "buffer_until_complete": true,
+        "enabled": false,
+        "fallback_model": "",
+        "max_attempts": 1,
+        "max_tokens": 8192
+      },
+      "upstream_protocol": "chat_completions",
+      "version": 1
+    }
+  },
+  "trae": {
+    "status": 422,
+    "profile": {
+      "error": {
+        "code": 422,
+        "message": "该模型暂无客户端推荐参数，请在模型页配置并验证",
+        "type": "invalid_request_error"
+      }
+    }
+  }
+}

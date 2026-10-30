@@ -1,0 +1,223 @@
+{
+  "clients": [
+    {
+      "case": "claude-omit-effort",
+      "exit": 1,
+      "seconds": 1.222,
+      "requests": 2
+    },
+    {
+      "case": "claude-thinking-off",
+      "exit": 1,
+      "seconds": 1.235,
+      "requests": 2
+    },
+    {
+      "case": "claude-no-capabilities",
+      "exit": 1,
+      "seconds": 1.214,
+      "requests": 2
+    }
+  ],
+  "requests": [
+    {
+      "case": "claude-omit-effort",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [],
+      "bytes": 4144
+    },
+    {
+      "case": "claude-omit-effort",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "thinking",
+        "context_management",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": null,
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "Read"
+      ],
+      "bytes": 2124
+    },
+    {
+      "case": "claude-thinking-off",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": null,
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "Read"
+      ],
+      "bytes": 2012
+    },
+    {
+      "case": "claude-thinking-off",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [],
+      "bytes": 4144
+    },
+    {
+      "case": "claude-no-capabilities",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": null,
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [
+        "Read"
+      ],
+      "bytes": 2012
+    },
+    {
+      "case": "claude-no-capabilities",
+      "path": "/v1/messages?beta=true",
+      "keys": [
+        "model",
+        "messages",
+        "system",
+        "tools",
+        "metadata",
+        "max_tokens",
+        "output_config",
+        "stream"
+      ],
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "thinking": null,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "reasoning": null,
+      "reasoning_effort": null,
+      "max_tokens": 8192,
+      "max_output_tokens": null,
+      "tool_types": [],
+      "bytes": 4144
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "model_requests": 0,
+  "checks": {
+    "read_allowed": false
+  },
+  "passed": false,
+  "diagnostic": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted\n"
+}

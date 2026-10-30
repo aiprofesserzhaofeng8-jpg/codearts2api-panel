@@ -1,0 +1,675 @@
+{
+  "entries": [
+    {
+      "provider": "codearts",
+      "request_id": "f96bbfd57995c94690ca8fd3",
+      "protocol": "chat",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1466,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 487,
+        "output_tokens": 59,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "0b852379a4cd06b0caaa52b4",
+      "protocol": "chat",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1981,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 571,
+        "output_tokens": 20,
+        "cached_tokens": 0,
+        "reasoning_tokens": 6
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "1bbb035f04ee5d875033aa1f",
+      "protocol": "responses",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 4772,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 8788,
+        "output_tokens": 218,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "36200df837e4ef308aa76b91",
+      "protocol": "responses",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 5389,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9070,
+        "output_tokens": 408,
+        "cached_tokens": 8704,
+        "reasoning_tokens": 190
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "8ca2c8c3823e537480defaec",
+      "protocol": "responses",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 5911,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9543,
+        "output_tokens": 342,
+        "cached_tokens": 8192,
+        "reasoning_tokens": 123
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "92cfcc2cb949616f0dac2078",
+      "protocol": "responses",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 2263,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9950,
+        "output_tokens": 260,
+        "cached_tokens": 9216,
+        "reasoning_tokens": 43
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "e5ef4bb8b54fb642afbbd003",
+      "protocol": "responses",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 2638,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 10276,
+        "output_tokens": 272,
+        "cached_tokens": 0,
+        "reasoning_tokens": 55
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "e6c62ebd6d4fa0923b1a39ef",
+      "protocol": "responses",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 4647,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 10612,
+        "output_tokens": 496,
+        "cached_tokens": 9728,
+        "reasoning_tokens": 456
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "5ec5f31234b24a088285670b",
+      "protocol": "chat",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1685,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 911,
+        "output_tokens": 38,
+        "cached_tokens": 512,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "7cfad5d17ca4fbb5870d4d40",
+      "protocol": "chat",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1903,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 976,
+        "output_tokens": 14,
+        "cached_tokens": 768,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "5530f0bb1f138a21a8906765",
+      "protocol": "responses",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1773,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 5055,
+        "output_tokens": 59,
+        "cached_tokens": 512,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "f57e893ebdf5d361840e0499",
+      "protocol": "responses",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1901,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 5181,
+        "output_tokens": 119,
+        "cached_tokens": 4992,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "3b0b2a34319fcacaf305deb2",
+      "protocol": "responses",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1749,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 5333,
+        "output_tokens": 66,
+        "cached_tokens": 5120,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "3551aa0caa5aac1bb0ee628e",
+      "protocol": "chat",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1802,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 487,
+        "output_tokens": 58,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "918c21dad9b219ecfae4b007",
+      "protocol": "chat",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1421,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 572,
+        "output_tokens": 40,
+        "cached_tokens": 0,
+        "reasoning_tokens": 25
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "1ea99c79cec30c8241686108",
+      "protocol": "responses",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 4594,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 8788,
+        "output_tokens": 257,
+        "cached_tokens": 0,
+        "reasoning_tokens": 40
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "07c04d527f86610fc067f699",
+      "protocol": "responses",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 5827,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9070,
+        "output_tokens": 373,
+        "cached_tokens": 0,
+        "reasoning_tokens": 154
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "c7e6382a4dcbeed41ae3c010",
+      "protocol": "responses",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 4616,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9354,
+        "output_tokens": 321,
+        "cached_tokens": 0,
+        "reasoning_tokens": 104
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "d2ad9bb1119a081a8178555f",
+      "protocol": "responses",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 10709,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9638,
+        "output_tokens": 526,
+        "cached_tokens": 0,
+        "reasoning_tokens": 467
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "2fe8e68cbff76ca60199b264",
+      "protocol": "responses",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 11374,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 9721,
+        "output_tokens": 574,
+        "cached_tokens": 0,
+        "reasoning_tokens": 540
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "68d5628de2279dd3b1cc0153",
+      "protocol": "messages",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1905,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 616,
+        "output_tokens": 46,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "5f7089b16d9d3ff284b26a50",
+      "protocol": "messages",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 3025,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 774,
+        "output_tokens": 288,
+        "cached_tokens": 512,
+        "reasoning_tokens": 278
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "2b493a915e22e7e1a0ed2797",
+      "protocol": "messages",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1394,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 691,
+        "output_tokens": 15,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "893140e107919389371c1101",
+      "protocol": "messages",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1369,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 774,
+        "output_tokens": 78,
+        "cached_tokens": 512,
+        "reasoning_tokens": 68
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "e3dd18e94a0209c487412ec8",
+      "protocol": "messages",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 2914,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 616,
+        "output_tokens": 129,
+        "cached_tokens": 512,
+        "reasoning_tokens": 89
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "codearts",
+      "request_id": "6b5ed08fa3cd6830b2562987",
+      "protocol": "messages",
+      "model": "deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1335,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 687,
+        "output_tokens": 16,
+        "cached_tokens": 512,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "448d2463234b6ef38606fa6a",
+      "protocol": "messages",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 502,
+      "latency_ms": 30114,
+      "attempts": 1,
+      "usage": {
+        "known": false,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "usage_incomplete": true,
+      "err": "WorkBuddy 连接失败：*url.Error"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "1db9872f03cd58b0c925a9eb",
+      "protocol": "messages",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 502,
+      "latency_ms": 30127,
+      "attempts": 1,
+      "usage": {
+        "known": false,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "usage_incomplete": true,
+      "err": "WorkBuddy 连接失败：*url.Error"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "e0398b9a767670d18f74594f",
+      "protocol": "messages",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 502,
+      "latency_ms": 1964,
+      "attempts": 1,
+      "usage": {
+        "known": false,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "usage_incomplete": true,
+      "err": "WorkBuddy 上游拒绝请求（HTTP 500，业务码 10000）"
+    },
+    {
+      "request_id": "78714266748debc58f149db1",
+      "protocol": "messages",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 503,
+      "latency_ms": 0,
+      "usage": {
+        "known": false,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "err": "没有可用账号，请先在控制台「导入本机桌面端」或在 CodeArts Agent 里登录"
+    },
+    {
+      "request_id": "a356ff34537a1d2513d53fb9",
+      "protocol": "messages",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 503,
+      "latency_ms": 0,
+      "usage": {
+        "known": false,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "err": "没有可用账号，请先在控制台「导入本机桌面端」或在 CodeArts Agent 里登录"
+    },
+    {
+      "request_id": "a1329f760fba08269f1d2083",
+      "protocol": "messages",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 503,
+      "latency_ms": 0,
+      "usage": {
+        "known": false,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "err": "没有可用账号，请先在控制台「导入本机桌面端」或在 CodeArts Agent 里登录"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "34d0922c8c97ef29d73648cd",
+      "protocol": "messages",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1524,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 616,
+        "output_tokens": 40,
+        "cached_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "tool_calls"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "50b717fc9d481abcd4ca7f2f",
+      "protocol": "messages",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 1827,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 774,
+        "output_tokens": 34,
+        "cached_tokens": 0,
+        "reasoning_tokens": 24
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "trae",
+      "scope": "cn",
+      "request_id": "39d56b2f2f899c5e34a048db",
+      "protocol": "messages",
+      "model": "trae/cn/deepseek-v4.1-flash",
+      "stream": true,
+      "status": 200,
+      "latency_ms": 2055,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 685,
+        "output_tokens": 55,
+        "cached_tokens": 0,
+        "reasoning_tokens": 42
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "provider": "workbuddy",
+      "scope": "cn",
+      "request_id": "f2fedfd909a338afe5eeac19",
+      "protocol": "chat",
+      "model": "workbuddy/cn/deepseek-v4.1-flash",
+      "stream": false,
+      "status": 200,
+      "latency_ms": 31680,
+      "attempts": 1,
+      "usage": {
+        "known": true,
+        "input_tokens": 504,
+        "output_tokens": 4,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "count": 36,
+  "status_counts": {
+    "200": 30,
+    "502": 3,
+    "503": 3
+  },
+  "total_attempts": 33
+}
