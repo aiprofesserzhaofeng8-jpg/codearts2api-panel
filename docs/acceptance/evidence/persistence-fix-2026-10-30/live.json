@@ -1,0 +1,135 @@
+{
+  "passed": true,
+  "real_requests": 3,
+  "results": [
+    {
+      "provider": "codearts",
+      "model": "deepseek-v4.1-flash",
+      "stream": false,
+      "status": 200,
+      "duration_sec": 0.995,
+      "request_id": "44aaf04c989a06483119718d",
+      "client_usage": {
+        "prompt_tokens": 33,
+        "completion_tokens": 8,
+        "total_tokens": 41,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9
+        }
+      },
+      "stored_usage": {
+        "known": true,
+        "input_tokens": 33,
+        "output_tokens": 8,
+        "cached_tokens": 0,
+        "reasoning_tokens": 8
+      },
+      "attempts": 1,
+      "estimated_cost": {
+        "currency": "USD",
+        "amount": 1.95e-05,
+        "price": {
+          "currency": "USD",
+          "input": 0.3,
+          "output": 1.2,
+          "cached": 0.006,
+          "source": "DeepSeek \u5b98\u65b9\u7f8e\u5143\u9ad8\u5cf0\u53c2\u8003\u4ef7\uff08\u56fa\u5b9a\uff0c\u4e0d\u81ea\u52a8\u5207\u6362\u65f6\u6bb5\uff09 https://api-docs.deepseek.com/quick_start/pricing/",
+          "updated_at": "2026-10-26"
+        }
+      },
+      "found_in_snapshot": false,
+      "found_in_journal": true
+    },
+    {
+      "provider": "workbuddy",
+      "model": "workbuddy/cn/deepseek-v4-flash",
+      "stream": true,
+      "status": 200,
+      "duration_sec": 1.278,
+      "request_id": "aa9ba0ddefabaebbcb9581c0",
+      "client_usage": {
+        "prompt_tokens": 499,
+        "completion_tokens": 2,
+        "total_tokens": 501,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0,
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 243,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "prompt_cache_write_tokens": 0,
+        "completion_thinking_tokens": 0,
+        "credit": 0.01,
+        "cached_tokens": 0
+      },
+      "stored_usage": {
+        "known": true,
+        "input_tokens": 499,
+        "output_tokens": 2,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1,
+      "estimated_cost": null,
+      "found_in_snapshot": false,
+      "found_in_journal": true
+    },
+    {
+      "provider": "trae",
+      "model": "trae/cn/DeepSeek-V4-Flash",
+      "stream": false,
+      "status": 200,
+      "duration_sec": 1.681,
+      "request_id": "fa7b09a3b03b13fe61813203",
+      "client_usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_creation_input_tokens_total": 0,
+        "cache_read_input_tokens": 0,
+        "cache_read_input_tokens_total": 0,
+        "cluster": "normal_context",
+        "completion_tokens": 56,
+        "completion_tokens_details": {
+          "reasoning_tokens": 52
+        },
+        "completion_tokens_total": 0,
+        "name": "",
+        "prompt_tokens": 7,
+        "prompt_tokens_total": 0,
+        "reasoning_tokens": 52,
+        "reasoning_tokens_total": 0,
+        "total_tokens": 63,
+        "total_tokens_total": 0
+      },
+      "stored_usage": {
+        "known": true,
+        "input_tokens": 7,
+        "output_tokens": 56,
+        "cached_tokens": 0,
+        "reasoning_tokens": 52
+      },
+      "attempts": 1,
+      "estimated_cost": null,
+      "found_in_snapshot": false,
+      "found_in_journal": true
+    }
+  ],
+  "budget_usage": {
+    "unpriced": true,
+    "requests": 3,
+    "tokens": 605,
+    "usd": 1.95e-05,
+    "incomplete": false
+  }
+}

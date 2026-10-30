@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: codearts2api/internal/store
+cpu: 13th Gen Intel(R) Core(TM) i5-13400F
+BenchmarkUsageSettlement/history_0         	    1000	       568.6 ns/op	      2014 p95-ns	      3913 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_0         	    1000	       526.6 ns/op	      1976 p95-ns	      3729 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_0         	    1000	       516.8 ns/op	      1932 p95-ns	      3231 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_0         	    1000	       541.1 ns/op	      1901 p95-ns	      4004 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_0         	    1000	       507.3 ns/op	      1848 p95-ns	      2977 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_10000     	    1000	       556.8 ns/op	      1281 p95-ns	      4254 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_10000     	    1000	       574.0 ns/op	      1367 p95-ns	      4351 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_10000     	    1000	       442.5 ns/op	      1125 p95-ns	      2373 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_10000     	    1000	       418.4 ns/op	      1034 p95-ns	      2650 p99-ns	    1031 B/op	       1 allocs/op
+BenchmarkUsageSettlement/history_10000     	    1000	       265.2 ns/op	       145.0 p95-ns	      2478 p99-ns	    1031 B/op	       1 allocs/op
+PASS
+ok  	codearts2api/internal/store	0.331s

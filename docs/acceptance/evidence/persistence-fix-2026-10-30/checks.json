@@ -1,0 +1,8 @@
+{
+  "full_race_passed": true,
+  "vet_passed": true,
+  "linux_build_passed": true,
+  "windows_cross_build_passed": true,
+  "core_commit": "2cef204",
+  "binary_sha256": "865590c35a21712ab8ff5765484adc42270291a1a190aa409de2d99aab435217"
+}

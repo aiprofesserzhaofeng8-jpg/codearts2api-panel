@@ -1,0 +1,8 @@
+{
+  "http_status": 200,
+  "accounts": 12,
+  "models": 81,
+  "ready": 12,
+  "service": "codearts2api-panel",
+  "status": "ok"
+}

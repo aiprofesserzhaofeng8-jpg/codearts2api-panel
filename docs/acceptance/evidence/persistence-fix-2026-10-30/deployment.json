@@ -1,0 +1,13 @@
+{
+  "pid": 3766940,
+  "binary_sha256": "865590c35a21712ab8ff5765484adc42270291a1a190aa409de2d99aab435217",
+  "state_version": 5,
+  "history_preserved": true,
+  "health": {
+    "accounts": 12,
+    "models": 8,
+    "ready": 12,
+    "service": "codearts2api-panel",
+    "status": "ok"
+  }
+}
