@@ -1122,6 +1122,13 @@ code{
 .modal::backdrop{background:rgba(6,8,18,.62);backdrop-filter:blur(3px)}
 .modal-small{width:min(440px,calc(100vw - 32px))}
 .growth-modal{width:min(820px,calc(100vw - 32px))}
+.growth-modal[open]{display:flex;flex-direction:column;overflow:hidden}
+#growthDialog>.modal-head,#growthDialog>.growth-footer{flex-shrink:0}
+#growthDialog>.modal-body{overflow-y:auto;min-height:0}
+#growthDialog>.growth-footer{border-top:1px solid var(--line)}
+#growthDialog .growth-footer>p{margin:12px 22px 0;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+#growthDialog .growth-footer>p:empty{display:none}
+#growthDialog .growth-footer>.modal-actions{position:static;border-top:0}
 #growthDialog .growth-account+.growth-account{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
 #growthDialog .growth-account-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px;overflow-wrap:anywhere}
 #growthDialog .growth-account-error{font-size:12px;overflow-wrap:anywhere}
@@ -1135,7 +1142,7 @@ code{
 #growthDialog .growth-task-reward{color:var(--accent-text)}
 #growthDialog .growth-task>.btn{flex-shrink:0}
 #growthDialog .growth-task-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0;align-items:flex-end}
-@media(max-width:600px){#growthDialog .growth-task{align-items:flex-start;gap:12px}#growthDialog .growth-task-meta{gap:6px}}
+@media(max-width:600px){#growthDialog .growth-task{align-items:flex-start;gap:12px}#growthDialog .growth-task-meta{gap:6px}#growthDialog .growth-footer>p{margin:10px 16px 0}}
 .key-create-modal{width:min(500px,calc(100vw - 32px))}
 .key-create-fields{display:flex;flex-direction:column;gap:22px}
 .key-create-fields .field{gap:9px}

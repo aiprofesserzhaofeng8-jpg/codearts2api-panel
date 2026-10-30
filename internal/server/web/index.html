@@ -82,10 +82,13 @@
   <div class="modal-body">
     <div class="field hidden" id="growthAccountPicker"><label for="growthAccountSelect">账号</label><select id="growthAccountSelect" aria-label="选择成长任务账号"></select></div>
     <p id="growthSummary" class="hint" role="status" aria-live="polite"></p>
-    <p id="growthError" class="err-text" role="alert"></p>
     <div id="growthTaskList" aria-busy="false"></div>
   </div>
-  <div class="modal-actions"><button class="btn" id="growthRefresh" type="button">刷新进度</button><button class="btn" id="growthAcceptAll" type="button" disabled>接取未报名任务</button><button class="btn" id="growthRunAll" type="button" disabled>完成可执行任务</button><button class="btn primary" id="growthClaimAll" type="button" disabled>领取可领奖励</button></div>
+  <div class="growth-footer">
+    <p id="growthNotice" class="hint" role="status" aria-live="polite"></p>
+    <p id="growthError" class="err-text" role="alert"></p>
+    <div class="modal-actions"><button class="btn" id="growthRefresh" type="button">刷新进度</button><button class="btn" id="growthAcceptAll" type="button" disabled>接取未报名任务</button><button class="btn" id="growthRunAll" type="button" disabled>执行对话任务</button><button class="btn primary" id="growthClaimAll" type="button" disabled>领取可领奖励</button></div>
+  </div>
 </dialog>
 <dialog id="addAccountDialog" class="modal account-create-modal" aria-labelledby="addAccountTitle">
   <div class="modal-head"><h2 id="addAccountTitle">添加账号</h2><button class="btn ghost" id="addAccountClose" aria-label="关闭添加账号窗口">关闭</button></div>
