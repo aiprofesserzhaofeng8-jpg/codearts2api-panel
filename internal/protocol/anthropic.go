@@ -323,9 +323,9 @@ func FromOpenAI(raw []byte, model string) Reply {
 			content = append(content, map[string]any{"type": "text", "text": text})
 		}
 		for _, tc := range ch.Message.ToolCalls {
-			var input any = map[string]any{}
-			if tc.Function.Arguments != "" {
-				_ = json.Unmarshal([]byte(tc.Function.Arguments), &input)
+			input := json.RawMessage(tc.Function.Arguments)
+			if !json.Valid(input) {
+				input = json.RawMessage(`{}`)
 			}
 			id := tc.ID
 			if id == "" {
