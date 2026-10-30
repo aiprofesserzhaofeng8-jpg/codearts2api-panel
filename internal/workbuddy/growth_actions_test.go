@@ -115,3 +115,30 @@ func TestGrowthEnrollmentValidationAndLocalCapabilities(t *testing.T) {
 		t.Fatal("local capability trusted upstream metadata", tasks, err)
 	}
 }
+
+func TestGrowthEnrollmentDetectsIndividualRejectionsInsideSuccessEnvelope(t *testing.T) {
+	for _, tc := range []struct {
+		data               string
+		fail, prerequisite bool
+	}{
+		{`{"results":[{"task_code":"chat_5","status":"accepted"}]}`, false, false},
+		{`{"results":[{"task_code":"chat_5","status":"error","message":"prerequisite not met: first_buddy"}]}`, true, true},
+		{`{"results":[{"task_code":"chat_5","status":"error","message":"fixture-secret"}]}`, true, false},
+		{`{"results":[{"task_code":"other","status":"accepted"}]}`, true, false},
+		{`{"results":[]}`, true, false},
+		{`{"results":[{"task_code":"chat_5","status":"accepted"},{"task_code":"chat_5","status":"accepted"}]}`, true, false},
+	} {
+		err := validateGrowthEnrollment([]byte(tc.data), []string{"chat_5"})
+		if (err != nil) != tc.fail {
+			t.Fatal(tc.data, err)
+		}
+		if err != nil {
+			if strings.Contains(err.Error(), "fixture-secret") {
+				t.Fatal("upstream message leaked")
+			}
+			if tc.prerequisite && !strings.Contains(err.Error(), "领养第一只 Buddy") {
+				t.Fatal("missing prerequisite instruction", err)
+			}
+		}
+	}
+}

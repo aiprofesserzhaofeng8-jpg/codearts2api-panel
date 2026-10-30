@@ -61,8 +61,53 @@ func (c *Client) AcceptGrowthTasks(ctx context.Context, raw json.RawMessage, cod
 		seen[code] = true
 	}
 	body, _ := json.Marshal(map[string]any{"task_codes": codes})
-	_, err := c.growthRequest(ctx, raw, http.MethodPost, GrowthAcceptPath, body, false)
-	return err
+	data, err := c.growthRequest(ctx, raw, http.MethodPost, GrowthAcceptPath, body, false)
+	if err != nil {
+		return err
+	}
+	return validateGrowthEnrollment(data, codes)
+}
+
+// HTTP/code success can contain individual rejections. Progress is still
+// re-read by the caller; this only exposes explicit refusal without retrying.
+func validateGrowthEnrollment(data json.RawMessage, codes []string) error {
+	if len(data) == 0 || string(data) == "null" {
+		return nil
+	}
+	var ack struct {
+		Results *[]struct {
+			Code    string `json:"task_code"`
+			Status  string `json:"status"`
+			Message string `json:"message"`
+		} `json:"results"`
+	}
+	if json.Unmarshal(data, &ack) != nil {
+		return fmt.Errorf("成长任务接取响应无效，请刷新核对")
+	}
+	if ack.Results == nil {
+		return nil
+	}
+	want := map[string]bool{}
+	for _, code := range codes {
+		want[code] = true
+	}
+	for _, result := range *ack.Results {
+		if !want[result.Code] {
+			return fmt.Errorf("成长任务接取结果标识不匹配，请刷新核对")
+		}
+		delete(want, result.Code)
+		if result.Status == "error" || result.Status == "failed" {
+			message := "上游拒绝接取该成长任务，请在官方成长中心核对前置条件"
+			if strings.Contains(result.Message, "prerequisite not met: first_buddy") {
+				message = "请先在官方应用完成「领养第一只 Buddy」，再接取此任务"
+			}
+			return &provider.Error{Status: 409, Message: message}
+		}
+	}
+	if len(want) > 0 {
+		return fmt.Errorf("成长任务接取结果不完整，请刷新核对")
+	}
+	return nil
 }
 
 // RunGrowthChat makes exactly one real model call. The caller owns account

@@ -26,6 +26,7 @@ type growthActionFixture struct {
 	targets                                    map[string]int64
 	chats, reports, claims, accepts            int
 	ignoreAccept, ignoreProgress, brokenStream bool
+	prerequisite                               bool
 	hold                                       <-chan struct{}
 	started                                    chan struct{}
 }
@@ -52,6 +53,10 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"code": 0, "data": map[string]any{"tasks": tasks}})
 	case workbuddy.GrowthAcceptPath:
 		f.accepts++
+		if f.prerequisite {
+			io.WriteString(w, `{"code":0,"data":{"results":[{"task_code":"chat_5","status":"error","message":"prerequisite not met: first_buddy"}]}}`)
+			return
+		}
 		var body struct {
 			Codes []string `json:"task_codes"`
 		}
@@ -364,5 +369,19 @@ func TestGrowthActionsRespectPaidModelSwitchWithoutBlockingEligibleClaims(t *tes
 	f.mu.Unlock()
 	if w := runGrowthFixture(s, "chat_5"); w.Code != 200 || f.claims != 1 || f.chats != 0 {
 		t.Fatal("existing reward incorrectly requires paid calls", w.Code, w.Body.String())
+	}
+}
+
+func TestGrowthActionsExplainRealEnrollmentPrerequisiteWithoutSpending(t *testing.T) {
+	f := newGrowthActionFixture()
+	f.prerequisite = true
+	s := growthActionsServer(t, f)
+	for _, w := range []*httptest.ResponseRecorder{runGrowthFixture(s, "chat_5"), growthRequest(s, "POST", "/admin/api/workbuddy/tasks/accept", `{"id":"wb-cn","task_codes":["chat_5"]}`)} {
+		if w.Code != 409 || !strings.Contains(w.Body.String(), "领养第一只 Buddy") {
+			t.Fatal("prerequisite hidden as pending/success", w.Code, w.Body.String())
+		}
+	}
+	if f.chats != 0 || f.reports != 0 || f.claims != 0 || len(s.Store.Logs(10)) != 0 {
+		t.Fatal("rejected enrollment spent credits")
 	}
 }

@@ -120,6 +120,11 @@ func (s *Server) handleGrowthAccept(w http.ResponseWriter, r *http.Request) {
 	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks, State: "accepted", Message: "任务已接取"}
 	if len(codes) > 0 {
 		if err = actions.AcceptGrowthTasks(ctx, raw, codes); err != nil {
+			var rejected *provider.Error
+			if errors.As(err, &rejected) && rejected.Status == 409 {
+				writeErr(w, 409, rejected.Error(), "invalid_request_error")
+				return
+			}
 			writeErr(w, 502, "接取结果未确认，请刷新核对；"+err.Error(), "upstream_error")
 			return
 		}
@@ -247,6 +252,11 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 	}
 	if !enrolledGrowth(task) {
 		if err = actions.AcceptGrowthTasks(ctx, raw, []string{body.Code}); err != nil {
+			var rejected *provider.Error
+			if errors.As(err, &rejected) && rejected.Status == 409 {
+				writeErr(w, 409, rejected.Error(), "invalid_request_error")
+				return
+			}
 			reply.Message = "接取结果未确认，请刷新核对；" + err.Error()
 			finish()
 			return
