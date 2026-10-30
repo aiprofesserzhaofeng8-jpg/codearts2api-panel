@@ -1,0 +1,18 @@
+{
+  "first_buddy_accept_not_required": true,
+  "no_buddy_enrollment_button": true,
+  "onboarding_button_enabled": true,
+  "run_all_enabled": true,
+  "not_mislabeled_unregistered": true,
+  "legacy_enrollment_http": 409,
+  "legacy_enrollment_message": "该任务无需接取，请直接点击「解锁并领养」",
+  "new_model_attempts": 0,
+  "settings_keys_groups_unchanged": true,
+  "buddy": {
+    "owned": false,
+    "agreed": true
+  },
+  "first_buddy_execution_pending": true,
+  "temporary_session_logged_out": true,
+  "javascript_errors": []
+}

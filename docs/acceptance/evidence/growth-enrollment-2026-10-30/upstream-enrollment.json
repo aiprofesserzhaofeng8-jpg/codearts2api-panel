@@ -1,0 +1,11 @@
+{
+  "http_status": 200,
+  "code": 0,
+  "results": [
+    {
+      "task_code": "first_buddy",
+      "status": "error",
+      "message": "task does not require acceptance"
+    }
+  ]
+}

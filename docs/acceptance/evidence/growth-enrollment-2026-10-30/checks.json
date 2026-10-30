@@ -1,0 +1,14 @@
+{
+  "go_vet_exit_code": 0,
+  "linux_build": true,
+  "javascript_syntax": true,
+  "browser_regressions": [
+    "growth-buddy",
+    "growth-actions",
+    "growth-multi",
+    "growth-tasks",
+    "growth-feedback"
+  ],
+  "other_providers_inference_changes": false,
+  "new_real_model_attempts": 0
+}
