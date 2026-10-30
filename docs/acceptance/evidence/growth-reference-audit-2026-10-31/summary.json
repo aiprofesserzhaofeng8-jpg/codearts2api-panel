@@ -1,0 +1,29 @@
+{
+  "checked_date": "2026-10-31",
+  "reference_commit": "73a7560efc7a88ebd9865db4c71ae7f6d85859f8",
+  "reference_last_push": "2026-10-21T03:05:08Z",
+  "reference_announced_maintenance_stop": "2026-10-21",
+  "native_tasks_http_status": 200,
+  "native_tasks_business_code": 0,
+  "task_count": 19,
+  "buddy": {
+    "owned": false,
+    "agreed": true
+  },
+  "first_buddy": {
+    "task_code": "first_buddy",
+    "accept_status": "not_accepted",
+    "progress": null,
+    "locked": false,
+    "start_time": null,
+    "end_time": null,
+    "deadline": null,
+    "expire_at": null
+  },
+  "official_rule_excerpt": "本活动长期有效；变更、中止或终止前七个自然日发布对应公告。具体活动以对应界面规则为准。",
+  "official_rule_source": "https://assets.workbuddy.cn/web/usercenter/c2c459583f986944917f8fb8c9ef420779151998/assets/GrowthCenterPage-BgRuSE36.js",
+  "new_model_calls": 0,
+  "new_activity_reports": 0,
+  "new_adoption_or_claim_writes": 0,
+  "original_project_live_flow_tested": false
+}
