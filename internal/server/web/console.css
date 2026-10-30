@@ -1121,6 +1121,17 @@ code{
 .modal{width:min(660px,calc(100vw - 32px));max-height:90vh;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:var(--pop);overflow:auto}
 .modal::backdrop{background:rgba(6,8,18,.62);backdrop-filter:blur(3px)}
 .modal-small{width:min(440px,calc(100vw - 32px))}
+.growth-modal{width:min(820px,calc(100vw - 32px))}
+#growthDialog #growthError:empty{display:none}
+#growthDialog .growth-task{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}
+#growthDialog .growth-task:last-child{border-bottom:0}
+#growthDialog .growth-task-content{min-width:0}
+#growthDialog .growth-task-title{font-size:14px;overflow-wrap:anywhere}
+#growthDialog .growth-task-description{margin:6px 0 10px;color:var(--text-2);font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+#growthDialog .growth-task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;font-size:12px;color:var(--text-3)}
+#growthDialog .growth-task-reward{color:var(--accent-text)}
+#growthDialog .growth-task>.btn{flex-shrink:0}
+@media(max-width:600px){#growthDialog .growth-task{align-items:flex-start;gap:12px}#growthDialog .growth-task-meta{gap:6px}}
 .key-create-modal{width:min(500px,calc(100vw - 32px))}
 .key-create-fields{display:flex;flex-direction:column;gap:22px}
 .key-create-fields .field{gap:9px}

@@ -51,7 +51,10 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 		}
 		if a.ProviderID() != provider.CodeArts && s.Providers != nil {
 			if adapter, ok := s.Providers.Get(a.ProviderID()); ok {
-				if _, identity, err := adapter.Normalize(a.Credentials); err == nil {
+				if raw, identity, err := adapter.Normalize(a.Credentials); err == nil {
+					if growth, ok := adapter.(provider.GrowthTasks); ok {
+						row["growth_tasks_supported"] = growth.SupportsGrowthTasks(raw)
+					}
 					row["expires_at"] = identity.ExpiresAt
 					row["expires_in"] = identity.ExpiresAt - time.Now().Unix()
 					row["has_refresh"] = identity.HasRefresh

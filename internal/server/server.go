@@ -32,6 +32,7 @@ import (
 type Server struct {
 	Search             *websearch.Client
 	rewardRuntime      providerRuntime
+	growthRuntime      providerRuntime
 	Providers          *provider.Registry
 	providerRuntime    providerRuntime
 	providerLogins     providerLoginRuntime
@@ -136,6 +137,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/models/refresh", s.withAdminAuth(s.handleAdminRefreshModels))
 	mux.HandleFunc("/admin/api/claim", s.withAdminAuth(s.handleAdminClaim))
 	mux.HandleFunc("/admin/api/welfare", s.withAdminAuth(s.handleAdminWelfare))
+	mux.HandleFunc("/admin/api/workbuddy/tasks", s.withAdminAuth(s.handleGrowthTasks))
+	mux.HandleFunc("/admin/api/workbuddy/tasks/claim", s.withAdminAuth(s.handleGrowthClaim))
 	mux.HandleFunc("/admin/api/invite", s.withAdminAuth(s.handleAdminInvite))
 	mux.HandleFunc("/admin/api/login/start", s.withAdminAuth(s.handleAdminLoginStart))
 	mux.HandleFunc("/admin/api/login/poll", s.withAdminAuth(s.handleAdminLoginPoll))
@@ -149,6 +152,7 @@ func (s *Server) Handler() http.Handler {
 	// 控制台静态资源（内嵌，同源）
 	mux.HandleFunc("/console.css", serveConsoleCSS)
 	mux.HandleFunc("/console.js", serveConsoleJS)
+	mux.HandleFunc("/growth.js", serveGrowthJS)
 	mux.HandleFunc("/theme.js", serveThemeJS)
 	mux.HandleFunc("/favicon.svg", serveFaviconSVG)
 	mux.HandleFunc("/favicon.ico", serveFaviconICO)

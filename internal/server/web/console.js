@@ -606,6 +606,11 @@
   var creditState = {};
   var creditLoading = null;
 
+  var growthTasks = window.CodeArtsGrowth({api:api,mk:mk,btn:btn,pill:pill,onBalance:function(id,balance){
+    creditState[id]={loading:false,ok:true,credit:balance};
+    if(state.data)renderAccounts(state.data);
+  }});
+
   // loadCredits 查询账号积分额度（上游统计插件）。
   // 默认走服务端 60 秒缓存；force=true 时带 ?fresh=1 强制回源。
   function loadCredits(force){
@@ -820,6 +825,7 @@
         {label:a.enabled?"停用":"启用",run:function(){return accountOp("toggle",{id:a.id});}},
         {label:a.paused?"恢复选号":"暂停选号",run:function(){return accountOp(a.paused?"resume":"pause",{id:a.id});}}
       ];
+      if(a.growth_tasks_supported)more.unshift({label:"成长任务",run:function(){return growthTasks.open(a);}});
       if(a.source==="desktop")more.push({label:"重读",run:function(){return accountOp("reimport",{id:a.id});}});
       if(a.failures>0 || (a.pool&&a.pool.cooldown_remaining_sec>0) || Object.keys(a.model_health || {}).some(function(m){return a.model_health[m].failures>0;}))more.push({label:"解除冷却 / 清错",run:function(){return accountOp("clear-errors",{id:a.id});}});
       more.push({label:"删除",danger:true,run:function(){showDeleteAccount(a);}});

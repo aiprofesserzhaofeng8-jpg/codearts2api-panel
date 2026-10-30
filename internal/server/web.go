@@ -18,6 +18,8 @@ var (
 	consoleCSS []byte
 	//go:embed web/console.js
 	consoleJS []byte
+	//go:embed web/growth.js
+	growthJS []byte
 
 	//go:embed web/theme.js
 	themeJS []byte
@@ -68,6 +70,11 @@ func serveConsoleCSS(w http.ResponseWriter, _ *http.Request) {
 func serveConsoleJS(w http.ResponseWriter, _ *http.Request) {
 	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
 	_, _ = w.Write(consoleJS)
+}
+
+func serveGrowthJS(w http.ResponseWriter, _ *http.Request) {
+	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
+	_, _ = w.Write(growthJS)
 }
 
 func serveThemeJS(w http.ResponseWriter, _ *http.Request) {

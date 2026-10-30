@@ -193,6 +193,7 @@ The detailed documents and management interface are currently primarily in Chine
 | Document | Contents |
 | --- | --- |
 | [Panel and account pool](docs/PANEL.md) | Login flow, scheduling, cooldown, and failure handling |
+| [WorkBuddy growth tasks](docs/WORKBUDDY-GROWTH.md) | Read current progress and claim eligible rewards; task execution is not automated |
 | [Management and budgets](docs/MANAGEMENT.md) | Administrator sessions, audit logs, credential refresh, key budgets, and recovery |
 | [Usage and pricing](docs/USAGE.md) | Token accounting, USD pricing, date filters, and pagination |
 | [Client setup](docs/CLIENTS.md) | Pi, Codex, and Claude Code configuration and limitations |

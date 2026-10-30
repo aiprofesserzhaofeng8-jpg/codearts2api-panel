@@ -77,6 +77,15 @@
   </div>
   <div class="modal-actions"><button class="btn" id="accountConcurrencyCancel">取消</button><button class="btn primary" id="accountConcurrencySave">保存</button></div>
 </dialog>
+<dialog id="growthDialog" class="modal growth-modal" aria-labelledby="growthTitle">
+  <div class="modal-head"><div><h2 id="growthTitle">成长任务</h2><p id="growthAccountName"></p></div><button class="btn ghost" id="growthClose" type="button">关闭</button></div>
+  <div class="modal-body">
+    <p id="growthSummary" class="hint" role="status" aria-live="polite"></p>
+    <p id="growthError" class="err-text" role="alert"></p>
+    <div id="growthTaskList" aria-busy="false"></div>
+  </div>
+  <div class="modal-actions"><button class="btn" id="growthRefresh" type="button">刷新进度</button><button class="btn primary" id="growthClaimAll" type="button" disabled>领取可领奖励</button></div>
+</dialog>
 <dialog id="addAccountDialog" class="modal account-create-modal" aria-labelledby="addAccountTitle">
   <div class="modal-head"><h2 id="addAccountTitle">添加账号</h2><button class="btn ghost" id="addAccountClose" aria-label="关闭添加账号窗口">关闭</button></div>
   <div class="account-create-body">
@@ -830,6 +839,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" title="点击关闭"></div>
 
+<script src="/growth.js"></script>
 <script src="/console.js"></script>
 </body>
 </html>
