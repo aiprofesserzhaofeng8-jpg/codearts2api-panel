@@ -31,6 +31,10 @@ func (c *Client) growthJSON(ctx context.Context, raw json.RawMessage, method, pa
 }
 
 func (c *Client) growthRequest(ctx context.Context, raw json.RawMessage, method, path string, payload []byte, web bool) (json.RawMessage, error) {
+	return c.growthRequestAt(ctx, raw, method, path, payload, web, "")
+}
+
+func (c *Client) growthRequestAt(ctx context.Context, raw json.RawMessage, method, path string, payload []byte, web bool, base string) (json.RawMessage, error) {
 	if !c.SupportsGrowthTasks(raw) {
 		return nil, fmt.Errorf("成长任务仅支持 WorkBuddy 国内个人账号")
 	}
@@ -39,9 +43,11 @@ func (c *Client) growthRequest(ctx context.Context, raw json.RawMessage, method,
 		return nil, err
 	}
 	a, _ := decode(normalized)
-	base := c.CNBase
-	if web {
-		base = c.CNWeb
+	if base == "" {
+		base = c.CNBase
+		if web {
+			base = c.CNWeb
+		}
 	}
 	var bodyReader io.Reader
 	if payload != nil {
@@ -77,7 +83,7 @@ func (c *Client) growthRequest(ctx context.Context, raw json.RawMessage, method,
 		return nil, fmt.Errorf("WorkBuddy 成长任务响应缺少明确业务结果")
 	}
 	data := bytes.TrimSpace(envelope.Data)
-	commandAck := !web && method == http.MethodPost && (path == GrowthAcceptPath || path == "/v2/report") && (len(data) == 0 || bytes.Equal(data, []byte("null")))
+	commandAck := !web && method == http.MethodPost && (path == GrowthAcceptPath || path == "/v2/report" || path == GrowthBuddyAgreementPath || path == GrowthBuddyFirstPath) && (len(data) == 0 || bytes.Equal(data, []byte("null")))
 	if !bytes.HasPrefix(data, []byte("{")) && !commandAck {
 		return nil, fmt.Errorf("WorkBuddy 成长任务响应结构无效")
 	}

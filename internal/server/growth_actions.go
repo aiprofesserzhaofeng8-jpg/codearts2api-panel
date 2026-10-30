@@ -152,8 +152,9 @@ func (s *Server) handleGrowthAccept(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ID   string `json:"id"`
-		Code string `json:"task_code"`
+		ID         string `json:"id"`
+		Code       string `json:"task_code"`
+		AgreeBuddy bool   `json:"agree_buddy,omitempty"`
 	}
 	if !decodeGrowthBody(w, r, &body) {
 		return
@@ -215,11 +216,16 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks, State: "pending", Message: "任务进度待确认，请刷新核对"}
-	calls := 0
+	calls, preparationCalls := 0, 0
 	finish := func() {
-		reply.CompletedCalls = calls
+		reply.CompletedCalls = calls + preparationCalls
 		s.decorateGrowthTasks(a.ID, reply.Tasks)
-		if calls > 0 && reply.Balance == nil && ctx.Err() == nil {
+		if reply.Buddy != nil && reply.Buddy.Owned {
+			if first := growthTask(reply.Tasks, "first_buddy"); first != nil {
+				first.ExecutionPending = false
+			}
+		}
+		if reply.CompletedCalls > 0 && reply.Balance == nil && ctx.Err() == nil {
 			balanceCtx, balanceCancel := context.WithTimeout(ctx, 3*time.Second)
 			reply.Balance, err = s.creditFor(balanceCtx, a, true)
 			balanceCancel()
@@ -236,15 +242,48 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var claimErr error
+		buddy := reply.Buddy
 		reply, claimErr = s.claimGrowthReward(ctx, a, adapter, raw, reply.Tasks, body.Code)
+		reply.Buddy = buddy
 		if claimErr != nil {
 			reply.State, reply.Message = "pending", claimErr.Error()
 		}
 		finish()
 	}
 	if task.Claimed || task.Claimable {
-		claim()
-		return
+		if body.Code != "first_buddy" {
+			claim()
+			return
+		}
+	}
+	if body.Code == "first_buddy" || action.Prerequisite == "first_buddy" && growthTask(tasks, "first_buddy") != nil && !growthTask(tasks, "first_buddy").Claimed {
+		prepared, ready, preparationErr := s.prepareGrowthBuddy(ctx, a, adapter, actions, raw, tasks, body.AgreeBuddy)
+		reply, preparationCalls = prepared, prepared.CompletedCalls
+		if preparationErr != nil {
+			var rejected *provider.Error
+			if preparationCalls == 0 && errors.As(preparationErr, &rejected) && rejected.Status >= 400 && rejected.Status < 500 {
+				writeErr(w, rejected.Status, rejected.Error(), "invalid_request_error")
+				return
+			}
+			reply.Message = preparationErr.Error()
+			finish()
+			return
+		}
+		if body.Code == "first_buddy" || !ready {
+			finish()
+			return
+		}
+		task = growthTask(reply.Tasks, body.Code)
+		if task == nil || task.Locked {
+			reply.State, reply.Message = "pending", "前置已完成，但目标任务状态需要刷新核对"
+			finish()
+			return
+		}
+		if task.Claimed || task.Claimable {
+			claim()
+			return
+		}
+		reply.State, reply.Message = "pending", "领养前置已完成，目标任务进度待确认"
 	}
 	if !s.Store.Settings().AllowCreditModels {
 		writeErr(w, 403, "积分模型调用已关闭，未开始真实对话", "invalid_request_error")

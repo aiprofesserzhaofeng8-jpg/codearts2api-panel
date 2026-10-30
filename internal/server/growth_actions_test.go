@@ -27,6 +27,10 @@ type growthActionFixture struct {
 	chats, reports, claims, accepts            int
 	ignoreAccept, ignoreProgress, brokenStream bool
 	prerequisite                               bool
+	buddies, owned, agreed, activity           bool
+	ignoreAdoption, ignoreAgreement            bool
+	adoptErrorAfterCommit                      bool
+	adoptions, agreements                      int
 	hold                                       <-chan struct{}
 	started                                    chan struct{}
 }
@@ -40,7 +44,11 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case workbuddy.GrowthTasksPath:
 		var tasks []map[string]any
-		for _, code := range []string{"Model_chat_GLM5.2", "chat_5", "automation_1"} {
+		codes := []string{"Model_chat_GLM5.2", "chat_5", "automation_1"}
+		if f.buddies {
+			codes = append([]string{"first_buddy"}, codes...)
+		}
+		for _, code := range codes {
 			status := "not_accepted"
 			if f.accepted[code] {
 				status = "accepted"
@@ -53,7 +61,7 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"code": 0, "data": map[string]any{"tasks": tasks}})
 	case workbuddy.GrowthAcceptPath:
 		f.accepts++
-		if f.prerequisite {
+		if f.prerequisite || f.buddies && !f.owned {
 			io.WriteString(w, `{"code":0,"data":{"results":[{"task_code":"chat_5","status":"error","message":"prerequisite not met: first_buddy"}]}}`)
 			return
 		}
@@ -99,6 +107,7 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !f.ignoreProgress {
+			f.activity = true
 			for _, code := range []string{"Model_chat_GLM5.2", "chat_5"} {
 				if f.accepted[code] && f.progress[code] < f.targets[code] {
 					f.progress[code]++
@@ -106,6 +115,41 @@ func (f *growthActionFixture) serve(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		io.WriteString(w, `{"code":0,"data":{}}`)
+	case workbuddy.GrowthBuddyInfoPath:
+		var buddy any
+		if f.owned {
+			buddy = map[string]any{"id": 42, "name": "fixture"}
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"code": 0, "data": map[string]any{"buddy": buddy}})
+	case workbuddy.GrowthBuddyAgreementPath:
+		if r.Method == "POST" {
+			f.agreements++
+			var body struct {
+				Agree bool `json:"agree"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			if body.Agree && !f.ignoreAgreement {
+				f.agreed = true
+			}
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"code": 0, "data": map[string]any{"agreed": f.agreed}})
+	case workbuddy.GrowthBuddyFirstPath:
+		f.adoptions++
+		if !f.agreed || !f.activity {
+			http.Error(w, "first_buddy task not completed yet", 400)
+			return
+		}
+		if !f.ignoreAdoption {
+			f.owned = true
+			f.accepted["first_buddy"] = true
+			f.targets["first_buddy"] = 1
+			f.progress["first_buddy"] = 1
+		}
+		if f.adoptErrorAfterCommit {
+			http.Error(w, "lost acknowledgement", 500)
+			return
+		}
+		io.WriteString(w, `{"code":0,"data":null}`)
 	case "/v2/billing/meter/get-user-resource":
 		io.WriteString(w, `{"code":0,"data":{"Response":{"Data":{"Accounts":[{"CapacityRemain":1000,"CapacitySize":1000}]}}}}`)
 	default:
@@ -236,7 +280,7 @@ func TestGrowthActionsEnrollmentMustBeConfirmedAndTargetsBounded(t *testing.T) {
 	if w := runGrowthFixture(s, "chat_5"); w.Code != 409 || f.chats != 0 {
 		t.Fatal("unbounded model calls", w.Code, w.Body.String())
 	}
-	for _, code := range []string{"automation_1", "RichMeow_Chat", "skill_1", "first_buddy", "missing"} {
+	for _, code := range []string{"automation_1", "RichMeow_Chat", "skill_1", "missing"} {
 		if w := runGrowthFixture(s, code); w.Code != 409 || f.chats != 0 || f.reports != 0 {
 			t.Fatal("unsupported action executed", code, w.Code)
 		}

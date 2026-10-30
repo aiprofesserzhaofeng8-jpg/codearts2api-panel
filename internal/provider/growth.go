@@ -22,8 +22,22 @@ type GrowthActions interface {
 }
 
 type GrowthAction struct {
-	Model    string
-	MaxCalls int64
+	Model        string
+	MaxCalls     int64
+	Prerequisite string
+}
+
+// GrowthBuddyOperations is optional and only used by explicit WorkBuddy task
+// actions. Other providers, daily rewards and normal inference do not use it.
+type GrowthBuddyOperations interface {
+	GrowthBuddyStatus(context.Context, json.RawMessage) (GrowthBuddyStatus, error)
+	AgreeGrowthBuddy(context.Context, json.RawMessage) error
+	AdoptGrowthBuddy(context.Context, json.RawMessage) error
+}
+
+type GrowthBuddyStatus struct {
+	Owned  bool `json:"owned"`
+	Agreed bool `json:"agreed"`
 }
 
 type GrowthTask struct {

@@ -12,10 +12,21 @@
       if(!entry.account.enabled||!entry.loaded||entry.blocked.has(task.task_code))return false;
       if(kind==="claim")return task.claimable;
       if(task.claimed||task.locked)return false;
-      return kind==="accept"?task.accept_status==="not_accepted":task.auto_supported&&!task.execution_pending;
+      if(kind==="accept")return task.accept_status==="not_accepted";
+      if(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned)return false;
+      if(task.task_code!=="first_buddy"&&entry.blocked.has("first_buddy"))return false;
+      return task.auto_supported&&(!task.execution_pending||task.task_code==="first_buddy");
+    }
+    function needsBuddy(entry){return entry.tasks.some(function(t){return t.task_code==="first_buddy"&&t.auto_supported&&!t.claimed;})&&!(entry.buddy&&entry.buddy.owned);}
+    function needsConsent(entry){return needsBuddy(entry)&&!(entry.buddy&&entry.buddy.agreed);}
+    function runOrder(code){return code==="first_buddy"?-2:(code==="Model_chat_GLM5.2"?-1:0);}
+    function runTask(entry,code){
+      var codes=[code];
+      if(code!=="first_buddy"&&needsBuddy(entry))codes.unshift("first_buddy");
+      return operate([{entry:entry,codes:codes}],"run");
     }
     function selectedJobs(kind){
-      return entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return eligible(e,t,kind);}).map(function(t){return t.task_code;}).sort(function(a,b){return (a==="Model_chat_GLM5.2"?-1:0)-(b==="Model_chat_GLM5.2"?-1:0);})};}).filter(function(job){return job.codes.length;});
+      return entries.map(function(e){return {entry:e,codes:e.tasks.filter(function(t){return eligible(e,t,kind);}).map(function(t){return t.task_code;}).sort(function(a,b){return runOrder(a)-runOrder(b);})};}).filter(function(job){return job.codes.length;});
     }
     function accepted(entry,code){
       return entry.tasks.some(function(t){return t.task_code===code&&(t.claimed||t.accept_status==="accepted"||t.accept_status==="completed"||t.accept_status==="claimed");});
@@ -34,14 +45,16 @@
       $("growthAcceptAll").disabled=busy||!selectedJobs("accept").length;
       var runCount=selectedJobs("run").reduce(function(n,job){return n+job.codes.length;},0);
       $("growthRunAll").disabled=busy||!runCount;
+      $("growthBuddyConsent").classList.toggle("hidden",!entries.some(needsConsent));
+      $("growthBuddyAgree").disabled=busy;
       $("growthRefresh").textContent=busyKind==="refresh"?"刷新中…":"刷新进度";
       $("growthAcceptAll").textContent=busyKind==="accept"?"接取中…":"接取未报名任务";
-      $("growthRunAll").textContent=busyKind==="run"?"执行中…":"执行对话任务"+(runCount?"（"+runCount+"）":"");
+      $("growthRunAll").textContent=busyKind==="run"?"执行中…":(entries.some(needsBuddy)?"执行成长任务":"执行对话任务")+(runCount?"（"+runCount+"）":"");
       $("growthClaimAll").textContent=busyKind==="claim"?"领取中…":"领取可领奖励";
-      $("growthRunAll").title=runCount?"只执行已接入的真实对话任务，会消耗积分":"当前没有可执行的对话任务；其他任务需在官方应用完成";
+      $("growthRunAll").title=runCount?"按依赖顺序完成领养与已接入的真实对话任务，会消耗积分":"当前没有可执行的任务；其他任务需在官方应用完成";
       $("growthClaimAll").title=$("growthClaimAll").disabled&&!busy?"当前没有可领取的奖励，请先完成任务并刷新进度":"只领取上游已确认达标的奖励";
       var all=entries.flatMap(function(e){return e.tasks;}),failed=entries.filter(function(e){return e.error;});
-      $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取 · "+all.filter(function(t){return t.auto_supported&&!t.claimed;}).length+" 项支持对话执行";
+      $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取 · "+all.filter(function(t){return t.auto_supported&&!t.claimed;}).length+" 项支持自动执行";
       $("growthNotice").textContent=notice;
       $("growthError").textContent=failed.length?(failed.length>1?failed.length+" 个账号操作未完成；":"")+(entries.length>1?(failed[0].account.name||"WorkBuddy")+"：":"")+failed[0].error:"";
       var list=$("growthTaskList");list.setAttribute("aria-busy",busy?"true":"false");list.textContent="";
@@ -69,7 +82,7 @@
           if(task.energy)rewards.push("+"+task.energy+" 能量");
           if(task.reward_buddy)rewards.push("Buddy 奖励");
           meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||"奖励以上游活动为准"));
-          var status=task.claimed?"已领取":(task.locked?"未解锁":(entry.running===task.task_code?"执行中":(entry.rejected.has(task.task_code)?"操作未完成":(entry.blocked.has(task.task_code)||task.execution_pending?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"?"未报名":"未完成"))))));
+          var status=task.claimed?"已领取":(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned?"已领养":(task.locked?"未解锁":(entry.running===task.task_code?"执行中":(entry.rejected.has(task.task_code)?"操作未完成":(entry.blocked.has(task.task_code)||task.execution_pending?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"?"未报名":"未完成")))))));
           meta.appendChild(ui.pill(status,task.claimed?"ok":(task.claimable&&!entry.blocked.has(task.task_code)?"warn":"")));
           content.appendChild(meta);item.appendChild(content);
           var actions=ui.mk("div","growth-task-actions");
@@ -78,7 +91,7 @@
             accept.disabled=busy||!eligible(entry,task,"accept");actions.appendChild(accept);
           }
           if(task.auto_supported){
-            var run=ui.btn("执行任务","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"run");});
+            var run=ui.btn(task.task_code==="first_buddy"?"解锁并领养":"执行任务","xs",function(){return runTask(entry,task.task_code);});
             run.disabled=busy||!eligible(entry,task,"run");actions.appendChild(run);
           }
           var button=ui.btn("领取奖励","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"claim");});
@@ -90,13 +103,14 @@
     function load(){
       if(busy)return Promise.resolve();
       var seq=++sequence;
-      entries=accounts.filter(function(a){return !select.value||a.id===select.value;}).map(function(a){return {account:a,tasks:[],loaded:false,error:"",blocked:new Set(),rejected:new Set()};});
+      $("growthBuddyAgree").checked=false;
+      entries=accounts.filter(function(a){return !select.value||a.id===select.value;}).map(function(a){return {account:a,tasks:[],buddy:null,loaded:false,error:"",blocked:new Set(),rejected:new Set()};});
       $("growthAccountName").textContent=select.value?((accounts.find(function(a){return a.id===select.value;})||{}).name||"WorkBuddy"):"全部 WorkBuddy 账号";
       busy=true;busyKind="refresh";notice="正在刷新任务进度…";render();
       return workers(entries,seq,async function(entry){
         try{
           var r=await ui.api("/admin/api/workbuddy/tasks?id="+encodeURIComponent(entry.account.id));
-          if(active(seq)){entry.tasks=r.tasks||[];entry.loaded=true;}
+          if(active(seq)){entry.tasks=r.tasks||[];entry.buddy=r.buddy||null;entry.loaded=true;entry.error=r.buddy_error||"";}
         }catch(e){if(active(seq))entry.error="查询失败："+e.message;}
         if(active(seq))render();
       }).finally(function(){if(active(seq)){
@@ -108,6 +122,7 @@
     }
     async function operate(jobs,kind){
       if(busy||!jobs.length)return;
+      if(kind==="run"&&!$("growthBuddyAgree").checked&&jobs.some(function(job){return needsConsent(job.entry);})){jobs.forEach(function(job){if(needsConsent(job.entry))job.entry.error="请先阅读官方活动规则，并勾选同意领养协议";});notice="尚未开始执行，未产生对话消耗。";render();$("growthBuddyAgree").focus();return;}
       var seq=sequence,confirmed=0,total=jobs.reduce(function(n,job){return n+job.codes.length;},0);
       busy=true;busyKind=kind;notice=kind==="accept"?"正在接取任务…":(kind==="run"?"正在执行真实对话并核对进度，请稍候…":"正在领取已达标奖励…");
       controller=kind==="run"?new AbortController():null;
@@ -121,13 +136,16 @@
             entry.running=kind==="run"?code:"";render();
             try{
               var body=kind==="accept"?{id:id,task_codes:codes}:{id:id,task_code:code};
+              if(kind==="run"&&$("growthBuddyAgree").checked)body.agree_buddy=true;
               var r=await ui.api("/admin/api/workbuddy/tasks/"+kind,{method:"POST",body:body,signal:signal});
               if(r.balance)ui.onBalance(id,r.balance);
               if(!active(seq))break;
               entry.tasks=r.tasks||entry.tasks;
+              if(r.buddy)entry.buddy=r.buddy;
+              var prepared=kind==="run"&&code==="first_buddy"&&r.state==="prepared"&&entry.buddy&&entry.buddy.owned;
               if(kind==="accept")confirmed+=codes.filter(function(c){return accepted(entry,c);}).length;
-              else if(r.state==="claimed"||r.state==="already_claimed")confirmed++;
-              if(r.state!=="claimed"&&r.state!=="already_claimed"&&!(kind==="accept"&&r.state==="accepted")){
+              else if(r.state==="claimed"||r.state==="already_claimed"||prepared)confirmed++;
+              if(r.state!=="claimed"&&r.state!=="already_claimed"&&!prepared&&!(kind==="accept"&&r.state==="accepted")){
                 codes.forEach(function(c){if(kind!=="accept"||!accepted(entry,c))entry.blocked.add(c);});entry.error=r.message||"操作结果待确认，请刷新任务进度";break;
               }
               if(r.balance_error)entry.error=r.balance_error;
@@ -141,6 +159,7 @@
                     var updated=await ui.api("/admin/api/workbuddy/tasks?id="+encodeURIComponent(id));
                     if(!active(seq))break;
                     entry.tasks=updated.tasks||entry.tasks;
+                    if(updated.buddy)entry.buddy=updated.buddy;
                   }catch(readError){if(active(seq))entry.error+="；接取后回查失败，请刷新进度核对";}
                 }
                 if(active(seq))codes.forEach(function(c){

@@ -16,15 +16,17 @@ import (
 // Growth progress is authoritative upstream state. Listing/claiming never use
 // daily markers or inference accounting. Real chat actions account separately.
 type growthReply struct {
-	OK             bool                   `json:"ok"`
-	ID             string                 `json:"id"`
-	Tasks          []provider.GrowthTask  `json:"tasks"`
-	State          string                 `json:"state,omitempty"`
-	Message        string                 `json:"message,omitempty"`
-	Reward         *provider.GrowthReward `json:"reward,omitempty"`
-	Balance        *codearts.CreditInfo   `json:"balance,omitempty"`
-	BalanceError   string                 `json:"balance_error,omitempty"`
-	CompletedCalls int                    `json:"completed_calls,omitempty"`
+	OK             bool                        `json:"ok"`
+	ID             string                      `json:"id"`
+	Tasks          []provider.GrowthTask       `json:"tasks"`
+	State          string                      `json:"state,omitempty"`
+	Message        string                      `json:"message,omitempty"`
+	Reward         *provider.GrowthReward      `json:"reward,omitempty"`
+	Balance        *codearts.CreditInfo        `json:"balance,omitempty"`
+	BalanceError   string                      `json:"balance_error,omitempty"`
+	CompletedCalls int                         `json:"completed_calls,omitempty"`
+	Buddy          *provider.GrowthBuddyStatus `json:"buddy,omitempty"`
+	BuddyError     string                      `json:"buddy_error,omitempty"`
 }
 
 func (s *Server) growthAccount(w http.ResponseWriter, id string, claim bool) *codearts.Account {
@@ -74,7 +76,21 @@ func (s *Server) handleGrowthTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.decorateGrowthTasks(a.ID, tasks)
-	writeJSON(w, 200, growthReply{OK: true, ID: a.ID, Tasks: tasks})
+	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks}
+	if first := growthTask(tasks, "first_buddy"); first != nil && !first.Claimed {
+		if buddy, ok := adapter.(provider.GrowthBuddyOperations); ok {
+			status, statusErr := buddy.GrowthBuddyStatus(ctx, raw)
+			if statusErr == nil {
+				reply.Buddy = &status
+				if status.Owned {
+					first.ExecutionPending = false
+				}
+			} else {
+				reply.BuddyError = "Buddy 状态暂时无法确认，执行前会重新核对"
+			}
+		}
+	}
+	writeJSON(w, 200, reply)
 }
 
 func growthTask(tasks []provider.GrowthTask, code string) *provider.GrowthTask {

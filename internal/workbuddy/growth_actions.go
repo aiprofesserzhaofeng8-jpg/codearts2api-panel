@@ -21,10 +21,12 @@ const growthPrompt = "请用一句话介绍你自己。"
 
 func (c *Client) GrowthAction(code string) (provider.GrowthAction, bool) {
 	switch code {
-	case "Model_chat_GLM5.2":
+	case "first_buddy":
 		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 1}, true
+	case "Model_chat_GLM5.2":
+		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 1, Prerequisite: "first_buddy"}, true
 	case "chat_5":
-		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 5}, true
+		return provider.GrowthAction{Model: "glm-5.2", MaxCalls: 5, Prerequisite: "first_buddy"}, true
 	default:
 		return provider.GrowthAction{}, false
 	}
@@ -41,7 +43,8 @@ func annotateGrowthTask(t *provider.GrowthTask) {
 		t.AutoSupported = true
 		t.ActionDescription = "使用 GLM-5.2 按差额进行真实对话，最多 5 次，每次最多输出 32 Token，会消耗积分"
 	case "first_buddy":
-		t.ManualInstruction = "请在官方应用阅读并同意领养协议，再领养 Buddy"
+		t.AutoSupported = true
+		t.ActionDescription = "先完成一次真实对话解锁，再按已确认的协议领养 Buddy；最多一次对话，会消耗积分"
 	case "Expert_Philanthropy":
 		t.ManualInstruction = "涉及捐款，请在官方应用自行决定是否参与"
 	default:
@@ -99,7 +102,7 @@ func validateGrowthEnrollment(data json.RawMessage, codes []string) error {
 		if result.Status == "error" || result.Status == "failed" {
 			message := "上游拒绝接取该成长任务，请在官方成长中心核对前置条件"
 			if strings.Contains(result.Message, "prerequisite not met: first_buddy") {
-				message = "请先在官方应用完成「领养第一只 Buddy」，再接取此任务"
+				message = "请先执行「领养第一只 Buddy」完成前置条件，再接取此任务"
 			}
 			return &provider.Error{Status: 409, Message: message}
 		}
@@ -171,7 +174,13 @@ func (c *Client) RunGrowthChat(ctx context.Context, raw json.RawMessage, code st
 	now := time.Now().UnixMilli()
 	event := map[string]any{"eventCode": "chat_request_send", "timestamp": now, "presentAt": now, "reportDelay": 0, "mode": "craft", "conversationId": conversationID, "parentConversationId": conversationID, "requestId": responseID, "rootRequestId": responseID, "inputLength": utf8.RuneCountInString(growthPrompt), "requestModelId": action.Model, "requestModelName": "GLM-5.2", "maxToken": 32, "maxRetries": 0, "userId": a.UID, "agentName": "default", "agentType": "conversation"}
 	payload, _ := json.Marshal([]any{event})
-	_, err = c.growthRequest(ctx, normalized, http.MethodPost, "/v2/report", payload, false)
+	base := ""
+	if code == "first_buddy" {
+		// The onboarding gate consumes billing-domain activity, as the official
+		// client does. This receipt describes the real chat above.
+		base = c.CNBilling
+	}
+	_, err = c.growthRequestAt(ctx, normalized, http.MethodPost, "/v2/report", payload, false, base)
 	if err != nil {
 		return true, fmt.Errorf("真实对话已完成，进度上报未确认：%w", err)
 	}

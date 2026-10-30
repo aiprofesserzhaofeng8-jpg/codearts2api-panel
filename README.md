@@ -192,7 +192,7 @@ python3 scripts/connect-client.py claude --url http://127.0.0.1:10087
 | --- | --- |
 | [面板与账号池](docs/PANEL.md) | 登录流程、账号调度、冷却和故障处理 |
 | [WorkBuddy 专用功能](docs/WORKBUDDY-FEATURES.md) | 联网搜索、系统提示词、出站指纹清洗与配置 |
-| [WorkBuddy 成长任务](docs/WORKBUDDY-GROWTH.md) | 集中入口、批量接取/领奖、两类真实对话任务执行与进度核验 |
+| [WorkBuddy 成长任务](docs/WORKBUDDY-GROWTH.md) | 集中入口、领养前置与依赖处理、批量接取/领奖、两类真实对话任务执行与进度核验 |
 | [各平台请求策略](docs/PROVIDER-FEATURES.md) | 独立提示词、清洗、搜索后端配置与维护边界 |
 | [管理与预算](docs/MANAGEMENT.md) | 管理会话、审计、凭据续期、密钥预算与恢复 |
 | [用量与价格](docs/USAGE.md) | Token 构成、USD 计价、日期查询和分页 |
