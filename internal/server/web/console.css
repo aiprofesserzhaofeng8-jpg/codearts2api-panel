@@ -12,25 +12,27 @@
   color-scheme:dark;
 
   /* 表面：靠明度差分层，而不是靠描边和阴影 */
-  --bg:#0c0e14;
-  --bg-soft:#14171f;
-  --surface:#14171f;
-  --surface-2:#1a1e28;
-  --surface-3:#202531;
-  --line:#262c3a;
-  --line-2:#343c4e;
+  --bg:#15140f;
+  --bg-soft:#1e1c16;
+  --surface:#1e1c16;
+  --surface-2:#26231b;
+  --surface-3:#302c22;
+  --line:#3a3529;
+  --line-2:#514a39;
 
   /* 文字 */
-  --text:#e8ebf2;
-  --text-2:#a8b0c2;
-  --text-3:#8892a6;
+  --text:#f1ede2;
+  --text-2:#c1b9a6;
+  --text-3:#a69c86;
 
   /* 强调与语义色 */
-  --accent:#5b7cfa;
-  --accent-text:#9aafff;
-  --accent-solid:#4565db;
-  --accent-solid-hover:#5271eb;
-  --accent-soft:rgba(91,124,250,.13);
+  --accent:#e5c35e;
+  --accent-text:#f4d878;
+  --accent-solid:#e8ca72;
+  --accent-solid-hover:#f0d98a;
+  --accent-soft:rgba(229,195,94,.13);
+  --accent-line:rgba(229,195,94,.3);
+  --accent-on-solid:#33270b;
   --ok:#3ddc97;
   --ok-soft:rgba(61,220,151,.12);
   --ok-line:rgba(61,220,151,.28);
@@ -58,10 +60,11 @@
 
 :root[data-theme="light"]{
   color-scheme:light;
-  --bg:#f4f5f8;--bg-soft:#fff;--surface:#fff;--surface-2:#f8f9fb;--surface-3:#edf0f6;
-  --line:#e2e5ec;--line-2:#cfd5e0;
-  --text:#181d29;--text-2:#545c6e;--text-3:#687389;
-  --accent:#3d5fe0;--accent-text:#3d5fe0;--accent-solid:#3d5fe0;--accent-solid-hover:#304fc9;--accent-soft:rgba(61,95,224,.09);
+  --bg:#faf9f6;--bg-soft:#fff;--surface:#fff;--surface-2:#fcfbf8;--surface-3:#f4f0e7;
+  --line:#e9e3d7;--line-2:#d8cfbd;
+  --text:#29251d;--text-2:#625b4c;--text-3:#756c5c;
+  --accent:#9a7410;--accent-text:#775807;--accent-solid:#f5d878;--accent-solid-hover:#edca5a;--accent-soft:#fff5cf;
+  --accent-line:#e6d18d;--accent-on-solid:#3e2e08;
   --ok:#0c8051;--ok-soft:rgba(15,157,99,.09);--ok-line:rgba(15,157,99,.24);
   --warn:#98650c;--warn-soft:rgba(180,118,17,.09);--warn-line:rgba(180,118,17,.24);
   --err:#c23635;--err-soft:rgba(207,59,52,.08);--err-line:rgba(207,59,52,.24);
@@ -81,12 +84,12 @@ body{
   text-rendering:optimizeLegibility;
 }
 
-::selection{background:rgba(77,124,255,.35);color:#fff}
+::selection{background:var(--accent-solid);color:var(--accent-on-solid)}
 
 *{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-thumb{background:var(--line-2);border:2px solid var(--bg);border-radius:99px}
-::-webkit-scrollbar-thumb:hover{background:#3a4459}
+::-webkit-scrollbar-thumb:hover{background:var(--text-3)}
 ::-webkit-scrollbar-track{background:transparent}
 
 a{color:var(--accent-text)}
@@ -132,7 +135,7 @@ a{color:var(--accent-text)}
   height:32px;
   border-radius:9px;
   background:var(--accent-soft);
-  border:1px solid rgba(77,124,255,.28);
+  border:1px solid var(--accent-line);
   color:var(--accent-text);
 }
 .brand-mark .ico{width:18px;height:18px}
@@ -590,7 +593,7 @@ td.empty{
 .btn.primary{
   background:var(--accent-solid);
   border-color:var(--accent-solid);
-  color:#fff;
+  color:var(--accent-on-solid);
   font-weight:500;
 }
 .btn.primary:hover{background:var(--accent-solid-hover);border-color:var(--accent-solid-hover)}
@@ -684,7 +687,7 @@ input[type=checkbox]::after{
   transition:transform .18s cubic-bezier(.3,.8,.3,1),background-color .18s ease;
 }
 input[type=checkbox]:checked{background:var(--accent-solid);border-color:var(--accent-solid)}
-input[type=checkbox]:checked::after{transform:translateX(14px);background:#fff}
+input[type=checkbox]:checked::after{transform:translateX(14px);background:var(--accent-on-solid)}
 input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .check{
@@ -858,7 +861,7 @@ code{
   padding:8px 14px;
   border-radius:var(--r-sm);
   background:var(--accent-solid);
-  color:#fff;
+  color:var(--accent-on-solid);
   font-size:13px;
   text-decoration:none;
   transition:top .14s ease;
@@ -1169,13 +1172,11 @@ code{
 @media(max-width:600px){.modal-head,.modal-body{padding:16px}.modal-actions{padding:12px 16px}.login-stepper{gap:4px}.login-stepper span{font-size:11px;padding:5px 6px}.modal .row{gap:7px}}
 
 /* Usage: Sub2API's compact cards, date dropdown, chart tables and record filters. */
-#tab-overview{--usage-accent:#0d9488;--usage-accent-soft:rgba(20,184,166,.1);--surface:#161e2c;--surface-2:#1c2636;--surface-3:#263244;--line:#2b3646;--line-2:#374151;--text:#f3f4f6;--text-2:#d1d5db;--text-3:#9ca3af;--ok:#4ade80;--panel-shadow:0 1px 2px rgba(0,0,0,.05)}
-:root[data-theme="light"] #tab-overview{--surface:#fff;--surface-2:#f9fafb;--surface-3:#f3f4f6;--line:#f0f1f3;--line-2:#e5e7eb;--text:#111827;--text-2:#4b5563;--text-3:#6b7280;--ok:#16a34a}
+#tab-overview{--usage-accent:var(--accent-text);--usage-accent-soft:var(--accent-soft)}
 main:has(#tab-overview.on){padding-top:24px;max-width:none}
-body:has(#tab-overview.on){background:#0b1120;--accent:#14b8a6;--accent-text:#2dd4bf;--accent-solid:#0d9488;--accent-solid-hover:#0f766e;--accent-soft:rgba(20,184,166,.1)}
-:root[data-theme="light"] body:has(#tab-overview.on){background:#f9fafb;--accent-text:#0d9488}
 #tab-overview .btn{height:42px;border-radius:12px;padding:9px 16px;font-size:14px;font-weight:500;gap:8px;background:var(--surface);border-color:var(--line-2);color:var(--text-2);box-shadow:var(--panel-shadow)}
-#tab-overview .btn.primary{background:linear-gradient(to right,#14b8a6,#0d9488);border-color:transparent;color:#fff;box-shadow:0 4px 6px rgba(20,184,166,.15)}
+#tab-overview .btn.primary{background:var(--accent-solid);border-color:var(--accent-solid);color:var(--accent-on-solid)}
+#tab-overview .btn.primary:hover{background:var(--accent-solid-hover);border-color:var(--accent-solid-hover)}
 #tab-overview .btn:disabled{opacity:.45;box-shadow:none}
 #tab-overview input:focus,#tab-overview select:focus{border-color:var(--usage-accent);box-shadow:0 0 0 3px var(--usage-accent-soft)}
 .usage-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
@@ -1283,7 +1284,7 @@ body.admin-locked .app { visibility: hidden; }
 .account-create-steps b{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--surface-3);font-weight:600}
 .account-create-steps i{width:42px;height:1px;background:var(--line-2)}
 .account-create-steps .active{color:var(--text)}
-.account-create-steps .active b{background:var(--accent-solid);color:#fff}
+.account-create-steps .active b{background:var(--accent-solid);color:var(--accent-on-solid)}
 .account-field-label{margin:24px 0 9px;color:var(--text-2);font-size:13px}
 .account-platforms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:var(--surface-2);padding:5px;border-radius:10px}
 .account-platform,.account-method{font:inherit;color:var(--text-2);cursor:pointer;border:1px solid transparent;background:transparent;text-align:left}
@@ -1295,7 +1296,7 @@ body.admin-locked .app { visibility: hidden; }
 .account-method{display:flex;align-items:center;gap:13px;min-height:86px;border-color:var(--line-2);border-radius:9px;padding:17px}
 .account-method.selected{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 .method-symbol{display:grid;place-items:center;flex-shrink:0;width:34px;height:34px;border-radius:9px;background:var(--surface-3);font-size:22px}
-.account-method.selected .method-symbol{background:var(--accent-solid);color:#fff}
+.account-method.selected .method-symbol{background:var(--accent-solid);color:var(--accent-on-solid)}
 .account-method strong{display:block;font-size:14px;color:var(--text);font-weight:500}
 .account-method small{display:block;margin-top:4px;font-size:11px;color:var(--text-3);line-height:1.6}
 .account-choice-hint{margin:20px 0 0}
