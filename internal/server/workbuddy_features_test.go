@@ -276,6 +276,7 @@ func TestWorkBuddyPolicyAcrossProtocols(t *testing.T) {
 }
 func TestSearchCancellationReleasesLease(t *testing.T) {
 	entered := make(chan struct{})
+	upstreamCanceled := make(chan struct{})
 	unblock := make(chan struct{})
 	defer close(unblock)
 	var calls atomic.Int64
@@ -285,6 +286,7 @@ func TestSearchCancellationReleasesLease(t *testing.T) {
 		close(entered)
 		select {
 		case <-r.Context().Done():
+			close(upstreamCanceled)
 		case <-unblock:
 		}
 	})
@@ -297,13 +299,19 @@ func TestSearchCancellationReleasesLease(t *testing.T) {
 	go func() { defer close(done); s.Handler().ServeHTTP(httptest.NewRecorder(), req) }()
 	select {
 	case <-entered:
-	case <-time.After(time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("search did not start")
 	}
 	cancel()
+	// Allow race-instrumented CI scheduling, but require real upstream cancellation.
+	select {
+	case <-upstreamCanceled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("upstream search did not receive cancellation")
+	}
 	select {
 	case <-done:
-	case <-time.After(time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("cancel did not release search")
 	}
 	if s.Store.PoolSnapshot()["wb-cn"].InFlight != 0 || calls.Load() != 1 {

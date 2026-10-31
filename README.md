@@ -8,14 +8,14 @@
 
 **中文** · [English](README_EN.md)
 
-[![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
+[![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](go.mod)
 
-[快速部署](#部署) · [客户端接入](#客户端接入) · [使用文档](#文档) · [提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/develop/) · [贡献者](#贡献者与致谢)
+[快速部署](#部署) · [客户端接入](#客户端接入) · [使用文档](#文档) · [提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/) · [贡献者](#贡献者与致谢)
 
 </div>
 
-> 当前为 `develop` 开发版，支持码道、WorkBuddy 和 Trae CN/SOLO；三平台已有真实账号调用验收，Trae 国际版尚未接入。原码道基线保留在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入见 [多上游说明](docs/MULTI-PROVIDER.md)，实测范围见 [三平台验收记录](docs/acceptance/PARALLEL-MAINTENANCE-2026-10-30.md)。
+> 当前版本支持码道、WorkBuddy 和 Trae CN/SOLO；三平台已有真实账号调用验收，Trae 国际版尚未接入。原码道基线保留在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入见 [多上游说明](docs/MULTI-PROVIDER.md)，实测范围见 [三平台验收记录](docs/acceptance/PARALLEL-MAINTENANCE-2026-10-30.md)。
 
 ## 项目简介
 
@@ -58,7 +58,7 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 需要 Git 和 Go 1.27.3 或更新版本。
 
 ```bash
-git clone --branch develop https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
+git clone --branch main https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
 cd codearts2api-panel
 ./build.sh
 ./start.sh
@@ -87,7 +87,7 @@ CODEARTS_HOST=0.0.0.0 CODEARTS_PORT=10087 ./start.sh
 需要 Docker 和 Compose。
 
 ```bash
-git clone --branch develop https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
+git clone --branch main https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
 cd codearts2api-panel
 cp .env.example .env
 docker compose up -d --build
@@ -227,7 +227,7 @@ node scripts/pi/codearts-compaction.test.mjs
 
 Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查另外需要 Playwright 和浏览器。真实上游验收会消耗账号额度，执行方法见验收文档。
 
-欢迎提交 Issue 和 Pull Request。每次修改的原因、行为变化、测试结果和已知限制写入提交说明；README 维护当前使用方法。规范见 [CONTRIBUTING.md](CONTRIBUTING.md)，历史见 [Git 提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/develop/)。
+欢迎提交 Issue 和 Pull Request。每次修改的原因、行为变化、测试结果和已知限制写入提交说明；README 维护当前使用方法。规范见 [CONTRIBUTING.md](CONTRIBUTING.md)，历史见 [Git 提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/)。
 
 ## 贡献者与致谢
 

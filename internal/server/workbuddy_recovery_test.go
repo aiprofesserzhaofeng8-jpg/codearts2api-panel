@@ -319,7 +319,7 @@ func TestWorkBuddyRecoveryWindowOnlyAdmitsRetry(t *testing.T) {
 			t.Cleanup(func() { waitRetry = old })
 			waitRetry = func(context.Context, time.Duration) error {
 				if expired {
-					ctx.Value(usageContextKey{}).(*usageCapture).started = time.Now().Add(-workBuddyRetryWindow)
+					ctx.Value(usageContextKey{}).(*usageCapture).started = time.Now().Add(-workBuddyRetryWindow - time.Second)
 				}
 				return nil
 			}

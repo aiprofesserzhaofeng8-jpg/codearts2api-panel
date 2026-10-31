@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -219,7 +220,7 @@ func TestGrowthActionsActualExecutionAccountingAndConcurrentDedup(t *testing.T) 
 		t.Fatal("lease leaked")
 	}
 	info, err := os.Stat(s.growthExecutionPath())
-	if err != nil || info.Mode().Perm() != 0600 {
+	if err != nil || (runtime.GOOS != "windows" && info.Mode().Perm() != 0600) {
 		t.Fatal("execution checkpoint not private", info, err)
 	}
 }

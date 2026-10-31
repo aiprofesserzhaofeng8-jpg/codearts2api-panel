@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"sync"
 	"testing"
@@ -66,7 +67,7 @@ func TestUsageJournalRecoversWithoutSnapshot(t *testing.T) {
 		t.Fatal("journal exposed the API key or lost the stable key reference")
 	}
 	info, err := os.Stat(s.usageJournalPath())
-	if err != nil || info.Mode().Perm() != 0o600 {
+	if err != nil || (runtime.GOOS != "windows" && info.Mode().Perm() != 0o600) {
 		t.Fatal("journal must be private")
 	}
 	var disk State
