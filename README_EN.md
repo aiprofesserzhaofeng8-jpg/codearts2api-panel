@@ -15,7 +15,7 @@ Access CodeArts, WorkBuddy, and Trae CN/SOLO accounts through Chat Completions, 
 
 </div>
 
-> This is the `develop` version with native WorkBuddy and Trae CN/SOLO adapters. Trae international accounts are not supported, and live Trae inference has not been validated with an account in this environment. The original CodeArts baseline is pinned at [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0). See [multi-provider setup and verification limits](docs/MULTI-PROVIDER.md). Real WorkBuddy model generation has not yet been validated with an account in this environment.
+> The `develop` version supports CodeArts, WorkBuddy, and Trae CN/SOLO, with real-account inference checks completed across all three providers. Trae international accounts are not supported. The original CodeArts baseline remains at [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0). See [multi-provider setup](docs/MULTI-PROVIDER.md) and the [three-provider acceptance report](docs/acceptance/PARALLEL-MAINTENANCE-2026-10-30.md) for the tested scope.
 
 ## Overview
 
@@ -28,16 +28,28 @@ Run it locally, on a server, or in Docker. The listening address and port are co
 | Feature | Description |
 | --- | --- |
 | Multiple accounts | Staged browser authorization, pasted callbacks, account preview and explicit confirmation, import and deletion |
-| Account scheduling | Least in-flight requests, round robin, or sequential exhaustion; session affinity, concurrency limits, pause, and cooldown |
+| Account scheduling | Least in-flight requests, round robin, or sequential exhaustion; session affinity, configurable concurrency limits, pause, and cooldown |
+| Group routing | Assign accounts to groups and bind API keys to a group for account and model selection |
 | Protocol compatibility | Chat Completions, Responses, and Anthropic Messages, with streaming and tool calls |
 | Administrator access | Password hashing, 8-hour sessions, revocation on logout or password changes, and management audit logs |
 | API keys | Create, disable, delete, reveal, and copy keys; request, token, and USD budgets |
 | Usage tracking | Input, output, and cached tokens; estimated cost, latency, date filters, and pagination |
 | Model configuration | Model catalog, aliases, USD pricing, context recommendations, and summary policies |
 | Summary recovery | Completeness checks, bounded retries, optional fallback models, and automatic installation of Pi's segmented recovery adapter |
+| Provider policies | Independent custom/passthrough system prompts and outbound fingerprint cleanup; native WorkBuddy search, configurable SearXNG for CodeArts/Trae |
+| WorkBuddy growth tasks | Enroll, execute, verify progress, and claim rewards in one batch, with two concurrent account workers and failure protection |
+| Durable usage | Append-only settlement journal and atomic state saves preserve recorded usage and budgets across restarts |
 | Client setup | Launchers for Pi, Codex, and Claude Code that read recommended settings from the gateway |
 
 Upstream charges depend on the account's actual entitlements and credits. The USD price table provides reference API cost estimates, not Huawei credit billing. Token and USD budgets are settled using reported usage, so an individual request can exceed the remaining budget.
+
+## WorkBuddy growth tasks
+
+In the account pool, select **WorkBuddy → Growth tasks → Execute growth tasks**. Supported tasks automatically enroll, execute, verify upstream progress, and claim rewards. Confirmed progress is reused, and claimed tasks are skipped. First adoption requires agreement confirmation. Tasks run sequentially within each account, with up to two accounts in parallel. An uncertain result stops that account's batch until its progress is checked again.
+
+Supported actions include adoption, activity, desktop/web events, templates, appearance, specific experts, expert teams, and skills. Event tasks do not invoke a model; expert and skill tasks make real short model calls, record usage, and may consume credits. The appearance task changes the official account theme. Following the official WeChat account for 24 hours requires the user's own action before refreshing and claiming.
+
+Task availability and rewards come from the upstream account. A real-account check on 2026-10-31 confirmed **18 of 19 tasks claimed**, with only the WeChat follow task remaining. Individual live actions and batch UI regression checks passed; a full batch from scratch on a fresh account has not been verified. See the [usage and maintenance guide](docs/WORKBUDDY-GROWTH.md) and [live acceptance report](docs/acceptance/GROWTH-REMAINING-2026-10-31.md).
 
 ## Deployment
 
@@ -154,6 +166,7 @@ See [Management](docs/MANAGEMENT.md) and [Panel](docs/PANEL.md) for login, crede
 | `POST /v1/chat/completions` | Chat Completions, streaming/non-streaming, and tool calls |
 | `POST /v1/responses`, alias `/responses` | Responses-to-Chat translation |
 | `POST /v1/messages` | Anthropic Messages-to-Chat translation |
+| `POST /v1/search/messages` | Messages-compatible web search using the configured provider backend |
 | `GET /v1/models` | Model catalog and available client configuration recommendations |
 | `GET /v1/client-profile` | Client recommendations for a specified model |
 | `GET /v1/capabilities` | Gateway capabilities and upstream protocol information |
@@ -172,7 +185,7 @@ curl http://127.0.0.1:10087/v1/chat/completions \
 
 Responses support is implemented through protocol translation. Native compaction, WebSocket, `store=true`, and `previous_response_id` are not supported. A model alias does not mean the upstream serves that vendor's actual model. See [Responses compatibility](docs/RESPONSES.md) for supported behavior and tool-call limitations.
 
-For Trae, use **Add Trae** in the account panel, paste the authorization callback or import complete credentials, and select `trae/cn/<config_name>`. See [Trae setup and validation limits](docs/TRAE.md).
+For Trae, use **Add account → Trae CN / SOLO** in the account panel, paste the authorization callback or import complete credentials, and select `trae/cn/<config_name>`. See [Trae setup and validation limits](docs/TRAE.md).
 
 ## Client setup
 
@@ -193,7 +206,7 @@ The detailed documents and management interface are currently primarily in Chine
 | Document | Contents |
 | --- | --- |
 | [Panel and account pool](docs/PANEL.md) | Login flow, scheduling, cooldown, and failure handling |
-| [WorkBuddy growth tasks](docs/WORKBUDDY-GROWTH.md) | Read current progress and claim eligible rewards; task execution is not automated |
+| [WorkBuddy growth tasks](docs/WORKBUDDY-GROWTH.md) | Batch enrollment and execution, desktop/web events, expert and skill tasks, and verified reward claims |
 | [Management and budgets](docs/MANAGEMENT.md) | Administrator sessions, audit logs, credential refresh, key budgets, and recovery |
 | [Usage and pricing](docs/USAGE.md) | Token accounting, USD pricing, date filters, and pagination |
 | [Client setup](docs/CLIENTS.md) | Pi, Codex, and Claude Code configuration and limitations |

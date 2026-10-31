@@ -15,11 +15,11 @@
 
 </div>
 
-> 当前为 `develop` 开发版：已加入 WorkBuddy 与 Trae CN/SOLO 原生适配；Trae 国际版尚未接入，真实账号调用待验证。原码道基线固定在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入方法和验收边界见 [多上游说明](docs/MULTI-PROVIDER.md)。
+> 当前为 `develop` 开发版，支持码道、WorkBuddy 和 Trae CN/SOLO；三平台已有真实账号调用验收，Trae 国际版尚未接入。原码道基线保留在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入见 [多上游说明](docs/MULTI-PROVIDER.md)，实测范围见 [三平台验收记录](docs/acceptance/PARALLEL-MAINTENANCE-2026-10-30.md)。
 
 ## 项目简介
 
-CodeArts2API Panel 为个人自用提供码道账号管理、模型请求转发、协议转换与用量统计。服务使用 Go 标准库开发，管理页面嵌入二进制，状态保存在本地 JSON 文件中。
+CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转发、协议转换与用量统计。服务使用 Go 标准库开发，管理页面嵌入二进制，状态保存在本地 JSON 文件中。
 
 支持在本机、服务器或 Docker 中运行，可设置监听地址与端口，也可通过 HTTPS 反向代理提供公网访问。当前采用单进程、单管理员架构，不支持多个实例共享同一状态文件。
 
@@ -28,16 +28,28 @@ CodeArts2API Panel 为个人自用提供码道账号管理、模型请求转发�
 | 功能 | 说明 |
 | --- | --- |
 | 多账号管理 | 浏览器分阶段授权、粘贴回调、预览后确认保存、导入与删除 |
-| 账号池调度 | 最少在途、轮询、顺序耗尽，支持粘性会话、并发限制、暂停与冷却 |
+| 账号池调度 | 最少在途、轮询、顺序耗尽，支持粘性会话、手动设置并发、暂停与冷却 |
+| 分组路由 | 将账号加入分组，API Key 绑定分组，按组选择可用账号与模型 |
 | 协议兼容 | Chat Completions、Responses、Anthropic Messages，支持流式输出和工具调用 |
 | 管理员登录 | 密码哈希、8 小时会话、退出及改密撤销、管理操作审计 |
 | API Key 管理 | 创建、停用、删除、按需显示和复制，以及请求数、Token、USD 预算 |
 | 用量统计 | 输入、输出、缓存 Token、参考费用、耗时、日期筛选和分页 |
 | 模型配置 | 模型目录、别名、USD 价格表、上下文与摘要策略 |
 | 摘要恢复 | 完整性检查、有限重试、可选备用模型；Pi 分段恢复由启动器自动安装 |
+| 平台独立策略 | custom/passthrough 系统提示词、出站指纹清洗；WorkBuddy 原生搜索，CodeArts/Trae 搜索需配置 SearXNG |
+| WorkBuddy 成长任务 | 一键接取、执行、核对进度并领取奖励，支持两个账号并行和失败保护 |
+| 用量持久化 | 追加结算账本与原子状态保存，重启恢复已记录用量和预算 |
 | 客户端接入 | Pi、Codex、Claude Code 启动器，从网关读取推荐配置 |
 
 上游按账号实际权益与积分计费。USD 价格表用于 API 参考估价，不等同于华为积分账单。Token 和 USD 预算按返回用量结算，单次请求仍可能超额。
+
+## WorkBuddy 成长任务
+
+在「账号池」选择 **WorkBuddy → 成长任务 → 执行成长任务**。已接入的任务自动接取、执行、核对进度并领奖；已有进度按差额补足，已领取任务自动跳过。首次领养需确认协议。同一账号逐项串行，最多两个账号并行；未知结果会停止该账号本轮队列，刷新核对后再操作。
+
+支持领养、活跃、桌面/Web 活动、模板、主题、指定专家、专家团与技能任务。事件任务不调用模型，专家和技能任务使用真实短对话并记录用量，可能消耗积分。主题任务会设置官方账号的和平精英主题。公众号任务需本人关注官方公众号满 24 小时，再刷新领取。
+
+任务清单与奖励由上游按账号下发。2026-10-31 的真实账号验收确认 **19 项中已领取 18 项**，剩余为公众号任务；逐项真实验收与批量页面回归均通过，尚未在全新账号上从零一次跑完整批。详见 [使用与维护说明](docs/WORKBUDDY-GROWTH.md) 和 [真实验收报告](docs/acceptance/GROWTH-REMAINING-2026-10-31.md)。
 
 ## 部署
 
@@ -154,6 +166,7 @@ Docker Compose 部署可在 `.env` 中设置 `CODEARTS_ADMIN_PASSWORD`，然后�
 | `POST /v1/chat/completions` | Chat Completions，流式/非流式和工具调用 |
 | `POST /v1/responses`，别名 `/responses` | Responses → Chat 转换 |
 | `POST /v1/messages` | Anthropic Messages → Chat 转换 |
+| `POST /v1/search/messages` | Messages 形态的联网搜索；按平台配置搜索后端 |
 | `GET /v1/models` | 模型目录与可用的客户端推荐配置 |
 | `GET /v1/client-profile` | 指定模型的客户端配置建议 |
 | `GET /v1/capabilities` | 网关能力及上游协议说明 |
