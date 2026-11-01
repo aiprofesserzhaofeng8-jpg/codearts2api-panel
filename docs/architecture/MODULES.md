@@ -2,7 +2,7 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号和凭据代际错误；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端；`gateway.Completions` 执行已选中的普通单次 CodeArts 对话；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号和凭据代际错误；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
@@ -57,6 +57,8 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 
 当前对话边界为使用方 `gateway.ChatSession`：`Chat`、`Stream` 和平台判断的空响应回退条件。`upstream/codearts.Session` 绑定现有不可变凭据指针，并在回调前过滤 CodeArts 业务错误；不选账号、不刷新、不结算。`provider.Adapter` 及 WorkBuddy/Trae 暂保留原接口，不将 CodeArts 凭据序列化后塞进它。普通单次执行已经脱离 HTTP，摘要策略和全局恢复仍由原实现协调。旧 `codearts.AggregateSSE` 只单向委托 `protocol.AggregateSSE`，供既有平台内测试兼容，迁完调用方后删除。
 
+最小 `gateway.StreamTransport` 仅包含 `Stream`；CodeArts 的 `ChatSession` 扩展该能力。WorkBuddy/Trae 用 `upstream.BindStream` 借用已经 Normalize 后的 JSON 凭据及不可变请求标识，不增加凭据解析或序列化；其原适配器只需原有的 `Stream` 方法。`CompleteStream` 保留原先非流式聚合的 32MiB 上限，普通流式仍即时交付。server 只准备该次凭据并调用原提示词编排，再交由 gateway 执行；这些编排及刷新互斥尚未迁出。平台目录、登录、搜索和奖励仍使用原接口，后续按能力迁移。
+
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 
 ## 旧代码迁移表
@@ -66,7 +68,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `main.go` 及其测试 | `cmd/panel`、`app` | 参数与业务初始化分别移动，构建注入版本保持一致 |
 | `server.New`、Provider 注册 | `app` | 已完成依赖装配；server.New 接收依赖，HTTP 运行状态仍归 server |
 | `server.go` 中 HTTP 路由和鉴权入口 | `httpapi` | 先代理现有 handler，再逐步抽出业务 |
-| `server/chat.go` 的重试和请求生命周期 | `gateway` | 已迁出普通单次 CodeArts 执行；全局重试、策略恢复和摘要待迁，保留取消和输出边界 |
+| `server/chat.go` 的重试和请求生命周期 | `gateway` | 三平台普通单次执行已迁出；全局重试、策略恢复和摘要待迁，保留取消和输出边界 |
 | `server/anthropic.go`、`responses.go` | `httpapi/inference` + `protocol` | HTTP 与纯转换分开，避免复制转换器 |
 | `protocol`、`responsescompat` | `protocol` 中清楚命名的实现 | 首批可保留旧包名；来源许可和测试随迁移保留 |
 | `store/pool.go` | `gateway` 准入状态 + `scheduler` 算法 | 先保留旧 Store 原子入口，再迁移锁与状态 |
@@ -74,7 +76,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `registry`、`server/group_model_mapping.go` | `catalog` + `gateway` | 目录、解析、尝试期型号替换分别归位 |
 | `requestpolicy`、`server/request_policy.go` | `policy` + `gateway` | 纯准备留 policy，重试执行留 gateway |
 | `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息已迁出；旧状态编码和条件提交暂留 store，保留代际校验 |
-| `provider`、`codearts`、`workbuddy`、`trae` | `upstream` 父包及各平台子包 | CodeArts 对话包装已实现，其余能力及两平台待迁；禁止重写成熟协议实现 |
+| `provider`、`codearts`、`workbuddy`、`trae` | `upstream` 父包及各平台子包 | 三平台对话边界已接入；原生实现和其余能力待迁，禁止重写成熟协议实现 |
 | `store/usage*`、`pricing`、`budget` | `usage` + `storage` | 结算规则与账本 I/O 分开，预留由准入协调 |
 | `server/growth*`、`claim.go` | `jobs`、平台能力、管理 handler | 任务执行、上游行为与 HTTP 分开 |
 | `server/web/*` | `frontend` | 先接构建再逐页迁移 |

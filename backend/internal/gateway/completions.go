@@ -3,16 +3,23 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 
 	"codearts2api/internal/protocol"
 	"codearts2api/internal/provider"
 )
 
-// ChatSession is a platform transport bound to an immutable credential generation.
-// It does not select accounts, refresh, apply policy, retry or settle usage.
-type ChatSession interface {
-	Chat(context.Context, string, []byte) ([]byte, error)
+// StreamTransport is the minimal inference contract. Stream-only platforms do
+// not need to implement a synthetic non-streaming operation or fallback rule.
+type StreamTransport interface {
 	Stream(context.Context, string, []byte, func([]byte) error) error
+}
+
+// ChatSession adds native non-streaming support to a bound transport.
+// Neither contract selects accounts, refreshes, applies policy or retries.
+type ChatSession interface {
+	StreamTransport
+	Chat(context.Context, string, []byte) ([]byte, error)
 	NeedsStreamFallback(error) bool
 }
 
@@ -54,8 +61,23 @@ func (e *Completions) aggregate(ctx context.Context, session ChatSession, model 
 	if err != nil {
 		return nil, err
 	}
+	return e.collectStream(ctx, session, model, streamBody, observer, 0)
+}
+
+// CompleteStream keeps the existing 32 MiB aggregate limit of stream-only
+// providers. Native Chat fallback retains its original independent behavior.
+func (e *Completions) CompleteStream(ctx context.Context, session StreamTransport, model string, body []byte, observer Observer) ([]byte, error) {
+	return e.collectStream(ctx, session, model, body, observer, 32<<20)
+}
+
+func (e *Completions) collectStream(ctx context.Context, session StreamTransport, model string, body []byte, observer Observer, limit int) ([]byte, error) {
 	var chunks [][]byte
-	err = e.Stream(ctx, session, model, streamBody, observer, func(chunk []byte) error {
+	size := 0
+	err := e.Stream(ctx, session, model, body, observer, func(chunk []byte) error {
+		size += len(chunk)
+		if limit > 0 && size > limit {
+			return fmt.Errorf("上游响应超过 %d MiB", limit>>20)
+		}
 		chunks = append(chunks, append([]byte(nil), chunk...))
 		return nil
 	})
@@ -65,7 +87,7 @@ func (e *Completions) aggregate(ctx context.Context, session ChatSession, model 
 	return protocol.AggregateSSE(chunks)
 }
 
-func (e *Completions) Stream(ctx context.Context, session ChatSession, model string, body []byte, observer Observer, onChunk func([]byte) error) error {
+func (e *Completions) Stream(ctx context.Context, session StreamTransport, model string, body []byte, observer Observer, onChunk func([]byte) error) error {
 	return session.Stream(ctx, model, body, func(chunk []byte) error {
 		observer.Observe()
 		observer.Usage(ctx, chunk)

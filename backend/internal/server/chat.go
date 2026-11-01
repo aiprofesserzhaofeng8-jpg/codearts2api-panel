@@ -222,20 +222,7 @@ func (s *Server) chatOnce(ctx context.Context, acct *accounts.Account, model reg
 		}
 	}
 	if acct.ProviderID() != provider.CodeArts {
-		var chunks [][]byte
-		size := 0
-		err := s.streamProvider(ctx, acct, model, body, func(b []byte) error {
-			size += len(b)
-			if size > 32<<20 {
-				return fmt.Errorf("上游响应超过 32 MiB")
-			}
-			chunks = append(chunks, append([]byte(nil), b...))
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		return protocol.AggregateSSE(chunks)
+		return s.chatProvider(ctx, acct, model, body)
 	}
 
 	startAttempt(ctx, acct, model.ID)

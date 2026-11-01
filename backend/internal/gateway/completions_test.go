@@ -140,3 +140,74 @@ func TestStreamDeliversImmediatelyAndStopsOnConsumerError(t *testing.T) {
 		t.Fatal("consumer error changed")
 	}
 }
+
+func TestCompleteStreamKeepsBodyAndCopiesBorrowedToolChunks(t *testing.T) {
+	body := []byte(` {"stream":false,"future":9007199254740993,"stream_options":{"future":true}} `)
+	buffer := make([]byte, 512)
+	calls, observed, usage := 0, 0, 0
+	session := fixtureSession{stream: func(_ context.Context, model string, got []byte, next func([]byte) error) error {
+		calls++
+		if model != "workbuddy/cn/physical" || !bytes.Equal(body, got) {
+			t.Fatal("stream-only aggregation rewrote request fields")
+		}
+		for _, raw := range []string{
+			`{"id":"same","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"tool","type":"function","function":{"name":"read","arguments":"{\"id\":"}}]}}]}`,
+			`{"id":"same","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"9007199254740993}"}}]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3,"completion_tokens":2}}`,
+		} {
+			n := copy(buffer, raw)
+			if err := next(buffer[:n]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}}
+	got, err := (&Completions{}).CompleteStream(t.Context(), session, "workbuddy/cn/physical", body, Observer{
+		Observe: func() { observed++ }, Usage: func(context.Context, []byte) { usage++ },
+	})
+	if err != nil || calls != 1 || observed != 2 || usage != 2 || !strings.Contains(string(got), `\"id\":9007199254740993`) || !strings.Contains(string(got), `"finish_reason":"tool_calls"`) {
+		t.Fatalf("tool aggregation/accounting changed: %v %s", err, got)
+	}
+}
+
+func TestCompleteStreamFailureCountsPartialUsageWithoutReplay(t *testing.T) {
+	for _, failure := range []error{context.Canceled, context.DeadlineExceeded, &provider.Error{Status: 400, ContentBlocked: true, Message: "blocked"}} {
+		calls, observed, usage := 0, 0, 0
+		session := fixtureSession{stream: func(_ context.Context, _ string, _ []byte, next func([]byte) error) error {
+			calls++
+			if err := next([]byte(`{"choices":[{"delta":{"content":"partial"}}],"usage":{"prompt_tokens":3}}`)); err != nil {
+				return err
+			}
+			return failure
+		}}
+		got, err := (&Completions{}).CompleteStream(t.Context(), session, "trae/cn/physical", nil, Observer{
+			Observe: func() { observed++ }, Usage: func(context.Context, []byte) { usage++ },
+		})
+		if err != failure || got != nil || calls != 1 || usage != 1 || observed != 1 {
+			t.Fatal("partial output replayed/returned or usage/observation lost")
+		}
+	}
+}
+
+func TestCompleteStreamRetains32MiBLimitAndCountsRejectedChunk(t *testing.T) {
+	chunk := make([]byte, 1<<20)
+	observed, usage, calls := 0, 0, 0
+	session := fixtureSession{stream: func(_ context.Context, _ string, _ []byte, next func([]byte) error) error {
+		calls++
+		for i := range 33 {
+			if err := next(chunk); err != nil {
+				if i != 32 {
+					t.Fatal("aggregate stopped below its existing limit")
+				}
+				return err
+			}
+		}
+		t.Fatal("aggregate did not stop at its existing limit")
+		return nil
+	}}
+	got, err := (&Completions{}).CompleteStream(t.Context(), session, "workbuddy/cn/physical", nil, Observer{
+		Observe: func() { observed++ }, Usage: func(context.Context, []byte) { usage++ },
+	})
+	if err == nil || err.Error() != "上游响应超过 32 MiB" || got != nil || calls != 1 || observed != 33 || usage != 33 {
+		t.Fatal("size failure changed, replayed or lost accounting", err)
+	}
+}

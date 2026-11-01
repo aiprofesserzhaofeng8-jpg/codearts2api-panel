@@ -1,0 +1,499 @@
+{
+  "stage": "structure-m3-3",
+  "date": "2026-11-01",
+  "baseline": "9f4b100",
+  "version": "0.3.0-structure-m3.3",
+  "scope": [
+    "WorkBuddy and Trae selected stream attempt binding",
+    "HTTP-independent stream execution and bounded non-stream aggregation",
+    "unchanged native platform protocols and web resources"
+  ],
+  "checks": {
+    "make_check": "passed",
+    "race": {
+      "status": "passed",
+      "tested_packages": 17,
+      "server_seconds": 294.723
+    },
+    "windows_vet": "passed",
+    "windows_amd64_crossbuild": "passed",
+    "windows_execution": "not run",
+    "linux_build": "passed",
+    "docker_build": "passed",
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001"
+      }
+    ],
+    "browser": [
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      }
+    ],
+    "launcher_tests": 9,
+    "pi": "passed",
+    "pinned_sub2api_original_tests": "not rerun; converter sources unchanged; project protocol regression passed",
+    "boundaries": {
+      "passed": true,
+      "native_platform_and_web_files_identical": true,
+      "direct_imports": {
+        "codearts2api/internal/gateway": [
+          "codearts2api/internal/protocol",
+          "codearts2api/internal/provider",
+          "context",
+          "fmt"
+        ],
+        "codearts2api/internal/upstream": [
+          "codearts2api/internal/provider",
+          "context",
+          "encoding/json"
+        ],
+        "codearts2api/internal/upstream/codearts": [
+          "codearts2api/internal/codearts",
+          "context"
+        ],
+        "codearts2api/internal/workbuddy": [
+          "bufio",
+          "bytes",
+          "codearts2api/internal/provider",
+          "context",
+          "crypto/rand",
+          "crypto/sha256",
+          "encoding/hex",
+          "encoding/json",
+          "fmt",
+          "io",
+          "net/http",
+          "net/url",
+          "strconv",
+          "strings",
+          "time",
+          "unicode/utf8"
+        ],
+        "codearts2api/internal/trae": [
+          "bufio",
+          "bytes",
+          "codearts2api/internal/provider",
+          "codearts2api/internal/requestpolicy",
+          "context",
+          "crypto/rand",
+          "crypto/sha256",
+          "crypto/subtle",
+          "encoding/base64",
+          "encoding/hex",
+          "encoding/json",
+          "fmt",
+          "io",
+          "net/http",
+          "net/url",
+          "os",
+          "path/filepath",
+          "regexp",
+          "sort",
+          "strconv",
+          "strings",
+          "sync",
+          "time"
+        ]
+      }
+    }
+  },
+  "real_upstreams": {
+    "successful_checks": [
+      {
+        "case": "codearts/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.127
+      },
+      {
+        "case": "codearts/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.984
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.937
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 2.126
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.536
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.337
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "trae/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "successful_generation_requests": 10,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted_on_exit": true,
+    "scope_limit": "Chat Completions buffered/stream on all three providers, two-request tool round trips on WorkBuddy and Trae; no full CLI application acceptance"
+  },
+  "performance": {
+    "baseline": "9f4b100",
+    "identical_fixture_and_native_platform_sources": true,
+    "initial_default_cpu_run": {
+      "capacity_rounds": 3,
+      "benchmark_rounds": 5,
+      "latencies": [
+        {
+          "provider": "workbuddy",
+          "stream": false,
+          "p95_median_ms": {
+            "before": 26.901,
+            "after": 27.95
+          },
+          "change_percent": 3.9
+        },
+        {
+          "provider": "workbuddy",
+          "stream": true,
+          "p95_median_ms": {
+            "before": 26.727,
+            "after": 31.694
+          },
+          "change_percent": 18.58
+        },
+        {
+          "provider": "trae",
+          "stream": false,
+          "p95_median_ms": {
+            "before": 27.277,
+            "after": 30.843
+          },
+          "change_percent": 13.07
+        },
+        {
+          "provider": "trae",
+          "stream": true,
+          "p95_median_ms": {
+            "before": 28.95,
+            "after": 26.899
+          },
+          "change_percent": -7.08
+        }
+      ],
+      "benchmarks": [
+        {
+          "benchmark": "BenchmarkGatewayStreamTiming",
+          "before": {
+            "ns_op": 1070358.0,
+            "bytes_op": 147085,
+            "allocs_op": 1116
+          },
+          "after": {
+            "ns_op": 1064014.0,
+            "bytes_op": 146525,
+            "allocs_op": 1115
+          },
+          "change_percent": -0.59
+        },
+        {
+          "benchmark": "BenchmarkMappedResponseModel",
+          "before": {
+            "ns_op": 2992.0,
+            "bytes_op": 932,
+            "allocs_op": 20
+          },
+          "after": {
+            "ns_op": 3180.0,
+            "bytes_op": 932,
+            "allocs_op": 20
+          },
+          "change_percent": 6.28
+        },
+        {
+          "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+          "before": {
+            "ns_op": 2571957.0,
+            "bytes_op": 649910,
+            "allocs_op": 14160
+          },
+          "after": {
+            "ns_op": 2391276.0,
+            "bytes_op": 650193,
+            "allocs_op": 14161
+          },
+          "change_percent": -7.03
+        },
+        {
+          "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+          "before": {
+            "ns_op": 2593721.0,
+            "bytes_op": 693598,
+            "allocs_op": 14119
+          },
+          "after": {
+            "ns_op": 2670949.0,
+            "bytes_op": 693629,
+            "allocs_op": 14119
+          },
+          "change_percent": 2.98
+        },
+        {
+          "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+          "before": {
+            "ns_op": 1548692.0,
+            "bytes_op": 268638,
+            "allocs_op": 3128
+          },
+          "after": {
+            "ns_op": 1524824.0,
+            "bytes_op": 268502,
+            "allocs_op": 3129
+          },
+          "change_percent": -1.54
+        },
+        {
+          "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+          "before": {
+            "ns_op": 1556338.0,
+            "bytes_op": 279360,
+            "allocs_op": 3088
+          },
+          "after": {
+            "ns_op": 1618683.0,
+            "bytes_op": 279725,
+            "allocs_op": 3088
+          },
+          "change_percent": 4.01
+        }
+      ],
+      "assessment": "large variance; initial results insufficient to establish a regression or a pass"
+    },
+    "controlled_recheck": {
+      "baseline": "9f4b100",
+      "cpu_affinity": [
+        0,
+        2
+      ],
+      "gomaxprocs": 2,
+      "capacity_rounds": 7,
+      "benchmark_rounds": 5
+    },
+    "fixture": {
+      "requests_per_case_per_round": 40,
+      "concurrency": 2,
+      "upstream_delay_ms": 20,
+      "both_http_hops_use_sockets": true
+    },
+    "latencies": [
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "p95_median_ms": {
+          "before": 23.44,
+          "after": 23.752
+        },
+        "change_percent": 1.33
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "p95_median_ms": {
+          "before": 23.303,
+          "after": 23.125
+        },
+        "change_percent": -0.76
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "p95_median_ms": {
+          "before": 22.91,
+          "after": 23.145
+        },
+        "change_percent": 1.03
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "p95_median_ms": {
+          "before": 23.025,
+          "after": 23.065
+        },
+        "change_percent": 0.17
+      }
+    ],
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 2362.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 2382.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "change_percent": 0.85
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 1423924.0,
+          "bytes_op": 646140,
+          "allocs_op": 14148
+        },
+        "after": {
+          "ns_op": 1409931.0,
+          "bytes_op": 646301,
+          "allocs_op": 14149
+        },
+        "change_percent": -0.98
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1430740.0,
+          "bytes_op": 688213,
+          "allocs_op": 14104
+        },
+        "after": {
+          "ns_op": 1431227.0,
+          "bytes_op": 688281,
+          "allocs_op": 14104
+        },
+        "change_percent": 0.03
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 967800.0,
+          "bytes_op": 264382,
+          "allocs_op": 3123
+        },
+        "after": {
+          "ns_op": 970185.0,
+          "bytes_op": 264345,
+          "allocs_op": 3124
+        },
+        "change_percent": 0.25
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 976085.0,
+          "bytes_op": 274509,
+          "allocs_op": 3082
+        },
+        "after": {
+          "ns_op": 987015.0,
+          "bytes_op": 275083,
+          "allocs_op": 3083
+        },
+        "change_percent": 1.12
+      }
+    ],
+    "controlled_checks": {
+      "all_requests_succeeded": true,
+      "calls_equal_requests": true,
+      "peak_concurrency": 2,
+      "remaining_leases": 0
+    },
+    "assessment": "No stable regression above 5% observed in controlled fixture; initial large differences were not reproduced; no universal zero-overhead claim"
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.3",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 8,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "5b101cef5582f840e1681bd9e45c4686a710c973549b30067660d3a90f9c6c90",
+    "cloud_modified": false,
+    "after_catalog_initialization": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  },
+  "remaining": [
+    "request policy recovery and global retry/cancellation/timeout orchestration",
+    "summary orchestration",
+    "credential acquisition and refresh ownership",
+    "management business and process lifecycle separation",
+    "M4 frontend; M5 admission/storage/ledger; M6 product features; M7 on demand"
+  ]
+}
