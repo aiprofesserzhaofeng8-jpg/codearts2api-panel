@@ -23,7 +23,7 @@ func BenchmarkNonStreamingCodeArtsOnce(b *testing.B) {
 				b.Fatal(err)
 			}
 			body := `{"choices":[{"message":{"content":"` + strings.Repeat("x", size) + `"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":1}}`
-			s := &Server{Store: st, Up: codearts.NewClient()}
+			s := attachChatExecution(&Server{Store: st, Up: codearts.NewClient()})
 			s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 				return nonJSONResponse(r, body), nil
 			})}

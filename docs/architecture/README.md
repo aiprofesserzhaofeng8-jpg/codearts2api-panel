@@ -1,12 +1,14 @@
 # 项目结构设计 v1
 
-日期：2026-11-01。状态：**M1/M2 已完成，M3 第一批已落地，后续批次及 M4–M7 待实施**。
+日期：2026-11-01。状态：**M1/M2 已完成，M3 第一、二批已落地，后续批次及 M4–M7 待实施**。
 
 本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。Vue 前端、业务模块拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
 
 已建立 `AGENTS.md` 和 `deploy/` 补充示例；当前未创建独立 `frontend/`。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
 
 工程布局、产物与本机更新结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)。中立账号与依赖装配见 [M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)。
+
+CodeArts 对话适配包装、普通单次执行与协议聚合见 [M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)。这两批尚未完成整个 HTTP/业务分离。
 
 ## 设计决策
 
@@ -32,6 +34,7 @@
 - [Store](../../backend/internal/store/store.go) 同时管理持久化、调度和预算；[选号入口](../../backend/internal/store/pool.go) 已在同一临界区复核权限、选择实际型号和占用账号并发。
 - 通用账号已迁入 [accounts](../../backend/internal/accounts/account.go)，仅依赖标准库。旧 `session` 字段通过不透明只读接口保留，由 [兼容编码器](../../backend/internal/store/account_codec.go) 在加载状态时还原 CodeArts 会话，保持 schema 6 和代际指针。
 - [app.Build](../../backend/internal/app/app.go) 创建平台客户端、注册 WorkBuddy/Trae 并连接刷新提交回调；Server 接收明确依赖，不再负责创建和注册平台客户端。进程生命周期暂留在 main。
+- [gateway.Completions](../../backend/internal/gateway/completions.go) 执行已授权、已选号的单次 CodeArts 对话，借助 [CodeArts 适配包装](../../backend/internal/upstream/codearts/adapter.go) 调用既有签名客户端；普通流式即时回调，非流式保留原空响应回退。摘要和全局重试仍在 server，准入仍在 Store。
 - [平台接口](../../backend/internal/provider/provider.go) 已存在；搜索、奖励、成长任务采用可选能力接口，可以继续利用。
 - [协议转换](../../backend/internal/protocol/anthropic.go)、[Responses 兼容](../../backend/internal/responsescompat/chatcompletions_responses_bridge.go)、[提示词处理](../../backend/internal/requestpolicy/request_policy.go) 已有可复用边界。
 - [console.js](../../backend/internal/server/web/console.js) 集中多个管理功能；[web.go](../../backend/internal/server/web.go) 将 HTML、JS、CSS 编入二进制。

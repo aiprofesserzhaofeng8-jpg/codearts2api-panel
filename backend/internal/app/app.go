@@ -7,11 +7,13 @@ import (
 	"log"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/server"
 	"codearts2api/internal/store"
 	"codearts2api/internal/trae"
+	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/websearch"
 	"codearts2api/internal/workbuddy"
 )
@@ -33,8 +35,10 @@ func Build(st *store.Store) (*server.Server, error) {
 	credentials.Latest = st.Account
 	credentials.Commit = st.CommitAccountSession
 	credentials.Logf = log.Printf
+	models := registry.New()
 	return server.New(st, server.Dependencies{
+		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: codearts.NewLoginManager(up),
-		Providers: adapters, Reg: registry.New(), Search: websearch.New(),
+		Providers: adapters, Reg: models, Search: websearch.New(),
 	}), nil
 }

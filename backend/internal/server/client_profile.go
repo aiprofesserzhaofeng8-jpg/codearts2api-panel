@@ -2,6 +2,7 @@ package server
 
 import (
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/protocol"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	"encoding/json"
@@ -196,7 +197,7 @@ func adaptSummary(body []byte, p store.ModelPolicy, retry bool) ([]byte, error) 
 	delete(req, "max_completion_tokens")
 	req["messages"], _ = json.Marshal(messages)
 	req["stream"] = json.RawMessage("true")
-	return requestStreamUsage(mustJSON(req))
+	return protocol.RequestStreamUsage(mustJSON(req))
 }
 func mustJSON(v any) []byte { b, _ := json.Marshal(v); return b }
 func adaptClientRequest(body []byte, model string) ([]byte, error) {

@@ -96,10 +96,7 @@ func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, mode
 		textChars := 0
 		toolCall := false
 		size := 0
-		err = s.Up.ChatStream(ctx, sess, target.ID, request, func(raw []byte) error {
-			if msg, status, bad := codearts.IsUpstreamBusinessError(raw); bad {
-				return codearts.UpstreamBusinessError(status, msg)
-			}
+		err = s.CodeArts.Bind(sess).Stream(ctx, target.ID, request, func(raw []byte) error {
 			var chunk struct {
 				Choices []struct {
 					Delta struct {

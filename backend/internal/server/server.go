@@ -19,10 +19,12 @@ import (
 
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
+	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/websearch"
 )
 
@@ -41,6 +43,8 @@ type Server struct {
 	responsesReasoning responsesReasoningCache
 	localPanelToken    string
 	Store              *store.Store
+	CodeArts           *codeartsup.Adapter
+	Completions        *gateway.Completions
 	Up                 *codearts.Client
 	Cred               *codearts.Manager
 	Reg                *registry.Registry
@@ -64,17 +68,20 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
-	Up        *codearts.Client
-	Cred      *codearts.Manager
-	Logins    *codearts.LoginManager
-	Providers *provider.Registry
-	Reg       *registry.Registry
-	Search    *websearch.Client
+	CodeArts    *codeartsup.Adapter
+	Completions *gateway.Completions
+	Up          *codearts.Client
+	Cred        *codearts.Manager
+	Logins      *codearts.LoginManager
+	Providers   *provider.Registry
+	Reg         *registry.Registry
+	Search      *websearch.Client
 }
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
 	s := &Server{Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
 	s.localPanelToken = rand.Text()
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)

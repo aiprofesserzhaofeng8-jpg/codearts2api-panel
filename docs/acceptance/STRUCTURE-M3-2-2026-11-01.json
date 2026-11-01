@@ -1,0 +1,665 @@
+{
+  "stage": "structure-m3-2",
+  "date": "2026-11-01",
+  "baseline": "183bb14",
+  "version": "0.3.0-structure-m3.2",
+  "scope": [
+    "native CodeArts chat adapter",
+    "HTTP-independent selected-attempt executor",
+    "pure SSE aggregation and stream request options"
+  ],
+  "checks": {
+    "make_check": "passed",
+    "race": {
+      "status": "passed",
+      "tested_packages": 16,
+      "server_seconds": 291.493
+    },
+    "windows_vet": "passed",
+    "windows_amd64_crossbuild": "passed",
+    "windows_execution": "not run",
+    "linux_build": "passed",
+    "docker_build": "passed",
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001"
+      }
+    ],
+    "browser": [
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      }
+    ],
+    "launcher_tests": 9,
+    "pi": "passed",
+    "pinned_sub2api": {
+      "status": "passed",
+      "revision": "ba81c7fd758e425d67f856d601147ef0c5263d3f"
+    },
+    "boundaries": {
+      "passed": true,
+      "direct_imports": {
+        "codearts2api/internal/gateway": [
+          "codearts2api/internal/protocol",
+          "codearts2api/internal/provider",
+          "context"
+        ],
+        "codearts2api/internal/upstream/codearts": [
+          "codearts2api/internal/codearts",
+          "context"
+        ],
+        "codearts2api/internal/protocol": [
+          "bytes",
+          "crypto/rand",
+          "encoding/hex",
+          "encoding/json",
+          "fmt",
+          "sort",
+          "strings"
+        ]
+      }
+    }
+  },
+  "real_upstreams": {
+    "successful_checks": [
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.82
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.791
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.624
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.2
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "codearts/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.702
+      },
+      {
+        "case": "codearts/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.993
+      },
+      {
+        "case": "codearts/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "successful_generation_requests": 10,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified_by_acceptance": false,
+    "isolated_copies_removed": true,
+    "before_fresh_login": {
+      "codearts_sessions_expired": 10,
+      "current_and_m3_1_control": "both returned HTTP 502 with no available account",
+      "status": "subsequently passed with fresh credentials"
+    }
+  },
+  "performance": {
+    "baseline": "183bb14",
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkModelSelection/legacy",
+        "before": {
+          "ns": 1744.0,
+          "bytes": 1224,
+          "allocs": 10
+        },
+        "after": {
+          "ns": 1864.0,
+          "bytes": 1224,
+          "allocs": 10
+        },
+        "change_percent": 6.88
+      },
+      {
+        "benchmark": "BenchmarkModelSelection/raw_in_mapped_group",
+        "before": {
+          "ns": 1922.0,
+          "bytes": 1288,
+          "allocs": 12
+        },
+        "after": {
+          "ns": 2021.0,
+          "bytes": 1288,
+          "allocs": 12
+        },
+        "change_percent": 5.15
+      },
+      {
+        "benchmark": "BenchmarkModelSelection/mapped",
+        "before": {
+          "ns": 1859.0,
+          "bytes": 1288,
+          "allocs": 12
+        },
+        "after": {
+          "ns": 1740.0,
+          "bytes": 1288,
+          "allocs": 12
+        },
+        "change_percent": -6.4
+      },
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns": 1023714.0,
+          "bytes": 147163,
+          "allocs": 1116
+        },
+        "after": {
+          "ns": 1038907.0,
+          "bytes": 146524,
+          "allocs": 1115
+        },
+        "change_percent": 1.48
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns": 3314.0,
+          "bytes": 932,
+          "allocs": 20
+        },
+        "after": {
+          "ns": 3148.0,
+          "bytes": 932,
+          "allocs": 20
+        },
+        "change_percent": -5.01
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns": 36872.0,
+          "bytes": 19795,
+          "allocs": 141
+        },
+        "after": {
+          "ns": 35890.0,
+          "bytes": 19808,
+          "allocs": 142
+        },
+        "change_percent": -2.66
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns": 4428383.0,
+          "bytes": 2256294,
+          "allocs": 163
+        },
+        "after": {
+          "ns": 4330304.0,
+          "bytes": 2256302,
+          "allocs": 164
+        },
+        "change_percent": -2.21
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns": 16546405.0,
+          "bytes": 17092264,
+          "allocs": 169
+        },
+        "after": {
+          "ns": 16827721.0,
+          "bytes": 17093128,
+          "allocs": 171
+        },
+        "change_percent": 1.7
+      }
+    ],
+    "capacity": {
+      "before": [
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 625608,
+          "p95_ms": 22.497,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 366136,
+          "p95_ms": 22.293,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 164504,
+          "p95_ms": 22.644,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        }
+      ],
+      "after": [
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 581144,
+          "p95_ms": 22.47,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 198208,
+          "p95_ms": 22.33,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 154840,
+          "p95_ms": 22.559,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        }
+      ]
+    },
+    "p95_median_ms": {
+      "before": 22.497,
+      "after": 22.47
+    },
+    "p95_change_percent": -0.12
+  },
+  "performance_recheck": {
+    "baseline": "183bb14",
+    "rounds": 5,
+    "comparison": [
+      {
+        "benchmark": "BenchmarkModelSelection/legacy",
+        "before": {
+          "ns_op": 1710.0,
+          "bytes_op": 1224,
+          "allocs_op": 10
+        },
+        "after": {
+          "ns_op": 1744.0,
+          "bytes_op": 1224,
+          "allocs_op": 10
+        },
+        "change_percent": 1.99
+      },
+      {
+        "benchmark": "BenchmarkModelSelection/raw_in_mapped_group",
+        "before": {
+          "ns_op": 1755.0,
+          "bytes_op": 1288,
+          "allocs_op": 12
+        },
+        "after": {
+          "ns_op": 1770.0,
+          "bytes_op": 1288,
+          "allocs_op": 12
+        },
+        "change_percent": 0.85
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 34899.0,
+          "bytes_op": 19775,
+          "allocs_op": 141
+        },
+        "after": {
+          "ns_op": 35926.0,
+          "bytes_op": 19791,
+          "allocs_op": 142
+        },
+        "change_percent": 2.94
+      }
+    ],
+    "rows": [
+      {
+        "round": 0,
+        "version": "before",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1710.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1752.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1673.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1781.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1848.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1706.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1712.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1876.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1713.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1755.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1684.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1766.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1768.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1770.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1628.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1720.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1549.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1851.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "name": "BenchmarkModelSelection/legacy",
+        "ns_op": 1744.0,
+        "bytes_op": 1224,
+        "allocs_op": 10
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "name": "BenchmarkModelSelection/raw_in_mapped_group",
+        "ns_op": 1783.0,
+        "bytes_op": 1288,
+        "allocs_op": 12
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 34463.0,
+        "bytes_op": 19773,
+        "allocs_op": 141
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 35926.0,
+        "bytes_op": 19791,
+        "allocs_op": 142
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 36678.0,
+        "bytes_op": 19789,
+        "allocs_op": 142
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 36904.0,
+        "bytes_op": 19775,
+        "allocs_op": 141
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 34899.0,
+        "bytes_op": 19775,
+        "allocs_op": 141
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 32416.0,
+        "bytes_op": 19793,
+        "allocs_op": 142
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 36441.0,
+        "bytes_op": 19795,
+        "allocs_op": 142
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 33737.0,
+        "bytes_op": 19778,
+        "allocs_op": 141
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 37186.0,
+        "bytes_op": 19776,
+        "allocs_op": 141
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "name": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "ns_op": 33923.0,
+        "bytes_op": 19791,
+        "allocs_op": 142
+      }
+    ]
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.2",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "after_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "state_changed_top_level_fields": [],
+    "credentials_and_ledger_unchanged": true,
+    "groups_keys_settings_prices_unchanged": true,
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "fd7e3b90e904b480d508d15019492088d06e53c282130f5c4c21fea9e716efcb",
+    "cloud_modified": false
+  },
+  "remaining": [
+    "HTTP handlers, global recovery, summaries and other platform execution still in server",
+    "Store admission locks and ledger remain original implementation",
+    "legacy native client/Manager/signing/SQLite/DPAPI remain in codearts",
+    "independent frontend and later phases not implemented",
+    "existing transient classification cannot recognize TM.00001041 when only error_code contains it and a nonempty message omits it; preserved in this refactor"
+  ]
+}

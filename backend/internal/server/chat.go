@@ -13,6 +13,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/protocol"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
@@ -234,7 +235,7 @@ func (s *Server) chatOnce(ctx context.Context, acct *accounts.Account, model reg
 		if err != nil {
 			return nil, err
 		}
-		return codearts.AggregateSSE(chunks)
+		return protocol.AggregateSSE(chunks)
 	}
 
 	startAttempt(ctx, acct, model.ID)
@@ -258,51 +259,9 @@ func (s *Server) codeartsChatOnce(ctx context.Context, sess *codearts.Session, m
 		if err != nil {
 			return nil, err
 		}
-		return codearts.AggregateSSE(chunks)
+		return protocol.AggregateSSE(chunks)
 	}
-	if model.StreamOnly {
-		return s.aggregateViaStream(ctx, sess, model, body, observe)
-	}
-
-	raw, err := s.Up.Chat(ctx, sess, model.ID, body)
-	if err != nil {
-		if codearts.IsEmptyRejection(err) {
-			s.Reg.MarkStreamOnly(model.ID)
-			if agg, aerr := s.aggregateViaStream(ctx, sess, model, body, observe); aerr == nil {
-				return agg, nil
-			} else {
-				return nil, aerr
-			}
-		}
-		return nil, err
-	}
-	captureUsage(ctx, raw)
-	return raw, nil
-}
-
-// aggregateViaStream 用流式请求取回分片，再在本地聚合成一次性响应。
-func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, observe func()) ([]byte, error) {
-	streamBody, err := rewriteStream(body, true)
-	if err == nil {
-		streamBody, err = requestStreamUsage(streamBody)
-	}
-	if err != nil {
-		return nil, err
-	}
-	var chunks [][]byte
-	err = s.Up.ChatStream(ctx, sess, model.ID, streamBody, func(chunk []byte) error {
-		if msg, status, bad := codearts.IsUpstreamBusinessError(chunk); bad {
-			return codearts.UpstreamBusinessError(status, msg)
-		}
-		observe()
-		captureUsage(ctx, chunk)
-		chunks = append(chunks, append([]byte(nil), chunk...))
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return codearts.AggregateSSE(chunks)
+	return s.Completions.Complete(ctx, s.CodeArts.Bind(sess), model, body, gateway.Observer{Observe: observe, Usage: captureUsage})
 }
 
 // streamOnce 用指定账号发一次流式请求，逐块回调。
@@ -317,7 +276,7 @@ func (s *Server) streamOnce(ctx context.Context, acct *accounts.Account, model r
 	if acct.ProviderID() != provider.CodeArts {
 		return s.streamProvider(ctx, acct, model, body, onChunk)
 	}
-	body, err := requestStreamUsage(body)
+	body, err := protocol.RequestStreamUsage(body)
 	if err != nil {
 		return err
 	}
@@ -344,14 +303,7 @@ func (s *Server) codeartsStreamOnce(ctx context.Context, sess *codearts.Session,
 		}
 		return nil
 	}
-	return s.Up.ChatStream(ctx, sess, model.ID, body, func(chunk []byte) error {
-		if msg, status, bad := codearts.IsUpstreamBusinessError(chunk); bad {
-			return codearts.UpstreamBusinessError(status, msg)
-		}
-		observe()
-		captureUsage(ctx, chunk)
-		return onChunk(chunk)
-	})
+	return s.Completions.Stream(ctx, s.CodeArts.Bind(sess), model.ID, body, gateway.Observer{Observe: observe, Usage: captureUsage}, onChunk)
 }
 
 // 重试相关常量。
@@ -575,20 +527,6 @@ func rewriteModel(body []byte, model string, stream bool) ([]byte, error) {
 		return nil, err
 	}
 	m["model"] = mb
-	sb, err := json.Marshal(stream)
-	if err != nil {
-		return nil, err
-	}
-	m["stream"] = sb
-	return json.Marshal(m)
-}
-
-// rewriteStream 只改写请求体里的 stream 字段。
-func rewriteStream(body []byte, stream bool) ([]byte, error) {
-	var m map[string]json.RawMessage
-	if err := json.Unmarshal(body, &m); err != nil {
-		return nil, err
-	}
 	sb, err := json.Marshal(stream)
 	if err != nil {
 		return nil, err
