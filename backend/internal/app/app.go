@@ -20,6 +20,7 @@ import (
 	"codearts2api/internal/store"
 	"codearts2api/internal/trae"
 	codeartsup "codearts2api/internal/upstream/codearts"
+	"codearts2api/internal/usage"
 	"codearts2api/internal/websearch"
 	"codearts2api/internal/workbuddy"
 )
@@ -45,6 +46,7 @@ func Build(st *store.Store) (*server.Server, error) {
 	models := registry.New()
 	credits := &accounts.Credits{}
 	return server.New(st, server.Dependencies{
+		AdminSessions: &access.AdminSessions{}, Pricing: usage.NewManagement(st),
 		Welfare: jobs.NewWelfare(st),
 		Growth:  jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
 		Credits: credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),

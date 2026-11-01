@@ -1,22 +1,15 @@
 package store
 
 import (
+	"codearts2api/internal/usage"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 )
 
-// Prices are currency units per million tokens, not Huawei credit rates.
-type ModelPrice struct {
-	Currency  string  `json:"currency"`
-	Input     float64 `json:"input"`
-	Output    float64 `json:"output"`
-	Cached    float64 `json:"cached"`
-	Source    string  `json:"source"`
-	UpdatedAt string  `json:"updated_at"`
-}
+// ModelPrice preserves the existing state and public Go compatibility type.
+type ModelPrice = usage.ModelPrice
 type RequestCost struct {
 	Partial  bool       `json:"partial,omitempty"`
 	Currency string     `json:"currency"`
@@ -62,20 +55,6 @@ func (s *Store) costForEntryLocked(e *LogEntry) *RequestCost {
 func defaultPrices() map[string]ModelPrice {
 	return map[string]ModelPrice{"deepseek-v4.1-flash": {Currency: "USD", Input: 0.30, Output: 1.20, Cached: 0.006,
 		Source: "DeepSeek 官方高峰参考价（固定，不自动切换时段） https://api-docs.deepseek.com/quick_start/pricing/", UpdatedAt: "2026-10-26"}}
-}
-func (p ModelPrice) Validate() error {
-	if p.Currency != "USD" {
-		return fmt.Errorf("币种必须为 USD")
-	}
-	for _, n := range []float64{p.Input, p.Output, p.Cached} {
-		if math.IsNaN(n) || math.IsInf(n, 0) || n < 0 || n > 1e6 {
-			return fmt.Errorf("每百万 Token 单价必须在 0 至 1000000 之间")
-		}
-	}
-	if len(p.Source) > 1000 {
-		return fmt.Errorf("价格来源过长")
-	}
-	return nil
 }
 func estimateCost(u TokenUsage, p ModelPrice) *RequestCost {
 	if !u.Known || p.Validate() != nil {

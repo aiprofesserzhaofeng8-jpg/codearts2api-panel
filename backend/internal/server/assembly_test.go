@@ -18,6 +18,7 @@ import (
 	"codearts2api/internal/store"
 	"codearts2api/internal/trae"
 	codeartsup "codearts2api/internal/upstream/codearts"
+	"codearts2api/internal/usage"
 	"codearts2api/internal/websearch"
 	"codearts2api/internal/workbuddy"
 )
@@ -107,6 +108,12 @@ func markModelsFresh(s *Server) {
 }
 
 func attachRewards(s *Server) {
+	if s.AdminSessions == nil {
+		s.AdminSessions = &access.AdminSessions{}
+	}
+	if s.Pricing == nil {
+		s.Pricing = usage.NewManagement(s.Store)
+	}
 	if s.Welfare == nil {
 		s.Welfare = jobs.NewWelfare(s.Store)
 	}

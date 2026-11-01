@@ -1,0 +1,718 @@
+{
+  "milestone": "M3.19",
+  "date": "2026-11-01",
+  "generated_at": "2026-11-01T14:49:02.027362+00:00",
+  "baseline": {
+    "commit": "f30e7385507c77d67563a53a99d344f9febfad69",
+    "runtime_version": "codearts2api 0.3.0-structure-m3.18",
+    "sha256": "9332316861a83fa6b2217f289359fa7a0998cee22abc238b8162eb77c2d233fd",
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  },
+  "scope": [
+    "usage owns ModelPrice, unchanged validation and administrative price coordination; Store retains compatibility alias and original transaction",
+    "access.AdminSessions owns the original digested session registry, mutex, expiry/capacity and revocation",
+    "HTTP preserves cookies, same-origin checks, password-header compatibility, throttling, audit and permissive decoding",
+    "No new inference I/O, locks, caches, background cleanup, token storage, pricing or state migration"
+  ],
+  "source_boundaries": {
+    "changed_server_functions": 6,
+    "constant_time_comparison_identical": true,
+    "inference_authorization_and_budget_bodies_unchanged": true,
+    "price_type_and_validator_identical": true,
+    "server_functions_unchanged": 250,
+    "session_record_and_digest_identical": true,
+    "store_functions_unchanged": 113
+  },
+  "checks": {
+    "make_check": true,
+    "full_go_race": true,
+    "linux_build": true,
+    "windows_vet_and_cross_build": true,
+    "windows_executed": false,
+    "docker_build": true,
+    "binary_and_container": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true,
+        "sessions_revoked_on_restart": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001",
+        "sessions_revoked_on_restart": true
+      }
+    ],
+    "browser_groups": 9,
+    "real_http_configuration_pricing_and_login_browser": true,
+    "launcher_tests": 9,
+    "pi_tests": true,
+    "price_save_failure_rollback_and_historical_snapshot_tests": true,
+    "session_expiry_capacity_eviction_password_binding_revocation_and_concurrency_tests": true
+  },
+  "compatibility": {
+    "baseline": "f30e738",
+    "cases": 40,
+    "all_equal": true,
+    "response_cookie_attributes_price_state_audit_and_call_counts_equal": true,
+    "normalization": [
+      "random token presence and attributes",
+      "eight-hour expiry window",
+      "custom price update timestamps"
+    ],
+    "case_results": [
+      {
+        "case": "login/method",
+        "status": 405,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/method",
+        "status": 405,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/anonymous",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/cross-origin",
+        "status": 403,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/cross-site",
+        "status": 403,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/malformed",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/null",
+        "status": 401,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/oversize",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/wrong",
+        "status": 401,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/anonymous",
+        "status": 401,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/success",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/authenticated",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/read",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/cross-origin",
+        "status": 403,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/malformed",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/null",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/missing-cached",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/empty-model",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/currency-before-length",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/negative",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/too-large",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/source-before-model-length",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/model-length",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/bad-number",
+        "status": 400,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/trim-zero",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/unknown-trailing",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/method",
+        "status": 405,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "logout/cross-site",
+        "status": 403,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "logout/success",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/revoked",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/revoked",
+        "status": 401,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/plain-before-hash",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/hash-upgrade-invalidates",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/hashed",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/hashed",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "session/password-changed",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/password-changed",
+        "status": 401,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/compatibility-header",
+        "status": 200,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "pricing/save-failure-rollback",
+        "status": 500,
+        "equal": true,
+        "upstream_calls": []
+      },
+      {
+        "case": "login/blocked",
+        "status": 429,
+        "equal": true,
+        "upstream_calls": []
+      }
+    ]
+  },
+  "performance": {
+    "rounds": 5,
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "micro_fixture_storage": "/dev/shm; temporary fixtures deleted",
+    "capacity_rows": 90,
+    "capacity_failures": 0,
+    "remaining_leases": 0,
+    "peak_concurrency": 2,
+    "upstream_calls_unchanged": true,
+    "p95_change_percent": [
+      {
+        "provider": "codearts",
+        "stream": false,
+        "retry": false,
+        "change_percent": 2.2
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": false,
+        "change_percent": 0.82
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": true,
+        "change_percent": 0.17
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": false,
+        "change_percent": 0.34
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": true,
+        "change_percent": -0.6
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "retry": false,
+        "change_percent": -1.38
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "retry": false,
+        "change_percent": -5.08
+      },
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "retry": false,
+        "change_percent": 1.55
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "retry": false,
+        "change_percent": 1.8
+      }
+    ],
+    "microbenchmarks": [
+      {
+        "benchmark": "BenchmarkAdminSessionPricingHTTP",
+        "change_percent": 6.42
+      },
+      {
+        "benchmark": "BenchmarkCatalogWarmModels",
+        "change_percent": 9.79
+      },
+      {
+        "benchmark": "BenchmarkCreditsWarmHTTP",
+        "change_percent": 2.71
+      },
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "change_percent": 8.05
+      },
+      {
+        "benchmark": "BenchmarkGrowthClaimedHTTP",
+        "change_percent": 18.59
+      },
+      {
+        "benchmark": "BenchmarkGrowthListHTTP",
+        "change_percent": -1.09
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "change_percent": 2.11
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "change_percent": -2.84
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "change_percent": 3.36
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "change_percent": 1.45
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+        "change_percent": 6.45
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+        "change_percent": -1.24
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+        "change_percent": 1.61
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+        "change_percent": 0.84
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=false",
+        "change_percent": 0.11
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=true",
+        "change_percent": -2.72
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=false",
+        "change_percent": 3.25
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=true",
+        "change_percent": 0.13
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "change_percent": 1.33
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "change_percent": -0.1
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "change_percent": 1.14
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "change_percent": 0.87
+      }
+    ],
+    "initial_above_review_threshold": [
+      {
+        "benchmark": "BenchmarkAdminSessionPricingHTTP",
+        "change_percent": 6.42
+      },
+      {
+        "benchmark": "BenchmarkCatalogWarmModels",
+        "change_percent": 9.79
+      },
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "change_percent": 8.05
+      },
+      {
+        "benchmark": "BenchmarkGrowthClaimedHTTP",
+        "change_percent": 18.59
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+        "change_percent": 6.45
+      }
+    ],
+    "focused_review": {
+      "rounds": 9,
+      "iterations": 20000,
+      "benchmarks": [
+        {
+          "benchmark": "BenchmarkAdminSessionPricingHTTP",
+          "change_percent": 0.89,
+          "before": {
+            "ns_op": 5369.0,
+            "bytes_op": 8947,
+            "allocs_op": 46
+          },
+          "after": {
+            "ns_op": 5417.0,
+            "bytes_op": 8947,
+            "allocs_op": 46
+          }
+        },
+        {
+          "benchmark": "BenchmarkCatalogWarmModels",
+          "change_percent": 0.38,
+          "before": {
+            "ns_op": 7017.0,
+            "bytes_op": 10037,
+            "allocs_op": 77
+          },
+          "after": {
+            "ns_op": 7044.0,
+            "bytes_op": 10037,
+            "allocs_op": 77
+          }
+        },
+        {
+          "benchmark": "BenchmarkGatewayStreamTiming",
+          "change_percent": -0.04,
+          "before": {
+            "ns_op": 311229.0,
+            "bytes_op": 147070,
+            "allocs_op": 1117
+          },
+          "after": {
+            "ns_op": 311109.0,
+            "bytes_op": 147067,
+            "allocs_op": 1117
+          }
+        },
+        {
+          "benchmark": "BenchmarkGrowthClaimedHTTP",
+          "change_percent": 0.5,
+          "before": {
+            "ns_op": 39455.0,
+            "bytes_op": 31109,
+            "allocs_op": 469
+          },
+          "after": {
+            "ns_op": 39652.0,
+            "bytes_op": 31109,
+            "allocs_op": 469
+          }
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+          "change_percent": 0.38,
+          "before": {
+            "ns_op": 121228.0,
+            "bytes_op": 144291,
+            "allocs_op": 511
+          },
+          "after": {
+            "ns_op": 121694.0,
+            "bytes_op": 144293,
+            "allocs_op": 511
+          }
+        }
+      ]
+    },
+    "interpretation": "No stable regression found in bounded simulation. All initial >5% slowdowns retained and reviewed. Real network latency is not guaranteed."
+  },
+  "live_generation": {
+    "checks": [
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.586,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.927,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.26,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.322,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "generation_requests": 6,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "temporary_states_deleted": true
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.19",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "all_root_data_files_identical": {
+      ".multi-provider-migration-check.json": true,
+      "state.json": true,
+      "state.json.usage.jsonl": true,
+      "state.json.access.json": true,
+      "server.pid": true,
+      "state.json.growth.json": true,
+      "state.json.before-usd-20261026-000714.bak": true,
+      "state.pre-management-20261026T070827Z.json.bak": true,
+      "server.log": true,
+      ".trae-deployment-check.json": true,
+      ".local-group-mapping-deployment.json": true
+    },
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "5c40bb36c14bd61cc3bb7af5aca1cd286f98f9bfbbe85c209f68cc5535d0ac61",
+    "cloud_modified": false
+  },
+  "final_checks": {
+    "credential_scan": "passed",
+    "changed_files": 23,
+    "native_and_web_unchanged": true,
+    "boundaries_passed": true,
+    "source_proof": {
+      "changed_server_functions": 6,
+      "constant_time_comparison_identical": true,
+      "inference_authorization_and_budget_bodies_unchanged": true,
+      "price_type_and_validator_identical": true,
+      "server_functions_unchanged": 250,
+      "session_record_and_digest_identical": true,
+      "store_functions_unchanged": 113
+    },
+    "historical_reports_unchanged": true,
+    "local_links": 89,
+    "gofmt": "passed",
+    "diff_check": "passed",
+    "all_root_data_files_identical": {
+      ".multi-provider-migration-check.json": true,
+      "state.json": true,
+      "state.json.usage.jsonl": true,
+      "state.json.access.json": true,
+      "server.pid": true,
+      "state.json.growth.json": true,
+      "state.json.before-usd-20261026-000714.bak": true,
+      "state.pre-management-20261026T070827Z.json.bak": true,
+      "server.log": true,
+      ".trae-deployment-check.json": true,
+      ".local-group-mapping-deployment.json": true
+    },
+    "runtime_hash_matches": true,
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  },
+  "limitations": [
+    "CodeArts credential expired at 2026-11-01T13:09:13.425Z with auto_refresh=false; no real CodeArts generation or credential refresh attempted.",
+    "No real price/configuration/password was changed; management writes tested only in isolated fixtures. Real reward claims and invitations were not submitted.",
+    "Password hashing/recovery, price transaction, historical settlement and admission/ledger ownership stay in Store for later M5.",
+    "M3 still needs application/background lifecycle, remaining boundary review and integrated acceptance."
+  ],
+  "cloud_modified": false,
+  "github_pushed": false,
+  "private_evidence": "artifacts/structure-m3-19/ (ignored; raw contracts, benchmark samples and test logs)"
+}

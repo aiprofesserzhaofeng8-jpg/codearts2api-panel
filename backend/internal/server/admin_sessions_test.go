@@ -75,11 +75,7 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 		t.Fatal("logout did not revoke")
 	}
 	cookie = login()
-	s.adminSessions.mu.Lock()
-	entry := s.adminSessions.tokens[sessionDigest(cookie.Value)]
-	entry.Expires = time.Now().Add(-time.Second)
-	s.adminSessions.tokens[sessionDigest(cookie.Value)] = entry
-	s.adminSessions.mu.Unlock()
+	s.AdminSessions.Issue(cookie.Value, s.Store.Settings().AdminPassword, time.Now().Add(-9*time.Hour))
 	if w := call("GET", "/admin/api/state", "", cookie, ""); w.Code != 401 {
 		t.Fatal("expired session accepted")
 	}

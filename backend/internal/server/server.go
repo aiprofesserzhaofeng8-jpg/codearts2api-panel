@@ -29,6 +29,7 @@ import (
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	codeartsup "codearts2api/internal/upstream/codearts"
+	"codearts2api/internal/usage"
 	"codearts2api/internal/websearch"
 )
 
@@ -48,7 +49,8 @@ type Server struct {
 	ProviderCredentials *accounts.ProviderCredentials
 	ProviderLogins      *accounts.ProviderLogins
 	AllowLocalAdmin     bool
-	adminSessions       adminSessions
+	AdminSessions       *access.AdminSessions
+	Pricing             *usage.Management
 	adminFailures       adminAttempts
 	responsesReasoning  responsesReasoningCache
 	localPanelToken     string
@@ -65,6 +67,8 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	AdminSessions       *access.AdminSessions
+	Pricing             *usage.Management
 	Growth              *jobs.Growth
 	Credits             *accounts.Credits
 	Welfare             *jobs.Welfare
@@ -88,7 +92,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()

@@ -4,37 +4,21 @@ import (
 	"bytes"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/store"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 )
 
 const adminCookie = "codearts_admin_session"
 
-type adminSession struct {
-	Expires         time.Time
-	PasswordVersion string
-}
-type adminSessions struct {
-	mu     sync.Mutex
-	tokens map[string]adminSession
-}
-
-func sessionDigest(v string) string { d := sha256.Sum256([]byte(v)); return hex.EncodeToString(d[:]) }
 func (s *Server) validAdminSession(r *http.Request) bool {
 	cookie, err := r.Cookie(adminCookie)
 	if err != nil {
 		return false
 	}
-	s.adminSessions.mu.Lock()
-	defer s.adminSessions.mu.Unlock()
-	session, ok := s.adminSessions.tokens[sessionDigest(cookie.Value)]
-	return ok && time.Now().Before(session.Expires) && secureEqual(session.PasswordVersion, sessionDigest(s.Store.Settings().AdminPassword))
+	return s.AdminSessions.Valid(cookie.Value, func() string { return s.Store.Settings().AdminPassword })
 }
 func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
@@ -68,29 +52,7 @@ func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 	s.adminFailures.success(r.RemoteAddr)
 	token := codearts.RandomHex(32)
 	now := time.Now()
-	expires := now.Add(8 * time.Hour)
-	s.adminSessions.mu.Lock()
-	if s.adminSessions.tokens == nil {
-		s.adminSessions.tokens = map[string]adminSession{}
-	}
-	for k, v := range s.adminSessions.tokens {
-		if !v.Expires.After(now) {
-			delete(s.adminSessions.tokens, k)
-		}
-	}
-	if len(s.adminSessions.tokens) >= 128 {
-		var oldest string
-		var at time.Time
-		for k, v := range s.adminSessions.tokens {
-			if oldest == "" || v.Expires.Before(at) {
-				oldest = k
-				at = v.Expires
-			}
-		}
-		delete(s.adminSessions.tokens, oldest)
-	}
-	s.adminSessions.tokens[sessionDigest(token)] = adminSession{expires, sessionDigest(password)}
-	s.adminSessions.mu.Unlock()
+	expires := s.AdminSessions.Issue(token, password, now)
 	http.SetCookie(w, &http.Cookie{Name: adminCookie, Value: token, Path: "/", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, MaxAge: 8 * 3600})
 	s.audit(r, "admin_session", "login", 200)
 	writeJSON(w, 200, map[string]any{"ok": true, "expires_at": expires.Unix()})
@@ -107,9 +69,7 @@ func (s *Server) handleAdminLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	authenticated := s.validAdminSession(r)
 	if c, e := r.Cookie(adminCookie); e == nil {
-		s.adminSessions.mu.Lock()
-		delete(s.adminSessions.tokens, sessionDigest(c.Value))
-		s.adminSessions.mu.Unlock()
+		s.AdminSessions.Revoke(c.Value)
 	}
 	http.SetCookie(w, &http.Cookie{Name: adminCookie, Value: "", Path: "/", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, MaxAge: -1})
 	if authenticated {

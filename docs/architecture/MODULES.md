@@ -78,7 +78,7 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 
 `access.Management` 只管理分组与密钥配置协调，经 `ManagementStore` 调用原 Store 事务，并借用当前目录/别名解析函数。原始型号来源必须精确命中目录；白名单沿用别名归一化和未知型号保留行为。更新分组时缺省/null 映射继承旧值，显式空列表清除。密钥引用保留原值、稳定 hash 和旧脱敏值的匹配顺序；管理员认证及明文找回入口仍在 HTTP 层。`APIKey`、`AccountGroup`、`ModelMapping`、`KeyBudget`、`BudgetUsage` 的规范定义归 access，Store 以类型别名兼容 schema 6。原子权限发布、预算预留/重置、准入和账本仍属 Store；管理服务不进入推理路径，不建立权限副本。全局设置/模型策略及认证会话尚未随本批迁移。
 
-`config.Management` 经 `ManagementStore` 借用原设置读取/发布、策略严格保存和状态落盘接口。设置先完成全部校验，再调用原 UpdateSettings，Save 失败继续记日志；HTTP 随后应用原身份头与限流。模型策略借用实时目录/别名，仅接收 ID、平台、地区；保留校验顺序、相同平台/地区备用要求、强制型号约束和 CodeArts 独有摘要保护限制。Settings、ProviderSettings、PoolSettings、ModelPolicy 的规范定义归 config，Store 类型别名保持旧 JSON；原纯校验/默认策略迁移不改变算法。Store.DefaultSettings 中原生常量投影仍在兼容入口，不将 CodeArts 导入 config。价格规则留 M5、目录推荐生成留目录迁移，管理认证会话边界仍待清理。
+`config.Management` 经 `ManagementStore` 借用原设置读取/发布、策略严格保存和状态落盘接口。设置先完成全部校验，再调用原 UpdateSettings，Save 失败继续记日志；HTTP 随后应用原身份头与限流。模型策略借用实时目录/别名，仅接收 ID、平台、地区；保留校验顺序、相同平台/地区备用要求、强制型号约束和 CodeArts 独有摘要保护限制。Settings、ProviderSettings、PoolSettings、ModelPolicy 的规范定义归 config，Store 类型别名保持旧 JSON；原纯校验/默认策略迁移不改变算法。Store.DefaultSettings 中原生常量投影仍在兼容入口，不将 CodeArts 导入 config。价格值/校验与管理协调见 M3.19；计量/预算/账本拆分留 M5，目录推荐生成留目录迁移。
 
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 
@@ -114,3 +114,6 @@ M3.16：积分数量快照归 accounts，不属于 API 美元费用/预算账本
 M3.17：成长编排与检查点归 jobs.Growth，app 装配固定的原 `.growth.json` 路径。HTTP 保留账号重读与凭据入口，付费回调只改变检查点所有者的单向委托；Store 准入和账本仍不拆分。原子检查点实现不是第二个账号 Store，也不能用于普通请求或重复提交未知动作。
 
 M3.18：jobs.Welfare 借用原 Store 选择账号和生成账号选项，不保存调度状态；upstream/codearts 包装活动列表、邀请调用和原生结果投影。HTTP 保留 DTO/方法/默认值/错误码，外部每日状态仍归 Rewards，列表与邀请不扩展彼此的回退规则和平台能力。无新锁、缓存、上游重试或普通推理调用。
+
+
+M3.19：usage.ModelPrice 为规范价格类型，Store 仅保留兼容别名；usage.Management 经原严格 SetPriceAndSave 管理价格，未复制计量、历史快照或保存锁。access.AdminSessions 持原会话摘要表及互斥，HTTP 保留 Cookie、同源、失败限流和审计，密码哈希/恢复事务仍沿用 Store。两者由 app 显式装配，既无新推理调用，也无新清理协程/缓存。
