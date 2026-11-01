@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2 已完成，M3 前十三批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行、全局重试循环及三平台凭据协调、三平台分阶段登录与导入、账号基础管理协调、摘要备用型号准备协调、分组与密钥管理协调；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)、[M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)、[M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)、[M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)、[M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)、[M3 第十批验收](../acceptance/STRUCTURE-M3-10-2026-11-01.md)、[M3 第十一批验收](../acceptance/STRUCTURE-M3-11-2026-11-01.md)、[M3 第十二批验收](../acceptance/STRUCTURE-M3-12-2026-11-01.md)和 [M3 第十三批验收](../acceptance/STRUCTURE-M3-13-2026-11-01.md)。
+状态：**M1/M2 已完成，M3 前十四批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行、全局重试循环及三平台凭据协调、三平台分阶段登录与导入、账号基础管理协调、摘要备用型号准备协调、分组与密钥管理协调、全局配置与模型策略协调；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)、[M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)、[M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)、[M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)、[M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)、[M3 第十批验收](../acceptance/STRUCTURE-M3-10-2026-11-01.md)、[M3 第十一批验收](../acceptance/STRUCTURE-M3-11-2026-11-01.md)、[M3 第十二批验收](../acceptance/STRUCTURE-M3-12-2026-11-01.md)、[M3 第十三批验收](../acceptance/STRUCTURE-M3-13-2026-11-01.md)和 [M3 第十四批验收](../acceptance/STRUCTURE-M3-14-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -77,6 +77,8 @@ M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `
 第十二批将摘要备用型号准备迁入 `gateway.PrepareSummaryAttempt`，纯型号替换与推理控制隔离归 `requestpolicy.PrepareSummaryModel`。server 通过窄数据源投影原始目录、当前强制型号、绑定账号冷却及型号策略，授权仍单向委托既有分组和预算进度入口，不复制权限快照。保持强制型号、目录/平台/地区、冷却、策略、权限/预算、请求准备的顺序；只有准备成功才开始计量，同型号重试也复核已消耗预算。替换请求的原始 JSON 只需解析一次即删除顶层旧推理选项，不改工具或业务内容。普通请求、Store 原子准入与持久化、平台协议和页面不改；其余管理业务及应用/后台生命周期仍待迁移，M3 尚未完成。
 
 第十三批将分组保存前的目录归一化、缺省映射兼容、密钥引用解析、创建/删除/启停、分组绑定及预算配置协调迁入 `access.Management`。五个持久化模型归 access，Store 保留类型别名和全部原函数体；权限快照、准入、预算预留/重置、账本和落盘仍为原子入口。app 借用当前目录和别名，不新增缓存或锁；HTTP 保留方法、参数大小、脱敏、状态码和管理员认证。严格事务失败回滚与旧版密钥删除/启停仅记录保存错误的区别保持原行为。全局设置/模型策略、目录/测活缓存、积分奖励、成长任务及应用/后台生命周期仍待处理，M3 尚未完成。
+
+第十四批将全局设置补丁校验、局部发布和保存协调，以及模型策略的目录/别名、备用目标与平台校验迁入 `config.Management`。四种规范配置类型、纯校验与默认策略迁入 config，Store 保留类型别名、DefaultSettings 原生默认投影及单向默认构造 wrapper。HTTP 参数限制、密码脱敏、原错误码与身份头/限流热生效顺序不变；密码哈希、设置发布、策略回滚、准入和账本仍由原 Store 入口负责。全局设置失败仅记录、策略严格保存的区别保留；不扩展摘要支持平台、不新增热路径调用。目录/测活缓存、价格/认证会话归属、积分/成长任务、应用及后台生命周期和整体验收仍待处理，M3 尚未完成。
 
 ## 验收矩阵
 

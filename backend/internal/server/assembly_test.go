@@ -7,6 +7,7 @@ import (
 	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
@@ -53,6 +54,10 @@ func newConfiguredServer(st *store.Store) *Server {
 }
 
 func attachAccessManagement(s *Server) {
+	s.Configuration = config.NewManagement(s.Store, func(id string) (config.ModelRef, bool) {
+		model, ok := s.Reg.Resolve(id, s.Store.Settings().ModelAliases)
+		return config.ModelRef{ID: model.ID, Provider: modelProvider(model), Scope: model.Scope}, ok
+	}, log.Printf)
 	s.AccessManagement = access.NewManagement(s.Store, access.ModelResolver{
 		Raw: func(id string) (string, bool) {
 			model, ok := s.Reg.ResolveRaw(id)

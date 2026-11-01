@@ -12,9 +12,9 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
 	codeartsup "codearts2api/internal/upstream/codearts"
 )
 
@@ -308,140 +308,16 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, sanitizedSettings(s.Store.Settings()))
 		return
 	}
-	var body struct {
-		CodeArts          json.RawMessage   `json:"codearts"`
-		Trae              json.RawMessage   `json:"trae"`
-		WorkBuddy         json.RawMessage   `json:"workbuddy"`
-		ModelAliases      map[string]string `json:"model_aliases"`
-		Pool              json.RawMessage   `json:"pool"`
-		AutoClaim         *bool             `json:"auto_claim"`
-		ClaimAfterHour    *int              `json:"claim_after_hour"`
-		ClaimAfterMinute  *int              `json:"claim_after_minute"`
-		DefaultModel      *string           `json:"default_model"`
-		ForceModel        *string           `json:"force_model"`
-		RequestTimeout    *int              `json:"request_timeout_sec"`
-		MaxRetries        *int              `json:"max_retries"`
-		LogKeep           *int              `json:"log_keep"`
-		CORSOrigin        *string           `json:"cors_origin"`
-		AdminPassword     *string           `json:"admin_password"`
-		ClearPassword     *bool             `json:"clear_admin_password"`
-		AutoRefresh       *bool             `json:"auto_refresh"`
-		AllowCreditModels *bool             `json:"allow_credit_models"`
-		AllowAnonymous    *bool             `json:"allow_anonymous"`
-		RateLimitEnabled  *bool             `json:"rate_limit_enabled"`
-		RateLimitQPS      *int              `json:"rate_limit_qps"`
-		RateLimitBurst    *int              `json:"rate_limit_burst"`
-		RateLimitConc     *int              `json:"rate_limit_concurrency"`
-		WriteBackToIDE    *bool             `json:"write_back_to_ide"`
-		LiveTTLSeconds    *int              `json:"live_ttl_sec"`
-		UserDataDir       *string           `json:"user_data_dir"`
-		LoginPort         *int              `json:"login_port"`
-		PluginName        *string           `json:"plugin_name"`
-		PluginVersion     *string           `json:"plugin_version"`
-		IDEName           *string           `json:"ide_name"`
-		IDEVersion        *string           `json:"ide_version"`
-		Language          *string           `json:"language"`
-	}
+	var body config.SettingsUpdate
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil {
 		writeErr(w, http.StatusBadRequest, "请求体解析失败", "invalid_request_error")
 		return
 	}
-	if body.ForceModel != nil && *body.ForceModel != "" {
-		for _, g := range s.Store.Groups() {
-			if len(g.ModelMappings) > 0 {
-				writeErr(w, 400, "分组统一模型启用时不能设置强制模型", "invalid_request_error")
-				return
-			}
-		}
-	}
-	current := s.Store.Settings()
-	policies := map[string]store.ProviderSettings{}
-	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae} {
-		if len(raw) == 0 {
-			continue
-		}
-		config := current.ProviderPolicy(name)
-		if string(raw) == "null" || json.Unmarshal(raw, &config) != nil {
-			writeErr(w, 400, name+" 配置格式错误", "invalid_request_error")
-			return
-		}
-		if err := config.ValidateFor(name); err != nil {
-			writeErr(w, 400, err.Error(), "invalid_request_error")
-			return
-		}
-		policies[name] = config
-	}
-	poolConfig := s.Store.Settings().Pool
-	if len(body.Pool) > 0 {
-		if err := json.Unmarshal(body.Pool, &poolConfig); err != nil {
-			writeErr(w, http.StatusBadRequest, "账号池配置格式错误", "invalid_request_error")
-			return
-		}
-		if err := poolConfig.Validate(); err != nil {
-			writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
-			return
-		}
-	}
-	if body.ClearPassword != nil && *body.ClearPassword && !s.AllowLocalAdmin {
-		writeErr(w, 400, "默认登录模式不允许清空密码；可设置新密码，或由启动参数重设", "invalid_request_error")
+	if err := s.Configuration.UpdateSettings(body, s.AllowLocalAdmin); err != nil {
+		writeErr(w, 400, err.Error(), "invalid_request_error")
 		return
 	}
-	if body.AdminPassword != nil && len(*body.AdminPassword) > 4096 {
-		writeErr(w, 400, "管理员密码不能超过 4096 字节", "invalid_request_error")
-		return
-	}
-	s.Store.UpdateSettings(func(st *store.Settings) {
-		if config, ok := policies["workbuddy"]; ok {
-			st.WorkBuddy = config
-		}
-		if config, ok := policies["codearts"]; ok {
-			st.CodeArts = config
-		}
-		if config, ok := policies["trae"]; ok {
-			st.Trae = config
-		}
-		if len(body.Pool) > 0 {
-			st.Pool = poolConfig
-		}
-		setIf(&st.AutoClaim, body.AutoClaim)
-		setIf(&st.ClaimAfterHour, body.ClaimAfterHour)
-		setIf(&st.ClaimAfterMinute, body.ClaimAfterMinute)
-		if body.ModelAliases != nil {
-			st.ModelAliases = body.ModelAliases
-		}
-		setIf(&st.DefaultModel, body.DefaultModel)
-		setIf(&st.ForceModel, body.ForceModel)
-		setIf(&st.RequestTimeout, body.RequestTimeout)
-		setIf(&st.MaxRetries, body.MaxRetries)
-		setIf(&st.LogKeep, body.LogKeep)
-		setIf(&st.CORSOrigin, body.CORSOrigin)
-		setIf(&st.AutoRefresh, body.AutoRefresh)
-		setIf(&st.AllowCreditModels, body.AllowCreditModels)
-		setIf(&st.AllowAnonymous, body.AllowAnonymous)
-		setIf(&st.RateLimitEnabled, body.RateLimitEnabled)
-		setIf(&st.RateLimitQPS, body.RateLimitQPS)
-		setIf(&st.RateLimitBurst, body.RateLimitBurst)
-		setIf(&st.RateLimitConcurrency, body.RateLimitConc)
-		setIf(&st.WriteBackToIDE, body.WriteBackToIDE)
-		setIf(&st.LiveTTLSeconds, body.LiveTTLSeconds)
-		setIf(&st.UserDataDir, body.UserDataDir)
-		setIf(&st.LoginPort, body.LoginPort)
-		setIf(&st.PluginName, body.PluginName)
-		setIf(&st.PluginVersion, body.PluginVersion)
-		setIf(&st.IDEName, body.IDEName)
-		setIf(&st.IDEVersion, body.IDEVersion)
-		setIf(&st.Language, body.Language)
-		// 只有显式带 clear_admin_password 才清除：空字符串一律视为「不修改」。
-		// 否则误发一个空字段就会把管理密码抹掉，让管理接口退回「本机直连」兜底。
-		if body.ClearPassword != nil && *body.ClearPassword {
-			st.AdminPassword = ""
-		} else if body.AdminPassword != nil {
-			if v := strings.TrimSpace(*body.AdminPassword); v != "" {
-				st.AdminPassword = v
-			}
-		}
-	})
-	s.persist()
+
 	// 身份头变更后重建上游客户端
 	s.ApplyIdentity()
 	// 限流参数变更后立即生效（不用重启）
@@ -851,13 +727,6 @@ func (s *Server) storeCredit(id string, info *codearts.CreditInfo, err error) {
 		s.creditCache = map[string]creditCacheEntry{}
 	}
 	s.creditCache[id] = creditCacheEntry{info: info, err: err, at: time.Now()}
-}
-
-// setIf 仅在指针非空时赋值。
-func setIf[T any](dst *T, src *T) {
-	if src != nil {
-		*dst = *src
-	}
 }
 
 // unixTime 把 Unix 秒转换为时间（0 表示使用默认有效期）。

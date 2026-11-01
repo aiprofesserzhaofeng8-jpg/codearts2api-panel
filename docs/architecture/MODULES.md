@@ -2,18 +2,19 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调；Store 仍执行原持久化及准入事务。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
 | 模块 | 数据或行为归属 | 对外入口示意 | 不应承担 |
 | --- | --- | --- | --- |
-| `app` | 进程生命周期、依赖装配、配置提交协调 | `Build`、`Start`、`Close` | 业务判定和平台协议 |
+| `app` | 进程生命周期、依赖装配、配置热生效装配 | `Build`、`Start`、`Close` | 业务判定和平台协议 |
 | `domain` | AccountID、GroupID、ModelRef、稳定错误分类等共享值 | 数据类型及无副作用校验 | 大而全的 Account 方法、数据库、平台常量 |
 | `httpapi` | HTTP 参数、身份入口、协议错误输出 | 现有 `/admin/*`、`/v1/*` 路由 | 直接修改存储数据、自己选择账号 |
 | `gateway` | Request/Attempt 生命周期、准入状态、重试预算、取消 | `Execute`、`BeginRequest`、`AcquireAttempt` | 平台登录协议、持久化文件格式 |
 | `accounts` | 账号元信息、凭据代际、登录会话、刷新协调 | `PreviewLogin`、`ConfirmLogin`、`CredentialsForAttempt` | 模型别名、各平台 HTTP 签名算法 |
 | `access` | 管理会话、API Key、Group、白名单和分组映射配置 | `Authenticate`、`SaveGroup`、`CompileAccess` | 选择实际账号、解释上游模型能力 |
+| `config` | 全局/平台/账号池/模型策略配置值、纯校验及管理保存协调 | `SettingsUpdate`、`UpdateSettings`、`SaveModelPolicy` | HTTP、原生凭据、准入事务、配置缓存和平台网络调用 |
 | `catalog` | 原始模型目录、映射解析、已验证预设、能力元数据 | `Resolve`、`CompileBindings`、`ListVisible` | 保存分组、占用并发、自动猜测模型等价性 |
 | `scheduler` | 候选排序和选择算法 | `Select(candidates, runtimeView)` | 独立租约计数器、文件 I/O、网络探测 |
 | `policy` | 提示词配置语义、继承、清洗及请求准备 | `ResolvePolicy`、`PrepareBody` | 自行重试、改写用户/工具业务内容 |
@@ -76,6 +77,8 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 `gateway.PrepareSummaryAttempt` 经 `SummaryTargetSource` 读取当前强制型号、目录、冷却和纯摘要选项；数据源不解释原生凭据、不选号、不新增缓存。更换目标仍限定在相同平台/地区并复用已绑定传输；首次准备沿用准入结果，重试先复核当前权限和已发生用量的预算进度。server 投影 Context 并委托既有 `checkRequestBudget`，原分组映射与原始白名单校验保留原入口；Store 的原子准入和账本未迁出。`requestpolicy.PrepareSummaryModel` 仅处理已授权型号的协议外壳；换型号删除原顶层 reasoning 控制，再应用备用型号自己的摘要策略。
 
 `access.Management` 只管理分组与密钥配置协调，经 `ManagementStore` 调用原 Store 事务，并借用当前目录/别名解析函数。原始型号来源必须精确命中目录；白名单沿用别名归一化和未知型号保留行为。更新分组时缺省/null 映射继承旧值，显式空列表清除。密钥引用保留原值、稳定 hash 和旧脱敏值的匹配顺序；管理员认证及明文找回入口仍在 HTTP 层。`APIKey`、`AccountGroup`、`ModelMapping`、`KeyBudget`、`BudgetUsage` 的规范定义归 access，Store 以类型别名兼容 schema 6。原子权限发布、预算预留/重置、准入和账本仍属 Store；管理服务不进入推理路径，不建立权限副本。全局设置/模型策略及认证会话尚未随本批迁移。
+
+`config.Management` 经 `ManagementStore` 借用原设置读取/发布、策略严格保存和状态落盘接口。设置先完成全部校验，再调用原 UpdateSettings，Save 失败继续记日志；HTTP 随后应用原身份头与限流。模型策略借用实时目录/别名，仅接收 ID、平台、地区；保留校验顺序、相同平台/地区备用要求、强制型号约束和 CodeArts 独有摘要保护限制。Settings、ProviderSettings、PoolSettings、ModelPolicy 的规范定义归 config，Store 类型别名保持旧 JSON；原纯校验/默认策略迁移不改变算法。Store.DefaultSettings 中原生常量投影仍在兼容入口，不将 CodeArts 导入 config。价格规则留 M5、目录推荐生成留目录迁移，管理认证会话边界仍待清理。
 
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 

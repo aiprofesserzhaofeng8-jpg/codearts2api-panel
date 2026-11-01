@@ -2,11 +2,12 @@ package server
 
 import (
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/config"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strings"
 )
 
 type summaryIntentKey struct{}
@@ -58,42 +59,19 @@ func (s *Server) handleAdminModelPolicies(w http.ResponseWriter, r *http.Request
 		writeJSON(w, 200, map[string]any{"policies": s.allModelPolicies(), "capabilities": gatewayCapabilities()})
 	case http.MethodPost:
 		var body struct {
-			Model  string            `json:"model"`
-			Policy store.ModelPolicy `json:"policy"`
+			Model  string             `json:"model"`
+			Policy config.ModelPolicy `json:"policy"`
 		}
 		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&body) != nil {
 			writeErr(w, 400, "配置格式无效", "invalid_request_error")
 			return
 		}
-		model, ok := s.Reg.Resolve(body.Model, s.Store.Settings().ModelAliases)
-		if !ok {
-			writeErr(w, 400, "模型未在当前目录中", "invalid_request_error")
-			return
-		}
-		if err := body.Policy.Validate(); err != nil {
-			writeErr(w, 400, err.Error(), "invalid_request_error")
-			return
-		}
-		fallback := strings.TrimSpace(body.Policy.SummaryFallbackModel)
-		if fallback != "" {
-			target, exists := s.Reg.Resolve(fallback, s.Store.Settings().ModelAliases)
-			if !exists || target.ID == model.ID || modelProvider(target) != modelProvider(model) || target.Scope != model.Scope {
-				writeErr(w, 400, "摘要备用模型须为相同上游和地区的其他模型", "invalid_request_error")
-				return
+		if err := s.Configuration.SaveModelPolicy(body.Model, body.Policy); err != nil {
+			if errors.Is(err, config.ErrModelPolicySave) {
+				writeErr(w, 500, "保存模型策略失败", "server_error")
+			} else {
+				writeErr(w, 400, err.Error(), "invalid_request_error")
 			}
-			if forced := s.Store.Settings().ForceModel; forced != "" && forced != target.ID {
-				writeErr(w, 400, "请先取消强制模型，再配置其他摘要备用模型", "invalid_request_error")
-				return
-			}
-			body.Policy.SummaryFallbackModel = target.ID
-		}
-		if modelProvider(model) != "codearts" && body.Policy.SummaryEnabled {
-			writeErr(w, 400, "当前摘要完整性适配仅支持码道；其他上游可配置上下文建议，但请关闭服务端摘要保护", "invalid_request_error")
-			return
-		}
-		body.Policy.Source = "管理员配置，非上游能力声明"
-		if err := s.Store.SetModelPolicyAndSave(model.ID, body.Policy); err != nil {
-			writeErr(w, 500, "保存模型策略失败", "server_error")
 			return
 		}
 		writeJSON(w, 200, map[string]any{"ok": true, "policies": s.allModelPolicies()})
