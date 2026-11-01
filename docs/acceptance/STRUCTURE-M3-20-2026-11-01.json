@@ -1,0 +1,885 @@
+{
+  "stage": "M3.20",
+  "date": "2026-11-01",
+  "baseline": "669c1c0",
+  "version": "0.3.0-structure-m3.20",
+  "batch_complete": true,
+  "M3_complete": false,
+  "scope": [
+    "app.Start / Runtime.Close owns original HTTP and background lifecycle",
+    "jobs.RunDailyLoop owns original delayed serial polling",
+    "main retains flags, bootstrap, import/export, OS signals and fatal exit policy"
+  ],
+  "invariants": {
+    "claim_initial_delay_seconds": 8,
+    "claim_interval_minutes": 5,
+    "ticker_starts_after_first_callback": true,
+    "periodic_save_seconds": 30,
+    "independent_startup_refresh_timeout_seconds": 60,
+    "http_read_header_timeout_seconds": 20,
+    "http_write_timeout_seconds": 0,
+    "shutdown_timeout_seconds": 10,
+    "shutdown_order": [
+      "HTTP Shutdown",
+      "final Save even on shutdown error",
+      "exit log",
+      "cancel background polling"
+    ],
+    "new_background_join": false,
+    "hot_path_changes": false
+  },
+  "verification": {
+    "make_check": "passed",
+    "full_race": "passed",
+    "final_lifecycle_race_repetitions": 10,
+    "lifecycle_tests": 9,
+    "linux_build": "passed",
+    "windows_vet_cross_build": "passed; Windows not executed",
+    "docker_build": "passed",
+    "process_lifecycle": {
+      "baseline": "669c1c0",
+      "results": [
+        {
+          "label": "before",
+          "health": {
+            "accounts": 0,
+            "models": 8,
+            "ready": 0,
+            "service": "codearts2api-panel",
+            "status": "ok"
+          },
+          "periodic_save_30s": true,
+          "signal_cases": [
+            {
+              "signal": "SIGTERM",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": false,
+              "shutdown_seconds": 0.003
+            },
+            {
+              "signal": "SIGINT",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": true,
+              "shutdown_seconds": 0.004
+            }
+          ],
+          "bind_failure_exit_code": 1,
+          "bootstrap_permissions": "0o600",
+          "schema": 6
+        },
+        {
+          "label": "after",
+          "health": {
+            "accounts": 0,
+            "models": 8,
+            "ready": 0,
+            "service": "codearts2api-panel",
+            "status": "ok"
+          },
+          "periodic_save_30s": true,
+          "signal_cases": [
+            {
+              "signal": "SIGTERM",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": false,
+              "shutdown_seconds": 0.003
+            },
+            {
+              "signal": "SIGINT",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": true,
+              "shutdown_seconds": 0.003
+            }
+          ],
+          "bind_failure_exit_code": 1,
+          "bootstrap_permissions": "0o600",
+          "schema": 6
+        }
+      ],
+      "passed": true
+    },
+    "runtime_binary_container": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true,
+        "sessions_revoked_on_restart": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001",
+        "sessions_revoked_on_restart": true
+      }
+    ],
+    "browser": [
+      {
+        "case": "providers-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-device-smoke",
+        "passed": true
+      },
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-tasks-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-actions-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-buddy-smoke",
+        "passed": true
+      }
+    ],
+    "launchers_tests": 9,
+    "pi_tests": "passed",
+    "source_boundary": {
+      "baseline": "669c1c0",
+      "cli_helpers_identical": true,
+      "daily_loop_ast_identical_after_callback_and_constant_normalization": true,
+      "existing_internal_production_files_unchanged": 173,
+      "gateway_protocol_store_native_web_unchanged": true,
+      "only_existing_internal_function_changed": "Server.StartClaimLoop delegates to jobs.RunDailyLoop"
+    }
+  },
+  "performance": {
+    "fixture": "fixed controlled upstream; RAM microbenchmark fixtures; CPU 0,2; GOMAXPROCS=2",
+    "initial_rounds": 5,
+    "initial_jobs_overlapped": true,
+    "capacity_records": 90,
+    "capacity_failures": 0,
+    "remaining_leases": 0,
+    "upstream_calls_unchanged": true,
+    "initial_capacity_latencies": [
+      {
+        "provider": "codearts",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.694,
+          "after": 22.872
+        },
+        "change_percent": -3.47
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.787,
+          "after": 24.54
+        },
+        "change_percent": 3.17
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 45.775,
+          "after": 44.835
+        },
+        "change_percent": -2.05
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 24.557,
+          "after": 24.556
+        },
+        "change_percent": -0.0
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 45.75,
+          "after": 45.297
+        },
+        "change_percent": -0.99
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 25.005,
+          "after": 24.492
+        },
+        "change_percent": -2.05
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 25.849,
+          "after": 25.31
+        },
+        "change_percent": -2.09
+      },
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.036,
+          "after": 25.79
+        },
+        "change_percent": 11.96
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 24.942,
+          "after": 25.517
+        },
+        "change_percent": 2.31
+      }
+    ],
+    "initial_microbenchmarks": [
+      {
+        "benchmark": "BenchmarkAdminSessionPricingHTTP",
+        "before": {
+          "ns_op": 5741.0,
+          "bytes_op": 8947,
+          "allocs_op": 46
+        },
+        "after": {
+          "ns_op": 5547.0,
+          "bytes_op": 8947,
+          "allocs_op": 46
+        },
+        "change_percent": -3.38
+      },
+      {
+        "benchmark": "BenchmarkCatalogWarmModels",
+        "before": {
+          "ns_op": 8513.0,
+          "bytes_op": 10038,
+          "allocs_op": 77
+        },
+        "after": {
+          "ns_op": 8908.0,
+          "bytes_op": 10037,
+          "allocs_op": 77
+        },
+        "change_percent": 4.64
+      },
+      {
+        "benchmark": "BenchmarkCreditsWarmHTTP",
+        "before": {
+          "ns_op": 7525.0,
+          "bytes_op": 9368,
+          "allocs_op": 63
+        },
+        "after": {
+          "ns_op": 7773.0,
+          "bytes_op": 9368,
+          "allocs_op": 63
+        },
+        "change_percent": 3.3
+      },
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 330277.0,
+          "bytes_op": 146800,
+          "allocs_op": 1119
+        },
+        "after": {
+          "ns_op": 352774.0,
+          "bytes_op": 146768,
+          "allocs_op": 1118
+        },
+        "change_percent": 6.81
+      },
+      {
+        "benchmark": "BenchmarkGrowthClaimedHTTP",
+        "before": {
+          "ns_op": 41344.0,
+          "bytes_op": 31114,
+          "allocs_op": 469
+        },
+        "after": {
+          "ns_op": 41655.0,
+          "bytes_op": 31105,
+          "allocs_op": 469
+        },
+        "change_percent": 0.75
+      },
+      {
+        "benchmark": "BenchmarkGrowthListHTTP",
+        "before": {
+          "ns_op": 33300.0,
+          "bytes_op": 27336,
+          "allocs_op": 386
+        },
+        "after": {
+          "ns_op": 33934.0,
+          "bytes_op": 27344,
+          "allocs_op": 386
+        },
+        "change_percent": 1.9
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 2419.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 2420.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "change_percent": 0.04
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 24732.0,
+          "bytes_op": 19746,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 26796.0,
+          "bytes_op": 19747,
+          "allocs_op": 142
+        },
+        "change_percent": 8.35
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns_op": 2037235.0,
+          "bytes_op": 2254075,
+          "allocs_op": 164
+        },
+        "after": {
+          "ns_op": 2040899.0,
+          "bytes_op": 2253812,
+          "allocs_op": 163
+        },
+        "change_percent": 0.18
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns_op": 16351494.0,
+          "bytes_op": 17092185,
+          "allocs_op": 173
+        },
+        "after": {
+          "ns_op": 16412396.0,
+          "bytes_op": 17092180,
+          "allocs_op": 173
+        },
+        "change_percent": 0.37
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+        "before": {
+          "ns_op": 136254.0,
+          "bytes_op": 145091,
+          "allocs_op": 512
+        },
+        "after": {
+          "ns_op": 141388.0,
+          "bytes_op": 145011,
+          "allocs_op": 512
+        },
+        "change_percent": 3.77
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+        "before": {
+          "ns_op": 137227.0,
+          "bytes_op": 146848,
+          "allocs_op": 517
+        },
+        "after": {
+          "ns_op": 140767.0,
+          "bytes_op": 146898,
+          "allocs_op": 516
+        },
+        "change_percent": 2.58
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+        "before": {
+          "ns_op": 213506.0,
+          "bytes_op": 256106,
+          "allocs_op": 817
+        },
+        "after": {
+          "ns_op": 217577.0,
+          "bytes_op": 255804,
+          "allocs_op": 817
+        },
+        "change_percent": 1.91
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+        "before": {
+          "ns_op": 220242.0,
+          "bytes_op": 257979,
+          "allocs_op": 831
+        },
+        "after": {
+          "ns_op": 224779.0,
+          "bytes_op": 258037,
+          "allocs_op": 831
+        },
+        "change_percent": 2.06
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=false",
+        "before": {
+          "ns_op": 18469994.0,
+          "bytes_op": 24983532,
+          "allocs_op": 643
+        },
+        "after": {
+          "ns_op": 18466443.0,
+          "bytes_op": 24879135,
+          "allocs_op": 648
+        },
+        "change_percent": -0.02
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=true",
+        "before": {
+          "ns_op": 19994729.0,
+          "bytes_op": 26568851,
+          "allocs_op": 651
+        },
+        "after": {
+          "ns_op": 19881342.0,
+          "bytes_op": 26463370,
+          "allocs_op": 651
+        },
+        "change_percent": -0.57
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=false",
+        "before": {
+          "ns_op": 26830726.0,
+          "bytes_op": 38786482,
+          "allocs_op": 1009
+        },
+        "after": {
+          "ns_op": 27007997.0,
+          "bytes_op": 38841700,
+          "allocs_op": 1018
+        },
+        "change_percent": 0.66
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=true",
+        "before": {
+          "ns_op": 28485634.0,
+          "bytes_op": 40001914,
+          "allocs_op": 1020
+        },
+        "after": {
+          "ns_op": 28745740.0,
+          "bytes_op": 40266468,
+          "allocs_op": 1029
+        },
+        "change_percent": 0.91
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 1197919.0,
+          "bytes_op": 647397,
+          "allocs_op": 14157
+        },
+        "after": {
+          "ns_op": 1193116.0,
+          "bytes_op": 647451,
+          "allocs_op": 14158
+        },
+        "change_percent": -0.4
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1225508.0,
+          "bytes_op": 689259,
+          "allocs_op": 14110
+        },
+        "after": {
+          "ns_op": 1250940.0,
+          "bytes_op": 689256,
+          "allocs_op": 14110
+        },
+        "change_percent": 2.08
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 660234.0,
+          "bytes_op": 265552,
+          "allocs_op": 3131
+        },
+        "after": {
+          "ns_op": 658510.0,
+          "bytes_op": 265729,
+          "allocs_op": 3131
+        },
+        "change_percent": -0.26
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 623125.0,
+          "bytes_op": 276001,
+          "allocs_op": 3087
+        },
+        "after": {
+          "ns_op": 630410.0,
+          "bytes_op": 276351,
+          "allocs_op": 3087
+        },
+        "change_percent": 1.17
+      }
+    ],
+    "review_reason": "Retain initial five-round data. Initial capacity and microbenchmark jobs overlapped; review all >5% positive signals serially after full race tests, without code changes.",
+    "serial_review_rounds": 9,
+    "review_iterations": 20000,
+    "microbenchmark_reviews": [
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 312698.0,
+          "bytes_op": 147050,
+          "allocs_op": 1117
+        },
+        "after": {
+          "ns_op": 312430.0,
+          "bytes_op": 147048,
+          "allocs_op": 1117
+        },
+        "change_percent": -0.09
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 19240.0,
+          "bytes_op": 19742,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 18960.0,
+          "bytes_op": 19740,
+          "allocs_op": 142
+        },
+        "change_percent": -1.46
+      }
+    ],
+    "capacity_review": {
+      "provider": "workbuddy",
+      "stream": false,
+      "p95_median_ms": {
+        "before": 22.822,
+        "after": 23.3
+      },
+      "samples": {
+        "before": [
+          22.974,
+          22.063,
+          22.822,
+          22.996,
+          23.268,
+          22.738,
+          22.598,
+          22.389,
+          23.457
+        ],
+        "after": [
+          22.501,
+          24.642,
+          22.775,
+          23.483,
+          22.657,
+          23.3,
+          23.557,
+          23.4,
+          22.529
+        ]
+      },
+      "change_percent": 2.09
+    },
+    "conclusion": "No stable performance regression detected in controlled fixtures; this is not an upstream latency guarantee."
+  },
+  "real_provider": {
+    "checks": [
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.723,
+        "policy_mode": "custom",
+        "usage": {
+          "prompt_tokens": 30,
+          "completion_tokens": 7,
+          "total_tokens": 37,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 30,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.66,
+        "policy_mode": "passthrough",
+        "usage": {
+          "prompt_tokens": 17,
+          "completion_tokens": 6,
+          "total_tokens": 23,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 17,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.77,
+        "policy_mode": "custom",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 25,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 55,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 17,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 80,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.325,
+        "policy_mode": "passthrough",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 20,
+          "completion_tokens_details": {
+            "reasoning_tokens": 9
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 47,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 9,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 67,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted_on_exit": true,
+    "discovered_models": 79
+  },
+  "deployment": {
+    "version": "0.3.0-structure-m3.20",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "all_root_data_files_identical": {
+      ".multi-provider-migration-check.json": true,
+      "state.json": true,
+      "state.json.usage.jsonl": true,
+      "state.json.access.json": true,
+      "server.pid": true,
+      "state.json.growth.json": true,
+      "state.json.before-usd-20261026-000714.bak": true,
+      "state.pre-management-20261026T070827Z.json.bak": true,
+      "server.log": true,
+      ".trae-deployment-check.json": true,
+      ".local-group-mapping-deployment.json": true
+    },
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "5b690a34efdaf091cff371bd3725f08788597daf4a0884d0581843dadf7c2005",
+    "cloud_modified": false
+  },
+  "limitations": [
+    "No real CodeArts generation: credentials expired and automatic refresh disabled.",
+    "No real reward claims, invitations, shared credential refresh or IDE writeback.",
+    "Existing background operations are not joined on shutdown; this behavior was preserved.",
+    "M3 boundary review and integrated acceptance remain.",
+    "Cloud deployment and GitHub push were not performed."
+  ],
+  "rollback_tag": "milestone/structure-m3-20-20261101",
+  "final_checks": {
+    "credential_scan": "passed",
+    "changed_files": 18,
+    "local_links": 92,
+    "gofmt": "passed",
+    "diff_check": "passed",
+    "historical_reports_unchanged": true,
+    "business_boundaries": "passed",
+    "source_proof": {
+      "baseline": "669c1c0",
+      "cli_helpers_identical": true,
+      "daily_loop_ast_identical_after_callback_and_constant_normalization": true,
+      "existing_internal_production_files_unchanged": 173,
+      "gateway_protocol_store_native_web_unchanged": true,
+      "only_existing_internal_function_changed": "Server.StartClaimLoop delegates to jobs.RunDailyLoop"
+    },
+    "all_root_data_files_identical": {
+      ".multi-provider-migration-check.json": true,
+      "state.json": true,
+      "state.json.usage.jsonl": true,
+      "state.json.access.json": true,
+      "server.pid": true,
+      "state.json.growth.json": true,
+      "state.json.before-usd-20261026-000714.bak": true,
+      "state.pre-management-20261026T070827Z.json.bak": true,
+      "server.log": true,
+      ".trae-deployment-check.json": true,
+      ".local-group-mapping-deployment.json": true
+    },
+    "runtime_hash_matches": true,
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  }
+}

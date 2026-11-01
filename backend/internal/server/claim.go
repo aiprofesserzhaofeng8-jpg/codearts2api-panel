@@ -25,34 +25,10 @@ import (
 // 真实事件触发（好友真实注册 / 真实学生认证），服务端会直接拒绝直接领取，
 // 网关也绝不会伪造触发事件。
 
-// claimTickInterval 是领取检查的间隔。
-//
-// 用「定时轮询 + 按本地日期去重」而不是「算准时刻触发一次」，
-// 这样可以避开休眠唤醒、时区切换、进程重启导致的漏领。
-const claimTickInterval = 5 * time.Minute
-
-// StartClaimLoop 启动后台自动领取。
+// StartClaimLoop is retained for callers of the previous server entrypoint.
+// The executable starts the same loop through app.Start.
 func (s *Server) StartClaimLoop(ctx context.Context) {
-	go func() {
-		// 启动后先延迟几秒，等账号导入与模型刷新完成
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(8 * time.Second):
-		}
-		s.RunDailyClaim(ctx)
-
-		ticker := time.NewTicker(claimTickInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				s.RunDailyClaim(ctx)
-			}
-		}
-	}()
+	go jobs.RunDailyLoop(ctx, s.RunDailyClaim)
 }
 
 // RunDailyClaim 对尚未领取过的账号各领一次当日活动福利。

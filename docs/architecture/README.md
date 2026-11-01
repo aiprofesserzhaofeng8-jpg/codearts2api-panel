@@ -1,6 +1,6 @@
 # 项目结构设计 v1
 
-日期：2026-11-01。状态：**M1/M2 已完成，M3 前十九批已落地，后续批次及 M4–M7 待实施**。
+日期：2026-11-01。状态：**M1/M2 已完成，M3 前二十批已落地，边界收尾/整体验收及 M4–M7 待实施**。
 
 本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。Vue 前端、业务模块拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
 
@@ -44,6 +44,8 @@ CodeArts 凭据运行时分离见 [M3 第十批验收](../acceptance/STRUCTURE-M
 
 第十九批完成价格管理与管理员会话注册表分离，详情见 [M3 第十九批验收](../acceptance/STRUCTURE-M3-19-2026-11-01.md)。usage 只持价格值/校验和管理协调，access 持原会话注册表；严格价格事务、历史结算和密码保存继续沿用 Store。应用后台生命周期、边界收尾和整体验收仍待处理。
 
+第二十批完成应用与后台生命周期分离，详情见 [M3 第二十批验收](../acceptance/STRUCTURE-M3-20-2026-11-01.md)。app 持 HTTP 启动/排空及最终保存顺序，jobs 持原领奖定时循环；main 保留参数、初始化、导入/导出、信号与致命退出。没有新增后台等待、重试或请求路径调用。M3 边界收尾与整体验收仍待完成。
+
 ## 设计决策
 
 采用一个仓库、一个 Go 模块、独立前端工程、单进程部署的模块化单体。按业务能力划分代码，通过本地函数和少量接口协作。首先支持更多平台、模型和管理功能；多用户权限和多实例运行作为明确的后续扩展，不在目录迁移中顺带实现。
@@ -67,7 +69,7 @@ CodeArts 凭据运行时分离见 [M3 第十批验收](../acceptance/STRUCTURE-M
 - [Server](../../backend/internal/server/server.go) 同时持有 HTTP、CodeArts 客户端、通用平台注册表、登录和任务运行状态。
 - [Store](../../backend/internal/store/store.go) 同时管理持久化、调度和预算；[选号入口](../../backend/internal/store/pool.go) 已在同一临界区复核权限、选择实际型号和占用账号并发。
 - 通用账号已迁入 [accounts](../../backend/internal/accounts/account.go)，账号类型本身仅依赖标准库；凭据协调只依赖中立 provider 契约。旧 `session` 字段通过不透明只读接口保留，由 [兼容编码器](../../backend/internal/store/account_codec.go) 在加载状态时还原 CodeArts 会话，保持 schema 6 和代际指针。
-- [app.Build](../../backend/internal/app/app.go) 创建平台客户端、注册 WorkBuddy/Trae 并连接刷新提交回调；Server 接收明确依赖，不再负责创建和注册平台客户端。进程生命周期暂留在 main。
+- [app.Build](../../backend/internal/app/app.go) 创建平台客户端、注册 WorkBuddy/Trae 并连接刷新提交回调；Server 接收明确依赖，不再负责创建和注册平台客户端。[app.Start/Runtime.Close](../../backend/internal/app/runtime.go) 持原 HTTP/后台运行生命周期，main 仍处理信号与初始化。
 - [gateway.Completions](../../backend/internal/gateway/completions.go) 执行已授权、已选号的单次 CodeArts 对话，借助 [CodeArts 适配包装](../../backend/internal/upstream/codearts/adapter.go) 调用既有签名客户端；普通流式即时回调，非流式保留原空响应回退。摘要由 gateway 执行，备用型号权限和平台错误策略仍在 server，准入仍在 Store。
 - WorkBuddy/Trae 经 [upstream.BindStream](../../backend/internal/upstream/stream.go) 绑定已解析凭据及请求标识，同样调用 `gateway.Completions`；各自原生适配器不变。非流式仍由流式聚合，维持 32MiB 上限；凭据刷新经 [accounts.ProviderCredentials](../../backend/internal/accounts/provider_credentials.go) 协调，沿用原生适配器和 Store 条件提交；提示词恢复由 gateway 执行，server 提供原计量及权限/预算 hook。
 - [gateway.RunPromptPolicy](../../backend/internal/gateway/prompt_policy.go) 负责有限的提示词恢复；[摘要准备](../../backend/internal/requestpolicy/summary.go) 保留原识别规则和请求参数。[gateway.RunSummary](../../backend/internal/gateway/summary.go) 持有完整性缓冲和有限截断重试；[gateway.RunAccountRetry](../../backend/internal/gateway/retry.go) 负责全局换号及租约生命周期，[RunRecovery](../../backend/internal/gateway/recovery.go) 负责同租约有限恢复；平台判定、权限预算、原子准入和账本保留原入口。

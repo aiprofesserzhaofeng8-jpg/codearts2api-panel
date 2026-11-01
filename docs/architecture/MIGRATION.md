@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2 已完成，M3 前十九批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行、全局重试循环及三平台凭据协调、三平台分阶段登录与导入、账号基础管理协调、摘要备用型号准备协调、分组与密钥管理协调、全局配置与模型策略协调、目录刷新/缓存与模型测活、积分查询/缓存与每日领奖编排、成长任务执行及检查点管理、活动列表/邀请边界、价格管理与管理员会话注册表；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)、[M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)、[M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)、[M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)、[M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)、[M3 第十批验收](../acceptance/STRUCTURE-M3-10-2026-11-01.md)、[M3 第十一批验收](../acceptance/STRUCTURE-M3-11-2026-11-01.md)、[M3 第十二批验收](../acceptance/STRUCTURE-M3-12-2026-11-01.md)、[M3 第十三批验收](../acceptance/STRUCTURE-M3-13-2026-11-01.md)、[M3 第十四批验收](../acceptance/STRUCTURE-M3-14-2026-11-01.md)、[M3 第十五批验收](../acceptance/STRUCTURE-M3-15-2026-11-01.md)、[M3 第十六批验收](../acceptance/STRUCTURE-M3-16-2026-11-01.md)、[M3 第十七批验收](../acceptance/STRUCTURE-M3-17-2026-11-01.md)、[M3 第十八批验收](../acceptance/STRUCTURE-M3-18-2026-11-01.md)和 [M3 第十九批验收](../acceptance/STRUCTURE-M3-19-2026-11-01.md)。
+状态：**M1/M2 已完成，M3 前二十批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行、全局重试循环及三平台凭据协调、三平台分阶段登录与导入、账号基础管理协调、摘要备用型号准备协调、分组与密钥管理协调、全局配置与模型策略协调、目录刷新/缓存与模型测活、积分查询/缓存与每日领奖编排、成长任务执行及检查点管理、活动列表/邀请边界、价格管理与管理员会话注册表、应用/后台生命周期；边界收尾和 M3 整体验收及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)、[M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)、[M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)、[M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)、[M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)、[M3 第十批验收](../acceptance/STRUCTURE-M3-10-2026-11-01.md)、[M3 第十一批验收](../acceptance/STRUCTURE-M3-11-2026-11-01.md)、[M3 第十二批验收](../acceptance/STRUCTURE-M3-12-2026-11-01.md)、[M3 第十三批验收](../acceptance/STRUCTURE-M3-13-2026-11-01.md)、[M3 第十四批验收](../acceptance/STRUCTURE-M3-14-2026-11-01.md)、[M3 第十五批验收](../acceptance/STRUCTURE-M3-15-2026-11-01.md)、[M3 第十六批验收](../acceptance/STRUCTURE-M3-16-2026-11-01.md)、[M3 第十七批验收](../acceptance/STRUCTURE-M3-17-2026-11-01.md)、[M3 第十八批验收](../acceptance/STRUCTURE-M3-18-2026-11-01.md)、[M3 第十九批验收](../acceptance/STRUCTURE-M3-19-2026-11-01.md)和 [M3 第二十批验收](../acceptance/STRUCTURE-M3-20-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -44,7 +44,7 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 
 M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `app.Build`。`codearts.Account` 暂保留类型别名供平台内部及既有测试使用；共享生产代码已使用 `accounts.Account`。旧 `session` 由 `store` 编码器加载成不可变平台值；请求路径仅做类型断言，不序列化、解析或复制凭据。`codearts.StoredSession` 是该兼容值的唯一具体类型入口。WorkBuddy/Trae 继续使用已有不透明 JSON 凭据。
 
-前六批均未迁移刷新互斥、准入锁和账本归属；它们仍由原实现负责。`app` 只装配依赖，启动与关闭仍留在 main。凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
+前六批均未迁移刷新互斥、准入锁和账本归属；它们当时仍由原实现负责。`app` 前六批只装配依赖；第二十批再迁入启动与关闭。凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
 
 第二批以 `upstream/codearts` 借用既有不可变凭据，包装原客户端的对话与业务错误过滤；`gateway.Completions` 负责已选中账号的普通单次执行、原有空响应回退及使用回调。SSE 聚合和流式选项归 `protocol`。不新增配置、锁、重试预算、凭据写入方或网络探测。普通流式仍立即交付，只有原来需要聚合的路径聚合。
 
@@ -89,6 +89,8 @@ M3 第十七批将成长任务清单/接取/领奖确认、活跃上报、Buddy 
 M3 第十八批将活动列表与邀请的账号选择迁入 `jobs.Welfare`，CodeArts 原生查询/邀请及展示结果投影由 `upstream/codearts` 包装。HTTP 保留方法、宽松解码、默认活动 3、30s 请求期限、状态码和原错误前缀；列表与邀请的不同回退规则、显式停用账号、可领计数与自动领取判定保持原样。外部签到状态仍委托 Rewards，不新增邀请能力或真实领取；Store、平台协议、普通推理和页面不变，无新缓存、锁或网络重试。价格/管理员会话、应用后台生命周期与 M3 整体验收仍待处理。
 
 M3 第十九批将价格值/校验与管理保存协调迁入 `usage`，Store.ModelPrice 保留类型别名及原严格事务；价格快照、历史费用、预算、账本和全部原计量函数体不变。`access.AdminSessions` 接管原内存摘要注册表和互斥锁，app 显式装配；保留 8 小时、128 项、最早过期淘汰、密码存储表示绑定、短路读取与恒定时间比较。HTTP 保留随机 token、Cookie、宽松解码、同源、失败限流、审计和状态码；无新锁域、清理协程、缓存或推理路径调用。密码哈希/恢复事务仍归原 Store，计量/存储拆分留 M5；应用后台生命周期、边界收尾与 M3 整体验收仍待处理。
+
+M3 第二十批将 HTTP 监听实例、后台启动和关闭保存协调迁入 `app.Start`/`Runtime.Close`，原领奖定时循环迁入 `jobs.RunDailyLoop`。main 保留参数、导入/导出、首次访问配置、信号和致命退出。原 8s/5min 领奖检查、30s 保存、独立 60s 启动刷新及 HTTP 最多 10s 排空后最终保存、最后取消轮询均不变；不新增 join、锁、重试、强制断流或普通推理调用。生命周期单元/竞态、真实 HTTP 在途排空和新旧进程信号/保存对照必须通过。M3 边界收尾及整体验收仍待完成，不能用本批通过替代全阶段完成。
 
 ## 验收矩阵
 

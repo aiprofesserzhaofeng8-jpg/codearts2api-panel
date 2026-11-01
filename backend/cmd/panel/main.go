@@ -7,25 +7,20 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"codearts2api/internal/app"
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/server"
 	"codearts2api/internal/store"
 )
 
@@ -128,82 +123,16 @@ func main() {
 		log.Fatalf("初始化服务失败: %v", err)
 	}
 	srv.AllowLocalAdmin = *localAuto
-	srv.ApplyIdentity()
-
-	// 后台每日自动领取运营活动福利
-	claimCtx, stopClaim := context.WithCancel(context.Background())
-	defer stopClaim()
-	srv.StartClaimLoop(claimCtx)
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-claimCtx.Done():
-				return
-			case <-ticker.C:
-				if err := st.Save(); err != nil {
-					log.Printf("定期保存用量失败: %v", err)
-				}
-			}
-		}
-	}()
-
-	// 后台刷新一次模型清单（不阻塞启动）
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-		if err := srv.RefreshModels(ctx); err != nil {
-			log.Printf("刷新上游模型清单失败（将使用内置兜底清单）: %v", err)
-		} else {
-			log.Printf("已同步上游模型清单")
-		}
-	}()
-
-	addr := net.JoinHostPort(*host, fmt.Sprintf("%d", *port))
-	httpSrv := &http.Server{
-		Addr:              addr,
-		Handler:           srv.Handler(),
-		ReadHeaderTimeout: 20 * time.Second,
-		// 流式响应可能持续数分钟，不设 WriteTimeout
-	}
-
-	go func() {
-		log.Printf("CodeArts2API Panel %s 已启动: http://%s/", version, addr)
-		if st.HasKeys() {
-			log.Printf("已签发 API 密钥，调用需携带 Authorization: Bearer sk-ca-...")
-		} else if st.Settings().AllowAnonymous {
-			log.Printf("⚠️  尚未签发 API 密钥，且已允许匿名调用：任何能访问本端口的人都可以使用账号额度")
-		} else {
-			log.Printf("尚未签发 API 密钥：/v1/* 目前仅允许本机直连，请在控制台创建密钥")
-		}
-		switch {
-		case st.Settings().AdminPassword != "":
-			log.Printf("管理面板需要登录（8 小时会话；兼容 X-Admin-Password / Bearer）")
-		case server.IsLoopbackHost(*host):
-			log.Printf("未设置管理密码，管理接口仅允许本机直连访问（可用 -admin-password 设置）")
-		default:
-			log.Printf("⚠️  监听 %s 且未设置管理密码：管理接口将拒绝一切非本机直连请求，请用 -admin-password 设置密码", *host)
-		}
-		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("监听失败: %v", err)
-		}
-	}()
+	runtime := app.Start(st, srv, app.Options{Host: *host, Port: *port, Version: version})
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-
-	log.Printf("正在关闭…")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := httpSrv.Shutdown(ctx); err != nil {
-		log.Printf("关闭异常: %v", err)
+	select {
+	case <-stop:
+	case err := <-runtime.Errors():
+		log.Fatalf("监听失败: %v", err)
 	}
-	if err := st.Save(); err != nil {
-		log.Printf("保存状态失败: %v", err)
-	}
-	log.Printf("已退出")
+	runtime.Close()
 }
 
 // autoImport 在启动时尝试导入本机桌面端登录态。

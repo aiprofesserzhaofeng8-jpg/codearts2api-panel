@@ -58,6 +58,8 @@ references: [adr-0002]
 - 控制台是单页 + 轮询，不用 SSE（`adr-0004` 记录了这个取舍）。
 
 
-## M3.19 边界现状
+## M3.20 边界现状
 
 平台和业务依赖由 app.Build 显式装配，server 继续作为 HTTP/嵌入页面兼容层。价格校验与管理协调归 usage.Management，会话摘要注册表归 access.AdminSessions；HTTP 保留 8KiB 解码、Cookie、同源、原认证优先级、失败限流及审计。Store 仍执行严格价格事务、密码哈希和历史结算保存。完整当前边界以 [架构文档](../../../docs/architecture/MODULES.md) 为准；上文早期职责描述不代表本阶段已迁出的业务仍应新增到 Server。
+
+HTTP 监听实例与三条既有后台流程由 app.Start 启动，app.Runtime.Close 保留原排空/最终保存/取消顺序；server 继续提供 Handler、RunDailyClaim 与 RefreshModels 投影。StartClaimLoop 仅单向兼容 jobs.RunDailyLoop，普通请求不调用生命周期接口。

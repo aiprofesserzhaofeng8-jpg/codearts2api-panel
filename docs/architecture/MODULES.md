@@ -21,7 +21,7 @@
 | `usage` | 用量语义、价格版本、预算规则、结算记录 | `CheckBudget`、`Settle`、`Query` | 上游选号、普通调试日志替代账本 |
 | `upstream` | 最小平台接口、注册表、标准错误与可选能力 | `Stream`、`Refresh`、`Models`、可选 `Search` 等 | HTTP 管理入口、分组权限、全局重试 |
 | `storage` | 状态读写、迁移、原子提交、追加账本与回放 | 各业务定义的存储接口实现 | 持有另一套业务规则或选号算法 |
-| `jobs` | 每日领奖、成长编排/锁/执行槽及未知对话检查点；定时生命周期仍待迁移 | `Rewards.Claim/Status/Batch/RunDaily`、`Growth.List/Accept/Claim/BeginRun` | 绕过原准入/账本执行计费对话 |
+| `jobs` | 每日领奖与原定时检查、成长编排/锁/执行槽及未知对话检查点 | `RunDailyLoop`、`Rewards.Claim/Status/Batch/RunDaily`、`Growth.List/Accept/Claim/BeginRun` | 绕过原准入/账本执行计费对话 |
 | `webui` | 嵌入产物、静态路由、CSP、SPA 路由回退 | `Handler` | 管理业务或开发服务器自动公开 |
 
 这里的函数名是设计约定，不是当前已存在的 Go API。
@@ -117,3 +117,5 @@ M3.18：jobs.Welfare 借用原 Store 选择账号和生成账号选项，不保�
 
 
 M3.19：usage.ModelPrice 为规范价格类型，Store 仅保留兼容别名；usage.Management 经原严格 SetPriceAndSave 管理价格，未复制计量、历史快照或保存锁。access.AdminSessions 持原会话摘要表及互斥，HTTP 保留 Cookie、同源、失败限流和审计，密码哈希/恢复事务仍沿用 Store。两者由 app 显式装配，既无新推理调用，也无新清理协程/缓存。
+
+M3.20：app.Start/Runtime.Close 持 HTTP 运行实例、后台启动及原停机顺序，jobs.RunDailyLoop 持原领奖定时算法；main 保留命令行/环境、桌面导入/导出、首次访问文件、OS 信号和致命退出。后台共享取消与独立刷新期限保持原样，不 join 已运行任务，不强制关闭有效 HTTP 响应。server 的 StartClaimLoop 只作单向兼容。app.Build 无副作用、所有平台/Store/普通推理和页面不变，边界收尾与 M3 整体验收仍待完成。
