@@ -1,10 +1,10 @@
 # 项目结构设计 v1
 
-日期：2026-11-02。状态：**M1/M2/M3 已完成，M4–M7 按阶段实施**。
+日期：2026-11-02。状态：**M1/M2/M3/M4 已完成，M5–M7 按阶段实施**。
 
-本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。独立前端、准入/存储拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
+本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。独立前端已完成；准入/存储拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
 
-已建立 `AGENTS.md` 和 `deploy/` 补充示例；当前未创建独立 `frontend/`。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
+已建立 `AGENTS.md` 和 `deploy/` 补充示例；独立 `frontend/` 与 `backend/internal/webui` 已接通，见 [M4 验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
 
 M3 当前完成状态见 [完整验收](../acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md)：搜索与型号解析已有唯一业务归属，HTTP 保留协议和原子入口适配；生产业务依赖检查覆盖间接路径。以下各批说明按当时进度记录，其“待迁移”不是当前待办。后续任务以 [迁移阶段](MIGRATION.md#阶段和完成条件) 为准。
 
@@ -77,7 +77,7 @@ CodeArts 凭据运行时分离见 [M3 第十批验收](../acceptance/STRUCTURE-M
 - [gateway.RunPromptPolicy](../../backend/internal/gateway/prompt_policy.go) 负责有限的提示词恢复；[摘要准备](../../backend/internal/requestpolicy/summary.go) 保留原识别规则和请求参数。[gateway.RunSummary](../../backend/internal/gateway/summary.go) 持有完整性缓冲和有限截断重试；[gateway.RunAccountRetry](../../backend/internal/gateway/retry.go) 负责全局换号及租约生命周期，[RunRecovery](../../backend/internal/gateway/recovery.go) 负责同租约有限恢复；平台判定、权限预算、原子准入和账本保留原入口。
 - [平台接口](../../backend/internal/provider/provider.go) 已存在；搜索、奖励、成长任务采用可选能力接口，可以继续利用。
 - [协议转换](../../backend/internal/protocol/anthropic.go)、[Responses 兼容](../../backend/internal/responsescompat/chatcompletions_responses_bridge.go)、[提示词处理](../../backend/internal/requestpolicy/request_policy.go) 已有可复用边界。
-- [console.js](../../backend/internal/server/web/console.js) 集中多个管理功能；[web.go](../../backend/internal/server/web.go) 将 HTML、JS、CSS 编入二进制。
+- [frontend](../../frontend/README.md) 按页面组织 SFC 和功能控制器；[webui](../../backend/internal/webui/assets.go) 嵌入构建产物，[web.go](../../backend/internal/server/web.go) 同源输出并保留 CSP。
 - Go 当前只使用标准库，没有 `go.sum`；已有 ADR、CI、跨平台检查、用量账本与验收脚本，不重新建立一套平行体系。
 
 ## 目标目录

@@ -23,6 +23,8 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 
 支持在本机、服务器或 Docker 中运行，可设置监听地址与端口，也可通过 HTTPS 反向代理提供公网访问。当前采用单进程、单管理员架构，不支持多个实例共享同一状态文件。
 
+前端工程化 M4 已完成：独立 Vue/Vite 构建、页面组件、统一 API 客户端和契约类型；生产仍为单 Go 二进制。开发命令及所有权规则见 [前端说明](frontend/README.md)，验收见 [M4 报告](docs/acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。
+
 ## 功能特性
 
 | 功能 | 说明 |
@@ -55,7 +57,7 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 
 ### 方式一：从源码运行
 
-需要 Git 和 Go 1.27.3 或更新版本。
+源码构建需要 Git、Go 1.27.3 或更新版本，以及 Node.js 24.11.x 和 npm。构建脚本自动使用固定版本的 pnpm；运行已编译的生产二进制不需要 Node.js。
 
 ```bash
 git clone --branch main https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git

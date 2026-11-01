@@ -7,7 +7,7 @@ async function chooseAccount(page, id, method='browser') {
   await page.locator(method==='import'?'#accountMethodImport':'#accountMethodBrowser').click();
   await page.locator('#accountCreateNext').click();
 }
-(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});try{const ctx=await browser.newContext({viewport:{width:1460,height:1000}});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));let accounts=[{id:'wb',name:'WorkBuddy fixture',provider:'workbuddy',scope:'cn',enabled:true,status:'ok',source:'browser'}],starts=0,saves=0,checks=0,failSave=true,usageFilters=[];
+(async()=>{const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});try{const ctx=await browser.newContext({viewport:{width:1460,height:1000}});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));let accounts=[{id:'wb',name:'WorkBuddy fixture',provider:'workbuddy',scope:'cn',enabled:true,status:'ok',source:'browser'}],starts=0,saves=0,checks=0,failSave=true,usageFilters=[];
 await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));await ctx.route('**/admin/api/**',route=>{const req=route.request(),u=new URL(req.url());let out={ok:true};
 if(u.pathname.endsWith('/state'))out={accounts,keys:[],models:[{id:'trae/cn/glm-5.2',provider:'trae',scope:'cn',source:'upstream'}],settings:{pool:{}},stats:{}};
 if(u.pathname.endsWith('/credits'))out={accounts:accounts.map(a=>({id:a.id,ok:true,credit:{available:false,reason:'fixture'}}))};

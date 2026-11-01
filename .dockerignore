@@ -42,3 +42,8 @@ codearts2api.exe
 *.md
 docs/
 tools/
+
+# Always rebuild frontend from pinned sources inside the image.
+frontend/node_modules/
+frontend/dist/
+backend/internal/webui/dist/

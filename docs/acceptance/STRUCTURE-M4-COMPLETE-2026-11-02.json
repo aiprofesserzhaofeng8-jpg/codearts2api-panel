@@ -1,0 +1,275 @@
+{
+  "date": "2026-11-02",
+  "milestone": "M4",
+  "status": "complete",
+  "version": "0.3.0-structure-m4",
+  "tag": "milestone/structure-m4-complete-20261102",
+  "baseline_commit": "87e1c163ce52e8ff0aae495625051e01f079947c",
+  "frontend": {
+    "pages": 8,
+    "unit_tests": 14,
+    "test_files": 4,
+    "typecheck": "passed",
+    "generated_contract": "in_sync",
+    "controller_language": "JavaScript",
+    "legacy_check_js": false
+  },
+  "go": [
+    {
+      "case": "test",
+      "passed": true
+    },
+    {
+      "case": "vet",
+      "passed": true
+    },
+    {
+      "case": "race",
+      "passed": true
+    },
+    {
+      "case": "windows-build",
+      "passed": true
+    },
+    {
+      "case": "windows-vet",
+      "passed": true
+    }
+  ],
+  "browser": [
+    {
+      "case": "providers-smoke",
+      "passed": true
+    },
+    {
+      "case": "trae-smoke",
+      "passed": true
+    },
+    {
+      "case": "trae-device-smoke",
+      "passed": true
+    },
+    {
+      "case": "groups-smoke",
+      "passed": true
+    },
+    {
+      "case": "account-create-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-multi-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-tasks-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-actions-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-buddy-smoke",
+      "passed": true
+    },
+    {
+      "case": "frontend-smoke",
+      "passed": true
+    }
+  ],
+  "visual": [
+    {
+      "view": "dark-1600-accounts",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "dark-1600-settings",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-accounts",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-audit",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-groups",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-keys",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-logs",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-models",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-overview",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-1600-settings",
+      "changed_pixels": 0,
+      "pixels": 1600000,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-390-accounts",
+      "changed_pixels": 0,
+      "pixels": 329160,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-390-models",
+      "changed_pixels": 0,
+      "pixels": 329160,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-390-overview",
+      "changed_pixels": 0,
+      "pixels": 329160,
+      "fraction": 0.0
+    },
+    {
+      "view": "light-390-settings",
+      "changed_pixels": 0,
+      "pixels": 329160,
+      "fraction": 0.0
+    }
+  ],
+  "proxy": [
+    "dev index has no local capability",
+    "same-origin login and HttpOnly cookie",
+    "cookie session retained through proxy",
+    "admin API normal Host/Origin accepted",
+    "foreign Origin stays rejected",
+    "proxy cannot reuse direct local capability",
+    "v1 proxy preserves API authentication",
+    "logout invalidates cookie"
+  ],
+  "docker": {
+    "passed": true,
+    "cases": [
+      "isolated empty container health",
+      "production index and strict CSP",
+      "all referenced production assets served",
+      "login Cookie and authenticated management API",
+      "logout revokes management session",
+      "non-root read-only runtime without Node"
+    ],
+    "build_id": "87b83ef669393d9a1963",
+    "image_id": "sha256:49af73adf31f24e6c15b099559ff16bb59526c1d6649380eca97eadb46415312"
+  },
+  "development": {
+    "passed": true,
+    "cwd_independent": true,
+    "isolated_backend": true,
+    "vite_proxy": true,
+    "sigint_exit_code": 0,
+    "both_ports_released": true
+  },
+  "missing_assets": {
+    "build_failed": true,
+    "reason": "internal/webui/assets.go:13:12: pattern all:dist: no matching files found"
+  },
+  "source": {
+    "production_go_files_byte_identical": 180,
+    "server_go_only_static_routes_changed": true,
+    "unchanged_css_theme_icons": {
+      "console.css": "e300129f3882a900d461191007ebc44a56f8a2d2909ba1eec4bf2676ef9aac95",
+      "theme.js": "ad808fd0f3fc84bc965d487ee6b0b8818fc7da329683237eacca041cf996594e",
+      "favicon.svg": "ba2c6e5c08f9774488945618475e778686af80bfcf500ae0dee8af044c68c3f3",
+      "favicon.ico": "c0eb25a6f91bb29286169d49695f5ec2eb555f6ba5c22a8f118e3e2890a2430e"
+    },
+    "platform_raw_commands_preserved": 2,
+    "first_page_uncompressed_bytes": {
+      "before": {
+        "html_bytes": 65095,
+        "resource_bytes": 213255,
+        "total_bytes": 278350
+      },
+      "after": {
+        "html_bytes": 738,
+        "resource_bytes": 295253,
+        "total_bytes": 295991
+      },
+      "change_percent": 6.3377043290820945
+    },
+    "pre_deploy_data_files_identical": 11
+  },
+  "local_runtime": {
+    "version": "codearts2api 0.3.0-structure-m4",
+    "binary_sha256": "64c365bb1b8857f9951b73e0979ac7871d1f36f01890df60927321edae545793",
+    "frontend_build_id": "87b83ef669393d9a1963",
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "live_assets_match_build": true,
+    "local_auto_unlock": false,
+    "no_upstream_operations": true
+  },
+  "local_data_files_unchanged": 11,
+  "new_live_upstream_calls": 0,
+  "limits": [
+    "Legacy native DOM controllers remain JavaScript; strict TypeScript does not cover every old algorithm.",
+    "Provider-specific operation payloads remain open in OpenAPI.",
+    "Windows build and vet ran locally; Windows execution is configured in CI but not observed in this run.",
+    "Visual comparisons and browser flows used isolated synthetic fixtures.",
+    "Initial uncompressed HTML/CSS/JS bytes grew by 6.34%; no inference speed guarantee follows from local page timing.",
+    "No new real upstream inference, rewards, shared credential refresh or IDE writeback was performed."
+  ],
+  "repository_checks": {
+    "passed": true,
+    "credential_scan": "passed",
+    "source_files_checked": 97,
+    "local_links_checked": 140,
+    "gofmt": "passed",
+    "production_import_boundaries": "passed",
+    "historical_reports_unchanged": true,
+    "root_data_files_identical": 11,
+    "runtime_hash_matches_build": true,
+    "public_evidence_consistent": true,
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  }
+}

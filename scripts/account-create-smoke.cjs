@@ -1,7 +1,7 @@
 // Unified account wizard fixtures; no real account or upstream mutations.
 const {chromium}=require('playwright');const assert=require('node:assert/strict');const fs=require('node:fs');
 (async()=>{
- const browser=await chromium.launch({channel:'chrome',headless:true});
+ const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});
  try{
   const ctx=await browser.newContext({viewport:{width:1280,height:1000}});const page=await ctx.newPage(),errors=[];
   let starts=0,cancels=0,failCancel=true,failImport=true,imports=0;

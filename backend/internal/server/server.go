@@ -176,12 +176,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/metrics", s.withAdminAuth(s.handleMetrics))
 
 	// 控制台静态资源（内嵌，同源）
-	mux.HandleFunc("/console.css", serveConsoleCSS)
-	mux.HandleFunc("/console.js", serveConsoleJS)
-	mux.HandleFunc("/growth.js", serveGrowthJS)
-	mux.HandleFunc("/theme.js", serveThemeJS)
-	mux.HandleFunc("/favicon.svg", serveFaviconSVG)
-	mux.HandleFunc("/favicon.ico", serveFaviconICO)
+	mux.HandleFunc("/assets/", serveConsoleAsset)
+	mux.HandleFunc("/theme.js", serveConsoleAsset)
+	mux.HandleFunc("/favicon.svg", serveConsoleAsset)
+	mux.HandleFunc("/favicon.ico", serveConsoleAsset)
 
 	mux.HandleFunc("/", s.handleRoot)
 

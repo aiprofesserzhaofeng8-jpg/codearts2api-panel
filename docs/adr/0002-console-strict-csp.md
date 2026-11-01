@@ -11,6 +11,8 @@ parent: server
 - 状态：已采纳
 - 日期：2026-10
 
+M4 已将资源路径切换为 Vite 产物与 `internal/webui`，参见 [ADR 0008](0008-frontend-ownership.md)。下述三文件形式是原始决策记录，严格 CSP 原则仍生效。
+
 ## 背景
 
 控制台最初是**一个 HTML 文件**，内含 `<style>` 与 `<script>`，另有 51 处内联

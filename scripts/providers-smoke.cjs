@@ -7,7 +7,7 @@ async function chooseAccount(page, id, method='browser') {
   await page.locator(method==='import'?'#accountMethodImport':'#accountMethodBrowser').click();
   await page.locator('#accountCreateNext').click();
 }
-(async()=>{const browser=await chromium.launch({headless:true,channel:'chrome'});try{const ctx=await browser.newContext({viewport:{width:1460,height:1000},permissions:['clipboard-read','clipboard-write']});const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));let accounts=[{id:'ca',name:'码道测试账号',provider:'codearts',enabled:true,status:'ok',source:'browser'}],starts=0,saves=0,checks=0,failed=true,filters=[];
+(async()=>{const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER || 'chrome'});try{const ctx=await browser.newContext({viewport:{width:1460,height:1000},permissions:['clipboard-read','clipboard-write']});const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));let accounts=[{id:'ca',name:'码道测试账号',provider:'codearts',enabled:true,status:'ok',source:'browser'}],starts=0,saves=0,checks=0,failed=true,filters=[];
 await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));await ctx.route('**/admin/api/**',route=>{const req=route.request(),u=new URL(req.url());let out={ok:true};
 if(u.pathname.endsWith('/state'))out={accounts,keys:[],models:[{id:'deepseek-v4.1-flash',source:'upstream'},{id:'workbuddy/global/shared',provider:'workbuddy',scope:'global',source:'upstream'}],settings:{pool:{}},stats:{}};
 if(u.pathname.endsWith('/credits'))out={accounts:accounts.map(a=>({id:a.id,ok:true,credit:{available:false,reason:'fixture'}}))};

@@ -51,3 +51,5 @@ git var GIT_AUTHOR_IDENT
 按修改范围执行检查：Go 命令在 `backend/` 下执行：Go 逻辑使用 `go test ./...`、必要时 `go test -race ./...` 和 `go vet ./...`；客户端配置使用 Python 单元测试；Pi 恢复使用 `node scripts/pi/codearts-compaction.test.mjs`。纯文档修改检查命令、链接和说明与当前实现是否一致。
 
 完整验收流程见 [质量验收方案](docs/acceptance/QUALITY-PLAN.md)。提交不得包含运行账号、访问凭据、密钥、私有会话或原始测试数据。
+
+前端与 Go 资源构建：先执行 `make frontend` 再运行直接 Go 命令；常规完整检查使用 `make check`，页面验收使用 `make e2e`。详见 [前端说明](frontend/README.md)。生成类型和锁文件入库，dist 与 node_modules 不入库。

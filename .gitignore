@@ -36,3 +36,10 @@ __pycache__/
 
 # Continuous local acceptance status; publish reviewed snapshots instead.
 /docs/acceptance/QUALITY-REPORT.md
+
+# Frontend build and dependencies
+/frontend/node_modules/
+/frontend/dist/
+/backend/internal/webui/dist/
+/frontend/.vite/
+/frontend/coverage/

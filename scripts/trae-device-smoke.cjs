@@ -13,7 +13,7 @@ async function chooseAccount(page, id, method='browser') {
   await page.locator('#accountCreateNext').click();
 }
 (async()=>{
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});
   const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'trae-device-command-'));
   try{
     const ctx=await browser.newContext({viewport:{width:1460,height:1100},permissions:['clipboard-read','clipboard-write']});

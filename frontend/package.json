@@ -1,0 +1,33 @@
+{
+  "name": "codearts2api-console",
+  "private": true,
+  "version": "0.3.0",
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24.11.0 <25"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "generate": "openapi-typescript ../api/admin.openapi.yaml -o src/api/generated/admin.ts",
+    "build": "vite build && node scripts/embed.mjs",
+    "check": "pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "vue": "3.5.44"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "@vitejs/plugin-vue": "6.0.10",
+    "@vue/test-utils": "2.5.1",
+    "jsdom": "26.1.0",
+    "openapi-typescript": "7.13.0",
+    "playwright": "1.60.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "vue-tsc": "3.3.14"
+  }
+}

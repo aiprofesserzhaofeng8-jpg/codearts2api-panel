@@ -1,8 +1,5 @@
-// Bounded account workers share the existing account-scoped read/claim APIs.
-// Closing the dialog stops queued work; no timers or background queue remain.
-(function(){
-  "use strict";
-  window.CodeArtsGrowth=function(ui){
+// WorkBuddy only. Existing bounded workers and unknown-result rules are preserved.
+export function createGrowth(ui) {
     var $=function(id){return document.getElementById(id);};
     var dialog=$("growthDialog"),sequence=0,accounts=[],entries=[],busy=false,busyKind="",notice="",controller=null;
     var select=$("growthAccountSelect");
@@ -197,6 +194,6 @@
       if(!dialog.open)dialog.showModal();
       return load();
     }
-    return {open:function(a){return openAccounts([a]);},openAccounts:openAccounts};
-  };
-})();
+    return {open:function(a){return openAccounts([a]);},openAccounts:openAccounts,dispose:function(){sequence++;if(controller)controller.abort();controller=null;accounts=[];entries=[];busy=false;}};
+
+}

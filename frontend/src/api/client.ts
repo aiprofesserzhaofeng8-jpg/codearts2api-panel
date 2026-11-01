@@ -1,0 +1,50 @@
+import type { paths } from './generated/admin';
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; }
+}
+export interface RequestOptions { method?: string; body?: unknown; signal?: AbortSignal }
+type JSONResponse<T> = T extends { responses: { 200: { content: { 'application/json': infer R } } } } ? R : unknown;
+export type GetResponse<P extends keyof paths> = JSONResponse<paths[P] extends { get: infer G } ? G : never>;
+let expired: (() => void) | undefined;
+let disposed = false;
+let generation = 0;
+const queries = new Map<string, AbortController>();
+const reads = new Set<AbortController>();
+const scoped = /^\/admin\/api\/(usage|logs|audit|pricing|model-policies)(?:\?|$)/;
+export const isAbortError = (error: unknown): boolean => typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
+export function configureClient(onExpired: () => void): void { expired = onExpired; disposed = false; generation++; }
+export function cancelPageQueries(): void { for (const controller of queries.values()) controller.abort(); queries.clear(); }
+export function disposeClient(): void { disposed = true; cancelPageQueries(); for (const controller of reads) controller.abort(); reads.clear(); expired = undefined; }
+export async function api<P extends keyof paths>(path: P, options?: { method?: "GET"; signal?: AbortSignal }): Promise<GetResponse<P>>;
+export async function api<T = unknown>(path: string, options?: RequestOptions): Promise<T>;
+export async function api(path: string, options: RequestOptions = {}): Promise<unknown> {
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) throw new Error('API path must be same-origin');
+  if (disposed) throw new DOMException('Console disposed', 'AbortError');
+  const currentGeneration = generation;
+  const method = options.method ?? 'GET';
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = document.querySelector<HTMLMetaElement>('meta[name="local-panel-session"]')?.content;
+  if (token) headers['X-Local-Panel-Session'] = token;
+  // Only replaceable page reads are cancelled; writes keep their existing semantics.
+  const key = path.split('?')[0]!;
+  let controller: AbortController | undefined;
+  if (method === 'GET' && !options.signal) {
+    controller = new AbortController(); reads.add(controller);
+    if (scoped.test(path)) {
+    queries.get(key)?.abort(); queries.set(key, controller);
+    }
+  }
+  try {
+    const response = await fetch(path, { method, headers, credentials: 'same-origin', signal: options.signal ?? controller?.signal,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body) });
+    const text = await response.text();
+    if (disposed || generation !== currentGeneration) throw new DOMException("Console disposed", "AbortError");
+    let data: unknown = null; try { data = JSON.parse(text); } catch { /* Preserve non-JSON error text. */ }
+    if (!response.ok) {
+      if (response.status === 401 && path.startsWith('/admin/api/')) expired?.();
+      const message = (data as { error?: { message?: unknown } } | null)?.error?.message;
+      throw new ApiError(message ? String(message) : text || `HTTP ${response.status}`, response.status);
+    }
+    return data;
+  } finally { if (controller) reads.delete(controller); if (controller && queries.get(key) === controller) queries.delete(key); }
+}

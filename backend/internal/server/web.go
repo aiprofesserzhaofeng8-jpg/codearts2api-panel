@@ -1,34 +1,14 @@
 package server
 
 import (
-	_ "embed"
+	"codearts2api/internal/webui"
 	"net/http"
+	"strings"
 )
 
-// 控制台页面、脚本、样式和站点图标均内嵌在二进制中。
-//
-// 拆开（而不是全部内联）是为了让 CSP 能收紧到 script-src 'self' /
-// style-src 'self'：内联 <script> 与内联 style 属性会迫使 CSP 放开
-// 'unsafe-inline'，等于放弃对注入点的最后一道防线。
-// 所有资源由本程序同源提供，不依赖外部 CDN，可离线使用。
-var (
-	//go:embed web/index.html
-	consoleHTML []byte
-	//go:embed web/console.css
-	consoleCSS []byte
-	//go:embed web/console.js
-	consoleJS []byte
-	//go:embed web/growth.js
-	growthJS []byte
-
-	//go:embed web/theme.js
-	themeJS []byte
-
-	//go:embed web/favicon.svg
-	faviconSVG []byte
-	//go:embed web/favicon.ico
-	faviconICO []byte
-)
+// Only generated production assets are embedded; frontend/src is the source.
+var consoleHTML = webui.Index()
+var frontendBuildID = webui.BuildID()
 
 // consoleCSP 是控制台页面与静态资源共用的 CSP。
 //
@@ -48,6 +28,7 @@ const consoleCSP = "default-src 'none'; " +
 // consoleHeaders 统一下发控制台资源的安全响应头。
 func consoleHeaders(h http.Header, contentType string) {
 	h.Set("Content-Type", contentType)
+	h.Set("X-Frontend-Build", frontendBuildID)
 	h.Set("Cache-Control", "no-store")
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "no-referrer")
@@ -60,33 +41,19 @@ func serveConsole(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(consoleHTML)
 }
 
-// serveConsoleCSS 输出控制台样式表。
-func serveConsoleCSS(w http.ResponseWriter, _ *http.Request) {
-	consoleHeaders(w.Header(), "text/css; charset=utf-8")
-	_, _ = w.Write(consoleCSS)
-}
-
-// serveConsoleJS 输出控制台脚本。
-func serveConsoleJS(w http.ResponseWriter, _ *http.Request) {
-	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
-	_, _ = w.Write(consoleJS)
-}
-
-func serveGrowthJS(w http.ResponseWriter, _ *http.Request) {
-	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
-	_, _ = w.Write(growthJS)
-}
-
-func serveThemeJS(w http.ResponseWriter, _ *http.Request) {
-	consoleHeaders(w.Header(), "application/javascript; charset=utf-8")
-	_, _ = w.Write(themeJS)
-}
-
-func serveFaviconSVG(w http.ResponseWriter, _ *http.Request) {
-	consoleHeaders(w.Header(), "image/svg+xml")
-	_, _ = w.Write(faviconSVG)
-}
-func serveFaviconICO(w http.ResponseWriter, _ *http.Request) {
-	consoleHeaders(w.Header(), "image/x-icon")
-	_, _ = w.Write(faviconICO)
+func serveConsoleAsset(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimPrefix(r.URL.Path, "/")
+	data, ok := webui.Read(name)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	consoleHeaders(w.Header(), webui.ContentType(name))
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if r.Method != http.MethodHead {
+		_, _ = w.Write(data)
+	}
 }

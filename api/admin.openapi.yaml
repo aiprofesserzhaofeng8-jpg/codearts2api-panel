@@ -1,0 +1,2554 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CodeArts2API existing management API",
+    "version": "0.3.0",
+    "description": "Same-origin management contract; inference bodies are not filtered by this schema. Variant operations are intentionally extensible. Query parameters and opaque provider payloads retain their existing handler validation."
+  },
+  "paths": {
+    "/admin/auth/login": {
+      "post": {
+        "operationId": "post__admin_auth_login",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password"
+                ],
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/auth/logout": {
+      "post": {
+        "operationId": "post__admin_auth_logout",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/auth/session": {
+      "get": {
+        "operationId": "get__admin_auth_session",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSession"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/providers": {
+      "get": {
+        "operationId": "get__admin_api_providers",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/provider-login": {
+      "post": {
+        "operationId": "post__admin_api_provider_login",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/provider-import": {
+      "post": {
+        "operationId": "post__admin_api_provider_import",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/trae-device": {
+      "get": {
+        "operationId": "get__admin_api_trae_device",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/audit": {
+      "get": {
+        "operationId": "get__admin_api_audit",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "get__health",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "get__healthz",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/model-policies": {
+      "get": {
+        "operationId": "get__admin_api_model_policies",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post__admin_api_model_policies",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/state": {
+      "get": {
+        "operationId": "get__admin_api_state",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/State"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/accounts": {
+      "post": {
+        "operationId": "post__admin_api_accounts",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/keys/budget": {
+      "post": {
+        "operationId": "post__admin_api_keys_budget",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/groups": {
+      "get": {
+        "operationId": "get__admin_api_groups",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/Group"
+                      }
+                    }
+                  },
+                  "required": [
+                    "groups"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post__admin_api_groups",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete__admin_api_groups",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/keys/group": {
+      "post": {
+        "operationId": "post__admin_api_keys_group",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/keys/reveal": {
+      "post": {
+        "operationId": "post__admin_api_keys_reveal",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/keys": {
+      "post": {
+        "operationId": "post__admin_api_keys",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete__admin_api_keys",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/logs": {
+      "get": {
+        "operationId": "get__admin_api_logs",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post__admin_api_logs",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete__admin_api_logs",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/usage": {
+      "get": {
+        "operationId": "get__admin_api_usage",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/pricing": {
+      "get": {
+        "operationId": "get__admin_api_pricing",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post__admin_api_pricing",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/stats": {
+      "get": {
+        "operationId": "get__admin_api_stats",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post__admin_api_stats",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete__admin_api_stats",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/settings": {
+      "post": {
+        "operationId": "post__admin_api_settings",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/checkin": {
+      "post": {
+        "operationId": "post__admin_api_checkin",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/credits": {
+      "get": {
+        "operationId": "get__admin_api_credits",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/models/probe": {
+      "post": {
+        "operationId": "post__admin_api_models_probe",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/models/refresh": {
+      "post": {
+        "operationId": "post__admin_api_models_refresh",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/claim": {
+      "post": {
+        "operationId": "post__admin_api_claim",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/welfare": {
+      "get": {
+        "operationId": "get__admin_api_welfare",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/workbuddy/tasks": {
+      "get": {
+        "operationId": "get__admin_api_workbuddy_tasks",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/workbuddy/tasks/claim": {
+      "post": {
+        "operationId": "post__admin_api_workbuddy_tasks_claim",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/workbuddy/tasks/accept": {
+      "post": {
+        "operationId": "post__admin_api_workbuddy_tasks_accept",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/workbuddy/tasks/run": {
+      "post": {
+        "operationId": "post__admin_api_workbuddy_tasks_run",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/invite": {
+      "post": {
+        "operationId": "post__admin_api_invite",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/login/start": {
+      "post": {
+        "operationId": "post__admin_api_login_start",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/login/poll": {
+      "get": {
+        "operationId": "get__admin_api_login_poll",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/login/complete": {
+      "post": {
+        "operationId": "post__admin_api_login_complete",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/login/callback": {
+      "post": {
+        "operationId": "post__admin_api_login_callback",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/login/cancel": {
+      "post": {
+        "operationId": "post__admin_api_login_cancel",
+        "responses": {
+          "200": {
+            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message",
+              "type"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": true
+      },
+      "AdminSession": {
+        "type": "object",
+        "properties": {
+          "authenticated": {
+            "type": "boolean"
+          },
+          "local_compatibility": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "authenticated",
+          "local_compatibility"
+        ],
+        "additionalProperties": true
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "service": {
+            "const": "codearts2api-panel"
+          },
+          "status": {
+            "const": "ok"
+          },
+          "accounts": {
+            "type": "integer"
+          },
+          "ready": {
+            "type": "integer"
+          },
+          "models": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "service",
+          "status",
+          "accounts",
+          "ready",
+          "models"
+        ],
+        "additionalProperties": true
+      },
+      "ModelMapping": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "sources"
+        ],
+        "additionalProperties": true
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "account_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowlist_enabled": {
+            "type": "boolean"
+          },
+          "model_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "model_mappings": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ModelMapping"
+            },
+            "description": "On update, absent or null preserves mappings; [] clears them. Names include a version. Sources are original platform-qualified IDs."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "account_ids",
+          "allowlist_enabled",
+          "model_ids"
+        ],
+        "additionalProperties": true
+      },
+      "Account": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "last_err": {
+            "type": "string"
+          },
+          "access_key": {
+            "type": "string"
+          },
+          "last_claim_date": {
+            "type": "string"
+          },
+          "last_claim_err": {
+            "type": "string"
+          },
+          "last_claim_msg": {
+            "type": "string"
+          },
+          "last_claim_state": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "has_refresh": {
+            "type": "boolean"
+          },
+          "permanent": {
+            "type": "boolean"
+          },
+          "claimed_today": {
+            "type": "boolean"
+          },
+          "daily_claim_supported": {
+            "type": "boolean"
+          },
+          "growth_tasks_supported": {
+            "type": "boolean"
+          },
+          "expires_at": {
+            "type": "integer"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "max_in_flight": {
+            "type": "integer"
+          },
+          "failures": {
+            "type": "integer"
+          },
+          "last_used": {
+            "type": "integer"
+          },
+          "last_claim_at": {
+            "type": "integer"
+          },
+          "next_claim_at": {
+            "type": "integer"
+          },
+          "cooldown_until": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "scope",
+          "enabled",
+          "paused",
+          "source",
+          "status"
+        ],
+        "additionalProperties": true,
+        "description": "Public masked account DTO. Optional provider fields are not inferred when absent. Times are Unix seconds; expires_in is seconds."
+      },
+      "KeyBudget": {
+        "type": "object",
+        "properties": {
+          "max_requests": {
+            "type": "integer"
+          },
+          "max_tokens": {
+            "type": "integer"
+          },
+          "max_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_requests",
+          "max_tokens",
+          "max_usd"
+        ],
+        "additionalProperties": true
+      },
+      "KeyUsage": {
+        "type": "object",
+        "properties": {
+          "unpriced": {
+            "type": "boolean"
+          },
+          "requests": {
+            "type": "integer"
+          },
+          "tokens": {
+            "type": "integer"
+          },
+          "usd": {
+            "type": "number"
+          },
+          "incomplete": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "unpriced",
+          "requests",
+          "tokens",
+          "usd",
+          "incomplete"
+        ],
+        "additionalProperties": true
+      },
+      "Key": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "group_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "integer"
+          },
+          "last_used": {
+            "type": "integer"
+          },
+          "requests": {
+            "type": "integer"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/KeyBudget"
+          },
+          "budget_usage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          }
+        },
+        "required": [
+          "ref",
+          "key",
+          "name",
+          "enabled",
+          "group_id",
+          "created_at",
+          "last_used",
+          "requests",
+          "budget",
+          "budget_usage"
+        ],
+        "additionalProperties": true,
+        "description": "key is masked. Complete key is available only through the explicit reveal command."
+      },
+      "Model": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "credit": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "upstream_id": {
+            "type": "string"
+          },
+          "context": {
+            "type": "integer"
+          },
+          "max_output": {
+            "type": "integer"
+          },
+          "stream_only": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "source",
+          "context",
+          "max_output"
+        ],
+        "additionalProperties": true
+      },
+      "State": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Account"
+            }
+          },
+          "groups": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Key"
+            }
+          },
+          "models": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Model"
+            }
+          },
+          "settings": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": true
+          },
+          "stats": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": true
+          },
+          "providers": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": true
+            }
+          },
+          "provider_errors": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": true
+          },
+          "upstream_error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "today",
+          "accounts",
+          "groups",
+          "keys",
+          "models",
+          "settings",
+          "stats",
+          "providers",
+          "provider_errors",
+          "upstream_error"
+        ],
+        "additionalProperties": true
+      },
+      "Ok": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "securitySchemes": {
+      "adminCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "codearts_admin_session"
+      },
+      "localPanelSession": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Local-Panel-Session",
+        "description": "Direct loopback only; never usable through dev proxy."
+      }
+    }
+  }
+}

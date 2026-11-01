@@ -50,6 +50,12 @@ M3 已完成搜索执行、统一请求型号解析和整体验收，当前记�
 
 不要为凑齐目标树创建空包、空服务或无法运行的配置。具体职责和依赖见 `docs/architecture/`。
 
+## 当前前端（M4 已完成）
+
+前端源码在 `frontend/src`，Vue 预编译页面及独立原生 DOM 控制器各自独占节点。保持 `v-once` 所有权边界，不能与响应式 DOM 更新混用。旧 server/web 已删除，`internal/webui` 仅嵌入本次生成的 dist。新基础设施为 TypeScript，遗留控制器为 JS；具体规则见 `frontend/README.md` 和 ADR 0008。
+
+先运行 `make frontend` 再执行直接 Go 命令。`make build/check/race/e2e` 自动构建必要资源；`build.sh` 包含锁定依赖安装、前端检查和构建。dist、node_modules、真实账号与浏览器测试产物不入库。API 类型从 `api/admin.openapi.yaml` 生成，`python3 tools/check_api_types.py` 检查同步。切页只取消读取，不能自动取消已提交写操作。
+
 ## 命令与验证
 
 - 仓库根：`make check`、`make race`、`make build`、`make docker`；Go 不在 PATH 时通过 `GO=/absolute/path/to/go` 指定。
