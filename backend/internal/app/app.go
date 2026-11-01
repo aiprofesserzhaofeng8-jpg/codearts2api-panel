@@ -53,6 +53,7 @@ func Build(st *store.Store) (*server.Server, error) {
 		Catalog:       catalog.NewRuntime(st, models),
 		AccountProbes: accounts.NewProbes(st, models, log.Printf),
 		ModelPolicies: config.NewModelPolicies(st, models),
+		Routing:       catalog.NewRouting(st, models),
 		Configuration: config.NewManagement(st, func(id string) (config.ModelRef, bool) {
 			model, ok := models.Resolve(id, st.Settings().ModelAliases)
 			platform := model.Provider

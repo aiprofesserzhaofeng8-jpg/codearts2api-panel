@@ -46,6 +46,8 @@ M3 第二十批将 HTTP 运行实例及启动/关闭协调迁入 `app.Start`/`Ru
 
 M3 第二十一批将账号连通性探活编排迁入 `accounts.Probes`，CodeArts Session 和最小探测请求仍由 `upstream/codearts` 包装；HTTP 保留宽松解码、脱敏字段和响应。逐账号串行、30/60s 超时、原生先失效再解析、成功才替换平台地区目录、失败仍返回已有凭证提示、最终保存失败只记日志均不变。模型推荐生成/目录合并归 `config.ModelPolicies`，统一模型公共建议归 `config.CommonModelPolicy`，继续优先管理员策略并遇缺失来源立即停止；不按模型名猜能力，不增缓存/锁。`make architecture` 和 CI 检查生产直接导入，旧 Registry/apierr/Store 原生桥接明确保留，不代表整个依赖图已完成迁移。搜索执行、统一请求型号解析与 M3 整体验收仍待处理。
 
+M3 已完成搜索执行、统一请求型号解析和整体验收，当前记录见 `docs/acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md`。以上各批是历史范围说明。catalog.Routing 借用唯一目录与实时权限；ModelPlan 仅本请求所有，不缓存分组授权，Store 仍原子选号/占位。gateway.RunSearch 保留平台与 SearxNG 的不同凭据/健康语义；protocol 只迁移原查询提取及型号外壳替换，不增普通请求解析。apierr 的业务错误仅单向别名。make architecture 覆盖直接与间接业务依赖；后续 M4 前端、M5 准入/存储和 M6 产品规则不能混入 M3 或同时改协议行为。
+
 不要为凑齐目标树创建空包、空服务或无法运行的配置。具体职责和依赖见 `docs/architecture/`。
 
 ## 命令与验证

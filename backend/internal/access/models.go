@@ -41,3 +41,25 @@ type BudgetUsage struct {
 	USD        float64 `json:"usd"`
 	Incomplete bool    `json:"incomplete"`
 }
+
+// AccessScope is a read-only permission snapshot, not an admission transaction.
+type AccessScope struct {
+	ModelMappings    []ModelMapping
+	Restricted       bool
+	AccountIDs       map[string]bool
+	AllowlistEnabled bool
+	ModelIDs         map[string]bool
+}
+
+func (p AccessScope) AllowsModel(id string) bool {
+	return !p.Restricted || !p.AllowlistEnabled || p.ModelIDs[id]
+}
+
+func (p AccessScope) Mapping(name string) ([]string, bool) {
+	for _, m := range p.ModelMappings {
+		if m.Name == name {
+			return m.Sources, true
+		}
+	}
+	return nil, false
+}

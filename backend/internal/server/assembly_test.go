@@ -138,6 +138,9 @@ func growthTask(tasks []provider.GrowthTask, code string) *provider.GrowthTask {
 }
 
 func attachModelPolicies(s *Server) {
+	if s.Routing == nil && s.Reg != nil {
+		s.Routing = catalog.NewRouting(s.Store, s.Reg)
+	}
 	if s.ModelPolicies == nil && s.Reg != nil {
 		s.ModelPolicies = config.NewModelPolicies(s.Store, s.Reg)
 	}

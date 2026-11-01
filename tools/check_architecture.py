@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Check production import boundaries using the module's selected Go toolchain.
+"""Check direct and transitive production import boundaries with the pinned Go toolchain.
 
 Legacy registry/apierr/store/native bridges remain visible and are not certified
 as migrated. Rules apply to dependencies, never file counts or source line counts.
 """
 import argparse
+from collections import deque
 import json
 from pathlib import Path
 import subprocess
@@ -19,6 +20,11 @@ PLATFORMS = {"codearts", "workbuddy", "trae"}
 PURE = {"access", "protocol", "ratelimit", "responsescompat", "usage"}
 
 
+def neutral(relative):
+    top = relative.split("/", 1)[0]
+    return top in NEUTRAL and (top != "upstream" or relative == "upstream")
+
+
 def violations(packages):
     errors = []
     for pkg in packages:
@@ -26,18 +32,19 @@ def violations(packages):
         if not name.startswith(PREFIX):
             continue
         relative = name.removeprefix(PREFIX)
+        owner = relative.split("/", 1)[0]
         for dep in pkg.get("Imports", []):
             local = dep.removeprefix(PREFIX) if dep.startswith(PREFIX) else None
             top = local.split("/", 1)[0] if local else None
             reason = None
-            if relative in NEUTRAL:
+            if neutral(relative):
                 if top in {"server", "httpapi", "app", "store", "storage", *PLATFORMS} or (local and local.startswith("upstream/")):
                     reason = "neutral business module must use an injected interface"
                 elif dep == "net/http" or dep.startswith("net/http/"):
                     reason = "HTTP belongs to transport or platform adapters"
-                elif top == "gateway" and relative != "gateway":
+                elif top == "gateway" and owner != "gateway":
                     reason = "business module must not depend back on gateway"
-            if relative in PURE and local:
+            if owner in PURE and local:
                 reason = "value/algorithm module must remain independent of other internal modules"
             platform = relative.split("/")[-1] if relative.startswith("upstream/") else relative
             if platform in PLATFORMS and (top in PLATFORMS or (local and local.startswith("upstream/"))):
@@ -48,6 +55,30 @@ def violations(packages):
                 reason = "lower modules must not import application or HTTP assembly"
             if reason:
                 errors.append(f"{name} -> {dep}: {reason}")
+    # A legacy helper can hide a forbidden dependency from a direct-only rule.
+    # Follow internal edges from each neutral owner; adapters/Store/Registry are
+    # intentionally outside these roots and retain their documented bridges.
+    graph = {p["ImportPath"]: p.get("Imports", []) for p in packages}
+    for root in sorted(graph):
+        if not neutral(root.removeprefix(PREFIX)):
+            continue
+        queue = deque([(root, [root])])
+        seen = {root}
+        while queue:
+            name, path = queue.popleft()
+            for dep in graph.get(name, []):
+                if dep in seen:
+                    continue
+                seen.add(dep)
+                local = dep.removeprefix(PREFIX) if dep.startswith(PREFIX) else None
+                top = local.split("/", 1)[0] if local else None
+                forbidden = top in {"server", "httpapi", "app", "store", "storage", *PLATFORMS} or (local and local.startswith("upstream/"))
+                forbidden = forbidden or dep == "net/http" or dep.startswith("net/http/")
+                forbidden = forbidden or (top == "gateway" and root.removeprefix(PREFIX).split("/", 1)[0] != "gateway")
+                if forbidden and len(path) > 1:
+                    errors.append(f"{' -> '.join([*path, dep])}: neutral business module has an indirect transport/storage/platform dependency")
+                elif local and not forbidden:
+                    queue.append((dep, [*path, dep]))
     return errors
 
 
@@ -73,7 +104,7 @@ def main():
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1
-    print("Production import boundaries passed (legacy bridges remain documented).")
+    print("Direct and transitive business import boundaries passed (legacy bridges remain documented).")
     return 0
 
 

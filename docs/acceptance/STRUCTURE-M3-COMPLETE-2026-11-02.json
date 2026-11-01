@@ -1,0 +1,2494 @@
+{
+  "date": "2026-11-02",
+  "stage": "M3",
+  "status": "complete",
+  "version": "0.3.0-structure-m3",
+  "baseline": {
+    "commit": "e35d48f5e18df6d44306e519877c508c1c81f736",
+    "version": "codearts2api 0.3.0-structure-m3.21",
+    "binary_sha256": "3d24315a2137e444375e0508af871eaf61ac7808e3204fd65ea7e5a345e25fcf"
+  },
+  "completion_tag": "milestone/structure-m3-complete-20261102",
+  "implementation": {
+    "search": "gateway.RunSearch / RunExternalSearchAccount",
+    "routing": "catalog.Routing",
+    "permission_projection": "access.AccessScope",
+    "protocol": "protocol.SearchQuery / MappedRequestModel / MappedResponseModel",
+    "composition": "app.Build",
+    "new_hot_path_cache": false,
+    "new_lock": false,
+    "extra_upstream_call_or_retry": false,
+    "schema_changed": false
+  },
+  "checks": {
+    "make_check": "passed",
+    "make_race": "passed",
+    "linux_windows_build": "passed",
+    "windows_gui_executed": false,
+    "docker_build": "passed",
+    "architecture": "direct and transitive, including neutral subpackages",
+    "architecture_checker_tests": 4,
+    "http_contract": {
+      "baseline": "e35d48f",
+      "cases": 95,
+      "identical_case_results": true,
+      "passed": true,
+      "scope": "mapped models across three protocols, raw access, retries, permissions, precision, native/external search budgets/leases/credentials/cancel, provider prompt policy"
+    },
+    "source_boundary": {
+      "baseline": "e35d48f",
+      "error_alias_normalized_for_comparison": true,
+      "existing_production_files_byte_identical": 169,
+      "functions_identical_in_changed_files": 68,
+      "native_platforms_web_and_cli_byte_identical": true,
+      "store_atomic_functions_ast_identical": true
+    },
+    "browser": [
+      {
+        "case": "providers-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-device-smoke",
+        "passed": true
+      },
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-tasks-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-actions-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-buddy-smoke",
+        "passed": true
+      }
+    ],
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true,
+        "sessions_revoked_on_restart": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001",
+        "sessions_revoked_on_restart": true
+      }
+    ],
+    "lifecycle": {
+      "baseline": "e35d48f",
+      "results": [
+        {
+          "label": "before",
+          "health": {
+            "accounts": 0,
+            "models": 8,
+            "ready": 0,
+            "service": "codearts2api-panel",
+            "status": "ok"
+          },
+          "periodic_save_30s": true,
+          "signal_cases": [
+            {
+              "signal": "SIGTERM",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": false,
+              "shutdown_seconds": 0.004
+            },
+            {
+              "signal": "SIGINT",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": true,
+              "shutdown_seconds": 0.003
+            }
+          ],
+          "bind_failure_exit_code": 1,
+          "bootstrap_permissions": "0o600",
+          "schema": 6
+        },
+        {
+          "label": "after",
+          "health": {
+            "accounts": 0,
+            "models": 8,
+            "ready": 0,
+            "service": "codearts2api-panel",
+            "status": "ok"
+          },
+          "periodic_save_30s": true,
+          "signal_cases": [
+            {
+              "signal": "SIGTERM",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": false,
+              "shutdown_seconds": 0.003
+            },
+            {
+              "signal": "SIGINT",
+              "exit_code": 0,
+              "final_save": true,
+              "restart_preserves_keys": true,
+              "sessions_revoked_on_restart": true,
+              "shutdown_seconds": 0.003
+            }
+          ],
+          "bind_failure_exit_code": 1,
+          "bootstrap_permissions": "0o600",
+          "schema": 6
+        }
+      ],
+      "passed": true
+    },
+    "launchers": "9 tests passed",
+    "pi": "passed"
+  },
+  "live": {
+    "client_requests": 12,
+    "initial_client_requests": 11,
+    "final_search_recheck_requests": 1,
+    "checks": [
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.9,
+        "policy_mode": "custom",
+        "usage": {
+          "prompt_tokens": 34,
+          "completion_tokens": 9,
+          "total_tokens": 43,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 34,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 2.196,
+        "policy_mode": "passthrough",
+        "usage": {
+          "prompt_tokens": 18,
+          "completion_tokens": 7,
+          "total_tokens": 25,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 18,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.354,
+        "policy_mode": "custom",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 7,
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 53,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 0,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 60,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.46,
+        "policy_mode": "passthrough",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 18,
+          "completion_tokens_details": {
+            "reasoning_tokens": 9
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 45,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 9,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 63,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "workbuddy/v1/messages/buffered",
+        "passed": true,
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "workbuddy/v1/responses/stream",
+        "passed": true,
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "trae/v1/messages/buffered",
+        "passed": true,
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "trae/v1/responses/stream",
+        "passed": true,
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "workbuddy/native_search",
+        "passed": true,
+        "results": 1,
+        "request_log_correlated": true
+      }
+    ],
+    "final_search": [
+      {
+        "case": "workbuddy/native_search",
+        "passed": true,
+        "results": 1,
+        "request_log_correlated": true
+      }
+    ],
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "temporary_credentials_deleted": true
+  },
+  "toolchain": "go1.27.3 linux/amd64",
+  "performance": {
+    "reason": "Use RAM for temporary benchmark fixtures to control known storage variance; production persistence unchanged.",
+    "baseline": "e35d48f",
+    "rounds": 5,
+    "fixture_storage": "/dev/shm (temporary directory removed)",
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "fixed_iterations": {
+      "normal": 2000,
+      "routing": 200000,
+      "codearts_once": 20
+    },
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 314176.0,
+          "bytes_op": 146791,
+          "allocs_op": 1118
+        },
+        "after": {
+          "ns_op": 318074.0,
+          "bytes_op": 146798,
+          "allocs_op": 1119
+        },
+        "change_percent": 1.24,
+        "samples_ns": {
+          "before": [
+            317995.0,
+            311712.0,
+            310352.0,
+            315389.0,
+            314176.0
+          ],
+          "after": [
+            325719.0,
+            322745.0,
+            317115.0,
+            315612.0,
+            318074.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkM3ClientProfile/deepseek-v4.1-flash",
+        "before": {
+          "ns_op": 8494.0,
+          "bytes_op": 6428,
+          "allocs_op": 83
+        },
+        "after": {
+          "ns_op": 8673.0,
+          "bytes_op": 6428,
+          "allocs_op": 83
+        },
+        "change_percent": 2.11,
+        "samples_ns": {
+          "before": [
+            8595.0,
+            9992.0,
+            8494.0,
+            8444.0,
+            8318.0
+          ],
+          "after": [
+            8538.0,
+            8395.0,
+            8700.0,
+            8673.0,
+            8908.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkM3ClientProfile/workbuddy/cn/profile",
+        "before": {
+          "ns_op": 8434.0,
+          "bytes_op": 6476,
+          "allocs_op": 84
+        },
+        "after": {
+          "ns_op": 8518.0,
+          "bytes_op": 6475,
+          "allocs_op": 84
+        },
+        "change_percent": 1.0,
+        "samples_ns": {
+          "before": [
+            8530.0,
+            12921.0,
+            8434.0,
+            8419.0,
+            8291.0
+          ],
+          "after": [
+            9146.0,
+            8518.0,
+            8719.0,
+            8388.0,
+            8498.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkM3ExternalSearchAdmission",
+        "before": {
+          "ns_op": 749.6,
+          "bytes_op": 736,
+          "allocs_op": 8
+        },
+        "after": {
+          "ns_op": 762.5,
+          "bytes_op": 736,
+          "allocs_op": 8
+        },
+        "change_percent": 1.72,
+        "samples_ns": {
+          "before": [
+            749.3,
+            749.6,
+            750.2,
+            740.5,
+            775.7
+          ],
+          "after": [
+            759.2,
+            769.8,
+            762.5,
+            771.4,
+            759.1
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkM3ModelRouting/mapped",
+        "before": {
+          "ns_op": 619.8,
+          "bytes_op": 1416,
+          "allocs_op": 13
+        },
+        "after": {
+          "ns_op": 636.3,
+          "bytes_op": 1416,
+          "allocs_op": 13
+        },
+        "change_percent": 2.66,
+        "samples_ns": {
+          "before": [
+            615.8,
+            619.8,
+            630.6,
+            622.5,
+            612.8
+          ],
+          "after": [
+            695.9,
+            636.3,
+            640.5,
+            631.9,
+            630.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkM3ModelRouting/raw-group",
+        "before": {
+          "ns_op": 634.4,
+          "bytes_op": 2328,
+          "allocs_op": 8
+        },
+        "after": {
+          "ns_op": 655.2,
+          "bytes_op": 2328,
+          "allocs_op": 8
+        },
+        "change_percent": 3.28,
+        "samples_ns": {
+          "before": [
+            642.3,
+            711.5,
+            629.3,
+            634.4,
+            631.9
+          ],
+          "after": [
+            698.7,
+            655.2,
+            680.0,
+            651.9,
+            641.6
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkM3ModelRouting/unrestricted",
+        "before": {
+          "ns_op": 419.3,
+          "bytes_op": 1816,
+          "allocs_op": 4
+        },
+        "after": {
+          "ns_op": 442.5,
+          "bytes_op": 1816,
+          "allocs_op": 4
+        },
+        "change_percent": 5.53,
+        "samples_ns": {
+          "before": [
+            397.6,
+            422.4,
+            419.3,
+            448.4,
+            411.6
+          ],
+          "after": [
+            455.7,
+            426.1,
+            478.4,
+            442.5,
+            441.1
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 2413.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 2395.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        "change_percent": -0.75,
+        "samples_ns": {
+          "before": [
+            2447.0,
+            2384.0,
+            2506.0,
+            2369.0,
+            2413.0
+          ],
+          "after": [
+            2375.0,
+            2432.0,
+            2395.0,
+            2495.0,
+            2332.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 25092.0,
+          "bytes_op": 20011,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 25634.0,
+          "bytes_op": 20010,
+          "allocs_op": 142
+        },
+        "change_percent": 2.16,
+        "samples_ns": {
+          "before": [
+            25675.0,
+            23817.0,
+            25092.0,
+            23987.0,
+            27537.0
+          ],
+          "after": [
+            24034.0,
+            25448.0,
+            27270.0,
+            27195.0,
+            25634.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns_op": 1985478.0,
+          "bytes_op": 2254076,
+          "allocs_op": 164
+        },
+        "after": {
+          "ns_op": 1986485.0,
+          "bytes_op": 2254314,
+          "allocs_op": 164
+        },
+        "change_percent": 0.05,
+        "samples_ns": {
+          "before": [
+            1960707.0,
+            2013133.0,
+            1985478.0,
+            1918968.0,
+            1985866.0
+          ],
+          "after": [
+            1933285.0,
+            1944666.0,
+            1986485.0,
+            1988236.0,
+            2027056.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns_op": 15779704.0,
+          "bytes_op": 17091113,
+          "allocs_op": 171
+        },
+        "after": {
+          "ns_op": 15924297.0,
+          "bytes_op": 17092181,
+          "allocs_op": 173
+        },
+        "change_percent": 0.92,
+        "samples_ns": {
+          "before": [
+            15793114.0,
+            15746740.0,
+            15779704.0,
+            16149524.0,
+            15754613.0
+          ],
+          "after": [
+            15924297.0,
+            15714527.0,
+            15994606.0,
+            15909997.0,
+            16067101.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 1122596.0,
+          "bytes_op": 647422,
+          "allocs_op": 14157
+        },
+        "after": {
+          "ns_op": 1127712.0,
+          "bytes_op": 647414,
+          "allocs_op": 14157
+        },
+        "change_percent": 0.46,
+        "samples_ns": {
+          "before": [
+            1128328.0,
+            1121010.0,
+            1122596.0,
+            1126982.0,
+            1107679.0
+          ],
+          "after": [
+            1115121.0,
+            1127712.0,
+            1143243.0,
+            1125592.0,
+            1136278.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1139019.0,
+          "bytes_op": 689257,
+          "allocs_op": 14110
+        },
+        "after": {
+          "ns_op": 1138521.0,
+          "bytes_op": 689228,
+          "allocs_op": 14110
+        },
+        "change_percent": -0.04,
+        "samples_ns": {
+          "before": [
+            1173719.0,
+            1132249.0,
+            1139019.0,
+            1134799.0,
+            1142156.0
+          ],
+          "after": [
+            1133212.0,
+            1138521.0,
+            1156311.0,
+            1128211.0,
+            1144343.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 597435.0,
+          "bytes_op": 266050,
+          "allocs_op": 3131
+        },
+        "after": {
+          "ns_op": 589466.0,
+          "bytes_op": 266314,
+          "allocs_op": 3131
+        },
+        "change_percent": -1.33,
+        "samples_ns": {
+          "before": [
+            597435.0,
+            598988.0,
+            602411.0,
+            588187.0,
+            592331.0
+          ],
+          "after": [
+            594060.0,
+            589466.0,
+            594262.0,
+            588916.0,
+            586333.0
+          ]
+        }
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 607222.0,
+          "bytes_op": 276388,
+          "allocs_op": 3087
+        },
+        "after": {
+          "ns_op": 607940.0,
+          "bytes_op": 276367,
+          "allocs_op": 3087
+        },
+        "change_percent": 0.12,
+        "samples_ns": {
+          "before": [
+            615252.0,
+            605260.0,
+            607222.0,
+            606306.0,
+            612961.0
+          ],
+          "after": [
+            600629.0,
+            607940.0,
+            603868.0,
+            608367.0,
+            614984.0
+          ]
+        }
+      }
+    ]
+  },
+  "capacity": {
+    "baseline": "e35d48f",
+    "rounds": 5,
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "latencies": [
+      {
+        "provider": "codearts",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 21.971,
+          "after": 21.856
+        },
+        "samples": {
+          "before": [
+            22.025,
+            21.971,
+            21.942,
+            21.782,
+            22.247
+          ],
+          "after": [
+            21.89,
+            21.856,
+            21.992,
+            21.852,
+            21.801
+          ]
+        },
+        "change_percent": -0.52
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 22.879,
+          "after": 23.113
+        },
+        "samples": {
+          "before": [
+            22.879,
+            22.753,
+            23.075,
+            22.554,
+            23.057
+          ],
+          "after": [
+            23.791,
+            22.673,
+            23.113,
+            23.263,
+            23.003
+          ]
+        },
+        "change_percent": 1.02
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.199,
+          "after": 44.065
+        },
+        "samples": {
+          "before": [
+            43.856,
+            44.199,
+            44.197,
+            44.232,
+            46.084
+          ],
+          "after": [
+            44.065,
+            44.261,
+            44.297,
+            43.932,
+            43.962
+          ]
+        },
+        "change_percent": -0.3
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.103,
+          "after": 23.237
+        },
+        "samples": {
+          "before": [
+            22.592,
+            23.228,
+            22.798,
+            23.127,
+            23.103
+          ],
+          "after": [
+            23.03,
+            22.865,
+            23.237,
+            23.259,
+            23.268
+          ]
+        },
+        "change_percent": 0.58
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.397,
+          "after": 44.053
+        },
+        "samples": {
+          "before": [
+            45.769,
+            44.217,
+            44.397,
+            43.476,
+            45.898
+          ],
+          "after": [
+            43.783,
+            43.603,
+            44.688,
+            44.27,
+            44.053
+          ]
+        },
+        "change_percent": -0.77
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.439,
+          "after": 22.98
+        },
+        "samples": {
+          "before": [
+            23.807,
+            22.944,
+            23.439,
+            23.718,
+            22.984
+          ],
+          "after": [
+            22.888,
+            22.909,
+            23.127,
+            23.16,
+            22.98
+          ]
+        },
+        "change_percent": -1.96
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 22.696,
+          "after": 22.7
+        },
+        "samples": {
+          "before": [
+            23.415,
+            22.567,
+            22.655,
+            22.696,
+            23.076
+          ],
+          "after": [
+            22.572,
+            22.7,
+            22.879,
+            22.514,
+            22.726
+          ]
+        },
+        "change_percent": 0.02
+      },
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.515,
+          "after": 23.378
+        },
+        "samples": {
+          "before": [
+            24.276,
+            23.515,
+            23.8,
+            23.512,
+            23.405
+          ],
+          "after": [
+            23.378,
+            23.016,
+            23.422,
+            23.826,
+            23.31
+          ]
+        },
+        "change_percent": -0.58
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.003,
+          "after": 22.907
+        },
+        "samples": {
+          "before": [
+            22.963,
+            23.003,
+            22.981,
+            23.065,
+            23.284
+          ],
+          "after": [
+            23.377,
+            22.978,
+            22.907,
+            22.772,
+            22.905
+          ]
+        },
+        "change_percent": -0.42
+      }
+    ],
+    "capacity": [
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 24.276,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.963,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.807,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.415,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 89432,
+        "p95_ms": 22.025,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.879,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.592,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 43.856,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 45.769,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.378,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.377,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.888,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.572,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 87304,
+        "p95_ms": 21.89,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.791,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.03,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.065,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 0,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 43.783,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.016,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.978,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.909,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.7,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 118872,
+        "p95_ms": 21.856,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.673,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.865,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.261,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 43.603,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.515,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.003,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.944,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.567,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 111456,
+        "p95_ms": 21.971,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.753,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.228,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.199,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 1,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.217,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.8,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.981,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.439,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.655,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 87784,
+        "p95_ms": 21.942,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.075,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.798,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.197,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.397,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.422,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.907,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.127,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.879,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 88336,
+        "p95_ms": 21.992,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.113,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.237,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.297,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 2,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.688,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.826,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.772,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.16,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.514,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 115240,
+        "p95_ms": 21.852,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.263,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.259,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 43.932,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.27,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.512,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.065,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.718,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.696,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 268536,
+        "p95_ms": 21.782,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 22.554,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.127,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.232,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 3,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 43.476,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.405,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.284,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.984,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.076,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 92072,
+        "p95_ms": 22.247,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.057,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.103,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 46.084,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "before",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 45.898,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 23.31,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.905,
+        "peak": 2,
+        "provider": "workbuddy",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.98,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "failures": 0,
+        "p95_ms": 22.726,
+        "peak": 2,
+        "provider": "trae",
+        "remaining_leases": 0,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "concurrency": 2,
+        "failures": 0,
+        "heap_growth_bytes": 86072,
+        "p95_ms": 21.801,
+        "peak_upstream_concurrency": 2,
+        "remaining_leases": 0,
+        "samples": 100,
+        "upstream_delay_ms": 20,
+        "provider": "codearts",
+        "stream": false,
+        "retry": false
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.003,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 40,
+        "concurrency": 2,
+        "expected_calls": 40,
+        "failures": 0,
+        "p95_ms": 23.268,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": false,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 43.962,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": false,
+        "upstream_delay_ms": 20
+      },
+      {
+        "round": 4,
+        "version": "after",
+        "calls": 80,
+        "concurrency": 2,
+        "expected_calls": 80,
+        "failures": 0,
+        "p95_ms": 44.053,
+        "peak": 2,
+        "provider": "codearts_summary",
+        "remaining_leases": 0,
+        "retry": true,
+        "samples": 40,
+        "stream": true,
+        "upstream_delay_ms": 20
+      }
+    ]
+  },
+  "performance_review": {
+    "signal": "unrestricted model resolution +5.53 percent",
+    "before_ns_op": 419.3,
+    "after_ns_op": 442.5,
+    "absolute_delta_ns": 23.2,
+    "allocs_op_before_after": [
+      4,
+      4
+    ],
+    "external_search_allocs_before_after": [
+      8,
+      8
+    ],
+    "decision": "accepted: nanosecond interface dispatch cost, unchanged allocations and no end-to-end p95 regression beyond threshold"
+  },
+  "limits": [
+    "CodeArts shared credential expired; this round uses controlled CodeArts upstream tests, not new real CodeArts inference.",
+    "Real authentication, claims, growth reward mutation, invitations, shared refresh and IDE writeback were not repeated. Login/tasks use isolated controlled regressions.",
+    "Windows cross-build passed; no Windows desktop execution.",
+    "Performance is a fixed local fake-upstream comparison, not a real-provider latency guarantee."
+  ],
+  "next_stages": {
+    "M4": "frontend build/API/types and incremental page components",
+    "M5": "atomic admission, scheduling, persistence and journal boundaries",
+    "M6": "mapping presets/defaults/visibility and prompt inheritance",
+    "M7": "scale only when required"
+  },
+  "deployment": {
+    "version": "0.3.0-structure-m3",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "all_root_data_files_identical": {
+      ".multi-provider-migration-check.json": true,
+      "state.json": true,
+      "state.json.usage.jsonl": true,
+      "state.json.access.json": true,
+      "server.pid": true,
+      "state.json.growth.json": true,
+      "state.json.before-usd-20261026-000714.bak": true,
+      "state.pre-management-20261026T070827Z.json.bak": true,
+      "server.log": true,
+      ".trae-deployment-check.json": true,
+      ".local-group-mapping-deployment.json": true
+    },
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "f1ae1ab28b222866954bad4eb3de5f669218fc0360b54bd40fdec9deaaed6320",
+    "cloud_modified": false
+  }
+}

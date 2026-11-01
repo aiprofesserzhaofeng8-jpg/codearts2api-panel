@@ -23,14 +23,6 @@ func cloneMappings(in []ModelMapping) []ModelMapping {
 	}
 	return out
 }
-func (p AccessScope) Mapping(name string) ([]string, bool) {
-	for _, m := range p.ModelMappings {
-		if m.Name == name {
-			return m.Sources, true
-		}
-	}
-	return nil, false
-}
 func validateMappings(mappings []ModelMapping) error {
 	if len(mappings) > 128 {
 		return fmt.Errorf("每组最多配置 128 个统一模型")

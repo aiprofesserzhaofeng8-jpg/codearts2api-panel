@@ -49,7 +49,7 @@ func (d *accountRetryDriver) Acquire(ctx context.Context, tried map[string]bool)
 	if d.plan == nil {
 		acct, release, accessErr = d.s.Store.AcquireAccountForKey(d.session, d.model, tried, groupKey(ctx))
 	} else {
-		acct, d.model, release, accessErr = d.s.Store.AcquireMappedAccount(d.session, d.plan.public, d.plan.ids, tried, groupKey(ctx))
+		acct, d.model, release, accessErr = d.s.Store.AcquireMappedAccount(d.session, d.plan.Public, d.plan.IDs, tried, groupKey(ctx))
 	}
 	if accessErr != nil {
 		return gateway.RetryAttempt{}, groupDenied()

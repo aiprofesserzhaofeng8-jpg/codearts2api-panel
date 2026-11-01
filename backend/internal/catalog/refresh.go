@@ -1,7 +1,7 @@
 package catalog
 
 import (
-	"codearts2api/internal/apierr"
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 	"context"
 	"errors"
@@ -18,14 +18,14 @@ func (s *Runtime) Refresh(ctx context.Context, ops RefreshOperations) error {
 	defer s.refreshMu.Unlock()
 	failures := s.refreshProviderModels(ctx, ops)
 	err := s.refreshCodeArtsModels(ctx, ops)
-	if err != nil && !errors.Is(err, apierr.NoAccount) {
+	if err != nil && !errors.Is(err, accounts.ErrNoAccount) {
 		failures[provider.CodeArts] = err.Error()
 	}
 	s.mu.Lock()
 	s.loadedAt = time.Now()
 	s.providerErrors = failures
 	s.err = ""
-	if err != nil && (!errors.Is(err, apierr.NoAccount) || len(failures) > 0) {
+	if err != nil && (!errors.Is(err, accounts.ErrNoAccount) || len(failures) > 0) {
 		s.err = err.Error()
 	}
 	s.mu.Unlock()
@@ -44,7 +44,7 @@ func (s *Runtime) Refresh(ctx context.Context, ops RefreshOperations) error {
 func (s *Runtime) refreshCodeArtsModels(ctx context.Context, ops RefreshOperations) error {
 	acct := s.store.NextAccount()
 	if acct == nil {
-		return apierr.NoAccount
+		return accounts.ErrNoAccount
 	}
 	models, err := ops.Native(ctx, acct)
 	if err != nil {

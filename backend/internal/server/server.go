@@ -43,6 +43,7 @@ type Server struct {
 	AccessManagement    *access.Management
 	AccountProbes       *accounts.Probes
 	ModelPolicies       *config.ModelPolicies
+	Routing             *catalog.Routing
 	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	Search              *websearch.Client
@@ -80,6 +81,7 @@ type Dependencies struct {
 	AccessManagement    *access.Management
 	AccountProbes       *accounts.Probes
 	ModelPolicies       *config.ModelPolicies
+	Routing             *catalog.Routing
 	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	ProviderLogins      *accounts.ProviderLogins
@@ -96,7 +98,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()

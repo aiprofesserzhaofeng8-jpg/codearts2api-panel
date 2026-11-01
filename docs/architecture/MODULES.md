@@ -1,8 +1,8 @@
 # 模块、数据归属与依赖
 
-状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
+状态：M3 业务边界已完成；表中目标命名和 M4–M7 能力仍按迁移计划实施。入口见 [总览](README.md)。路径均以 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调，`catalog.Runtime` 持有目录刷新/缓存及模型测活协调，`accounts.Credits` 持有积分查询和短缓存，`jobs.Rewards` 持有每日领奖状态/锁与单轮编排；Store 仍执行原持久化及准入事务。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调，`catalog.Runtime` 持有目录刷新/缓存及模型测活协调，`accounts.Credits` 持有积分查询和短缓存，`jobs.Rewards` 持有每日领奖状态/锁与单轮编排；Store 仍执行原持久化及准入事务。`catalog.Routing` 负责请求解析和分组映射，`gateway.RunSearch` 负责搜索编排，`protocol` 负责纯搜索查询及映射外壳；成长、活动、价格、管理员会话和应用生命周期也已按下方逐批记录迁出。表中未来接口不能视为全部已实现，原子准入/存储职责留 M5。
 
 ## 责任表
 
@@ -15,7 +15,7 @@
 | `accounts` | 账号元信息、凭据代际、登录会话、刷新协调、积分快照/查询短缓存 | `PreviewLogin`、`ConfirmLogin`、`CredentialsForAttempt` | 模型别名、各平台 HTTP 签名算法 |
 | `access` | 管理会话、API Key、Group、白名单和分组映射配置 | `Authenticate`、`SaveGroup`、`CompileAccess` | 选择实际账号、解释上游模型能力 |
 | `config` | 全局/平台/账号池/模型策略配置值、纯校验及管理保存协调 | `SettingsUpdate`、`UpdateSettings`、`SaveModelPolicy` | HTTP、原生凭据、准入事务、配置缓存和平台网络调用 |
-| `catalog` | 目录刷新、刷新状态与模型测活；目标包含原始目录、映射解析、已验证预设、能力元数据 | 已有 `Refresh`、`RefreshIfStale`、`BeginProbe`；目标 `Resolve`、`CompileBindings`、`ListVisible` | 保存分组、占用并发、自动猜测模型等价性 |
+| `catalog` | 目录刷新、模型测活、请求/搜索目标解析与分组映射；预设留 M6 | `Runtime.Refresh`、`Routing.Resolve`、`VisibleModels`、`Check`、`ResolveSearchTarget` | 保存分组、占用并发、自动猜测模型等价性 |
 | `scheduler` | 候选排序和选择算法 | `Select(candidates, runtimeView)` | 独立租约计数器、文件 I/O、网络探测 |
 | `policy` | 提示词配置语义、继承、清洗及请求准备 | `ResolvePolicy`、`PrepareBody` | 自行重试、改写用户/工具业务内容 |
 | `usage` | 用量语义、价格版本、预算规则、结算记录 | `CheckBudget`、`Settle`、`Query` | 上游选号、普通调试日志替代账本 |
@@ -107,6 +107,8 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 
 新增一个使用现有协议的平台，应能通过“实现适配器、注册、能力配置、可选登录表单、测试”完成普通接入。确实需要新的通用协议语义时，单独定义扩展点并验证旧平台。通过新增空实现、吞掉不支持错误或把所有分支搬到同一个新文件，不算完成模块隔离。
 
+以下为各批迁移时的范围记录，当前完整边界见末节。
+
 M3.15 的 catalog Runtime 借用唯一 Registry，只持有原刷新状态及原三把独立锁。HTTP 投影平台操作和宽松解码，CodeArts 获取/原生 Probe 由 upstream 包装，其余测活继续走原 chatOnce；不创建平行目录、解析器或普通推理入口。目录解析/映射仍由 Registry、access、Store 的既有边界负责，不因目标表存在 `Resolve` 就重复实现。
 
 M3.16：积分数量快照归 accounts，不属于 API 美元费用/预算账本。CodeArts 仅保留 CreditInfo/CreditCategory 别名，原生解析不改；WorkBuddy/Trae 继续返回原 JSON 并按原顺序解析。jobs 每日领奖调用原适配器，不自行解析凭据，不写准入或推理健康状态。领奖、成长、凭据的三组账号锁仍独立；自动领取定时器、活动列表与邀请 HTTP 中剩余的原生调用待后续迁移。
@@ -121,3 +123,12 @@ M3.19：usage.ModelPrice 为规范价格类型，Store 仅保留兼容别名；u
 M3.20：app.Start/Runtime.Close 持 HTTP 运行实例、后台启动及原停机顺序，jobs.RunDailyLoop 持原领奖定时算法；main 保留命令行/环境、桌面导入/导出、首次访问文件、OS 信号和致命退出。后台共享取消与独立刷新期限保持原样，不 join 已运行任务，不强制关闭有效 HTTP 响应。server 的 StartClaimLoop 只作单向兼容。app.Build 无副作用、所有平台/Store/普通推理和页面不变，边界收尾与 M3 整体验收仍待完成。
 
 M3.21：accounts.Probes 持账号探活串行循环、30/60s 截止时间、目录成功发布与结果保存顺序。原生会话/脱敏提示由 upstream/codearts 投影，HTTP 保留 wire DTO 与原宽松解码。config.ModelPolicies 借用 Store/Registry 提供实时推荐，CommonModelPolicy 只合并已获授权来源的建议；无新缓存、锁或推理调用。执行 `make architecture`（可用 GO/PYTHON 指定工具），检查生产 `go list -json` 的直接导入并测试检查器；它不把旧 Registry/apierr/Store 桥接当作迁移完成。搜索执行与统一请求型号解析仍待迁。
+
+
+## M3 完成后的调用边界
+
+`server` 将 HTTP 身份和 Context 投影给 `catalog.Routing`，从同一目录获得已授权原型或请求私有的 `ModelPlan`；计划不缓存权限、不选号。Store 的原子入口仍将实时权限、候选约束和并发占位一起处理。Messages 的 Trae thinking 排除只收窄本请求的候选。HTTP 在已选中账号后调用计划校验及 `protocol` 外壳替换，不修改工具数据或普通转发路径。
+
+`gateway.RunSearch` 只执行已有能力；原生搜索使用当前凭据与同一重试/冷却入口，SearxNG 只借用预算和原子租约。两条路径均沿用原 20s 上限及更小的请求期限，不增加请求、锁或重试。`catalog.ResolveSearchTarget` 保留平台/地区边界；`protocol.SearchQuery` 保留原文本提取规则。
+
+`make architecture` 检查生产导入的直接边和内部传递路径，防止中立业务借旧错误映射/目录工具间接引入 HTTP、Store 或具体平台。`apierr` 保留 HTTP/原生错误映射，`NoAccount` 和 `ModelNotFound` 单向别名到业务类型；目录不再导入 `apierr`。Registry、Store 和原生协议包作为既有实现继续保留，检查器不会把这些遗留桥接整体宣称为新结构。详情及验证限制见 [M3 完成验收](../acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md)。

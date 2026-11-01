@@ -1,10 +1,12 @@
 # 项目结构设计 v1
 
-日期：2026-11-01。状态：**M1/M2 已完成，M3 前二十一批已落地，边界收尾/整体验收及 M4–M7 待实施**。
+日期：2026-11-02。状态：**M1/M2/M3 已完成，M4–M7 按阶段实施**。
 
-本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。Vue 前端、业务模块拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
+本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。独立前端、准入/存储拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
 
 已建立 `AGENTS.md` 和 `deploy/` 补充示例；当前未创建独立 `frontend/`。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
+
+M3 当前完成状态见 [完整验收](../acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md)：搜索与型号解析已有唯一业务归属，HTTP 保留协议和原子入口适配；生产业务依赖检查覆盖间接路径。以下各批说明按当时进度记录，其“待迁移”不是当前待办。后续任务以 [迁移阶段](MIGRATION.md#阶段和完成条件) 为准。
 
 工程布局、产物与本机更新结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)。中立账号与依赖装配见 [M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)。
 
@@ -178,4 +180,4 @@ flowchart LR
 
 具体定义见 [请求与状态](RUNTIME.md)。所有重构阶段须验证这些行为，不能以“只是搬文件”为由跳过。
 
-账号探活、推荐参数生成/公共合并与生产依赖检查见 [M3 第二十一批验收](../acceptance/STRUCTURE-M3-21-2026-11-01.md)。M3 还需迁出搜索执行、统一请求型号解析并完成整体验收，具体完成项见 [迁移计划](MIGRATION.md#m3-剩余完成项)。
+账号探活和推荐参数生成见 [M3 第二十一批验收](../acceptance/STRUCTURE-M3-21-2026-11-01.md)。搜索执行、统一请求型号解析和全阶段收尾见 [M3 完成验收](../acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md)，具体归属见 [完成项](MIGRATION.md#m3-完成项)。

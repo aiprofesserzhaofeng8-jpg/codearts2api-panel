@@ -134,12 +134,7 @@ func truncateStr(s string, n int) string {
 	return s[:n] + "…"
 }
 
-func modelProvider(m registry.Model) string {
-	if m.Provider == "" {
-		return provider.CodeArts
-	}
-	return m.Provider
-}
+func modelProvider(m registry.Model) string { return catalog.ModelProvider(m) }
 
 func (s *Server) providerModelErrors() map[string]string {
 	return s.Catalog.ProviderErrors()

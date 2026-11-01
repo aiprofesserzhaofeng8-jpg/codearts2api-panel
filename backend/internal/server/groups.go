@@ -3,13 +3,10 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	"codearts2api/internal/access"
-	"codearts2api/internal/accounts"
-	"codearts2api/internal/apierr"
-	"codearts2api/internal/provider"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 )
@@ -20,109 +17,26 @@ func groupKey(ctx context.Context) string {
 	key, _ := ctx.Value(groupKeyContext{}).(string)
 	return key
 }
-func groupDenied() error {
-	return &provider.Error{Status: 403, Message: "当前 API Key 的分组不允许调用此模型或没有对应账号"}
-}
-func scopeAllows(scope store.AccessScope, accounts []*accounts.Account, model registry.Model) bool {
-	if !scope.Restricted {
-		return true
-	}
-	if !scope.AllowsModel(model.ID) {
-		return false
-	}
-	for _, a := range accounts {
-		if scope.AccountIDs[a.ID] && a.Enabled && a.ProviderID() == modelProvider(model) && (a.ProviderID() == provider.CodeArts || a.Scope == model.Scope) {
-			return true
-		}
-	}
-	return false
-}
+func groupDenied() error { return catalog.GroupDenied() }
 func (s *Server) visibleModels(ctx context.Context) ([]registry.Model, error) {
-	access, err := s.Store.AccessScope(groupKey(ctx))
-	if err != nil {
-		return nil, groupDenied()
-	}
-	settings := s.Store.Settings()
-	accounts := s.Store.Accounts()
-	out := []registry.Model{}
-	if len(access.ModelMappings) > 0 {
-		for _, mapping := range access.ModelMappings {
-			plan := s.mappingPlan(access, mapping.Name)
-			if len(plan.ids) > 0 {
-				out = append(out, publicMappingModel(mapping.Name))
-			}
-		}
-		return out, nil
-	}
-	for _, m := range s.Reg.List(settings.ModelAliases) {
-		resolved, ok := s.Reg.Resolve(m.ID, settings.ModelAliases)
-		if ok && scopeAllows(access, accounts, resolved) {
-			out = append(out, m)
-		}
-	}
-	return out, nil
+	return s.Routing.VisibleModels(groupKey(ctx))
 }
 func (s *Server) resolveModelForRequest(r *http.Request, settings store.Settings, requested string) (registry.Model, error) {
 	if c, ok := r.Context().Value(usageContextKey{}).(*usageCapture); ok {
 		c.requestedModel = requested
 	}
-	access, err := s.Store.AccessScope(groupKey(r.Context()))
-	if err != nil {
-		return registry.Model{}, groupDenied()
-	}
-	if len(access.ModelMappings) > 0 {
-		return s.resolveMappedModel(r, settings, access, requested)
-	}
-	m, err := s.resolveModel(settings, requested)
-	if err != nil {
-		var missing *apierr.ModelNotFound
-		if access.Restricted && errors.As(err, &missing) {
-			list, _ := s.visibleModels(r.Context())
-			ids := []string{}
-			for _, m := range list {
-				ids = append(ids, m.ID)
-			}
-			return registry.Model{}, &apierr.ModelNotFound{Name: requested, Available: ids}
+	model, plan, err := s.Routing.Resolve(groupKey(r.Context()), settings, requested)
+	if plan != nil {
+		if c, ok := r.Context().Value(usageContextKey{}).(*usageCapture); ok {
+			c.mapping = plan
 		}
-		return registry.Model{}, err
 	}
-	if !scopeAllows(access, s.Store.Accounts(), m) {
-		return registry.Model{}, groupDenied()
-	}
-	return m, nil
+	return model, err
 }
 func (s *Server) checkGroupModel(ctx context.Context, model string) error {
-	access, err := s.Store.AccessScope(groupKey(ctx))
-	if err != nil {
-		return groupDenied()
-	}
-	if !access.Restricted {
-		return nil
-	}
-	if requestKind(ctx) == "search" {
-		target, _, err := resolveSearchTarget(s.Store.Settings(), model)
-		if err != nil || target.ID != model || !scopeAllows(access, s.Store.Accounts(), target) {
-			return groupDenied()
-		}
-		return nil
-	}
-	if plan := mappedPlan(ctx); plan != nil {
-		sources, found := access.Mapping(plan.public)
-		allowed := false
-		for _, id := range sources {
-			if id == model {
-				allowed = true
-			}
-		}
-		if !found || (!allowed && !s.mappedSummaryFallback(ctx, model)) {
-			return groupDenied()
-		}
-	}
-	m, ok := s.Reg.Resolve(model, s.Store.Settings().ModelAliases)
-	if !ok || !scopeAllows(access, s.Store.Accounts(), m) {
-		return groupDenied()
-	}
-	return nil
+	return s.Routing.Check(groupKey(ctx), model, requestKind(ctx) == "search", mappedPlan(ctx), func() bool {
+		return s.mappedSummaryFallback(ctx, model)
+	})
 }
 func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {

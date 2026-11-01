@@ -4,7 +4,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -13,13 +12,16 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/gateway"
+	"codearts2api/internal/protocol"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 )
 
-const searchQueryPrefix = "Perform a web search for the query:"
+const searchQueryPrefix = protocol.SearchQueryPrefix
 
 type searchProviderKey struct{}
 
@@ -29,88 +31,12 @@ func (s *Server) searchForProvider(name string) http.HandlerFunc {
 	}
 }
 
-type searchMessagesRequest struct {
-	Model          string `json:"model"`
-	Stream         bool   `json:"stream"`
-	MaxResults     int    `json:"max_results"`
-	ConversationID string `json:"conversation_id"`
-	Tools          []struct {
-		Type string `json:"type"`
-		Name string `json:"name"`
-	} `json:"tools"`
-	Messages []struct {
-		Role    string          `json:"role"`
-		Content json.RawMessage `json:"content"`
-	} `json:"messages"`
-}
+type searchMessagesRequest = protocol.SearchMessagesRequest
 
-func searchQuery(req searchMessagesRequest) string {
-	query := ""
-	for _, m := range req.Messages {
-		if m.Role != "user" {
-			continue
-		}
-		var plain string
-		if json.Unmarshal(m.Content, &plain) != nil {
-			var blocks []struct {
-				Type string `json:"type"`
-				Text string `json:"text"`
-			}
-			if json.Unmarshal(m.Content, &blocks) != nil {
-				continue
-			}
-			parts := []string{}
-			for _, b := range blocks {
-				if b.Type == "text" {
-					parts = append(parts, b.Text)
-				}
-			}
-			plain = strings.Join(parts, "\n")
-		}
-		if strings.TrimSpace(plain) != "" {
-			query = strings.TrimSpace(plain)
-		}
-	}
-	if len(query) >= len(searchQueryPrefix) && strings.EqualFold(query[:len(searchQueryPrefix)], searchQueryPrefix) {
-		query = strings.TrimSpace(query[len(searchQueryPrefix):])
-	}
-	return query
-}
-
-// Virtual capabilities are namespaced separately from the conversation catalog.
-// CodeArts has no region segment in its legacy model IDs.
-func providerSearchModel(name, scope string) registry.Model {
-	id := provider.ModelID(name, scope, "web-search")
-	if name == provider.CodeArts {
-		id = "codearts/web-search"
-		scope = ""
-	}
-	return registry.Model{ID: id, Provider: name, Scope: scope, Name: name + " 联网搜索"}
-}
-
+func searchQuery(req searchMessagesRequest) string          { return protocol.SearchQuery(req) }
+func providerSearchModel(name, scope string) registry.Model { return catalog.SearchModel(name, scope) }
 func resolveSearchTarget(settings store.Settings, requested string) (registry.Model, store.ProviderSettings, error) {
-	name, scope := provider.WorkBuddy, settings.WorkBuddy.SearchScope
-	if strings.Contains(requested, "/") {
-		var id string
-		name, scope, id = provider.ParseModel(requested)
-		switch name {
-		case provider.CodeArts:
-			if id != "web-search" {
-				return registry.Model{}, store.ProviderSettings{}, fmt.Errorf("CodeArts 搜索标识须为 codearts/web-search")
-			}
-		case provider.Trae:
-			if scope != "cn" || id != "web-search" {
-				return registry.Model{}, store.ProviderSettings{}, fmt.Errorf("Trae 搜索标识须为 trae/cn/web-search")
-			}
-		case provider.WorkBuddy:
-			if (scope != "cn" && scope != "global") || id == "" {
-				return registry.Model{}, store.ProviderSettings{}, fmt.Errorf("WorkBuddy 搜索地区无效")
-			}
-		default:
-			return registry.Model{}, store.ProviderSettings{}, fmt.Errorf("未知搜索平台，不会回落到其他平台")
-		}
-	}
-	return providerSearchModel(name, scope), settings.ProviderPolicy(name), nil
+	return catalog.ResolveSearchTarget(settings, requested)
 }
 
 func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
@@ -195,38 +121,12 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 	routing, _ := json.Marshal(map[string]any{"model": model.ID, "conversation_id": conv, "messages": req.Messages})
 	ctx := withRoutingModel(withRoutingSession(r, routing), model.ID)
 	key, start := extractKey(r), time.Now()
-	timeout := 20 * time.Second
-	if settings.RequestTimeout > 0 {
-		timeout = min(timeout, time.Duration(settings.RequestTimeout)*time.Second)
-	}
-	var outcome *provider.SearchOutcome
-	call := func(ctx context.Context, a *accounts.Account) error {
-		startAttempt(ctx, a, model.ID)
-		if policy.SearchBackend == "searxng" {
-			// Independent backend: never refresh or forward model credentials.
-			outcome, err = s.Search.Search(ctx, policy.SearchURL, input)
-			return err
-		}
-		adapter, raw, err := s.providerCredentials(ctx, a)
-		if err != nil {
-			return err
-		}
-		searcher, ok := adapter.(provider.Searcher)
-		if !ok {
-			return &provider.Error{Status: 400, Message: "该上游未接入联网搜索"}
-		}
-		outcome, err = searcher.Search(ctx, raw, input)
-		if err == nil && outcome == nil {
-			return fmt.Errorf("上游搜索未返回结果")
-		}
-		return err
-	}
-	var acct *accounts.Account
-	if policy.SearchBackend == "searxng" {
-		acct, err = s.withExternalSearchAccount(ctx, timeout, model.ID, call)
-	} else {
-		acct, err = s.withAccountRetry(ctx, timeout, call)
-	}
+	acct, outcome, err := gateway.RunSearch(ctx, gateway.SearchOptions{
+		Model: model.ID, Backend: policy.SearchBackend, URL: policy.SearchURL, RequestTimeout: settings.RequestTimeout,
+	}, input, gateway.SearchOperations{
+		Start: startAttempt, Credentials: s.providerCredentials, External: s.Search.Search,
+		ExternalAccount: s.withExternalSearchAccount, AccountRetry: s.withAccountRetry,
+	})
 	if err != nil {
 		e := apierr.From(err)
 		s.record(ctx, key, acct, model.ID, false, e.Status, start, len([]rune(query)), 0, err)
@@ -241,25 +141,24 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 
 // An external search shares group authorization and concurrency leases, but its
 // success/failure says nothing about model credentials or model account health.
-func (s *Server) withExternalSearchAccount(ctx context.Context, timeout time.Duration, model string, call func(context.Context, *accounts.Account) error) (*accounts.Account, error) {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	if err := s.checkRequestBudget(ctx, model); err != nil {
-		return nil, err
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+type externalSearchAdmission struct {
+	server *Server
+	model  string
+}
+
+func (a externalSearchAdmission) Check(ctx context.Context) error {
+	return a.server.checkRequestBudget(ctx, a.model)
+}
+func (a externalSearchAdmission) Acquire(ctx context.Context) (*accounts.Account, func(), error) {
 	session, _ := ctx.Value(routingSessionKey{}).(string)
-	acct, release, err := s.Store.AcquireAccountForKey(session, model, nil, groupKey(ctx))
+	acct, release, err := a.server.Store.AcquireAccountForKey(session, a.model, nil, groupKey(ctx))
 	if err != nil {
-		return nil, groupDenied()
+		return nil, nil, groupDenied()
 	}
-	if acct == nil {
-		return nil, apierr.NoAccount
-	}
-	defer release()
-	return acct, call(ctx, acct)
+	return acct, release, nil
+}
+func (s *Server) withExternalSearchAccount(ctx context.Context, timeout time.Duration, model string, call func(context.Context, *accounts.Account) error) (*accounts.Account, error) {
+	return gateway.RunExternalSearchAccount(ctx, timeout, externalSearchAdmission{s, model}, call)
 }
 func searchMessagesResponse(model string, out *provider.SearchOutcome) map[string]any {
 	if model == "" {

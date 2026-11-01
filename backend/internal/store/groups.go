@@ -12,17 +12,7 @@ import (
 
 type AccountGroup = access.AccountGroup
 
-type AccessScope struct {
-	ModelMappings    []ModelMapping
-	Restricted       bool
-	AccountIDs       map[string]bool
-	AllowlistEnabled bool
-	ModelIDs         map[string]bool
-}
-
-func (p AccessScope) AllowsModel(id string) bool {
-	return !p.Restricted || !p.AllowlistEnabled || p.ModelIDs[id]
-}
+type AccessScope = access.AccessScope
 
 func cloneGroup(g AccountGroup) AccountGroup {
 	g.ModelMappings = cloneMappings(g.ModelMappings)
