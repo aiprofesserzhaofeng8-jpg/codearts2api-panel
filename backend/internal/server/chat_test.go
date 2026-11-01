@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/registry"
 )
 
@@ -30,15 +31,15 @@ func TestTransientBackoffSequence(t *testing.T) {
 		3 * time.Second, // 第 5 次：4*base=4s，被封顶
 	}
 	for i, w := range want {
-		if got := transientBackoff(i + 1); got != w {
-			t.Errorf("transientBackoff(%d) = %v，期望 %v", i+1, got, w)
+		if got := gateway.TransientBackoff(i + 1); got != w {
+			t.Errorf("gateway.TransientBackoff(%d) = %v，期望 %v", i+1, got, w)
 		}
 	}
-	if got := transientBackoff(0); got != 0 {
-		t.Errorf("transientBackoff(0) = %v，期望 0", got)
+	if got := gateway.TransientBackoff(0); got != 0 {
+		t.Errorf("gateway.TransientBackoff(0) = %v，期望 0", got)
 	}
-	if got := transientBackoff(-1); got != 0 {
-		t.Errorf("transientBackoff(-1) = %v，期望 0", got)
+	if got := gateway.TransientBackoff(-1); got != 0 {
+		t.Errorf("gateway.TransientBackoff(-1) = %v，期望 0", got)
 	}
 }
 

@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+
+	"codearts2api/internal/gateway"
 )
 
 type routingSessionKey struct{}
@@ -63,15 +65,7 @@ func withRoutingSession(r *http.Request, body []byte) context.Context {
 	return context.WithValue(r.Context(), routingSessionKey{}, hex.EncodeToString(sum[:]))
 }
 
-// Once output is visible to a client, another attempt would concatenate two
-// answers/tool-call sequences. Preserve the original error for classification.
-type committedStreamError struct{ err error }
-
-func (e *committedStreamError) Error() string { return e.err.Error() }
-func (e *committedStreamError) Unwrap() error { return e.err }
+// HTTP handlers report their commit boundary without losing error identity.
 func stopAfterOutput(err error, started bool) error {
-	if err != nil && started {
-		return &committedStreamError{err: err}
-	}
-	return err
+	return gateway.StopAfterOutput(err, started)
 }

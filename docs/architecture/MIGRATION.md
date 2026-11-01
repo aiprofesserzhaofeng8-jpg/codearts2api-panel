@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2 已完成，M3 前五批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)和 [M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)。
+状态：**M1/M2 已完成，M3 前六批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行及全局重试循环；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)和 [M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -44,7 +44,7 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 
 M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `app.Build`。`codearts.Account` 暂保留类型别名供平台内部及既有测试使用；共享生产代码已使用 `accounts.Account`。旧 `session` 由 `store` 编码器加载成不可变平台值；请求路径仅做类型断言，不序列化、解析或复制凭据。`codearts.StoredSession` 是该兼容值的唯一具体类型入口。WorkBuddy/Trae 继续使用已有不透明 JSON 凭据。
 
-前五批均未迁移刷新互斥、准入锁和账本归属；它们仍由原实现负责。`app` 只装配依赖，启动与关闭仍留在 main。凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
+前六批均未迁移刷新互斥、准入锁和账本归属；它们仍由原实现负责。`app` 只装配依赖，启动与关闭仍留在 main。凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
 
 第二批以 `upstream/codearts` 借用既有不可变凭据，包装原客户端的对话与业务错误过滤；`gateway.Completions` 负责已选中账号的普通单次执行、原有空响应回退及使用回调。SSE 聚合和流式选项归 `protocol`。不新增配置、锁、重试预算、凭据写入方或网络探测。普通流式仍立即交付，只有原来需要聚合的路径聚合。
 
@@ -53,6 +53,8 @@ M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `
 第四批将有限的提示词恢复迁入 `gateway.RunPromptPolicy`，纯摘要识别/请求准备迁入 `requestpolicy`。server 投影当前平台设置，保留摘要豁免和计量/权限预算 hook；gateway 不依赖 Store 或具体平台。恢复仍最多一次，仍复用账号、凭据、型号和租约；上游任何已观察分片均关闭恢复窗口。摘要执行、备用型号权限、缓冲完整性检查、重试/冷却和结算尚未迁移，公共提示词继承也没有在重构中隐式启用。客户端默认策略的旧测试 helper 已移到测试文件，生产不保留重复的摘要准备实现。
 
 第五批将摘要私有缓冲、完整性校验与最多一次截断重试迁入 `gateway.RunSummary`。通过窄 hook 保留 server 的备用型号解析/同平台地区约束、最新权限与预算复核、尝试计量及冷却写入。仍复用绑定凭据和租约；损坏 JSON、超限、非完整结束不交付内容，原始分片只复制不重建，错误消息与请求级终止保持一致。当前只抽取 CodeArts 已有摘要流程，没有扩大 WorkBuddy/Trae 的摘要能力。全局换号、WorkBuddy 短恢复、凭据归属和管理业务尚待后续批次。
+
+第六批抽取 `gateway.RunAccountRetry` 与 `RunRecovery`，分别持有单一请求期限/尝试槽/租约循环及同租约有限恢复顺序。server 以 RetryDriver 保留原子选号、公开与实际型号权限预算、平台健康分类和持久化边界。WorkBuddy 300ms/3s、错误白名单及已观察分片限制仍为独立策略，恢复占用原总尝试次数；CodeArts 原退避序列不变。已提交输出的错误仍保留包装链，在健康处理之后阻止重放。凭据获取/刷新、管理业务与进程生命周期尚未迁移；准入锁和账本仍待 M5。
 
 抽取 CodeArts 适配器时复用旧客户端；核实 [ADR 0004](../adr/0004-deferred-refactors.md) 提到的 SQLite、DPoP、刷新失败测试缺口当前是否已覆盖。存在缺口先补具体行为测试，不假设旧文档的缺口仍全部存在或已经自动消失。
 

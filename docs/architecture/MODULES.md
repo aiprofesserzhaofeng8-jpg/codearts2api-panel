@@ -2,7 +2,7 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号和凭据代际错误；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号和凭据代际错误；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
@@ -61,6 +61,8 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 
 `gateway.PromptPolicy` 是平台配置的推理投影，`requestpolicy.SummaryOptions` 只包含本次摘要的输出预算和思维控制；两者不定义新的持久化配置。提示词恢复先结束旧尝试并复核现有预算/权限，再准备替换请求并开始新尝试。摘要识别与准备不包含平台调用或重试；`gateway.RunSummary` 执行既有摘要流程，保留 8MiB 缓冲和仅 length 最多重试一次的边界。server 的 Prepare/Start/Usage/Result hook 分别提供备用型号与权限预算、尝试开始、分片用量、结束健康写入；不将 Store 或平台错误分类导入 gateway。
 
+`gateway.RetryDriver` 接收使用方的原子准入及平台策略，不直接导入 Store 或平台。`RetryAttempt` 携带实际型号、带总期限的上下文及释放函数；同一租约内的短恢复必须回报是否消耗另一个尝试槽。server 的 `accountRetryDriver` 保留当前权限/预算和健康写入，`accountRecovery` 保留 WorkBuddy 进入窗口及授权。`CommittedStreamError` 归 gateway，HTTP 入口只报告可见输出边界，保留原始错误链。取消先于平台健康分类，正常结束及分类时租约已经释放；不能把这个抽取视为准入锁或调度算法已经拆出。
+
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 
 ## 旧代码迁移表
@@ -70,7 +72,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `main.go` 及其测试 | `cmd/panel`、`app` | 参数与业务初始化分别移动，构建注入版本保持一致 |
 | `server.New`、Provider 注册 | `app` | 已完成依赖装配；server.New 接收依赖，HTTP 运行状态仍归 server |
 | `server.go` 中 HTTP 路由和鉴权入口 | `httpapi` | 先代理现有 handler，再逐步抽出业务 |
-| `server/chat.go` 的重试和请求生命周期 | `gateway` | 三平台普通单次执行已迁出；提示词恢复已迁；摘要执行已迁；全局重试待迁，保留取消和输出边界 |
+| `server/chat.go` 的重试和请求生命周期 | `gateway` | 三平台普通单次执行已迁出；提示词恢复已迁；摘要执行已迁；全局重试循环已迁；平台策略和原子准入暂留，保留取消和输出边界 |
 | `server/anthropic.go`、`responses.go` | `httpapi/inference` + `protocol` | HTTP 与纯转换分开，避免复制转换器 |
 | `protocol`、`responsescompat` | `protocol` 中清楚命名的实现 | 首批可保留旧包名；来源许可和测试随迁移保留 |
 | `store/pool.go` | `gateway` 准入状态 + `scheduler` 算法 | 先保留旧 Store 原子入口，再迁移锁与状态 |

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 )
 
@@ -18,30 +19,33 @@ func workBuddyTransientStatus(status int) bool {
 	return status == 500 || status == 502 || status == 503 || status == 504
 }
 
-// One fast recovery, before any upstream output, shares the original lease and
-// total-attempt limit. The window admits retries; it never cuts off generation.
+// WorkBuddy eligibility remains platform policy. The gateway owns the bounded
+// recovery sequence; this adapter keeps usage and authorization in their owner.
 func (s *Server) runAccountAttempt(ctx context.Context, acct *accounts.Account, model string, fn func(context.Context, *accounts.Account) error, mayRepeat bool) (error, bool) {
-	err := fn(ctx, acct)
-	finishAttempt(ctx, err)
-	if !mayRepeat || !canRecoverWorkBuddy(ctx, acct, err) {
-		return err, false
-	}
-	if waitErr := waitRetry(ctx, workBuddyRetryWait); waitErr != nil {
-		return waitErr, false
-	}
+	return gateway.RunRecovery(ctx, gateway.RecoveryOptions{MayRepeat: mayRepeat, Delay: workBuddyRetryWait, Wait: waitRetry}, &accountRecovery{s: s, acct: acct, model: model, fn: fn})
+}
+
+type accountRecovery struct {
+	s     *Server
+	acct  *accounts.Account
+	model string
+	fn    func(context.Context, *accounts.Account) error
+}
+
+func (a *accountRecovery) Run(ctx context.Context) error       { return a.fn(ctx, a.acct) }
+func (*accountRecovery) Finish(ctx context.Context, err error) { finishAttempt(ctx, err) }
+func (a *accountRecovery) CanRecover(ctx context.Context, err error) bool {
+	return canRecoverWorkBuddy(ctx, a.acct, err)
+}
+func (a *accountRecovery) AdmitRecovery(ctx context.Context) (bool, error) {
 	c := ctx.Value(usageContextKey{}).(*usageCapture)
-	if ctx.Err() != nil {
-		return ctx.Err(), false
-	}
 	if time.Since(c.started) > workBuddyRetryWindow {
-		return err, false
+		return false, nil
 	}
-	if budgetErr := s.checkRequestBudget(ctx, model); budgetErr != nil {
-		return budgetErr, false
+	if err := a.s.checkRequestBudget(ctx, a.model); err != nil {
+		return false, err
 	}
-	err = fn(ctx, acct)
-	finishAttempt(ctx, err)
-	return err, true
+	return true, nil
 }
 
 func canRecoverWorkBuddy(ctx context.Context, acct *accounts.Account, err error) bool {
@@ -52,7 +56,7 @@ func canRecoverWorkBuddy(ctx context.Context, acct *accounts.Account, err error)
 	if !ok || c.started.IsZero() || c.attempts != 1 || c.attemptObserved {
 		return false
 	}
-	var committed *committedStreamError
+	var committed *gateway.CommittedStreamError
 	var terminal interface{ NonRetryableRequest() bool }
 	if errors.As(err, &committed) || errors.As(err, &terminal) && terminal.NonRetryableRequest() {
 		return false

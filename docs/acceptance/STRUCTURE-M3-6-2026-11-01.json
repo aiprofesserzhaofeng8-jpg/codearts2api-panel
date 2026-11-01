@@ -1,0 +1,574 @@
+{
+  "stage": "structure-m3-6",
+  "date": "2026-11-01",
+  "baseline": "969a2e3",
+  "version": "0.3.0-structure-m3.6",
+  "scope": [
+    "single deadline, bounded global retry, account exclusions and lease lifecycle in gateway",
+    "one same-lease recovery consumes the existing attempt budget",
+    "server retains atomic admission, access/budget and provider health policy"
+  ],
+  "checks": {
+    "make_check": "passed",
+    "race": {
+      "status": "passed",
+      "tested_packages": 17,
+      "server_seconds": 303.607
+    },
+    "windows_vet": "passed",
+    "windows_amd64_crossbuild": "passed",
+    "windows_execution": "not run",
+    "linux_build": "passed",
+    "docker_build": "passed",
+    "container_version": "codearts2api 0.3.0-structure-m3.6",
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001"
+      }
+    ],
+    "browser": [
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      }
+    ],
+    "launcher_tests": 9,
+    "pi": "passed",
+    "boundaries": {
+      "passed": true,
+      "native_platform_store_web_files_identical": true,
+      "direct_imports": {
+        "gateway": [
+          "codearts2api/internal/accounts",
+          "codearts2api/internal/protocol",
+          "codearts2api/internal/provider",
+          "codearts2api/internal/requestpolicy",
+          "context",
+          "encoding/json",
+          "errors",
+          "fmt",
+          "strings",
+          "time"
+        ],
+        "requestpolicy": [
+          "codearts2api/internal/protocol",
+          "embed",
+          "encoding/json",
+          "fmt",
+          "regexp",
+          "strings"
+        ],
+        "upstream": [
+          "codearts2api/internal/provider",
+          "context",
+          "encoding/json"
+        ]
+      }
+    },
+    "pinned_sub2api_original_tests": "not rerun; converter sources unchanged; project protocol regression passed"
+  },
+  "real_upstreams": {
+    "checks": [
+      {
+        "case": "codearts/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.854,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "codearts/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.836,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.281,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.754,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.254,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.519,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "codearts/summary_explicit_buffered",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "summary_attempts": 1,
+        "finish_reason": "stop",
+        "request_log_correlated": true
+      },
+      {
+        "case": "codearts/summary_pi_stream",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "summary_attempts": 1,
+        "finish_reason": "stop",
+        "request_log_correlated": true
+      },
+      {
+        "case": "trae/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "client_generation_requests": 12,
+    "met_all_assertions": 12,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted_on_exit": true,
+    "scope_limit": "No forced real 500, output-limit retry or content block; controlled fixtures cover those faults. No full CLI application or 24-hour acceptance."
+  },
+  "performance": {
+    "rounds": 5,
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "fixed_iterations": {
+      "normal": 500,
+      "codearts_once": 20,
+      "summary_small": 500,
+      "summary_large": 20
+    },
+    "latencies": [
+      {
+        "provider": "codearts",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 21.951,
+          "after": 21.955
+        },
+        "change_percent": 0.02
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 22.859,
+          "after": 22.83
+        },
+        "change_percent": -0.13
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.092,
+          "after": 44.043
+        },
+        "change_percent": -0.11
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.183,
+          "after": 22.884
+        },
+        "change_percent": -1.29
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 43.966,
+          "after": 44.075
+        },
+        "change_percent": 0.25
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.206,
+          "after": 22.984
+        },
+        "change_percent": -0.96
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.097,
+          "after": 23.006
+        },
+        "change_percent": -0.39
+      },
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.447,
+          "after": 23.455
+        },
+        "change_percent": 0.03
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.494,
+          "after": 23.04
+        },
+        "change_percent": -1.93
+      }
+    ],
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 754737.0,
+          "bytes_op": 145700,
+          "allocs_op": 1114
+        },
+        "after": {
+          "ns_op": 773210.0,
+          "bytes_op": 145924,
+          "allocs_op": 1118
+        },
+        "change_percent": 2.45
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 3756.0,
+          "bytes_op": 929,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 2598.0,
+          "bytes_op": 929,
+          "allocs_op": 20
+        },
+        "change_percent": -30.83
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 26989.0,
+          "bytes_op": 19746,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 25791.0,
+          "bytes_op": 19746,
+          "allocs_op": 142
+        },
+        "change_percent": -4.44
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns_op": 1976322.0,
+          "bytes_op": 2254069,
+          "allocs_op": 164
+        },
+        "after": {
+          "ns_op": 1980814.0,
+          "bytes_op": 2254342,
+          "allocs_op": 164
+        },
+        "change_percent": 0.23
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns_op": 15806124.0,
+          "bytes_op": 17092443,
+          "allocs_op": 173
+        },
+        "after": {
+          "ns_op": 15954992.0,
+          "bytes_op": 17092710,
+          "allocs_op": 174
+        },
+        "change_percent": 0.94
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+        "before": {
+          "ns_op": 641715.0,
+          "bytes_op": 143854,
+          "allocs_op": 507
+        },
+        "after": {
+          "ns_op": 653471.0,
+          "bytes_op": 144381,
+          "allocs_op": 513
+        },
+        "change_percent": 1.83
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+        "before": {
+          "ns_op": 705460.0,
+          "bytes_op": 145965,
+          "allocs_op": 513
+        },
+        "after": {
+          "ns_op": 731622.0,
+          "bytes_op": 146588,
+          "allocs_op": 517
+        },
+        "change_percent": 3.71
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+        "before": {
+          "ns_op": 744848.0,
+          "bytes_op": 255221,
+          "allocs_op": 811
+        },
+        "after": {
+          "ns_op": 717999.0,
+          "bytes_op": 255437,
+          "allocs_op": 817
+        },
+        "change_percent": -3.6
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+        "before": {
+          "ns_op": 705257.0,
+          "bytes_op": 257147,
+          "allocs_op": 827
+        },
+        "after": {
+          "ns_op": 713268.0,
+          "bytes_op": 257479,
+          "allocs_op": 832
+        },
+        "change_percent": 1.14
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=false",
+        "before": {
+          "ns_op": 18548476.0,
+          "bytes_op": 24983479,
+          "allocs_op": 638
+        },
+        "after": {
+          "ns_op": 18438606.0,
+          "bytes_op": 24982857,
+          "allocs_op": 643
+        },
+        "change_percent": -0.59
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=true",
+        "before": {
+          "ns_op": 20165500.0,
+          "bytes_op": 26517340,
+          "allocs_op": 646
+        },
+        "after": {
+          "ns_op": 19448185.0,
+          "bytes_op": 26305872,
+          "allocs_op": 651
+        },
+        "change_percent": -3.56
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=false",
+        "before": {
+          "ns_op": 26879107.0,
+          "bytes_op": 38681238,
+          "allocs_op": 1006
+        },
+        "after": {
+          "ns_op": 26435277.0,
+          "bytes_op": 38679788,
+          "allocs_op": 1011
+        },
+        "change_percent": -1.65
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=true",
+        "before": {
+          "ns_op": 27859192.0,
+          "bytes_op": 40423397,
+          "allocs_op": 1021
+        },
+        "after": {
+          "ns_op": 27679287.0,
+          "bytes_op": 40211635,
+          "allocs_op": 1022
+        },
+        "change_percent": -0.65
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 1427168.0,
+          "bytes_op": 646020,
+          "allocs_op": 14149
+        },
+        "after": {
+          "ns_op": 1420400.0,
+          "bytes_op": 646438,
+          "allocs_op": 14156
+        },
+        "change_percent": -0.47
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1455341.0,
+          "bytes_op": 687936,
+          "allocs_op": 14104
+        },
+        "after": {
+          "ns_op": 1430766.0,
+          "bytes_op": 688219,
+          "allocs_op": 14108
+        },
+        "change_percent": -1.69
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 961050.0,
+          "bytes_op": 263645,
+          "allocs_op": 3125
+        },
+        "after": {
+          "ns_op": 972013.0,
+          "bytes_op": 264357,
+          "allocs_op": 3131
+        },
+        "change_percent": 1.14
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 987024.0,
+          "bytes_op": 273994,
+          "allocs_op": 3083
+        },
+        "after": {
+          "ns_op": 977736.0,
+          "bytes_op": 274263,
+          "allocs_op": 3087
+        },
+        "change_percent": -0.94
+      }
+    ],
+    "fixture": {
+      "codearts_ordinary_samples_per_round": 100,
+      "other_samples_per_case_per_round": 40,
+      "concurrency": 2,
+      "upstream_delay_ms": 20,
+      "tracked_normal_and_summary_no_retry_calls": 40,
+      "tracked_summary_retry_calls": 80,
+      "remaining_leases": 0
+    },
+    "assessment": "See measured ranges and allocation deltas; timings include local accounting and storage, so decreases are not evidence of upstream speedup."
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.6",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "9d4bc5ded8fd1c84dc397aeb3ae829be8d75a35bdcd62e73ba18a7fb7b7ce5ab",
+    "cloud_modified": false
+  },
+  "remaining": [
+    "credential acquisition and refresh ownership",
+    "fallback authorization and management business",
+    "process lifecycle",
+    "M4 frontend; M5 admission/storage/ledger; M6 product features; M7 on demand"
+  ]
+}
