@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"codearts2api/internal/codearts"
@@ -18,8 +17,8 @@ func (s *Server) summaryPolicy(ctx context.Context, body []byte, model string) (
 	return p, ok && p.SummaryEnabled && requestpolicy.IsSummaryRequest(body, explicit)
 }
 
-// The gateway owns private buffering and bounded retries. Account policy,
-// fallback authorization, attempt accounting and cooldown writes stay here.
+// The gateway owns preparation, private buffering and bounded retries. HTTP
+// context projection, attempt accounting and cooldown writes stay here.
 func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, p store.ModelPolicy) ([][]byte, error) {
 	return gateway.RunSummary(ctx, s.CodeArts.Bind(sess), p.SummaryRetry, gateway.SummaryHooks{
 		Prepare: func(retry bool) (gateway.SummaryAttempt, error) {
@@ -51,50 +50,33 @@ func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, mode
 }
 
 func (s *Server) prepareSummaryAttempt(ctx context.Context, model registry.Model, body []byte, p store.ModelPolicy, retry bool) (gateway.SummaryAttempt, error) {
-	target, policy := model, p
-	if retry && p.SummaryFallbackModel != "" {
-		if forced := s.Store.Settings().ForceModel; forced != "" && forced != p.SummaryFallbackModel {
-			return gateway.SummaryAttempt{}, &gateway.SummaryFailure{Message: "强制模型设置阻止摘要备用模型调用"}
-		}
-		var exists bool
-		target, exists = s.Reg.Resolve(p.SummaryFallbackModel, nil)
-		if !exists || modelProvider(target) != modelProvider(model) || target.Scope != model.Scope {
-			return gateway.SummaryAttempt{}, &gateway.SummaryFailure{Message: "摘要备用模型已不在模型目录中"}
-		}
-		if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
-			if s.Store.ModelHealthSnapshot()[c.accountID][target.ID].CooldownUntil > time.Now().Unix() {
-				return gateway.SummaryAttempt{}, &gateway.SummaryFailure{Message: "摘要备用模型正在冷却，请调整策略或稍后再试"}
-			}
-		}
-		if configured, exists := s.Store.ModelPolicy(target.ID); exists {
-			policy = configured
-		} else {
-			policy.DisableSummaryThinking = false
-		}
-	}
-	if retry {
-		if err := s.checkRequestBudget(ctx, target.ID); err != nil {
-			return gateway.SummaryAttempt{}, err
-		}
-	}
-	requestBody, err := rewriteModel(body, target.ID, true)
-	if err != nil {
-		return gateway.SummaryAttempt{}, err
-	}
-	if target.ID != model.ID {
-		// Reasoning options for the original model are not a capability claim
-		// about the explicitly selected fallback.
-		var request map[string]json.RawMessage
-		if err := json.Unmarshal(requestBody, &request); err != nil {
-			return gateway.SummaryAttempt{}, err
-		}
-		delete(request, "thinking")
-		delete(request, "reasoning_effort")
-		requestBody = mustJSON(request)
-	}
-	request, err := requestpolicy.PrepareSummary(requestBody, requestpolicy.SummaryOptions{MaxTokens: policy.SummaryMaxTokens, DisableThinking: policy.DisableSummaryThinking}, retry)
-	if err != nil {
-		return gateway.SummaryAttempt{}, err
-	}
-	return gateway.SummaryAttempt{Model: target.ID, Body: request}, nil
+	return gateway.PrepareSummaryAttempt(ctx, summaryTarget(model), body, summaryOptions(p), p.SummaryFallbackModel, retry, summaryTargetSource{s, ctx})
+}
+
+type summaryTargetSource struct {
+	s   *Server
+	ctx context.Context
+}
+
+func summaryTarget(model registry.Model) gateway.SummaryTarget {
+	return gateway.SummaryTarget{ID: model.ID, Provider: modelProvider(model), Scope: model.Scope}
+}
+func summaryOptions(p store.ModelPolicy) requestpolicy.SummaryOptions {
+	return requestpolicy.SummaryOptions{MaxTokens: p.SummaryMaxTokens, DisableThinking: p.DisableSummaryThinking}
+}
+func (source summaryTargetSource) ForcedModel() string { return source.s.Store.Settings().ForceModel }
+func (source summaryTargetSource) Resolve(name string) (gateway.SummaryTarget, bool) {
+	model, ok := source.s.Reg.Resolve(name, nil)
+	return summaryTarget(model), ok
+}
+func (source summaryTargetSource) Cooling(model string) bool {
+	c, ok := source.ctx.Value(usageContextKey{}).(*usageCapture)
+	return ok && source.s.Store.ModelHealthSnapshot()[c.accountID][model].CooldownUntil > time.Now().Unix()
+}
+func (source summaryTargetSource) Options(model string) (requestpolicy.SummaryOptions, bool) {
+	p, ok := source.s.Store.ModelPolicy(model)
+	return summaryOptions(p), ok
+}
+func (source summaryTargetSource) Authorize(ctx context.Context, model string) error {
+	return source.s.checkRequestBudget(ctx, model)
 }
