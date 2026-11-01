@@ -3,7 +3,6 @@ package server
 import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/config"
-	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	"encoding/json"
 	"errors"
@@ -56,7 +55,7 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleAdminModelPolicies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, 200, map[string]any{"policies": s.allModelPolicies(), "capabilities": gatewayCapabilities()})
+		writeJSON(w, 200, map[string]any{"policies": s.ModelPolicies.All(), "capabilities": gatewayCapabilities()})
 	case http.MethodPost:
 		var body struct {
 			Model  string             `json:"model"`
@@ -74,7 +73,7 @@ func (s *Server) handleAdminModelPolicies(w http.ResponseWriter, r *http.Request
 			}
 			return
 		}
-		writeJSON(w, 200, map[string]any{"ok": true, "policies": s.allModelPolicies()})
+		writeJSON(w, 200, map[string]any{"ok": true, "policies": s.ModelPolicies.All()})
 	default:
 		writeErr(w, 405, "仅支持 GET/POST", "invalid_request_error")
 	}
@@ -102,29 +101,3 @@ func unsupportedCapability(w http.ResponseWriter, r *http.Request) {
 }
 
 func mustJSON(v any) []byte { b, _ := json.Marshal(v); return b }
-
-// Recommendations for new providers use declared catalog bounds, never model-name guesses.
-func (s *Server) modelPolicyFor(m registry.Model) (store.ModelPolicy, bool) {
-	if p, ok := s.Store.ModelPolicy(m.ID); ok {
-		return p, true
-	}
-	if modelProvider(m) == "codearts" || m.Context < 8192 || m.MaxOutput < 256 {
-		return store.ModelPolicy{}, false
-	}
-	window := min(m.Context, 2097152)
-	output := min(m.MaxOutput, 8192, window/4)
-	reserve := min(max(16384, output+4096), window-2048)
-	trigger := min(45000, window-reserve)
-	keep := min(12000, trigger/2)
-	p := store.ModelPolicy{ContextWindow: window, MaxOutputTokens: output, ReserveTokens: reserve, KeepRecentTokens: keep, TriggerTokens: trigger, SummaryMaxTokens: output, Source: "基于上游目录的保守建议；此上游未启用服务端摘要适配"}
-	return p, p.Validate() == nil
-}
-func (s *Server) allModelPolicies() map[string]store.ModelPolicy {
-	out := s.Store.ModelPolicies()
-	for _, m := range s.Reg.List(nil) {
-		if p, ok := s.modelPolicyFor(m); ok {
-			out[m.ID] = p
-		}
-	}
-	return out
-}

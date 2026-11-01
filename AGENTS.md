@@ -44,6 +44,8 @@ M3 第十九批将价格值/校验与管理保存协调迁入 `usage`，Store.Mo
 
 M3 第二十批将 HTTP 运行实例及启动/关闭协调迁入 `app.Start`/`Runtime.Close`，原领奖定时循环归 `jobs.RunDailyLoop`；main 保留参数、导入/导出、首次访问配置、信号和致命退出策略。保留 8s 后首检/首检返回后启动 5min ticker、30s 保存、独立 60s 启动刷新，以及先 HTTP 最多 10s 排空、再最终保存、最后取消轮询的顺序。后台不新增 join、锁、重试或强制关闭，不能把本批当作修改退出保证的授权；server.StartClaimLoop 仅单向兼容。app.Build 仍无网络或后台副作用，普通推理/平台协议/Store/页面不变。M3 边界收尾与整体验收仍待处理。
 
+M3 第二十一批将账号连通性探活编排迁入 `accounts.Probes`，CodeArts Session 和最小探测请求仍由 `upstream/codearts` 包装；HTTP 保留宽松解码、脱敏字段和响应。逐账号串行、30/60s 超时、原生先失效再解析、成功才替换平台地区目录、失败仍返回已有凭证提示、最终保存失败只记日志均不变。模型推荐生成/目录合并归 `config.ModelPolicies`，统一模型公共建议归 `config.CommonModelPolicy`，继续优先管理员策略并遇缺失来源立即停止；不按模型名猜能力，不增缓存/锁。`make architecture` 和 CI 检查生产直接导入，旧 Registry/apierr/Store 原生桥接明确保留，不代表整个依赖图已完成迁移。搜索执行、统一请求型号解析与 M3 整体验收仍待处理。
+
 不要为凑齐目标树创建空包、空服务或无法运行的配置。具体职责和依赖见 `docs/architecture/`。
 
 ## 命令与验证

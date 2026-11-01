@@ -349,60 +349,34 @@ func (s *Server) handleAdminCheckin(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 
-	targets := s.Store.Accounts()
-	if body.ID != "" {
-		targets = nil
-		if a := s.Store.Account(body.ID); a != nil {
-			targets = append(targets, a)
-		}
-	}
-	results := make([]map[string]any, 0, len(targets))
-	for _, a := range targets {
-		if a.ProviderID() != provider.CodeArts {
-			ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	checked := s.AccountProbes.Run(r.Context(), body.ID, accounts.ProbeOperations{
+		Invalidate: s.Cred.Invalidate,
+		Provider: func(ctx context.Context, a *accounts.Account) ([]provider.Model, error) {
 			adapter, raw, err := s.providerCredentials(ctx, a)
-			if err == nil {
-				var models []provider.Model
-				models, err = adapter.Models(ctx, raw)
-				if err == nil {
-					s.Reg.ReplaceProvider(a.ProviderID(), a.Scope, models)
-				}
-			}
-			cancel()
-			note := ""
 			if err != nil {
-				note = err.Error()
+				return nil, err
 			}
-			s.Store.MarkAccountResult(a.ID, err == nil, note)
-			results = append(results, map[string]any{"id": a.ID, "name": a.DisplayName(), "ok": err == nil, "err": note})
-			continue
-		}
-		s.Cred.Invalidate(a.ID)
-		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
-		sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
-		if err == nil {
-			probe, ok := s.defaultProbeModel()
-			if !ok {
-				err = &apierr.ModelNotFound{Name: s.Store.Settings().DefaultModel}
-			} else {
-				err = s.Up.Probe(ctx, sess, probe.ID)
-			}
-		}
-		cancel()
-		ok := err == nil
-		note := ""
-		if err != nil {
-			note = err.Error()
-		}
-		s.Store.MarkAccountResult(a.ID, ok, note)
-		row := map[string]any{"id": a.ID, "name": a.DisplayName(), "ok": ok, "err": note}
-		if sess != nil {
-			row["expires_at"] = sess.ExpiresAt.Unix()
-			row["access_key"] = codearts.Mask(sess.AccessKey)
+			return adapter.Models(ctx, raw)
+		},
+		Native: func(ctx context.Context, a *accounts.Account) (*accounts.ProbeCredentialInfo, error) {
+			return s.CodeArts.ProbeAccount(ctx, s.Cred, a, s.resolveOptions(), func() (string, error) {
+				probe, ok := s.defaultProbeModel()
+				if !ok {
+					return "", &apierr.ModelNotFound{Name: s.Store.Settings().DefaultModel}
+				}
+				return probe.ID, nil
+			})
+		},
+	})
+	results := make([]map[string]any, 0, len(checked))
+	for _, result := range checked {
+		row := map[string]any{"id": result.ID, "name": result.Name, "ok": result.OK, "err": result.Error}
+		if result.Credentials != nil {
+			row["expires_at"] = result.Credentials.ExpiresAt
+			row["access_key"] = result.Credentials.AccessKey
 		}
 		results = append(results, row)
 	}
-	s.persist()
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "results": results})
 }
 

@@ -59,6 +59,7 @@ func newConfiguredServer(st *store.Store) *Server {
 }
 
 func attachAccessManagement(s *Server) {
+	attachModelPolicies(s)
 	attachRewards(s)
 	if s.Catalog == nil {
 		s.Catalog = catalog.NewRuntime(s.Store, s.Reg)
@@ -81,6 +82,7 @@ func attachAccessManagement(s *Server) {
 
 // Narrow fixture constructors intentionally omit unrelated app services.
 func attachChatExecution(s *Server) *Server {
+	attachModelPolicies(s)
 	attachRewards(s)
 	if s.Catalog == nil && s.Reg != nil {
 		s.Catalog = catalog.NewRuntime(s.Store, s.Reg)
@@ -95,6 +97,7 @@ func attachChatExecution(s *Server) *Server {
 }
 
 func attachAccountManagement(s *Server) {
+	s.AccountProbes = accounts.NewProbes(s.Store, s.Reg, log.Printf)
 	s.AccountManagement = accounts.NewManagement(s.Store, &codeartsup.AccountManagement{Manager: s.Cred, Options: s.resolveOptions}, s.Cred.Invalidate, log.Printf)
 }
 
@@ -132,4 +135,10 @@ func attachRewards(s *Server) {
 func (s *Server) growthExecutionPath() string { return s.Store.Path() + ".growth.json" }
 func growthTask(tasks []provider.GrowthTask, code string) *provider.GrowthTask {
 	return jobs.GrowthTask(tasks, code)
+}
+
+func attachModelPolicies(s *Server) {
+	if s.ModelPolicies == nil && s.Reg != nil {
+		s.ModelPolicies = config.NewModelPolicies(s.Store, s.Reg)
+	}
 }

@@ -50,7 +50,9 @@ func Build(st *store.Store) (*server.Server, error) {
 		Welfare: jobs.NewWelfare(st),
 		Growth:  jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
 		Credits: credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
-		Catalog: catalog.NewRuntime(st, models),
+		Catalog:       catalog.NewRuntime(st, models),
+		AccountProbes: accounts.NewProbes(st, models, log.Printf),
+		ModelPolicies: config.NewModelPolicies(st, models),
 		Configuration: config.NewManagement(st, func(id string) (config.ModelRef, bool) {
 			model, ok := models.Resolve(id, st.Settings().ModelAliases)
 			platform := model.Provider

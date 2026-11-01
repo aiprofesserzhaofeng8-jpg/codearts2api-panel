@@ -1,6 +1,7 @@
 package server
 
 import (
+	"codearts2api/internal/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -120,7 +121,7 @@ func filterMappedMessages(ctx context.Context, thinking bool) error {
 // Never resolve its public name through legacy aliases or infer native capabilities.
 func (s *Server) requestModelPolicy(r *http.Request, model registry.Model) (store.ModelPolicy, bool) {
 	if model.Source != "mapping" {
-		return s.modelPolicyFor(model)
+		return s.ModelPolicies.For(model)
 	}
 	access, err := s.Store.AccessScope(groupKey(r.Context()))
 	if err != nil {
@@ -130,28 +131,9 @@ func (s *Server) requestModelPolicy(r *http.Request, model registry.Model) (stor
 	if plan == nil || len(plan.ids) == 0 {
 		return store.ModelPolicy{}, false
 	}
-	var combined store.ModelPolicy
-	for i, id := range plan.ids {
-		p, ok := s.modelPolicyFor(plan.models[id])
-		if !ok {
-			return store.ModelPolicy{}, false
-		}
-		if i == 0 {
-			combined = p
-		} else {
-			combined.ContextWindow = min(combined.ContextWindow, p.ContextWindow)
-			combined.MaxOutputTokens = min(combined.MaxOutputTokens, p.MaxOutputTokens)
-			combined.TriggerTokens = min(combined.TriggerTokens, p.TriggerTokens)
-			combined.KeepRecentTokens = min(combined.KeepRecentTokens, p.KeepRecentTokens)
-			combined.ReserveTokens = max(combined.ReserveTokens, p.ReserveTokens)
-		}
-	}
-	combined.ReserveTokens = min(combined.ReserveTokens, combined.ContextWindow-combined.TriggerTokens)
-	combined.SummaryEnabled, combined.SummaryRetry = false, false
-	combined.SummaryFallbackModel = ""
-	combined.SummaryMaxTokens = combined.MaxOutputTokens
-	combined.Source = "分组内各来源的保守公共建议；实际能力以所选上游为准"
-	return combined, combined.Validate() == nil
+	return config.CommonModelPolicy(plan.ids, func(id string) (config.ModelPolicy, bool) {
+		return s.ModelPolicies.For(plan.models[id])
+	})
 }
 
 // Existing same-platform summary fallback remains subject to the raw allowlist.

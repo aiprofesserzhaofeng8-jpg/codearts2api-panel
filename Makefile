@@ -11,7 +11,7 @@ BIN     ?= codearts2api
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
-.PHONY: all build test vet vet-linux fmt lint race console check clean docker
+.PHONY: all build test vet vet-linux fmt lint race console architecture check clean docker
 
 all: check build
 
@@ -43,7 +43,11 @@ race:
 console:
 	$(PYTHON) tools/check_html_js.py
 
-check: vet vet-linux test console
+architecture:
+	$(PYTHON) tools/check_architecture.py --go "$(GO)"
+	$(PYTHON) -m unittest discover -s tools -p test_check_architecture.py
+
+check: vet vet-linux test console architecture
 
 clean:
 	rm -f $(BIN) $(BIN).exe

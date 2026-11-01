@@ -38,6 +38,11 @@ jobs:
             echo "以下文件未格式化："; echo "$out"; exit 1
           fi
 
+      - name: 生产依赖边界检查
+        run: |
+          python tools/check_architecture.py
+          python -m unittest discover -s tools -p test_check_architecture.py
+
       - name: go vet
         working-directory: backend
         run: go vet ./...
