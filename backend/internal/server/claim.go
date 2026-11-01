@@ -70,12 +70,8 @@ func (s *Server) rewardOperations() jobs.RewardOperations {
 }
 
 // WelfareSnapshot 返回某账号的活动福利清单（供控制台展示）。
-func (s *Server) WelfareSnapshot(ctx context.Context, a *accounts.Account) (*codearts.WelfareDelivery, error) {
-	sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
-	if err != nil {
-		return nil, err
-	}
-	return s.Up.FetchWelfareDelivery(ctx, sess)
+func (s *Server) WelfareSnapshot(ctx context.Context, a *accounts.Account) (*jobs.WelfareSnapshot, error) {
+	return s.CodeArts.WelfareSnapshot(ctx, s.Cred, a, s.resolveOptions())
 }
 
 // handleAdminWelfare 返回运营活动清单（「活动福利」）。
@@ -84,21 +80,7 @@ func (s *Server) WelfareSnapshot(ctx context.Context, a *accounts.Account) (*cod
 // 不指定时回退到调度池里的下一个账号。响应里带上账号 id/名称，
 // 控制台据此显示「当前查看的是哪个号」，避免用户误以为只有某一个号能领。
 func (s *Server) handleAdminWelfare(w http.ResponseWriter, r *http.Request) {
-	var acct *accounts.Account
-	if id := r.URL.Query().Get("id"); id != "" {
-		acct = s.Store.Account(id)
-	}
-	if acct == nil {
-		acct = s.Store.NextAccount()
-	}
-	if acct == nil {
-		for _, a := range s.Store.Accounts() {
-			if a.Enabled && s.dailyRewardsSupported(a) {
-				acct = a
-				break
-			}
-		}
-	}
+	acct := s.Welfare.ForList(r.URL.Query().Get("id"), s.Providers)
 	if acct == nil {
 		writeErr(w, http.StatusBadRequest, apierr.NoAccount.Error(), "invalid_request_error")
 		return
@@ -116,54 +98,20 @@ func (s *Server) handleAdminWelfare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]map[string]any, 0, len(delivery.Campaigns))
-	claimable := 0
-	for _, c := range delivery.Campaigns {
-		if c.Claimable {
-			claimable++
-		}
-		items = append(items, map[string]any{
-			"campaign_id":    c.CampaignID,
-			"title":          c.Title,
-			"type":           c.Type,
-			"status":         c.Status,
-			"claimable":      c.Claimable,
-			"auto_claimable": c.IsAutoClaimable(),
-			"benefit_amount": c.BenefitAmount,
-			"benefit_unit":   c.BenefitUnit,
-			"description":    c.Description,
-			"trigger_mode":   c.Extra.TriggerMode,
-			"trigger_event":  c.Extra.TriggerEvent,
-			"start_time":     c.Extra.StartTime,
-			"end_time":       c.Extra.EndTime,
-		})
-	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":      true,
 		"account": acct.DisplayName(),
 		"id":      acct.ID,
 		// 让前端能把账号下拉框列全，而不是只看到当前这一个
 		"accounts":        s.welfareAccountOptions(),
-		"campaigns":       items,
-		"claimable_count": claimable,
+		"campaigns":       delivery.Campaigns,
+		"claimable_count": delivery.ClaimableCount,
 	})
 }
 
 // welfareAccountOptions 返回可用于查询活动清单的账号列表。
 func (s *Server) welfareAccountOptions() []map[string]any {
-	accts := s.Store.Accounts()
-	out := make([]map[string]any, 0, len(accts))
-	for _, a := range accts {
-		if !s.dailyRewardsSupported(a) {
-			continue
-		}
-		out = append(out, map[string]any{
-			"id": a.ID, "name": a.DisplayName(), "provider": a.ProviderID(),
-			"enabled": a.Enabled, "status": a.Status,
-			"permanent": a.Session != nil && a.Session.IsPermanent(),
-		})
-	}
-	return out
+	return s.Welfare.AccountOptions(s.Providers)
 }
 
 // handleAdminInvite 生成（或取回）专属邀请码与邀请链接。
@@ -184,13 +132,7 @@ func (s *Server) handleAdminInvite(w http.ResponseWriter, r *http.Request) {
 		body.CampaignID = 3 // 「推荐码上有礼」
 	}
 
-	var acct *accounts.Account
-	if body.ID != "" {
-		acct = s.Store.Account(body.ID)
-	}
-	if acct == nil {
-		acct = s.Store.NextAccount()
-	}
+	acct := s.Welfare.ForInvite(body.ID)
 	if acct == nil {
 		writeErr(w, http.StatusBadRequest, apierr.NoAccount.Error(), "invalid_request_error")
 		return
@@ -198,14 +140,9 @@ func (s *Server) handleAdminInvite(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	sess, err := s.Cred.Session(ctx, acct, s.resolveOptions())
+	code, err := s.CodeArts.WelfareInvite(ctx, s.Cred, acct, s.resolveOptions(), body.CampaignID)
 	if err != nil {
 		writeErr(w, http.StatusBadGateway, err.Error(), "upstream_error")
-		return
-	}
-	code, err := s.Up.GenerateInviteCode(ctx, sess, body.CampaignID)
-	if err != nil {
-		writeErr(w, http.StatusBadGateway, "生成邀请链接失败: "+err.Error(), "upstream_error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

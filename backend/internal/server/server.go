@@ -35,6 +35,7 @@ import (
 // Server 是网关 HTTP 服务。
 type Server struct {
 	Credits             *accounts.Credits
+	Welfare             *jobs.Welfare
 	Rewards             *jobs.Rewards
 	Catalog             *catalog.Runtime
 	Configuration       *config.Management
@@ -66,6 +67,7 @@ type Server struct {
 type Dependencies struct {
 	Growth              *jobs.Growth
 	Credits             *accounts.Credits
+	Welfare             *jobs.Welfare
 	Rewards             *jobs.Rewards
 	Catalog             *catalog.Runtime
 	Configuration       *config.Management
@@ -86,7 +88,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()

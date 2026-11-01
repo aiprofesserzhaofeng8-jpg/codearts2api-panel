@@ -112,3 +112,5 @@ M3.15 的 catalog Runtime 借用唯一 Registry，只持有原刷新状态及原
 M3.16：积分数量快照归 accounts，不属于 API 美元费用/预算账本。CodeArts 仅保留 CreditInfo/CreditCategory 别名，原生解析不改；WorkBuddy/Trae 继续返回原 JSON 并按原顺序解析。jobs 每日领奖调用原适配器，不自行解析凭据，不写准入或推理健康状态。领奖、成长、凭据的三组账号锁仍独立；自动领取定时器、活动列表与邀请 HTTP 中剩余的原生调用待后续迁移。
 
 M3.17：成长编排与检查点归 jobs.Growth，app 装配固定的原 `.growth.json` 路径。HTTP 保留账号重读与凭据入口，付费回调只改变检查点所有者的单向委托；Store 准入和账本仍不拆分。原子检查点实现不是第二个账号 Store，也不能用于普通请求或重复提交未知动作。
+
+M3.18：jobs.Welfare 借用原 Store 选择账号和生成账号选项，不保存调度状态；upstream/codearts 包装活动列表、邀请调用和原生结果投影。HTTP 保留 DTO/方法/默认值/错误码，外部每日状态仍归 Rewards，列表与邀请不扩展彼此的回退规则和平台能力。无新锁、缓存、上游重试或普通推理调用。

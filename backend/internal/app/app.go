@@ -45,6 +45,7 @@ func Build(st *store.Store) (*server.Server, error) {
 	models := registry.New()
 	credits := &accounts.Credits{}
 	return server.New(st, server.Dependencies{
+		Welfare: jobs.NewWelfare(st),
 		Growth:  jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
 		Credits: credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
 		Catalog: catalog.NewRuntime(st, models),

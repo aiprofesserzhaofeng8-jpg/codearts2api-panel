@@ -107,6 +107,9 @@ func markModelsFresh(s *Server) {
 }
 
 func attachRewards(s *Server) {
+	if s.Welfare == nil {
+		s.Welfare = jobs.NewWelfare(s.Store)
+	}
 	if s.Credits == nil {
 		s.Credits = &accounts.Credits{}
 	}
