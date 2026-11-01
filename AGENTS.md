@@ -6,11 +6,13 @@ Go 模块位于 `backend/`，模块名为 `codearts2api`。服务入口为 `back
 
 M3 第一批已将中立账号迁入 `internal/accounts`，平台依赖装配迁入 `internal/app`。共享代码使用 `accounts.Account`；`codearts.Account` 仅为迁移别名。旧 `session` 槽由 store 兼容编码器读取、CodeArts 解释，不能为新平台继续往该接口堆方法或往中立账号添加平台字段。请求路径不能为了读取旧会话而反复解析 JSON。
 
-M3 第二批将 CodeArts 对话传输包装为 `internal/upstream/codearts`，普通单次执行归 `internal/gateway.Completions`，SSE 聚合及请求流式选项归 `internal/protocol`。适配器借用已选中的不可变凭据；不能另建 JSON 凭据解码路径。gateway 不导入 HTTP、Store 或具体平台，不增加选号、刷新或重试层。摘要编排、全局重试和其他平台执行仍留原入口，后续逐项迁移。
+M3 第二批将 CodeArts 对话传输包装为 `internal/upstream/codearts`，普通单次执行归 `internal/gateway.Completions`，SSE 聚合及请求流式选项归 `internal/protocol`。适配器借用已选中的不可变凭据；不能另建 JSON 凭据解码路径。gateway 不导入 HTTP、Store 或具体平台，不增加选号、刷新或重试层。该批尚未迁移的摘要、全局重试和其他平台执行按后续批次逐项处理。
 
 M3 第三批将 WorkBuddy/Trae 的单次流式执行及非流式聚合也接入 `gateway.Completions`。`upstream.BindStream` 只借用已解析凭据并传递型号、会话和请求标识；原生协议、登录、搜索、奖励仍归各平台。两平台只实现最小流式能力，不伪造原生 Chat 或空响应回退接口。32MiB 聚合上限保持原值；凭据解析/刷新互斥、提示词恢复、全局重试和摘要编排仍待后续迁移。
 
 M3 第四批将提示词准备/恢复编排迁入 `gateway.RunPromptPolicy`，摘要识别/准备归 `requestpolicy`。server 仅投影平台配置、判定摘要豁免，并通过两个 hook 保留原尝试计量及预算/分组权限复核。顺序必须是结束旧尝试、复核预算/权限、准备替换请求、开始新尝试；收到任何上游分片后不能恢复。摘要的完整性缓冲、备用型号选择、重试、冷却和结算仍在原实现，本批没有扩展其他平台摘要能力或公共提示词继承。
+
+M3 第五批将摘要完整性验证、8MiB 私有缓冲及最多一次截断重试迁入 `gateway.RunSummary`，使用既有 `StreamTransport`，不增加平台能力。server 通过 Prepare/Start/Usage/Result hook 保留备用型号解析、预算与分组权限、尝试计量、用量和模型冷却；准备成功后才开始计量。错误仍为请求级终止，不能经外层换号放大摘要重试。分片仍只解析一次、先计量再检查大小、复制原字节；只有完整正文才交付客户端。全局换号、WorkBuddy 短恢复和凭据业务仍待迁移。
 
 不要为凑齐目标树创建空包、空服务或无法运行的配置。具体职责和依赖见 `docs/architecture/`。
 

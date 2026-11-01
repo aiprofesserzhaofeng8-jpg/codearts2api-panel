@@ -31,8 +31,8 @@ type Observer struct {
 }
 
 // Completions executes one already-selected, already-authorized attempt.
-// Account admission, prompt recovery and summaries retain their existing owner
-// during M3; none of them may be repeated by this executor.
+// Account admission, prompt recovery and summary orchestration run outside this
+// executor; none of them may be repeated by a single completion.
 type Completions struct {
 	MarkStreamOnly func(string)
 }

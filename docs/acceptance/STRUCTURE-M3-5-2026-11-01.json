@@ -1,0 +1,723 @@
+{
+  "stage": "structure-m3-5",
+  "date": "2026-11-01",
+  "baseline": "1b4064a",
+  "version": "0.3.0-structure-m3.5",
+  "scope": [
+    "summary completeness validation and private 8 MiB buffer in gateway",
+    "at most one output-limit retry on the bound transport",
+    "server retains fallback selection, access/budget, accounting and cooldown hooks"
+  ],
+  "checks": {
+    "make_check": "passed",
+    "race": {
+      "status": "passed",
+      "tested_packages": 17,
+      "server_seconds": 307.05
+    },
+    "windows_vet": "passed",
+    "windows_amd64_crossbuild": "passed",
+    "windows_execution": "not run",
+    "linux_build": "passed",
+    "docker_build": "passed",
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001"
+      }
+    ],
+    "browser": [
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      }
+    ],
+    "launcher_tests": 9,
+    "pi": "passed",
+    "boundaries": {
+      "passed": true,
+      "native_platform_store_web_files_identical": true,
+      "direct_imports": {
+        "gateway": [
+          "codearts2api/internal/protocol",
+          "codearts2api/internal/provider",
+          "codearts2api/internal/requestpolicy",
+          "context",
+          "encoding/json",
+          "errors",
+          "fmt",
+          "strings"
+        ],
+        "requestpolicy": [
+          "codearts2api/internal/protocol",
+          "embed",
+          "encoding/json",
+          "fmt",
+          "regexp",
+          "strings"
+        ],
+        "upstream": [
+          "codearts2api/internal/provider",
+          "context",
+          "encoding/json"
+        ]
+      }
+    },
+    "pinned_sub2api_original_tests": "not rerun; converter sources unchanged; project protocol regression passed"
+  },
+  "real_upstreams": {
+    "checks": [
+      {
+        "case": "codearts/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.674,
+        "policy_mode": "custom",
+        "run": "live-smoke"
+      },
+      {
+        "case": "codearts/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.795,
+        "policy_mode": "passthrough",
+        "run": "live-smoke"
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.631,
+        "policy_mode": "custom",
+        "run": "live-smoke"
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.581,
+        "policy_mode": "passthrough",
+        "run": "live-smoke"
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.288,
+        "policy_mode": "custom",
+        "run": "live-smoke"
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.38,
+        "policy_mode": "passthrough",
+        "run": "live-smoke"
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2,
+        "run": "live-smoke"
+      },
+      {
+        "case": "codearts/summary_explicit_buffered",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "run": "live-smoke"
+      },
+      {
+        "case": "codearts/summary_pi_stream",
+        "passed": false,
+        "run": "live-smoke",
+        "failure_kind": "summary_metadata_assertion_not_met",
+        "content_marker_passed": true,
+        "status": 200
+      },
+      {
+        "case": "codearts/summary_explicit_buffered",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "run": "live-summary-recheck"
+      },
+      {
+        "case": "codearts/summary_pi_stream",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "run": "live-summary-recheck"
+      },
+      {
+        "case": "trae/tool_roundtrip",
+        "passed": true,
+        "requests": 2,
+        "run": "live-trae-tool"
+      },
+      {
+        "case": "codearts/summary_explicit_buffered",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "summary_attempts": 1,
+        "finish_reason": "stop",
+        "request_log_correlated": true,
+        "run": "live-summary-correlated"
+      },
+      {
+        "case": "codearts/summary_pi_stream",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "summary_attempts": 1,
+        "finish_reason": "stop",
+        "request_log_correlated": true,
+        "run": "live-summary-correlated"
+      }
+    ],
+    "client_generation_requests": 16,
+    "met_all_assertions": 15,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted_on_exit": true,
+    "assessment": "All cases passed in focused runs. The first Pi stream returned the correct marker but did not meet an overly strict metadata assertion requiring exactly one attempt. That run did not record individual fields, so its cause remains unconfirmed. Rechecks passed, including exact request-ID correlation with one attempt and stop. The initial result is retained.",
+    "scope_limit": "No forced real content block or output-limit retry; controlled native-client fixtures cover these faults. Client request count does not assert an exact upstream attempt count for the first failed metadata check. No full CLI application or 24-hour acceptance."
+  },
+  "performance": {
+    "baseline": "1b4064a",
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "capacity_rounds": 5,
+    "benchmark_rounds": 5,
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 1370899.0,
+          "bytes_op": 145872,
+          "allocs_op": 1114
+        },
+        "after": {
+          "ns_op": 759644.0,
+          "bytes_op": 145854,
+          "allocs_op": 1114
+        },
+        "change_percent": -44.59
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 2364.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 2384.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "change_percent": 0.85
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 19118.0,
+          "bytes_op": 19741,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 19119.0,
+          "bytes_op": 19740,
+          "allocs_op": 142
+        },
+        "change_percent": 0.01
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns_op": 2089806.0,
+          "bytes_op": 2255103,
+          "allocs_op": 165
+        },
+        "after": {
+          "ns_op": 2103894.0,
+          "bytes_op": 2255189,
+          "allocs_op": 165
+        },
+        "change_percent": 0.67
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns_op": 15687503.0,
+          "bytes_op": 17091718,
+          "allocs_op": 172
+        },
+        "after": {
+          "ns_op": 15773471.0,
+          "bytes_op": 17091860,
+          "allocs_op": 172
+        },
+        "change_percent": 0.55
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+        "before": {
+          "ns_op": 1756558.0,
+          "bytes_op": 144243,
+          "allocs_op": 497
+        },
+        "after": {
+          "ns_op": 677244.0,
+          "bytes_op": 144540,
+          "allocs_op": 507
+        },
+        "change_percent": -61.44
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+        "before": {
+          "ns_op": 1102580.0,
+          "bytes_op": 145924,
+          "allocs_op": 503
+        },
+        "after": {
+          "ns_op": 695140.0,
+          "bytes_op": 146476,
+          "allocs_op": 513
+        },
+        "change_percent": -36.95
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+        "before": {
+          "ns_op": 1361789.0,
+          "bytes_op": 254878,
+          "allocs_op": 796
+        },
+        "after": {
+          "ns_op": 730161.0,
+          "bytes_op": 255784,
+          "allocs_op": 811
+        },
+        "change_percent": -46.38
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+        "before": {
+          "ns_op": 2477528.0,
+          "bytes_op": 257286,
+          "allocs_op": 813
+        },
+        "after": {
+          "ns_op": 726623.0,
+          "bytes_op": 257964,
+          "allocs_op": 828
+        },
+        "change_percent": -70.67
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=false",
+        "before": {
+          "ns_op": 19991989.0,
+          "bytes_op": 25003299,
+          "allocs_op": 624
+        },
+        "after": {
+          "ns_op": 18724793.0,
+          "bytes_op": 24943316,
+          "allocs_op": 633
+        },
+        "change_percent": -6.34
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=true",
+        "before": {
+          "ns_op": 21661314.0,
+          "bytes_op": 26505529,
+          "allocs_op": 637
+        },
+        "after": {
+          "ns_op": 20132128.0,
+          "bytes_op": 26494730,
+          "allocs_op": 645
+        },
+        "change_percent": -7.06
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=false",
+        "before": {
+          "ns_op": 27785664.0,
+          "bytes_op": 38467391,
+          "allocs_op": 988
+        },
+        "after": {
+          "ns_op": 26326668.0,
+          "bytes_op": 38782680,
+          "allocs_op": 1000
+        },
+        "change_percent": -5.25
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=true",
+        "before": {
+          "ns_op": 29394804.0,
+          "bytes_op": 40131041,
+          "allocs_op": 1009
+        },
+        "after": {
+          "ns_op": 28439199.0,
+          "bytes_op": 39959479,
+          "allocs_op": 1016
+        },
+        "change_percent": -3.25
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 2085790.0,
+          "bytes_op": 646256,
+          "allocs_op": 14149
+        },
+        "after": {
+          "ns_op": 1410088.0,
+          "bytes_op": 646361,
+          "allocs_op": 14150
+        },
+        "change_percent": -32.4
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1948129.0,
+          "bytes_op": 688442,
+          "allocs_op": 14104
+        },
+        "after": {
+          "ns_op": 1421992.0,
+          "bytes_op": 688196,
+          "allocs_op": 14104
+        },
+        "change_percent": -27.01
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 1481819.0,
+          "bytes_op": 263786,
+          "allocs_op": 3125
+        },
+        "after": {
+          "ns_op": 958142.0,
+          "bytes_op": 263977,
+          "allocs_op": 3125
+        },
+        "change_percent": -35.34
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 1641229.0,
+          "bytes_op": 273858,
+          "allocs_op": 3083
+        },
+        "after": {
+          "ns_op": 996823.0,
+          "bytes_op": 274585,
+          "allocs_op": 3083
+        },
+        "change_percent": -39.26
+      }
+    ],
+    "latencies": [
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.73,
+          "after": 23.696
+        },
+        "change_percent": -0.14
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 24.168,
+          "after": 23.039
+        },
+        "change_percent": -4.67
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.72,
+          "after": 23.326
+        },
+        "change_percent": -1.66
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.883,
+          "after": 23.383
+        },
+        "change_percent": -2.09
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.474,
+          "after": 23.269
+        },
+        "change_percent": -0.87
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.046,
+          "after": 44.136
+        },
+        "change_percent": 0.2
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.158,
+          "after": 23.698
+        },
+        "change_percent": 2.33
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.502,
+          "after": 44.173
+        },
+        "change_percent": -0.74
+      }
+    ],
+    "fixed_iteration_summary": {
+      "rounds": 5,
+      "iterations": {
+        "1024": 500,
+        "1048576": 20
+      },
+      "cpu_affinity": [
+        0,
+        2
+      ],
+      "gomaxprocs": 2,
+      "benchmarks": [
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+          "before": {
+            "ns_op": 624830.0,
+            "bytes_op": 143295,
+            "allocs_op": 496
+          },
+          "after": {
+            "ns_op": 633411.0,
+            "bytes_op": 143811,
+            "allocs_op": 507
+          },
+          "change_percent": 1.37
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+          "before": {
+            "ns_op": 661053.0,
+            "bytes_op": 145816,
+            "allocs_op": 503
+          },
+          "after": {
+            "ns_op": 653886.0,
+            "bytes_op": 146156,
+            "allocs_op": 513
+          },
+          "change_percent": -1.08
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+          "before": {
+            "ns_op": 721993.0,
+            "bytes_op": 254367,
+            "allocs_op": 796
+          },
+          "after": {
+            "ns_op": 740679.0,
+            "bytes_op": 254977,
+            "allocs_op": 811
+          },
+          "change_percent": 2.59
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+          "before": {
+            "ns_op": 709556.0,
+            "bytes_op": 256388,
+            "allocs_op": 813
+          },
+          "after": {
+            "ns_op": 726956.0,
+            "bytes_op": 257331,
+            "allocs_op": 828
+          },
+          "change_percent": 2.45
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=false",
+          "before": {
+            "ns_op": 18221209.0,
+            "bytes_op": 24984071,
+            "allocs_op": 628
+          },
+          "after": {
+            "ns_op": 18181803.0,
+            "bytes_op": 25086457,
+            "allocs_op": 636
+          },
+          "change_percent": -0.22
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=true",
+          "before": {
+            "ns_op": 19983655.0,
+            "bytes_op": 26516672,
+            "allocs_op": 642
+          },
+          "after": {
+            "ns_op": 19746521.0,
+            "bytes_op": 26410674,
+            "allocs_op": 647
+          },
+          "change_percent": -1.19
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=false",
+          "before": {
+            "ns_op": 26424770.0,
+            "bytes_op": 38680461,
+            "allocs_op": 992
+          },
+          "after": {
+            "ns_op": 26132009.0,
+            "bytes_op": 38259874,
+            "allocs_op": 1002
+          },
+          "change_percent": -1.11
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=true",
+          "before": {
+            "ns_op": 27834194.0,
+            "bytes_op": 40265355,
+            "allocs_op": 1005
+          },
+          "after": {
+            "ns_op": 27904568.0,
+            "bytes_op": 40475410,
+            "allocs_op": 1020
+          },
+          "change_percent": 0.25
+        }
+      ]
+    },
+    "assessment": "All controlled p95 changes are between -4.67 and +2.33 percent; fixed-iteration summary timings between -1.19 and +2.59 percent. Time-calibrated ledger benchmarks are noisy and their decreases are not evidence of speedup. Small summary fixtures add 10 to 15 allocations and approximately 340 to 943 bytes per request; no stable slowdown above 5 percent observed under these fixtures.",
+    "fixture": {
+      "requests_per_case_per_round": 40,
+      "concurrency": 2,
+      "upstream_delay_ms": 20,
+      "both_http_hops_use_sockets": true,
+      "ordinary_and_summary_no_retry_upstream_calls": 40,
+      "summary_retry_upstream_calls": 80,
+      "remaining_leases": 0
+    }
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.5",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "6ac7948e25ee8cf7441e110c248444bca5b0e6534dd4c46f11decd1310bc0216",
+    "cloud_modified": false
+  },
+  "remaining": [
+    "global account retry and WorkBuddy short recovery",
+    "fallback authorization and credential acquisition/refresh ownership",
+    "management business and process lifecycle",
+    "M4 frontend; M5 admission/storage/ledger; M6 product features; M7 on demand"
+  ]
+}
