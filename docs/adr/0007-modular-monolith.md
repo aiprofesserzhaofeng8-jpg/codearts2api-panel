@@ -2,13 +2,13 @@
 id: adr-0007
 type: architecture-design
 title: "ADR 0007：面向多平台扩展的模块化单体"
-status: proposed
+status: accepted
 parent: architecture
 ---
 
 # ADR 0007：面向多平台扩展的模块化单体
 
-- 状态：设计稿；尚未实施工程迁移。
+- 状态：目标设计已采纳；M1/M2 已完成，其余阶段待实施，参见对应验收记录。
 - 日期：2026-11-01。
 - 完整设计：[项目结构设计 v1](../architecture/README.md)。
 
@@ -47,4 +47,4 @@ parent: architecture
 
 ## 生效方式
 
-本 ADR 记录设计选择，不证明任何新目录或功能已经实现。实施提交按 [迁移计划](../architecture/MIGRATION.md) 更新阶段状态与证据，完成相应阶段后再将设计状态更新为已采纳/已实施。支持文件与源码目录按需要逐步落地。
+本 ADR 记录已采纳的目标设计；各阶段是否实现，以 [迁移计划](../architecture/MIGRATION.md) 和验收记录为准。M1/M2 已落地，剩余支持文件与业务目录继续按阶段建立；已采纳不等于整个目标树均已实现。

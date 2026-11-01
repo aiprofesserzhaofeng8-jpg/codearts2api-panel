@@ -1,8 +1,12 @@
 # 项目结构设计 v1
 
-日期：2026-11-01。状态：**设计稿，分阶段实施**。
+日期：2026-11-01。状态：**分阶段实施，M1/M2 已完成，M3–M7 待实施**。
 
-本文描述目标结构，不表示目录迁移、Vue 前端、公共提示词继承或多实例运行已经实现。当前源码仍以根目录 `main.go`、`internal/server`、`internal/store` 和嵌入式原生页面为入口。当前功能说明继续以仓库 README 和使用文档为准。
+本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。Vue 前端、业务模块拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
+
+已建立 `AGENTS.md` 和 `deploy/` 补充示例；当前未创建独立 `frontend/`。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
+
+工程布局、产物与本机更新结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)。
 
 ## 设计决策
 
@@ -24,12 +28,12 @@
 
 以下来自本次工作区静态检查，并非正在运行的服务或生产部署状态：
 
-- [Server](../../internal/server/server.go) 同时持有 HTTP、CodeArts 客户端、通用平台注册表、登录和任务运行状态。
-- [Store](../../internal/store/store.go) 同时管理持久化、调度和预算；[选号入口](../../internal/store/pool.go) 已在同一临界区复核权限、选择实际型号和占用账号并发。
-- 通用账号仍定义在 [CodeArts session.go](../../internal/codearts/session.go)，同时含通用元信息和 CodeArts Session。
-- [平台接口](../../internal/provider/provider.go) 已存在；搜索、奖励、成长任务采用可选能力接口，可以继续利用。
-- [协议转换](../../internal/protocol/anthropic.go)、[Responses 兼容](../../internal/responsescompat/chatcompletions_responses_bridge.go)、[提示词处理](../../internal/requestpolicy/request_policy.go) 已有可复用边界。
-- [console.js](../../internal/server/web/console.js) 集中多个管理功能；[web.go](../../internal/server/web.go) 将 HTML、JS、CSS 编入二进制。
+- [Server](../../backend/internal/server/server.go) 同时持有 HTTP、CodeArts 客户端、通用平台注册表、登录和任务运行状态。
+- [Store](../../backend/internal/store/store.go) 同时管理持久化、调度和预算；[选号入口](../../backend/internal/store/pool.go) 已在同一临界区复核权限、选择实际型号和占用账号并发。
+- 通用账号仍定义在 [CodeArts session.go](../../backend/internal/codearts/session.go)，同时含通用元信息和 CodeArts Session。
+- [平台接口](../../backend/internal/provider/provider.go) 已存在；搜索、奖励、成长任务采用可选能力接口，可以继续利用。
+- [协议转换](../../backend/internal/protocol/anthropic.go)、[Responses 兼容](../../backend/internal/responsescompat/chatcompletions_responses_bridge.go)、[提示词处理](../../backend/internal/requestpolicy/request_policy.go) 已有可复用边界。
+- [console.js](../../backend/internal/server/web/console.js) 集中多个管理功能；[web.go](../../backend/internal/server/web.go) 将 HTML、JS、CSS 编入二进制。
 - Go 当前只使用标准库，没有 `go.sum`；已有 ADR、CI、跨平台检查、用量账本与验收脚本，不重新建立一套平行体系。
 
 ## 目标目录

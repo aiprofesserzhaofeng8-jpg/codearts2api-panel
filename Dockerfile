@@ -5,14 +5,13 @@
 # （session JSON 含 refresh_token 与 DPoP 私钥，因此仍可自动续期）。
 FROM golang:1.27.3-alpine AS build
 WORKDIR /src
-COPY go.mod ./
-COPY *.go ./
-COPY cmd ./cmd
-COPY internal ./internal
+COPY backend/go.mod ./
+COPY backend/cmd ./cmd
+COPY backend/internal ./internal
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -trimpath \
       -ldflags "-s -w -X main.version=${VERSION}" \
-      -o /out/codearts2api .
+      -o /out/codearts2api ./cmd/panel
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata && \

@@ -48,6 +48,6 @@ git var GIT_AUTHOR_IDENT
 
 ## 验证
 
-按修改范围执行检查：Go 逻辑使用 `go test ./...`、必要时 `go test -race ./...` 和 `go vet ./...`；客户端配置使用 Python 单元测试；Pi 恢复使用 `node scripts/pi/codearts-compaction.test.mjs`。纯文档修改检查命令、链接和说明与当前实现是否一致。
+按修改范围执行检查：Go 命令在 `backend/` 下执行：Go 逻辑使用 `go test ./...`、必要时 `go test -race ./...` 和 `go vet ./...`；客户端配置使用 Python 单元测试；Pi 恢复使用 `node scripts/pi/codearts-compaction.test.mjs`。纯文档修改检查命令、链接和说明与当前实现是否一致。
 
 完整验收流程见 [质量验收方案](docs/acceptance/QUALITY-PLAN.md)。提交不得包含运行账号、访问凭据、密钥、私有会话或原始测试数据。

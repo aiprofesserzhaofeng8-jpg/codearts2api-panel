@@ -30,7 +30,8 @@ import tempfile
 BS = chr(92)  # backslash
 QUOTE = chr(34)  # double quote
 
-WEB_DIR = os.path.join("internal", "server", "web")
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WEB_DIR = os.path.join(PROJECT_DIR, "backend", "internal", "server", "web")
 
 
 def strip_literals_and_comments(s: str) -> str:

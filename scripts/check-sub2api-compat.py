@@ -11,7 +11,7 @@ import tempfile
 import urllib.request
 
 root = Path(__file__).resolve().parents[1]
-source = root / 'internal/responsescompat'
+source = root / 'backend/internal/responsescompat'
 manifest = json.loads((source / 'upstream.json').read_text())
 go = os.environ.get('CODEARTS_GO_BIN', 'go')
 cache = os.environ.get('SUB2API_REFERENCE_DIR')

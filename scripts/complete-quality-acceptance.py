@@ -91,7 +91,7 @@ soak_done=(run/'soak.json').exists() and json.loads((run/'soak.json').read_text(
 if not active and not soak_done:
  subprocess.run(['systemd-run','--user','--unit='+unit,'--property=WorkingDirectory='+str(ROOT),'--property=RuntimeMaxSec=90000','--property=Restart=on-failure',sys.executable,str(ROOT/'scripts/quality-soak.py'),str(soak_config)],check=True)
 report['live_phase_finished_at']=utc();report['observer_unit']=unit;save_json(run/'results.json',report)
-metadata=json.loads((run/'environment.json').read_text());files=[ROOT/f for f in subprocess.check_output(['rg','--files'],cwd=ROOT,text=True).splitlines() if f.endswith(('.go','.js','.css','.html','.py','.cjs','.mjs')) or f in ('go.mod','go.sum')];metadata['final_validation_source_sha256']=hashlib.sha256(b''.join(str(f.relative_to(ROOT)).encode()+b'\0'+f.read_bytes() for f in sorted(files))).hexdigest();metadata['finalized_at']=utc();metadata['observer_unit']=unit
+metadata=json.loads((run/'environment.json').read_text());files=[ROOT/f for f in subprocess.check_output(['rg','--files'],cwd=ROOT,text=True).splitlines() if f.endswith(('.go','.js','.css','.html','.py','.cjs','.mjs')) or f in ('backend/go.mod','backend/go.sum')];metadata['final_validation_source_sha256']=hashlib.sha256(b''.join(str(f.relative_to(ROOT)).encode()+b'\0'+f.read_bytes() for f in sorted(files))).hexdigest();metadata['finalized_at']=utc();metadata['observer_unit']=unit
 for cli in ('pi','codex','claude'):
  pr=subprocess.run([cli,'--version'],capture_output=True,text=True,timeout=15);metadata[cli+'_version']=pr.stdout.strip()[:150]
 save_json(run/'environment.json',metadata);subprocess.run([sys.executable,'scripts/render-quality-report.py',str(run)],cwd=ROOT,check=True)

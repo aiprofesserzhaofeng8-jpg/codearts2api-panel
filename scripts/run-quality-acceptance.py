@@ -11,12 +11,12 @@ def update(ids,status,detail,evidence):
  for ident in ids.split():report['cases'][ident]={'status':status,'detail':detail,'evidence':evidence}
  save_json(run/'results.json',report);print(ids+' '+status+': '+detail,flush=True)
 def command(name,argv,timeout=240,env=None):
- start=time.monotonic();proc=subprocess.run(argv,cwd=ROOT,env=env,capture_output=True,text=True,timeout=timeout)
+ start=time.monotonic();proc=subprocess.run(argv,cwd=ROOT/'backend' if argv[0]==GO else ROOT,env=env,capture_output=True,text=True,timeout=timeout)
  (run/name).write_text(scrub(proc.stdout+proc.stderr));return proc.returncode==0,proc,time.monotonic()-start
 GO=os.environ.get('CODEARTS_GO_BIN') or shutil.which('go');
 if not GO:raise SystemExit('Go toolchain not found; install the version specified in go.mod')
 env={**os.environ,'CODEARTS_GO_BIN':GO,'PLAYWRIGHT_CHANNEL':'chrome','CODEARTS_TEST_BASE':'http://127.0.0.1:10088'}
-files=[ROOT/f for f in subprocess.check_output(['rg','--files'],cwd=ROOT,text=True).splitlines() if f.endswith(('.go','.js','.css','.html','.py','.cjs')) or f in ('go.mod','go.sum')]
+files=[ROOT/f for f in subprocess.check_output(['rg','--files'],cwd=ROOT,text=True).splitlines() if f.endswith(('.go','.js','.css','.html','.py','.cjs')) or f in ('backend/go.mod','backend/go.sum')]
 fingerprint=hashlib.sha256(b''.join(str(f.relative_to(ROOT)).encode()+b'\0'+f.read_bytes() for f in sorted(files))).hexdigest()
 metadata={'started_at':utc(),'platform':sys.platform,'source_sha256':fingerprint,'binary_sha256':hashlib.sha256((ROOT/'bin/codearts2api-panel').read_bytes()).hexdigest(),'git_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'git_dirty':True,'go':subprocess.check_output([GO,'version'],cwd=ROOT,text=True).strip(),'node':subprocess.check_output(['node','--version'],text=True).strip(),'private_directory':str(private)}
 save_json(run/'environment.json',metadata);private_json(private/'run.json',{'run_dir':str(run),'private':str(private)})
@@ -36,7 +36,7 @@ try:
  if perf:save_json(run/'performance.json',perf)
  update('P01 P02','PASS' if ok and perf and not perf['failures'] else 'FAIL',f'受控上游 100 请求/2并发；P95 {perf["p95_ms"]:.1f}ms；堆增长 {perf["heap_growth_bytes"]}B；剩余租约 {perf["remaining_leases"]}' if perf else '缺少性能样本','performance.json')
  ok,_,_=command('client-config-tests.log',[sys.executable,'-m','unittest','discover','-s','scripts','-p','test_connect_client.py'],60,env);update('C01','PASS' if ok else 'FAIL','客户端参数生成和密钥隔离测试','client-config-tests.log')
- vet,_,_=command('go-vet.log',[GO,'vet','./...'],180,env);build,_,_=command('build.log',[GO,'build','-trimpath','-ldflags','-s -w -X main.version=0.1.0-panel','-o',str(private/'build-check'),'.'],180,env);compat,_,_=command('sub2api.log',[sys.executable,'scripts/check-sub2api-compat.py'],240,env)
+ vet,_,_=command('go-vet.log',[GO,'vet','./...'],180,env);build,_,_=command('build.log',[GO,'build','-trimpath','-ldflags','-s -w -X main.version=0.1.0-panel','-o',str(private/'build-check'),'./cmd/panel'],180,env);compat,_,_=command('sub2api.log',[sys.executable,'scripts/check-sub2api-compat.py'],240,env)
  update('M01','PASS' if vet and build and compat else 'FAIL',f'vet={vet}，构建={build}，固定版上游兼容回归={compat}','sub2api.log')
  scanner='/tmp/codearts-security-tools/govulncheck';scan,_,_=command('govulncheck.log',[scanner,'-mode=binary','bin/codearts2api-panel'],120,env);update('S03','PASS' if scan else 'FAIL','当前二进制已知漏洞扫描；二进制 SHA256 见 environment.json','govulncheck.log')
  state,password=current_access();secrets=[password]+[k['key'] for k in state['keys']]

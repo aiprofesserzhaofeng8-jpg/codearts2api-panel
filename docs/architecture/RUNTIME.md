@@ -32,7 +32,7 @@
 
 ## 原子准入与锁
 
-现有 [Store 选号](../../internal/store/pool.go) 已将权限复核、选择实际型号与增加 in-flight 放在同一把锁下。这是迁移约束。
+现有 [Store 选号](../../backend/internal/store/pool.go) 已将权限复核、选择实际型号与增加 in-flight 放在同一把锁下。这是迁移约束。
 
 目标由一个 `gateway.AdmissionCoordinator` 持有运行快照和并发状态。`scheduler.Select` 只基于传入候选和运行视图计算，不自己维护第二套计数器。配置发布、账号暂停/删除、密钥停用与新尝试准入使用同一协调边界。
 

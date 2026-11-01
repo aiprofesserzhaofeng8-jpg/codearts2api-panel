@@ -1,5 +1,7 @@
 # CodeArts2API 逆向勘察报告
 
+> 本报告保留勘察时的结构和证据。当前工程目录及命令见 [项目 README](../README.md) 与 [结构设计](architecture/README.md)。
+
 > 目标：把本机 **CodeArts Agent**（华为云码道 / CodeArts Doer for Coding）桌面端的
 > 上游模型服务，复刻成一个 OpenAI 兼容网关。
 >

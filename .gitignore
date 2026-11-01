@@ -2,6 +2,8 @@
 /codearts2api
 /codearts2api.exe
 /bin/
+/backend/panel
+/backend/probe
 /data/
 /.env
 *.access.json

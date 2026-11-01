@@ -75,7 +75,7 @@ trae/cn/<config_name>
 
 已使用一个真实 Trae 账号验证额度查询：上游使用 `usage_summary` 汇总，包含不带积分字段的功能权益包时仍可正确读取总额及已用值。此结果只证明额度接口；真实模型生成、完整授权流程和过期续期仍需分别验收，不将模拟测试标为完整真实上游验收通过。
 
-来源与许可证见 [原生适配来源](../internal/trae/UPSTREAM.md)。
+来源与许可证见 [原生适配来源](../backend/internal/trae/UPSTREAM.md)。
 
 2026-10-29 实测每日签到：账号状态为 `enable=true, checked_in=false, credits=100`，领取返回业务码 `9074`，复查仍未签到，余额未增加。此结果确认请求链路及失败处理，不代表奖励已到账。
 

@@ -40,8 +40,8 @@ P1 不是声称发生了线上事故，而是建议优先修复或补证。结�
 
 **两个已复现问题**
 
-1. 用本地模拟上游返回 HTTP 200，正文分别为 `not json`、`{"choices":[]}`、`{"error":{"type":"server_error","message":"fixture failure"}}`。三个请求的客户端状态及日志状态均为 200，failed_requests 不增加。定位：[chat.go](../../internal/server/chat.go#L227)。这不能证明历史 462 次成功中存在这些情况，但说明成功率统计目前无法排除它们。
-2. 构造 enabled=true、status=ok、paused=true 的账号。实际 AcquireAccountForModel 无法取到账号，但 `codearts2api_accounts_ready` 返回 1。定位：[metrics.go](../../internal/server/metrics.go#L22) 与 [pool.go](../../internal/store/pool.go#L115)。
+1. 用本地模拟上游返回 HTTP 200，正文分别为 `not json`、`{"choices":[]}`、`{"error":{"type":"server_error","message":"fixture failure"}}`。三个请求的客户端状态及日志状态均为 200，failed_requests 不增加。定位：[chat.go](../../backend/internal/server/chat.go#L227)。这不能证明历史 462 次成功中存在这些情况，但说明成功率统计目前无法排除它们。
+2. 构造 enabled=true、status=ok、paused=true 的账号。实际 AcquireAccountForModel 无法取到账号，但 `codearts2api_accounts_ready` 返回 1。定位：[metrics.go](../../backend/internal/server/metrics.go#L22) 与 [pool.go](../../backend/internal/store/pool.go#L115)。
 
 复现使用 Go overlay 添加临时测试，没有改动业务源码。完整输出见 [reproductions.log](evidence/review-2026-10-29/reproductions.log)，测试源见 [reproduction_test.go.txt](evidence/review-2026-10-29/reproduction_test.go.txt)。复现测试显示 PASS，含义是成功确认当前缺陷行为，不代表业务行为正确。
 

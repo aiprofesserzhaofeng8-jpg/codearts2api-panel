@@ -17,12 +17,12 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: backend/go.mod
           # 本项目零第三方依赖（ADR 0001），因此没有 go.sum。
           # setup-go 默认拿 go.sum 算缓存 key，找不到就整段缓存失效并告警；
           # 指向 go.mod 后缓存仍能命中（主要收益是 GOCACHE 里的标准库编译产物）。
           cache: true
-          cache-dependency-path: go.mod
+          cache-dependency-path: backend/go.mod
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -31,6 +31,7 @@ jobs:
           node-version: "24"
 
       - name: gofmt
+        working-directory: backend
         run: |
           out="$(gofmt -l .)"
           if [ -n "$out" ]; then
@@ -38,12 +39,15 @@ jobs:
           fi
 
       - name: go vet
+        working-directory: backend
         run: go vet ./...
 
       - name: go test
+        working-directory: backend
         run: go test ./...
 
       - name: go test -race
+        working-directory: backend
         run: go test -race ./...
 
       - name: 控制台 JS/CSS 检查
@@ -56,7 +60,8 @@ jobs:
         run: node scripts/pi/codearts-compaction.test.mjs
 
       - name: 构建
-        run: go build -trimpath -ldflags "-s -w -X main.version=ci" -o /tmp/codearts2api .
+        working-directory: backend
+        run: go build -trimpath -ldflags "-s -w -X main.version=ci" -o /tmp/codearts2api ./cmd/panel
 
   build-windows:
     name: build + test (windows)
@@ -65,12 +70,14 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: backend/go.mod
           cache: true
-          cache-dependency-path: go.mod
+          cache-dependency-path: backend/go.mod
       # Windows 专属代码（DPAPI / 定长回写）只在 build tag 为 windows 时编译，
       # 因此必须单独跑一遍，避免 linux 任务漏掉编译错误。
       - name: build
+        working-directory: backend
         run: go build ./...
       - name: test
+        working-directory: backend
         run: go test ./...

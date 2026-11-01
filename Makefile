@@ -6,6 +6,7 @@
 #   make docker    # 构建镜像
 
 GO      ?= go
+PYTHON  ?= python
 BIN     ?= codearts2api
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
@@ -15,32 +16,32 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 all: check build
 
 build:
-	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN) .
+	cd backend && $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$(abspath $(BIN))" ./cmd/panel
 
 test:
-	$(GO) test ./...
+	cd backend && $(GO) test ./...
 
 vet:
-	$(GO) vet ./...
+	cd backend && $(GO) vet ./...
 
 # 跨平台预检：在 Windows 上也能抓到「只在非 Windows 编译的文件」（如
 # session_other.go）里的错误，以及「只在 Windows 定义、却被通用测试引用」的
 # 符号 —— CI 的 linux job 就是挂在这类问题上。
 vet-linux:
-	GOOS=linux GOARCH=amd64 $(GO) vet ./...
+	cd backend && GOOS=linux GOARCH=amd64 $(GO) vet ./...
 
 fmt:
-	$(GO) fmt ./...
+	cd backend && $(GO) fmt ./...
 
 # 可选：需要先安装 golangci-lint（CI 不强制依赖它）。
 lint:
-	golangci-lint run ./...
+	cd backend && golangci-lint run ./...
 
 race:
-	$(GO) test -race ./...
+	cd backend && $(GO) test -race ./...
 
 console:
-	python tools/check_html_js.py
+	$(PYTHON) tools/check_html_js.py
 
 check: vet vet-linux test console
 

@@ -1,5 +1,7 @@
 # CodeArts2API
 
+> 本文保留上游项目的历史说明与目录。当前工程的 Go 命令在 `backend/` 下执行，服务入口为 `./cmd/panel`；现行用法见 [项目 README](../README.md)。
+
 把本机 **CodeArts Agent**（华为云码道 / CodeArts Doer for Coding）桌面端的
 上游模型服务，逆向复刻成一个 **OpenAI 兼容的 Go 网关**。
 

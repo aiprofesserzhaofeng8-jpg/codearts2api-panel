@@ -9,7 +9,7 @@ Access CodeArts, WorkBuddy, and Trae CN/SOLO accounts through Chat Completions, 
 [中文](README.md) · **English**
 
 [![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](go.mod)
+[![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](backend/go.mod)
 
 [Deployment](#deployment) · [Client setup](#client-setup) · [Documentation](#documentation) · [Commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/) · [Contributors](#contributors-and-acknowledgments)
 
@@ -217,10 +217,14 @@ The detailed documents and management interface are currently primarily in Chine
 
 ## Development and contributions
 
+The Go module lives in `backend/`, with service and diagnostic commands in `backend/cmd/panel` and `backend/cmd/probe`. The current UI remains embedded; a separate frontend build is a later migration stage. Build, startup, and Docker entry points remain at the repository root. See [development conventions](AGENTS.md), [architecture](docs/architecture/README.md), and [deployment examples](deploy/README.md).
+
 ```bash
+cd backend
 go test ./...
 go test -race ./...
 go vet ./...
+cd ..
 python3 -m unittest discover -s scripts -p test_connect_client.py
 node scripts/pi/codearts-compaction.test.mjs
 ```
@@ -258,6 +262,6 @@ AI attribution records the use of OpenAI tools for assisted development. It does
 
 ## License
 
-The base project uses [Apache-2.0](LICENSE). WorkBuddy-related design references retain their [MIT notices](LICENSE.workbuddy). Reused code under `internal/responsescompat` uses [LGPL-3.0](internal/responsescompat/LICENSE), and the bundled Ubuntu AppArmor profile retains its GPL-2.0-or-later notices.
+The base project uses [Apache-2.0](LICENSE). WorkBuddy-related design references retain their [MIT notices](LICENSE.workbuddy). Reused code under `backend/internal/responsescompat` uses [LGPL-3.0](backend/internal/responsescompat/LICENSE), and the bundled Ubuntu AppArmor profile retains its GPL-2.0-or-later notices.
 
 See [NOTICE](NOTICE) for component origins, modification notices, and license boundaries. This is an independent community project.

@@ -9,7 +9,7 @@
 **中文** · [English](README_EN.md)
 
 [![CI](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](go.mod)
+[![Go](https://img.shields.io/badge/Go-1.27.3%2B-00ADD8?logo=go)](backend/go.mod)
 
 [快速部署](#部署) · [客户端接入](#客户端接入) · [使用文档](#文档) · [提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/) · [贡献者](#贡献者与致谢)
 
@@ -213,16 +213,20 @@ python3 scripts/connect-client.py claude --url http://127.0.0.1:10087
 | [客户端接入](docs/CLIENTS.md) | Pi、Codex、Claude Code 配置与限制 |
 | [协议兼容](docs/RESPONSES.md) | Responses 转换、工具和推理历史 |
 | [Sub2API 设计参考](docs/SUB2API-ALIGNMENT.md) | 已实现能力及未覆盖部分 |
-| [项目结构设计 v1](docs/architecture/README.md) | 目标目录、模块边界、请求与状态、前端部署和迁移验收；当前为设计稿 |
+| [项目结构设计 v1](docs/architecture/README.md) | 当前迁移进度、目标目录、模块边界与验收 |
 | [质量验收](docs/acceptance/QUALITY-PLAN.md) | 验收方法、门槛及复跑步骤 |
 | [安全策略](SECURITY.md) | 漏洞反馈、部署边界与数据保护 |
 
 ## 开发与贡献
 
+Go 工程位于 `backend/`，服务入口为 `backend/cmd/panel`，诊断入口为 `backend/cmd/probe`。当前页面继续内嵌于后端；独立前端工程将在后续阶段迁移。根目录保留构建、启动、Docker 与部署入口，详见 [开发约定](AGENTS.md) 和 [部署示例](deploy/README.md)。
+
 ```bash
+cd backend
 go test ./...
 go test -race ./...
 go vet ./...
+cd ..
 python3 -m unittest discover -s scripts -p test_connect_client.py
 node scripts/pi/codearts-compaction.test.mjs
 ```
@@ -260,6 +264,6 @@ AI 署名记录使用 OpenAI 工具进行辅助开发的事实，不表示 OpenA
 
 ## 许可证
 
-基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，`internal/responsescompat` 中的复用代码采用 [LGPL-3.0](internal/responsescompat/LICENSE)，附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
+基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，`backend/internal/responsescompat` 中的复用代码采用 [LGPL-3.0](backend/internal/responsescompat/LICENSE)，附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
 
 各组件的来源、修改声明和许可证边界见 [NOTICE](NOTICE)。本项目为独立社区项目。

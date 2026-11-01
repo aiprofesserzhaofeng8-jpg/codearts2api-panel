@@ -62,6 +62,7 @@ Pi 若使用此接口，provider 的 api 设为 `openai-responses`；原有 `ope
 ## 验证
 
 ```bash
+cd backend
 go test -race ./...
 go vet ./...
 python3 scripts/check-sub2api-compat.py

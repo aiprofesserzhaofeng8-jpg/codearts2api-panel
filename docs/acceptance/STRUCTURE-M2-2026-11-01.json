@@ -1,0 +1,249 @@
+{
+  "date": "2026-11-01",
+  "stage": "M2",
+  "baseline_commit": "74a2a9a",
+  "baseline_tag": "baseline/pre-structure-20261101",
+  "source_equivalence": {
+    "compared_files": 274,
+    "differing_files": [],
+    "business_and_embedded_assets_identical": true
+  },
+  "checks": {
+    "make_check": true,
+    "fresh_race": true,
+    "race_test_packages": 13,
+    "linux_build": true,
+    "windows_cross_build": true,
+    "windows_vet": true,
+    "windows_native_execution": false,
+    "docker_build": true,
+    "docker_compose_config": true,
+    "systemd_example_verify": true,
+    "sub2api_pinned_tests": true,
+    "python_launcher_tests": 9,
+    "pi_compaction": true,
+    "gofmt": true,
+    "new_broken_document_links": 0
+  },
+  "runtime_smoke": [
+    {
+      "case": "binary",
+      "passed": true,
+      "resources_identical": true,
+      "login": true,
+      "restart_preserves_keys": true,
+      "different_cwd": true
+    },
+    {
+      "case": "container",
+      "passed": true,
+      "resources_identical": true,
+      "login": true,
+      "restart": true,
+      "uid": "10001"
+    }
+  ],
+  "browser_smoke": [
+    {
+      "case": "groups-smoke",
+      "passed": true
+    },
+    {
+      "case": "account-create-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-multi-smoke",
+      "passed": true
+    }
+  ],
+  "startup_wrapper": {
+    "passed": true,
+    "called_from": "/tmp",
+    "process_cwd": "/home/white/codearts2api-panel",
+    "explicit_state_path": true,
+    "private_bootstrap_file": true
+  },
+  "performance": {
+    "controlled_capacity": {
+      "before": [
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 585384,
+          "p95_ms": 22.486,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 201664,
+          "p95_ms": 22.545,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 160352,
+          "p95_ms": 22.4,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        }
+      ],
+      "after": [
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 538464,
+          "p95_ms": 22.591,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 156168,
+          "p95_ms": 22.434,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 157352,
+          "p95_ms": 22.184,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        }
+      ],
+      "before_median_p95_ms": 22.486,
+      "after_median_p95_ms": 22.434,
+      "change_percent": -0.23
+    },
+    "response_recheck": {
+      "rows": [
+        {
+          "round": 0,
+          "version": "before",
+          "ns_op": 2937.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 0,
+          "version": "after",
+          "ns_op": 3267.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 1,
+          "version": "before",
+          "ns_op": 3158.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 1,
+          "version": "after",
+          "ns_op": 2914.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 2,
+          "version": "before",
+          "ns_op": 3209.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 2,
+          "version": "after",
+          "ns_op": 3138.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 3,
+          "version": "before",
+          "ns_op": 2996.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 3,
+          "version": "after",
+          "ns_op": 2960.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 4,
+          "version": "before",
+          "ns_op": 3103.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 4,
+          "version": "after",
+          "ns_op": 3216.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        }
+      ],
+      "before_median_ns": 3103.0,
+      "after_median_ns": 3138.0,
+      "change_percent": 1.13
+    }
+  },
+  "deployment": {
+    "service": "codearts2api-panel.service",
+    "pid": 2195567,
+    "version": "codearts2api 0.3.0-structure-m2",
+    "binary_sha256": "7ceb187a8896d111054da1352a4f33052c9337a47762498bd4042d45dcd712d8",
+    "expected_binary_sha256": "7ceb187a8896d111054da1352a4f33052c9337a47762498bd4042d45dcd712d8",
+    "cwd": "/home/white/codearts2api-panel",
+    "health": {
+      "accounts": 13,
+      "models": 8,
+      "ready": 13,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "preserved": {
+      "version": true,
+      "accounts": true,
+      "groups": true,
+      "keys": true,
+      "settings": true
+    },
+    "state_bytes_unchanged": true,
+    "scope": "local 127.0.0.1:10088",
+    "health_after_catalog_sync": {
+      "accounts": 13,
+      "models": 79,
+      "ready": 13,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  },
+  "real_inference_requests_this_stage": 0,
+  "frontend_migration": "not_started",
+  "state_schema": 6
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=CodeArts2API Panel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/codearts2api-panel
+ExecStart=%h/codearts2api-panel/start.sh -host 127.0.0.1 -port 10087
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+UMask=0077
+
+[Install]
+WantedBy=default.target

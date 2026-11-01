@@ -37,7 +37,7 @@ CPU：Intel i5-13400F；Linux amd64；Go 1.27.3。使用以 ASCII 文本为主�
 
 分配量是 B/op，不是进程峰值内存或泄漏。大请求清洗会增加首字前处理时间；并发可能放大 CPU、分配与 GC 压力，但本次没有证明它已造成线上秒级卡顿。固定 CPU、序列化内容和负载限制了数据外推范围。
 
-另外使用阻塞上游结束事件的本地测试验证：普通 `/v1/chat/completions` 流式请求在上游尚未完成时已收到 FIRST 分片，单次测试耗时约 0.892 ms。这个值不是模型首 Token 时间或延迟百分位，只证明该路径没有等待整段答案。摘要路径见 [summary.go](../../internal/server/summary.go#L28)，它主动缓存完整摘要；摘要生成及重试等待不能归因于 JSON 校验。
+另外使用阻塞上游结束事件的本地测试验证：普通 `/v1/chat/completions` 流式请求在上游尚未完成时已收到 FIRST 分片，单次测试耗时约 0.892 ms。这个值不是模型首 Token 时间或延迟百分位，只证明该路径没有等待整段答案。摘要路径见 [summary.go](../../backend/internal/server/summary.go#L28)，它主动缓存完整摘要；摘要生成及重试等待不能归因于 JSON 校验。
 
 **已复现的数据变更**
 
@@ -45,7 +45,7 @@ CPU：Intel i5-13400F；Linux amd64；Go 1.27.3。使用以 ASCII 文本为主�
 2. 三个平台共同使用的清洗规则，会把历史工具参数字符串 `cc_version=42; keep me 11128` 中的 `cc_version=42;` 删除。WorkBuddy 还会改写后面的数字字符串。即便规则原本针对客户端元数据，也无法仅凭这个文本片段判断它是否是用户需要保留的代码/内容。这里改变的是发往上游的上下文，没有执行任何真实工具或写入用户文件。
 3. `AggregateSSE` 接收合法的 `delta.refusal` 与正常 stop 事件时，最终结果中没有 refusal，而是空的 content。该聚合器用于流转非流的若干路径；这证明该字段在该路径丢失，不表示所有协议或普通透传路径都丢失同一字段。
 
-定位：[清洗规则](../../internal/requestpolicy/sanitize.go#L85)、[清洗工具参数](../../internal/requestpolicy/sanitize.go#L160)、[聚合器固定字段](../../internal/codearts/sse.go#L41)。完整复现输出见 [reproductions.log](evidence/sub2api-review-2026-10-29/reproductions.log)。
+定位：[清洗规则](../../backend/internal/requestpolicy/sanitize.go#L85)、[清洗工具参数](../../backend/internal/requestpolicy/sanitize.go#L160)、[聚合器固定字段](../../backend/internal/codearts/sse.go#L41)。完整复现输出见 [reproductions.log](evidence/sub2api-review-2026-10-29/reproductions.log)。
 
 评估原型对工具调用无文本、refusal、length 截断、未知字段、未知结束原因、大整数扩展字段分别验证了接受且原字节不变。这仅覆盖这些合成样本，不能把原型直接视为可投产的完整校验器。
 

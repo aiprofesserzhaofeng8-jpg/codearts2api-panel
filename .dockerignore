@@ -11,6 +11,11 @@ codearts-session.json.tmp
 codearts2api-data.json
 codearts2api-data.json.tmp
 data/
+bin/
+artifacts/
+.env
+*.access.json
+*.admin-recovery.json
 *.codearts2api.bak
 *.codearts2api.tmp
 

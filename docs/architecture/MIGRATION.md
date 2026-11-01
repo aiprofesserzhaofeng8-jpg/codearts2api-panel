@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M0 设计交付**。下面所有实现阶段均未执行。本轮只建立文档与索引；工作区已有统一模型实现不属于本轮结构迁移。
+状态：**M1/M2 已完成**。M3–M7 尚未实施。Go 工程已迁入 backend，业务与页面源码保持迁移前内容；结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -19,7 +19,7 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 
 ## M1 基线
 
-当前统一模型功能存在未提交源码、文档和测试。先审查这些已有变更，保留实际实现与证据，再形成基线；不能只给旧 HEAD 打标签就声称已固定当前工作区。
+已将统一模型功能的源码、文档和测试固定为 `74a2a9a`，标签为 `baseline/pre-structure-20261101`。检查、私有备份和副本启动恢复结果见 [M1 基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。后续基线也必须包含实际工作区功能，不能只给旧 HEAD 打标签。
 
 记录：Git 提交及工作区状态、编译版本、运行二进制 hash/cwd、监听入口、前端资源标识、数据 schema、账号/分组/密钥计数。服务和数据只记录必要元信息，不将真实凭据写入报告或 Git。
 
@@ -52,14 +52,14 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 
 | 范围 | 必须覆盖的行为 | 现有起点 |
 | --- | --- | --- |
-| 公开/实际型号 | 同名跨平台、三协议×流式/非流式、隐藏原型直调、非法来源、映射删除 | [映射服务测试](../../internal/server/group_model_mapping_test.go)、[调度测试](../../internal/store/model_mapping_test.go) |
-| 准入并发 | 原始/统一名共享租约、并发上限、黏性、冷却、删除/停用与放行交错 | [账号池测试](../../internal/store/pool_test.go)、[并发测试](../../internal/server/account_concurrency_test.go) |
-| 取消与重试 | 首包前/后取消、超时、释放、取消不冷却、已输出不重放、总预算 | [取消测试](../../internal/server/cancel_timeout_test.go)、[重试测试](../../internal/server/retry_test.go) |
-| 数据保真 | 工具闭环、大整数、未知字段、合法空文本/拒绝/推理内容、损坏 JSON 和截断 | [保真测试](../../internal/server/fidelity_test.go)、[协议精度](../../internal/protocol/anthropic_precision_test.go) |
-| 凭据 | 刷新竞争、重新登录/删除后旧结果、保存失败不恢复旧 token、平台/地区隔离 | [凭据事务](../../internal/store/account_transaction_test.go)、[Manager 代际](../../internal/codearts/manager_generation_test.go) |
-| 用量与预算 | 账本回放不重复、历史价格不变、重置边界、未知用量、并发结算与落盘失败 | [账本测试](../../internal/store/usage_journal_test.go)、[预算测试](../../internal/server/budget_test.go) |
+| 公开/实际型号 | 同名跨平台、三协议×流式/非流式、隐藏原型直调、非法来源、映射删除 | [映射服务测试](../../backend/internal/server/group_model_mapping_test.go)、[调度测试](../../backend/internal/store/model_mapping_test.go) |
+| 准入并发 | 原始/统一名共享租约、并发上限、黏性、冷却、删除/停用与放行交错 | [账号池测试](../../backend/internal/store/pool_test.go)、[并发测试](../../backend/internal/server/account_concurrency_test.go) |
+| 取消与重试 | 首包前/后取消、超时、释放、取消不冷却、已输出不重放、总预算 | [取消测试](../../backend/internal/server/cancel_timeout_test.go)、[重试测试](../../backend/internal/server/retry_test.go) |
+| 数据保真 | 工具闭环、大整数、未知字段、合法空文本/拒绝/推理内容、损坏 JSON 和截断 | [保真测试](../../backend/internal/server/fidelity_test.go)、[协议精度](../../backend/internal/protocol/anthropic_precision_test.go) |
+| 凭据 | 刷新竞争、重新登录/删除后旧结果、保存失败不恢复旧 token、平台/地区隔离 | [凭据事务](../../backend/internal/store/account_transaction_test.go)、[Manager 代际](../../backend/internal/codearts/manager_generation_test.go) |
+| 用量与预算 | 账本回放不重复、历史价格不变、重置边界、未知用量、并发结算与落盘失败 | [账本测试](../../backend/internal/store/usage_journal_test.go)、[预算测试](../../backend/internal/server/budget_test.go) |
 | 管理页面 | 登录失效、账号表单、分组映射编辑、默认值、任务反馈、移动端/明暗主题 | [分组浏览器脚本](../../scripts/groups-smoke.cjs)、[账号表单](../../scripts/account-create-smoke.cjs) |
-| 后台任务 | 同账号串行、多账号限制、未知操作恢复、真实对话走租约/计量 | [成长任务测试](../../internal/server/growth_test.go)、[多账号脚本](../../scripts/growth-multi-smoke.cjs) |
+| 后台任务 | 同账号串行、多账号限制、未知操作恢复、真实对话走租约/计量 | [成长任务测试](../../backend/internal/server/growth_test.go)、[多账号脚本](../../scripts/growth-multi-smoke.cjs) |
 | 部署 | 二进制/容器中的实际页面与 API、旧数据启动、路径及可回退性 | M2/M4 对新产物增加隔离冒烟 |
 
 表中链接指向当前工作区；移动源码的提交同时更新链接。现有测试是起点，表格不表示它们已经覆盖未来所有并发交错。新结构增加的事务边界需要对应故障注入用例。
@@ -86,4 +86,4 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 
 ## 第一批实施范围
 
-下一批从 M1 开始：审查当前未提交功能并固定基线，记录实际运行/数据入口，执行对应回归和性能基准，核实已有 ADR 的待补测试。完成后再独立进行 M2。第一批交付不以“建好了所有目标目录”为完成标准。
+第一批包含 M1 与 M2：先固定现有功能、运行/数据入口和性能基准，再整体迁移 Go 工程并验证产物。M2 通过后进入 M3，先梳理中立账号类型和依赖装配；前端独立工程在 M4 实施。交付以实际行为和证据为准。
