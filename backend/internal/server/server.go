@@ -42,8 +42,7 @@ type Server struct {
 	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	Search              *websearch.Client
-	growthRuntime       accounts.OperationLocks
-	growthExecution     growthExecutionState
+	Growth              *jobs.Growth
 	Providers           *provider.Registry
 	ProviderCredentials *accounts.ProviderCredentials
 	ProviderLogins      *accounts.ProviderLogins
@@ -65,6 +64,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	Growth              *jobs.Growth
 	Credits             *accounts.Credits
 	Rewards             *jobs.Rewards
 	Catalog             *catalog.Runtime
@@ -86,7 +86,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()

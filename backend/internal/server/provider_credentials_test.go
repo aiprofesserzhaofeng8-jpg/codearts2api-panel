@@ -29,7 +29,7 @@ func TestProviderCredentialsKeepRewardAndGrowthLocksIndependent(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("claim did not start")
 	}
-	releaseGrowth, err := s.growthRuntime.Acquire(t.Context(), "wb-cn")
+	releaseGrowth, err := s.Growth.Acquire(t.Context(), "wb-cn")
 	if err != nil {
 		t.Fatal(err)
 	}

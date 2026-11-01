@@ -306,11 +306,12 @@ func TestGrowthActionsPersistenceAndSharedPoolFailuresBeforeBillableCall(t *test
 					t.Fatal(err)
 				}
 			case "write_failure":
+				if _, err := s.Growth.Pending("wb-cn", provider.GrowthTask{Code: "Model_chat_GLM5.2"}); err != nil {
+					t.Fatal(err)
+				}
 				if err := os.Mkdir(s.growthExecutionPath(), 0700); err != nil {
 					t.Fatal(err)
 				}
-				s.growthExecution.loaded = true
-				s.growthExecution.marks = map[string]growthExecutionMark{}
 			case "pool_busy":
 				_, release1 := s.Store.AcquireAccountForModel("", "workbuddy/cn/glm-5.2", nil)
 				defer release1()
@@ -396,7 +397,7 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 	close(hold)
 	<-done
 	// Synchronize with the task lock to wait for accounting/cleanup after disconnect.
-	release, err := s.growthRuntime.Acquire(context.Background(), "wb-cn")
+	release, err := s.Growth.Acquire(context.Background(), "wb-cn")
 	if err != nil {
 		t.Fatal(err)
 	}

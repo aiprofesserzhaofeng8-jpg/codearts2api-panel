@@ -72,6 +72,8 @@
 
 存在未领的 `first_buddy` 时，显式查询可返回 `buddy={owned,agreed}`；状态读取失败附 `buddy_error`，不伪装成未领养。执行前仍重新核对。`agree_buddy` 为本次请求授权，不写入网关全局设置或其他平台账号。
 
+以下路径均相对于 `backend/`。成长任务业务和原生 WorkBuddy 协议分别维护，付费执行继续借用既有准入和账本。
+
 | 文件 | 职责 |
 | --- | --- |
 | `internal/provider/growth.go` | 可选能力、任务及奖励结构 |
@@ -82,11 +84,12 @@
 | `internal/workbuddy/growth_experts.go` / `growth_desktop_chat.go` | 专家资源核对、任务专用真实对话、完整流核验及使用报告 |
 | `internal/workbuddy/growth_activity.go` | 活动事件格式与维护请求头，仅发往 billing 域，不调用模型 |
 | `internal/workbuddy/growth_buddy.go` | WorkBuddy Buddy 档案、协议与领养协议调用及严格状态校验 |
-| `internal/server/growth.go` | 管理路由、账号校验、互斥、回查与余额刷新 |
-| `internal/server/growth_actions.go` | 接取/执行编排、并发名额、正常用量记录、进度核验与自动领奖 |
-| `internal/server/growth_buddy.go` | 领养前置编排、同意检查、活动上报、所有权确认和依赖放行 |
-| `internal/server/growth_activity.go` | 活跃差额执行、异步进度回读、取消与未知结果停止 |
-| `internal/server/growth_execution_state.go` | 独立执行检查点、重启防重、服务端双账号执行上限 |
+| `internal/server/growth.go` | 查询/领奖 HTTP、账号和平台守卫、期限、锁内重读与凭据入口 |
+| `internal/server/growth_actions.go` / `growth_operations.go` | 接取/执行 HTTP、业务投影和错误映射；保留原付费准入、租约及正常用量记录 |
+| `internal/jobs/growth.go` / `growth_actions.go` | 成长结果、账号锁、查询/接取/领奖确认与有界动作编排 |
+| `internal/jobs/growth_buddy.go` | 领养前置编排、同意检查、活动上报、所有权确认和依赖放行 |
+| `internal/jobs/growth_activity.go` | 活跃差额执行、异步进度回读、取消与未知结果停止 |
+| `internal/jobs/growth_state.go` | 原独立执行检查点、重启防重、服务端双账号执行上限，路径/格式不变 |
 | `internal/server/web/growth.js` | 弹窗状态、账号切换、两个账号的并行队列、同账号串行领取 |
 
 前端复用现有主题变量，新增 CSS 限定在成长弹窗，不替换账号、分组、用量或登录页面。没有在正常推理路由与 SSE 处理中加入任务轮询或文件读取；公共日志函数仅增加错误返回值供执行器停止后续消费。模型、专家和技能任务会占用账号正常并发；活动执行、主动查询和领奖会产生上游管理请求，不能保证任意负载下零影响。

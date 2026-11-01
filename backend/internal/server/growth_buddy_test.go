@@ -167,7 +167,7 @@ func TestGrowthBuddyActivityDoesNotUsePaidSwitchOrCheckpoint(t *testing.T) {
 					t.Fatal(err)
 				}
 			} else {
-				if err := s.growthExecution.checkpoint(s.growthExecutionPath(), "wb-cn", provider.GrowthTask{Code: "first_buddy", Target: 1}, false); err != nil {
+				if err := s.Growth.Checkpoint("wb-cn", provider.GrowthTask{Code: "first_buddy", Target: 1}, false); err != nil {
 					t.Fatal(err)
 				}
 			}

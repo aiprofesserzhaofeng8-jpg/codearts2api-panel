@@ -110,7 +110,16 @@ func attachRewards(s *Server) {
 	if s.Credits == nil {
 		s.Credits = &accounts.Credits{}
 	}
+	if s.Growth == nil {
+		s.Growth = jobs.NewGrowth(s.Store.Path()+".growth.json", s.Credits.Invalidate)
+	}
 	if s.Rewards == nil {
 		s.Rewards = jobs.NewRewards(s.Store, s.Credits.Invalidate, log.Printf)
 	}
+}
+
+// Compatibility helpers for the original integration fixtures.
+func (s *Server) growthExecutionPath() string { return s.Store.Path() + ".growth.json" }
+func growthTask(tasks []provider.GrowthTask, code string) *provider.GrowthTask {
+	return jobs.GrowthTask(tasks, code)
 }

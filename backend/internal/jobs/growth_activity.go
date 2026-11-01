@@ -1,4 +1,4 @@
-package server
+package jobs
 
 // Activity execution is isolated from billable model execution. Native progress
 // is re-read after every report; no unknown result starts another report.
@@ -21,7 +21,7 @@ func growthPause(ctx context.Context, duration time.Duration) error {
 	}
 }
 
-func (s *Server) waitGrowthScoring(ctx context.Context, growth provider.GrowthTasks, raw json.RawMessage, ready func([]provider.GrowthTask) bool) ([]provider.GrowthTask, error) {
+func (g *Growth) waitGrowthScoring(ctx context.Context, growth provider.GrowthTasks, raw json.RawMessage, ready func([]provider.GrowthTask) bool) ([]provider.GrowthTask, error) {
 	var tasks []provider.GrowthTask
 	for poll := 0; poll < 4; poll++ {
 		if poll > 0 {
@@ -38,7 +38,7 @@ func (s *Server) waitGrowthScoring(ctx context.Context, growth provider.GrowthTa
 	return tasks, nil
 }
 
-func (s *Server) runGrowthActivity(ctx context.Context, adapter provider.Adapter, raw json.RawMessage, task provider.GrowthTask, limit int64, reply growthReply) (growthReply, bool) {
+func (g *Growth) RunActivity(ctx context.Context, adapter provider.Adapter, raw json.RawMessage, task provider.GrowthTask, limit int64, reply GrowthResult) (GrowthResult, bool) {
 	activity, ok := adapter.(provider.GrowthActivityActions)
 	if !ok {
 		reply.Message = "当前上游不支持活跃上报"
@@ -73,7 +73,7 @@ func (s *Server) runGrowthActivity(ctx context.Context, adapter provider.Adapter
 				return reply, false
 			}
 			reply.Tasks = updated
-			next := growthTask(updated, task.Code)
+			next := GrowthTask(updated, task.Code)
 			if next == nil || next.Locked || next.Target != task.Target {
 				reply.Message = "活跃任务状态发生变化，已停止；请刷新核对"
 				return reply, false

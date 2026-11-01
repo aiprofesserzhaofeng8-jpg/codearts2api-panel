@@ -1,4 +1,4 @@
-package server
+package jobs
 
 // WorkBuddy onboarding is an explicit task action, independent from account
 // routing, daily check-in and other providers. Only verified ownership unlocks
@@ -13,17 +13,17 @@ import (
 	"codearts2api/internal/provider"
 )
 
-func (s *Server) prepareGrowthBuddy(ctx context.Context, a *accounts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, consent bool) (growthReply, bool, error) {
-	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks, State: "pending"}
-	ops, ok := adapter.(provider.GrowthBuddyOperations)
+func (g *Growth) prepareBuddy(ctx context.Context, a *accounts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, consent bool, ops GrowthOperations) (GrowthResult, bool, error) {
+	reply := GrowthResult{OK: true, ID: a.ID, Tasks: tasks, State: "pending"}
+	buddyOps, ok := adapter.(provider.GrowthBuddyOperations)
 	if !ok {
 		return reply, false, fmt.Errorf("当前上游不支持自动领养 Buddy")
 	}
-	first := growthTask(tasks, "first_buddy")
+	first := GrowthTask(tasks, "first_buddy")
 	if first == nil || first.Locked {
 		return reply, false, &provider.Error{Status: 409, Message: "领养前置任务不存在或尚未解锁"}
 	}
-	status, err := ops.GrowthBuddyStatus(ctx, raw)
+	status, err := buddyOps.GrowthBuddyStatus(ctx, raw)
 	if err != nil {
 		return reply, false, fmt.Errorf("Buddy 状态读取失败，未执行新的动作")
 	}
@@ -53,17 +53,17 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *accounts.Account, ad
 			return reply, false, err
 		}
 		if !status.Agreed {
-			if err = ops.AgreeGrowthBuddy(ctx, raw); err != nil {
+			if err = buddyOps.AgreeGrowthBuddy(ctx, raw); err != nil {
 				return reply, false, fmt.Errorf("领养协议提交未确认，请刷新核对：%w", err)
 			}
-			status, err = ops.GrowthBuddyStatus(ctx, raw)
+			status, err = buddyOps.GrowthBuddyStatus(ctx, raw)
 			if err != nil || !status.Owned && !status.Agreed {
 				return reply, false, fmt.Errorf("领养协议尚未确认，未提交领养；请刷新核对")
 			}
 			reply.Buddy = &status
 		}
 		if !status.Owned {
-			adoptErr := ops.AdoptGrowthBuddy(ctx, raw)
+			adoptErr := buddyOps.AdoptGrowthBuddy(ctx, raw)
 			// Even an errored POST can have reached upstream. Confirm ownership
 			// with bounded reads rather than replaying an adoption or model call.
 			for attempt := 0; attempt < 3; attempt++ {
@@ -74,7 +74,7 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *accounts.Account, ad
 					case <-time.After(500 * time.Millisecond):
 					}
 				}
-				status, err = ops.GrowthBuddyStatus(ctx, raw)
+				status, err = buddyOps.GrowthBuddyStatus(ctx, raw)
 				if err == nil {
 					reply.Buddy = &status
 					if status.Owned {
@@ -99,11 +99,11 @@ func (s *Server) prepareGrowthBuddy(ctx context.Context, a *accounts.Account, ad
 		return reply, true, nil
 	}
 	reply.Tasks = updated
-	first = growthTask(updated, "first_buddy")
+	first = GrowthTask(updated, "first_buddy")
 	if first != nil && first.Claimed {
 		reply.State, reply.Message = "already_claimed", "Buddy 领养及成长奖励均已确认"
 	} else if first != nil && first.Claimable {
-		claimed, claimErr := s.claimGrowthReward(ctx, a, adapter, raw, updated, "first_buddy")
+		claimed, claimErr := g.ClaimReward(ctx, a, adapter, raw, updated, "first_buddy", ops)
 		if claimErr == nil {
 			claimed.Buddy, claimed.CompletedReports = reply.Buddy, reply.CompletedReports
 			return claimed, true, nil

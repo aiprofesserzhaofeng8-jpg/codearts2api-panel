@@ -39,7 +39,7 @@ func TestGrowthActivityWaitsForNativeProgressAndStopsOnCancellation(t *testing.T
 			ctx, cancel := context.WithTimeout(context.Background(), budget)
 			defer cancel()
 			start := time.Now()
-			reply, ready := s.runGrowthActivity(ctx, client, s.Store.Account("wb-cn").Credentials,
+			reply, ready := s.Growth.RunActivity(ctx, client, s.Store.Account("wb-cn").Credentials,
 				provider.GrowthTask{Code: "chat_5", Current: 4, Target: 5}, 5, growthReply{})
 			if ready == cancelEarly || reply.CompletedReports != 1 || f.reports != 1 || f.chats != 0 || f.claims != 0 {
 				t.Fatal("unconfirmed activity repeated, claimed or billed", ready, reply, f.reports, f.chats, f.claims)

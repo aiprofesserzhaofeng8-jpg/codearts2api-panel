@@ -21,7 +21,7 @@
 | `usage` | 用量语义、价格版本、预算规则、结算记录 | `CheckBudget`、`Settle`、`Query` | 上游选号、普通调试日志替代账本 |
 | `upstream` | 最小平台接口、注册表、标准错误与可选能力 | `Stream`、`Refresh`、`Models`、可选 `Search` 等 | HTTP 管理入口、分组权限、全局重试 |
 | `storage` | 状态读写、迁移、原子提交、追加账本与回放 | 各业务定义的存储接口实现 | 持有另一套业务规则或选号算法 |
-| `jobs` | 每日领奖状态/锁、串行批量与单轮编排；目标含成长状态机/调度/恢复 | 已有 `Rewards.Claim`、`Status`、`Batch`、`RunDaily`；目标 `Start`、`Run`、`Reconcile` | 绕过网关执行计费对话 |
+| `jobs` | 每日领奖、成长编排/锁/执行槽及未知对话检查点；定时生命周期仍待迁移 | `Rewards.Claim/Status/Batch/RunDaily`、`Growth.List/Accept/Claim/BeginRun` | 绕过原准入/账本执行计费对话 |
 | `webui` | 嵌入产物、静态路由、CSP、SPA 路由回退 | `Handler` | 管理业务或开发服务器自动公开 |
 
 这里的函数名是设计约定，不是当前已存在的 Go API。
@@ -110,3 +110,5 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 M3.15 的 catalog Runtime 借用唯一 Registry，只持有原刷新状态及原三把独立锁。HTTP 投影平台操作和宽松解码，CodeArts 获取/原生 Probe 由 upstream 包装，其余测活继续走原 chatOnce；不创建平行目录、解析器或普通推理入口。目录解析/映射仍由 Registry、access、Store 的既有边界负责，不因目标表存在 `Resolve` 就重复实现。
 
 M3.16：积分数量快照归 accounts，不属于 API 美元费用/预算账本。CodeArts 仅保留 CreditInfo/CreditCategory 别名，原生解析不改；WorkBuddy/Trae 继续返回原 JSON 并按原顺序解析。jobs 每日领奖调用原适配器，不自行解析凭据，不写准入或推理健康状态。领奖、成长、凭据的三组账号锁仍独立；自动领取定时器、活动列表与邀请 HTTP 中剩余的原生调用待后续迁移。
+
+M3.17：成长编排与检查点归 jobs.Growth，app 装配固定的原 `.growth.json` 路径。HTTP 保留账号重读与凭据入口，付费回调只改变检查点所有者的单向委托；Store 准入和账本仍不拆分。原子检查点实现不是第二个账号 Store，也不能用于普通请求或重复提交未知动作。
