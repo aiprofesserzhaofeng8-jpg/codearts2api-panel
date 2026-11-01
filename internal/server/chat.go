@@ -108,6 +108,12 @@ func (s *Server) blockingChat(w http.ResponseWriter, r *http.Request, body []byt
 		if err != nil {
 			return err
 		}
+		if model.Source == "mapping" {
+			res, err = mappedResponseModel(res, model.ID)
+			if err != nil {
+				return err
+			}
+		}
 		raw = res
 		return nil
 	})
@@ -143,6 +149,13 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 
 	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
 		err := s.streamOnce(ctx, acct, model, body, func(chunk []byte) error {
+			if model.Source == "mapping" {
+				var err error
+				chunk, err = mappedResponseModel(chunk, model.ID)
+				if err != nil {
+					return err
+				}
+			}
 			if !started {
 				h := w.Header()
 				h.Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -199,6 +212,13 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 // 上游对个别模型（实测 glm-5.3）的非流式接口只回一个空 body 的 400，
 // 这里检测到该特征后自动改用「流式 + 本地聚合」，对客户端保持非流式语义。
 func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte) ([]byte, error) {
+	if mappedPlan(ctx) != nil {
+		var err error
+		model, body, err = s.prepareMappedAttempt(ctx, acct, model, body)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if acct.ProviderID() != provider.CodeArts {
 		var chunks [][]byte
 		size := 0
@@ -286,6 +306,13 @@ func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session,
 
 // streamOnce 用指定账号发一次流式请求，逐块回调。
 func (s *Server) streamOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
+	if mappedPlan(ctx) != nil {
+		var err error
+		model, body, err = s.prepareMappedAttempt(ctx, acct, model, body)
+		if err != nil {
+			return err
+		}
+	}
 	if acct.ProviderID() != provider.CodeArts {
 		return s.streamProvider(ctx, acct, model, body, onChunk)
 	}
@@ -385,19 +412,29 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 	defer cancel()
 	session, _ := ctx.Value(routingSessionKey{}).(string)
 	model, _ := ctx.Value(routingModelKey{}).(string)
+	plan := mappedPlan(ctx)
 	tried := make(map[string]bool)
 
 	var lastErr error
 	var used *codearts.Account
 	transientWaits := 0
 	for i := 0; i < attempts; i++ {
-		if err := s.checkRequestBudget(ctx, model); err != nil {
-			return used, err
+		if plan == nil {
+			if err := s.checkRequestBudget(ctx, model); err != nil {
+				return used, err
+			}
 		}
 		if ctx.Err() != nil {
 			return used, ctx.Err()
 		}
-		acct, release, accessErr := s.Store.AcquireAccountForKey(session, model, tried, groupKey(ctx))
+		var acct *codearts.Account
+		var release func()
+		var accessErr error
+		if plan == nil {
+			acct, release, accessErr = s.Store.AcquireAccountForKey(session, model, tried, groupKey(ctx))
+		} else {
+			acct, model, release, accessErr = s.Store.AcquireMappedAccount(session, plan.public, plan.ids, tried, groupKey(ctx))
+		}
 		if accessErr != nil {
 			return used, groupDenied()
 		}
@@ -405,11 +442,23 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 			break
 		}
 		used = acct
+		attemptCtx := ctx
+		if plan != nil {
+			attemptCtx = withRoutingModel(ctx, model)
+			if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
+				c.selectedModel = model
+			}
+		}
 		var repeated bool
 		err := func() error {
 			defer release()
+			if plan != nil {
+				if err := s.checkRequestBudget(attemptCtx, model); err != nil {
+					return err
+				}
+			}
 			var err error
-			err, repeated = s.runAccountAttempt(ctx, acct, model, fn, i+1 < attempts)
+			err, repeated = s.runAccountAttempt(attemptCtx, acct, model, fn, i+1 < attempts)
 			return err
 		}()
 		if repeated {
@@ -583,6 +632,10 @@ func (s *Server) record(ctx context.Context, key string, acct *codearts.Account,
 	}
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		e.FirstTokenMS = c.firstTokenMS
+		e.RequestedModel = c.requestedModel
+		if c.selectedModel != "" {
+			e.Model = c.selectedModel
+		}
 	}
 	if err := s.Store.Record(e, outLen, key); err != nil {
 		log.Printf("保存请求 %s 的用量账本失败: %v", e.RequestID, err)

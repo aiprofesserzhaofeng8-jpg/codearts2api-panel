@@ -118,6 +118,7 @@ type RequestAttempt struct {
 }
 
 type LogEntry struct {
+	RequestedModel  string           `json:"requested_model,omitempty"`
 	FirstTokenMS    *int64           `json:"first_token_ms,omitempty"`
 	ErrorKind       string           `json:"error_kind,omitempty"`
 	Provider        string           `json:"provider,omitempty"`
@@ -175,7 +176,7 @@ type Stats struct {
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 5
+const StateVersion = 6
 
 // State 是全部持久化状态。
 type State struct {
@@ -304,6 +305,8 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 5:
+			s.st.Version = 6
 		case 4:
 			// Older binaries must not discard the journal checkpoint.
 			s.st.Version = 5

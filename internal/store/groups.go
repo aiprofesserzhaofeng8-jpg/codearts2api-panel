@@ -6,17 +6,20 @@ import (
 	"strings"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 )
 
 type AccountGroup struct {
-	ID               string   `json:"id"`
-	Name             string   `json:"name"`
-	AccountIDs       []string `json:"account_ids"`
-	AllowlistEnabled bool     `json:"allowlist_enabled"`
-	ModelIDs         []string `json:"model_ids"`
+	ModelMappings    []ModelMapping `json:"model_mappings,omitempty"`
+	ID               string         `json:"id"`
+	Name             string         `json:"name"`
+	AccountIDs       []string       `json:"account_ids"`
+	AllowlistEnabled bool           `json:"allowlist_enabled"`
+	ModelIDs         []string       `json:"model_ids"`
 }
 
 type AccessScope struct {
+	ModelMappings    []ModelMapping
 	Restricted       bool
 	AccountIDs       map[string]bool
 	AllowlistEnabled bool
@@ -28,6 +31,7 @@ func (p AccessScope) AllowsModel(id string) bool {
 }
 
 func cloneGroup(g AccountGroup) AccountGroup {
+	g.ModelMappings = cloneMappings(g.ModelMappings)
 	g.AccountIDs = append([]string{}, g.AccountIDs...)
 	g.ModelIDs = append([]string{}, g.ModelIDs...)
 	return g
@@ -65,7 +69,7 @@ func (s *Store) accessScopeLocked(key string) (AccessScope, error) {
 			if g.ID != k.GroupID {
 				continue
 			}
-			p := AccessScope{Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
+			p := AccessScope{ModelMappings: cloneMappings(g.ModelMappings), Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
 			for _, id := range g.AccountIDs {
 				p.AccountIDs[id] = true
 			}
@@ -103,6 +107,9 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 	if g.Name == "" || len([]rune(g.Name)) > 80 {
 		return g, fmt.Errorf("分组名称须为 1–80 个字符")
 	}
+	if err := validateMappings(g.ModelMappings); err != nil {
+		return g, err
+	}
 	var err error
 	if g.AccountIDs, err = uniqueIDs(g.AccountIDs); err != nil {
 		return g, err
@@ -124,6 +131,34 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 		}
 		if !found {
 			return g, fmt.Errorf("所选账号不存在，请刷新列表")
+		}
+	}
+	if len(g.ModelMappings) > 0 {
+		if s.st.Settings.ForceModel != "" {
+			return g, fmt.Errorf("请先取消强制模型，再配置分组统一模型")
+		}
+		allowed := map[string]bool{}
+		for _, id := range g.ModelIDs {
+			allowed[id] = true
+		}
+		for _, m := range g.ModelMappings {
+			for _, id := range m.Sources {
+				if g.AllowlistEnabled && !allowed[id] {
+					return g, fmt.Errorf("统一模型来源未包含在分组型号白名单：%s", id)
+				}
+				p, scope, _ := provider.ParseModel(id)
+				found := false
+				for _, a := range s.st.Accounts {
+					for _, aid := range g.AccountIDs {
+						if a.ID == aid && a.ProviderID() == p && (p == provider.CodeArts || a.Scope == scope) {
+							found = true
+						}
+					}
+				}
+				if !found {
+					return g, fmt.Errorf("统一模型来源在当前分组没有对应平台账号：%s", id)
+				}
+			}
 		}
 	}
 	index := -1

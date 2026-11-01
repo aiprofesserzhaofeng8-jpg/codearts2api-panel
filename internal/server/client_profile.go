@@ -47,7 +47,7 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return
 	}
-	p, ok := s.modelPolicyFor(model)
+	p, ok := s.requestModelPolicy(r, model)
 	if !ok {
 		writeErr(w, 422, "该模型暂无客户端推荐参数，请在模型页配置并验证", "invalid_request_error")
 		return
@@ -119,7 +119,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 	}
 	caps := gatewayCapabilities()
 	caps["providers"] = s.providerDescriptors()
-	caps["model_routing"] = "裸模型名保持码道；workbuddy/cn/<model> 或 workbuddy/global/<model> 显式选择 WorkBuddy"
+	caps["model_routing"] = "配置统一模型的分组按公开名称跨平台选号；其他分组保持原有路由。完整平台型号可在分组权限内直接调用。"
 	writeJSON(w, 200, caps)
 }
 func unsupportedCapability(w http.ResponseWriter, r *http.Request) {

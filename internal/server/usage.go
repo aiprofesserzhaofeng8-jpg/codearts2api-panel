@@ -11,6 +11,9 @@ import (
 
 type usageContextKey struct{}
 type usageCapture struct {
+	requestedModel    string
+	selectedModel     string
+	mapping           *groupModelPlan
 	started           time.Time
 	stream            bool
 	firstTokenMS      *int64

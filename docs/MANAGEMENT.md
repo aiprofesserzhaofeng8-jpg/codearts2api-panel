@@ -19,11 +19,13 @@
 
 一个账号可属于多个组，每个密钥只能绑定一个组。不分组的密钥保持原有行为，可使用全部账号。分组为空时没有可调用模型；启用白名单但未选择模型时禁止所有模型。仍有密钥绑定的分组不能删除，需先修改密钥分组（包含停用密钥）。保存失败会回滚配置。
 
-绑定分组的 `/v1/models` 只展示该组已启用账号对应平台、地区的模型，并应用白名单。同一模型 ID 只出现一次；跨平台同名模型保留 `workbuddy/cn/...`、`trae/cn/...` 等来源前缀，避免混用计费渠道。「模型」页面将刷新、批量测活与筛选区分开，支持按组预览及模型名称 / ID 搜索，数量随筛选更新。「批量测活」仅提交当前列表中的真实模型，空列表不发起测活；管理端的测活账号仍由管理员接口选择。
+未配置统一模型时，绑定分组的 `/v1/models` 只展示该组已启用账号对应平台、地区的模型，并应用白名单。同一模型 ID 只出现一次；跨平台同名模型保留 `workbuddy/cn/...`、`trae/cn/...` 等来源前缀，避免混用计费渠道。「模型」页面将刷新、批量测活与筛选区分开，支持按组预览及模型名称 / ID 搜索，数量随筛选更新。「批量测活」仅提交当前列表中的真实模型，空列表不发起测活；管理端的测活账号仍由管理员接口选择。
 
 Chat Completions、Responses 和 Messages 均限制到组内账号；粘性会话、满载换号、失败重试不会借用组外账号。模型别名、强制模型及摘要备用模型按实际模型校验白名单。组内账号的并发、暂停、冷却和密钥预算仍分别生效。配置变更影响后续准入，不中断已发起的上游请求。
 
-管理接口：`GET/POST /admin/api/groups`；保存请求字段为 `id`（新建省略）、`name`、`account_ids`、`allowlist_enabled`、`model_ids`。`DELETE /admin/api/groups?id=GROUP_ID` 删除未绑定分组。`POST /admin/api/keys/group` 接受 `{"ref":"KEY_REF","group_id":"GROUP_ID"}`，空 `group_id` 解除绑定；`POST /admin/api/keys` 创建时支持 `group_id`。状态文件 schema v4 保留分组与绑定；降级需同时恢复升级前备份和旧程序。
+可在同一分组增加带版本号的统一名称，对应多个平台原型；此时客户端只展示统一名称，原型仍可在权限内直调。配置方式和调度边界见 [分组统一模型](GROUP-MODELS.md)。
+
+管理接口：`GET/POST /admin/api/groups`；保存请求字段为 `id`（新建省略）、`name`、`account_ids`、`allowlist_enabled`、`model_ids`、`model_mappings`（可选）。`DELETE /admin/api/groups?id=GROUP_ID` 删除未绑定分组。`POST /admin/api/keys/group` 接受 `{"ref":"KEY_REF","group_id":"GROUP_ID"}`，空 `group_id` 解除绑定；`POST /admin/api/keys` 创建时支持 `group_id`。状态文件 schema v6 保留分组、映射与绑定；升级及回退见 [分组统一模型](GROUP-MODELS.md#配置和维护)。
 
 ## 账号并发设置
 
@@ -39,7 +41,7 @@ Chat Completions、Responses 和 Messages 均限制到组内账号；粘性会�
 
 默认本机和远程都要求登录。首次密码在 `data/state.json.access.json` 的 `admin_password` 字段；该文件是初始值记录，之后不会跟随改密。旧部署原先没有密码时生成 `data/state.json.admin-recovery.json`。忘记密码可通过 `CODEARTS_ADMIN_PASSWORD='新密码' ./start.sh` 重设；运行服务需在其启动环境中配置后重启。
 
-状态文件当前为 schema v4，旧版本程序会拒绝读取，避免丢弃分组、预算等配置。降级需同时恢复升级前的状态备份和旧程序。
+状态文件当前为 schema v6，旧版本程序会拒绝读取，避免丢弃分组、映射、用量和预算等配置。回退必须处理状态兼容，并保留最新凭据，不能盲目覆盖已轮转的令牌。
 
 状态文件中的管理密码自动迁移为 PBKDF2-SHA256、600000 次迭代、16 字节随机盐。浏览器清理旧版保存的密码，改用 HttpOnly、SameSite=Strict Cookie；直连 HTTPS 时 Cookie 另带 Secure。远程部署应在 HTTPS 入口终止 TLS，或使用 SSH 隧道。不要通过公网明文 HTTP 登录。反代终止 TLS 时应用不会无条件信任客户端的 X-Forwarded-Proto；应由可信反代统一设置 Secure Cookie。
 

@@ -414,6 +414,14 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "请求体解析失败", "invalid_request_error")
 		return
 	}
+	if body.ForceModel != nil && *body.ForceModel != "" {
+		for _, g := range s.Store.Groups() {
+			if len(g.ModelMappings) > 0 {
+				writeErr(w, 400, "分组统一模型启用时不能设置强制模型", "invalid_request_error")
+				return
+			}
+		}
+	}
 	current := s.Store.Settings()
 	policies := map[string]store.ProviderSettings{}
 	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae} {

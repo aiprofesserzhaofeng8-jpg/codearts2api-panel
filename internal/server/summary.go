@@ -85,6 +85,9 @@ func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, mode
 			resetUsage(ctx)
 			if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 				c.model = target.ID
+				if c.mapping != nil {
+					c.selectedModel = target.ID
+				}
 			}
 		}
 		markSummary(ctx, attempt+1)

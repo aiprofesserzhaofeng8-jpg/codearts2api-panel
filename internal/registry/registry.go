@@ -268,3 +268,10 @@ func (r *Registry) ReplaceProvider(name, scope string, models []Model) {
 	r.models = out
 	r.updated = time.Now()
 }
+
+// ResolveRaw bypasses aliases and resolves a concrete provider ID.
+func (r *Registry) ResolveRaw(name string) (Model, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return lookup(r.models, strings.TrimPrefix(strings.TrimSpace(name), "codearts/"))
+}

@@ -29,7 +29,7 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 | --- | --- |
 | 多账号管理 | 浏览器分阶段授权、粘贴回调、预览后确认保存、导入与删除 |
 | 账号池调度 | 最少在途、轮询、顺序耗尽，支持粘性会话、手动设置并发、暂停与冷却 |
-| 分组路由 | 将账号加入分组，API Key 绑定分组，按组选择可用账号与模型 |
+| 分组路由 | API Key 绑定分组；支持带版本号的统一模型名称，将多个平台的对应型号加入同一账号池调度 |
 | 协议兼容 | Chat Completions、Responses、Anthropic Messages，支持流式输出和工具调用 |
 | 管理员登录 | 密码哈希、8 小时会话、退出及改密撤销、管理操作审计 |
 | API Key 管理 | 创建、停用、删除、按需显示和复制，以及请求数、Token、USD 预算 |
@@ -206,12 +206,14 @@ python3 scripts/connect-client.py claude --url http://127.0.0.1:10087
 | [面板与账号池](docs/PANEL.md) | 登录流程、账号调度、冷却和故障处理 |
 | [WorkBuddy 专用功能](docs/WORKBUDDY-FEATURES.md) | 联网搜索、系统提示词、出站指纹清洗与配置 |
 | [WorkBuddy 成长任务](docs/WORKBUDDY-GROWTH.md) | 集中入口、领养前置与依赖处理、批量接取/领奖、桌面/Web 活动、专家/技能执行与奖励核验 |
+| [分组统一模型](docs/GROUP-MODELS.md) | 版本化公开名称、多个平台来源、隐藏原型直调及调度边界 |
 | [各平台请求策略](docs/PROVIDER-FEATURES.md) | 独立提示词、清洗、搜索后端配置与维护边界 |
 | [管理与预算](docs/MANAGEMENT.md) | 管理会话、审计、凭据续期、密钥预算与恢复 |
 | [用量与价格](docs/USAGE.md) | Token 构成、USD 计价、日期查询和分页 |
 | [客户端接入](docs/CLIENTS.md) | Pi、Codex、Claude Code 配置与限制 |
 | [协议兼容](docs/RESPONSES.md) | Responses 转换、工具和推理历史 |
 | [Sub2API 设计参考](docs/SUB2API-ALIGNMENT.md) | 已实现能力及未覆盖部分 |
+| [项目结构设计 v1](docs/architecture/README.md) | 目标目录、模块边界、请求与状态、前端部署和迁移验收；当前为设计稿 |
 | [质量验收](docs/acceptance/QUALITY-PLAN.md) | 验收方法、门槛及复跑步骤 |
 | [安全策略](SECURITY.md) | 漏洞反馈、部署边界与数据保护 |
 

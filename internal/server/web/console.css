@@ -1314,5 +1314,12 @@ body.admin-locked .app { visibility: hidden; }
 .group-account-options .check{align-items:flex-start;font-size:12px;overflow-wrap:anywhere}
 #groupModels{width:100%;min-height:170px}
 #groupDialog{width:min(720px,calc(100vw - 32px))}
+.group-mapping-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}
+.group-mapping-head h3{margin:0;font-size:14px;font-weight:600}
+.group-mapping-row{border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0;background:var(--bg)}
+.group-mapping-name{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.group-mapping-name .field{flex:1;margin:0;min-width:0}
+.group-mapping-row select{width:100%;min-height:140px}
+.group-mapping-row .field{margin-bottom:0}
 @media(max-width:600px){.group-account-options{grid-template-columns:1fr}}
 @media(max-width:600px){.account-create-body{padding:18px}.account-create-steps{gap:10px;font-size:11px;margin-bottom:24px}.account-create-steps i{width:20px}.account-platform{flex-direction:column;font-size:12px;padding:13px 4px;gap:7px}.account-methods{grid-template-columns:1fr}.account-create-modal #manualAccountPanel .field-grid{grid-template-columns:1fr}.account-create-modal{max-height:94vh}}

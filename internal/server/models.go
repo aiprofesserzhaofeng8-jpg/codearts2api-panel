@@ -114,10 +114,12 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 	data := make([]map[string]any, 0, len(models))
 	for _, m := range models {
 		var recommendation map[string]any
-		if resolved, ok := s.Reg.Resolve(m.ID, settings.ModelAliases); ok {
-			if p, ok := s.modelPolicyFor(resolved); ok {
-				recommendation = profileFromPolicy(resolved.ID, p)
-			}
+		resolved := m
+		if m.Source != "mapping" {
+			resolved, _ = s.Reg.Resolve(m.ID, settings.ModelAliases)
+		}
+		if p, ok := s.requestModelPolicy(r, resolved); ok {
+			recommendation = profileFromPolicy(resolved.ID, p)
 		}
 		data = append(data, map[string]any{
 			"client_profile": recommendation,

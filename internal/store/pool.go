@@ -53,6 +53,7 @@ func (p PoolSettings) Validate() error {
 }
 
 type stickyBinding struct {
+	model   string
 	id      string
 	expires time.Time
 }
@@ -93,14 +94,61 @@ func (s *Store) AcquireAccountForModel(session, model string, exclude map[string
 }
 
 func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]bool, key string) (*codearts.Account, func(), error) {
+	a, _, release, err := s.acquireAccountForModels(session, []string{model}, exclude, key, "")
+	return a, release, err
+}
+
+// AcquireMappedAccount selects the concrete model and leases its account in the
+// same critical section. Current group membership and mappings are rechecked.
+func (s *Store) AcquireMappedAccount(session, public string, models []string, exclude map[string]bool, key string) (*codearts.Account, string, func(), error) {
+	return s.acquireAccountForModels(session, models, exclude, key, public)
+}
+func (s *Store) acquireAccountForModels(session string, models []string, exclude map[string]bool, key, public string) (*codearts.Account, string, func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	access, err := s.accessScopeLocked(key)
 	if err != nil {
-		return nil, func() {}, err
+		return nil, "", func() {}, err
 	}
-	if !access.AllowsModel(model) {
-		return nil, func() {}, fmt.Errorf("分组不允许调用此模型")
+	allowedSources, mapped := access.Mapping(public)
+	if public != "" && !mapped {
+		return nil, "", func() {}, fmt.Errorf("分组统一模型已删除")
+	}
+	type target struct{ id, platform, scope string }
+	var smallTargets [4]target
+	targets := smallTargets[:0]
+	if len(models) > cap(targets) {
+		targets = make([]target, 0, len(models))
+	}
+	for _, model := range models {
+		if !access.AllowsModel(model) {
+			continue
+		}
+		if public != "" {
+			allowed := false
+			for _, id := range allowedSources {
+				if id == model {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				continue
+			}
+		}
+		p, scope, _ := provider.ParseModel(model)
+		targets = append(targets, target{model, p, scope})
+	}
+	if len(targets) == 0 {
+		return nil, "", func() {}, fmt.Errorf("分组不允许调用此模型")
+	}
+	targetFor := func(a *codearts.Account) string {
+		for _, t := range targets {
+			if a.ProviderID() == t.platform && (t.platform == provider.CodeArts || a.Scope == t.scope) {
+				return t.id
+			}
+		}
+		return ""
 	}
 	s.initPoolLocked()
 	now, cfg := s.poolNow(), s.st.Settings.Pool
@@ -112,12 +160,12 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 		}
 		s.pool.gcAt = now.Add(time.Minute)
 	}
-	upstream, scope, _ := provider.ParseModel(model)
 	eligible := func(a *codearts.Account) bool {
 		if access.Restricted && !access.AccountIDs[a.ID] {
 			return false
 		}
-		if a.ProviderID() != upstream || (upstream != provider.CodeArts && a.Scope != scope) {
+		model := targetFor(a)
+		if model == "" && !(public == "" && len(models) == 1 && models[0] == "" && a.ProviderID() == provider.CodeArts) {
 			return false
 		}
 		return a.Enabled && !a.Paused && !exclude[a.ID] && a.CooldownUntil <= now.Unix() && s.st.ModelHealth[a.ID][model].CooldownUntil <= now.Unix() && s.pool.inFlight[a.ID] < accountMaxInFlight(a, cfg)
@@ -126,7 +174,7 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 	if session != "" && cfg.StickyTTLSec > 0 {
 		if b, ok := s.pool.bindings[session]; ok && now.Before(b.expires) {
 			for _, a := range s.st.Accounts {
-				if a.ID == b.id && eligible(a) {
+				if a.ID == b.id && eligible(a) && (public == "" || b.model == targetFor(a)) {
 					selected = a
 					break
 				}
@@ -150,7 +198,7 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 		}
 	}
 	if selected == nil {
-		return nil, func() {}, nil
+		return nil, "", func() {}, nil
 	}
 	if chosen >= 0 {
 		s.pool.cursor = chosen
@@ -158,6 +206,7 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 			s.pool.cursor = (chosen + 1) % n
 		}
 	}
+	selectedModel := targetFor(selected)
 	id := selected.ID
 	s.pool.inFlight[id]++
 	selected.LastUsed = now.Unix()
@@ -173,7 +222,7 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 			}
 			delete(s.pool.bindings, oldest)
 		}
-		s.pool.bindings[session] = stickyBinding{id: id, expires: now.Add(time.Duration(cfg.StickyTTLSec) * time.Second)}
+		s.pool.bindings[session] = stickyBinding{model: selectedModel, id: id, expires: now.Add(time.Duration(cfg.StickyTTLSec) * time.Second)}
 	}
 	var once sync.Once
 	release := func() {
@@ -186,7 +235,7 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 			}
 		})
 	}
-	return cloneAccount(selected), release, nil
+	return cloneAccount(selected), selectedModel, release, nil
 }
 
 func (s *Store) ForgetSession(key, id string) {

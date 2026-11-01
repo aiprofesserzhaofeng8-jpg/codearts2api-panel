@@ -54,8 +54,12 @@
     <div class="field"><label for="groupName">分组名称</label><input id="groupName" maxlength="80" placeholder="例如：日常、测试、Trae 专用"></div>
     <p class="account-field-label">可用账号</p><div id="groupAccounts" class="group-account-options"></div>
     <label class="check mt-14"><input id="groupAllowlist" type="checkbox">仅允许选中的模型</label>
-    <div class="field mt-12"><label for="groupModels">模型白名单（可多选）</label><select id="groupModels" multiple size="8" aria-describedby="groupModelsHint"></select></div>
-    <p id="groupModelsHint" class="hint">不启用白名单时展示所选账号平台的全部模型。启用后未选模型表示不允许调用任何模型。</p>
+    <div id="groupModelsField" class="field mt-12"><label for="groupModels">模型白名单（可多选）</label><select id="groupModels" multiple size="8" aria-describedby="groupModelsHint"></select></div>
+    <p id="groupModelsHint" class="hint">白名单限制可调用的原始型号。启用后未选型号则禁止调用。</p>
+    <div class="group-mapping-head"><h3>统一模型</h3><button class="btn" id="addGroupMapping">添加映射</button></div>
+    <p class="hint">公开名称须带版本号，例如 deepseek-4.1-flash。选择多个平台的对应型号后，由账号池自动选号；每个平台和地区可选一个型号。</p>
+    <div id="groupMappingRows"></div>
+    <p class="hint">配置后，此分组的客户端模型列表仅展示统一名称。原始型号仍可在分组权限内用完整平台 ID 调用。</p>
     <p id="groupError" class="err-text" role="alert"></p>
   </div>
   <div class="modal-actions"><button class="btn" id="groupCancel">取消</button><button class="btn primary" id="groupSave">保存分组</button></div>

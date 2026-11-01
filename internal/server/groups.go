@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -45,6 +46,15 @@ func (s *Server) visibleModels(ctx context.Context) ([]registry.Model, error) {
 	settings := s.Store.Settings()
 	accounts := s.Store.Accounts()
 	out := []registry.Model{}
+	if len(access.ModelMappings) > 0 {
+		for _, mapping := range access.ModelMappings {
+			plan := s.mappingPlan(access, mapping.Name)
+			if len(plan.ids) > 0 {
+				out = append(out, publicMappingModel(mapping.Name))
+			}
+		}
+		return out, nil
+	}
 	for _, m := range s.Reg.List(settings.ModelAliases) {
 		resolved, ok := s.Reg.Resolve(m.ID, settings.ModelAliases)
 		if ok && scopeAllows(access, accounts, resolved) {
@@ -54,9 +64,15 @@ func (s *Server) visibleModels(ctx context.Context) ([]registry.Model, error) {
 	return out, nil
 }
 func (s *Server) resolveModelForRequest(r *http.Request, settings store.Settings, requested string) (registry.Model, error) {
+	if c, ok := r.Context().Value(usageContextKey{}).(*usageCapture); ok {
+		c.requestedModel = requested
+	}
 	access, err := s.Store.AccessScope(groupKey(r.Context()))
 	if err != nil {
 		return registry.Model{}, groupDenied()
+	}
+	if len(access.ModelMappings) > 0 {
+		return s.resolveMappedModel(r, settings, access, requested)
 	}
 	m, err := s.resolveModel(settings, requested)
 	if err != nil {
@@ -91,6 +107,18 @@ func (s *Server) checkGroupModel(ctx context.Context, model string) error {
 		}
 		return nil
 	}
+	if plan := mappedPlan(ctx); plan != nil {
+		sources, found := access.Mapping(plan.public)
+		allowed := false
+		for _, id := range sources {
+			if id == model {
+				allowed = true
+			}
+		}
+		if !found || (!allowed && !s.mappedSummaryFallback(ctx, model)) {
+			return groupDenied()
+		}
+	}
 	m, ok := s.Reg.Resolve(model, s.Store.Settings().ModelAliases)
 	if !ok || !scopeAllows(access, s.Store.Accounts(), m) {
 		return groupDenied()
@@ -106,6 +134,23 @@ func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 256<<10)).Decode(&g) != nil {
 			writeErr(w, 400, "分组格式无效", "invalid_request_error")
 			return
+		}
+		if g.ID != "" && g.ModelMappings == nil {
+			for _, old := range s.Store.Groups() {
+				if old.ID == g.ID {
+					g.ModelMappings = old.ModelMappings
+				}
+			}
+		}
+		for i := range g.ModelMappings {
+			for j, id := range g.ModelMappings[i].Sources {
+				m, ok := s.Reg.ResolveRaw(id)
+				if !ok {
+					writeErr(w, 400, fmt.Sprintf("原始型号不在当前目录：%s", id), "invalid_request_error")
+					return
+				}
+				g.ModelMappings[i].Sources[j] = m.ID
+			}
 		}
 		for i, id := range g.ModelIDs {
 			if m, ok := s.Reg.Resolve(strings.TrimSpace(id), s.Store.Settings().ModelAliases); ok {

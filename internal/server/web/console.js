@@ -409,7 +409,7 @@
         if(l.request_id)status.title="请求 ID: "+l.request_id;
         if(l.err)status.title=(status.title || "")+" · "+l.err;
         var stamp=fmtTime(l.time).split(" "),date=cell("","usage-log-date");date.appendChild(mk("span","",stamp[0]));date.appendChild(mk("span","usage-log-sub",stamp[1] || ""));
-        var model=cell(""),name=mk("span","usage-log-model",l.model);name.title=l.model;model.appendChild(name);model.appendChild(mk("span","usage-log-sub",usageSeriesName(l.provider || "codearts","providers")));
+        var model=cell(""),name=mk("span","usage-log-model",l.model);name.title=(l.requested_model&&l.requested_model!==l.model?l.requested_model+" → ":"")+l.model;model.appendChild(name);model.appendChild(mk("span","usage-log-sub",usageSeriesName(l.provider || "codearts","providers")));
         var tokens=cell(""),counts=mk("div","usage-token-values");
         [{n:input-cached,label:"输入（未缓存）",tone:"usage-input",path:"M7 2v10m-4-4 4 4 4-4"},{n:output,label:"输出",tone:"usage-output",path:"M7 12V2m-4 4 4-4 4 4"}].forEach(function(item){var span=mk("span",""),icon=usageSVG("svg",{viewBox:"0 0 14 14",class:item.tone,"aria-hidden":"true"});icon.appendChild(usageSVG("path",{d:item.path}));span.title=item.label;span.appendChild(icon);span.appendChild(document.createTextNode(number(item.n)));counts.appendChild(span);});
         tokens.appendChild(counts);tokens.appendChild(mk("span","usage-cache-value","缓存 "+number(cached)));tokens.title="总 Token："+number(input+output)+(l.usage_incomplete?"（用量部分报告）":"");
@@ -921,7 +921,7 @@
           (a.status ? " · " + a.status : "") + (a.error_kind ? " · " + a.error_kind : "");
       }).join("\n");
       tb.appendChild(row([
-        cell(fmtTime(l.time), "muted"), cell(l.model, "mono"), cell(l.stream ? "是" : "否", "mono"),
+        cell(fmtTime(l.time), "muted"), cell((l.requested_model&&l.requested_model!==l.model?l.requested_model+" → ":"")+l.model, "mono"), cell(l.stream ? "是" : "否", "mono"),
         st, elapsed, cell(l.prompt_len + " / " + l.output_len, "mono"),
         cell(l.account, "mono"), cell(l.key, "mono"), errCell
       ]));
@@ -1827,7 +1827,7 @@ PY
   var editingGroup="",groupSaving=false,editingKeyGroup="",keyGroupSaving=false;
   function groupModelAllowed(model,group,data){
     var aliases=(data.settings || {}).model_aliases || {};
-    var resolved=(data.models || []).find(function(m){return m.id===aliases[model.id];}) || model;
+    var resolved=model.source==="alias"?((data.models || []).find(function(m){return m.id===aliases[model.id];}) || model):model;
     if(group.allowlist_enabled && !(group.model_ids || []).includes(resolved.id))return false;
     return (data.accounts || []).some(function(a){return (group.account_ids || []).includes(a.id)&&a.enabled&&(a.provider || "codearts")===(resolved.provider || "codearts")&&((resolved.provider || "codearts")==="codearts"||(a.scope || "")===(resolved.scope || ""));});
   }
@@ -1851,7 +1851,7 @@ PY
       ops.appendChild(btn("编辑","xs",function(){openGroup(g);}));
       var remove=btn("删除","xs danger",function(){if(!confirm("确定删除分组「"+g.name+"」？"))return;return api("/admin/api/groups?id="+encodeURIComponent(g.id),{method:"DELETE"}).then(refresh).catch(function(e){toast("删除失败："+e.message,"err");});});
       remove.disabled=bindings>0;if(bindings)remove.title="请先修改绑定密钥的分组";ops.appendChild(remove);
-      rows.appendChild(row([cell(g.name),cell((g.account_ids || []).length),cell(g.allowlist_enabled?(g.model_ids || []).length+" 个模型":"组内平台全部模型"),cell(bindings),ops]));
+      rows.appendChild(row([cell(g.name),cell((g.account_ids || []).length),cell((g.model_mappings || []).length?(g.model_mappings.length+" 个统一模型"):(g.allowlist_enabled?(g.model_ids || []).length+" 个模型":"组内平台全部模型")),cell(bindings),ops]));
     });
     if(!rows.children.length)rows.appendChild(emptyRow(5,"尚未创建分组"));
   }
@@ -1863,6 +1863,27 @@ PY
     [{id:"codearts/web-search",provider:"codearts",scope:"",label:"CodeArts 联网搜索 · SearXNG"},{id:"trae/cn/web-search",provider:"trae",scope:"cn",label:"Trae 联网搜索 · SearXNG"},{id:"workbuddy/cn/web-search",provider:"workbuddy",scope:"cn",label:"WorkBuddy 联网搜索 · 国内"},{id:"workbuddy/global/web-search",provider:"workbuddy",scope:"global",label:"WorkBuddy 联网搜索 · 国际"}].forEach(function(capability){if(groupModelAllowed(capability,group,data)){var option=document.createElement("option");option.value=capability.id;option.textContent=capability.label;option.selected=chosen.includes(capability.id);seen[capability.id]=true;select.appendChild(option);}});
     chosen.filter(function(id){return !seen[id];}).forEach(function(id){var o=document.createElement("option");o.value=id;o.textContent=id+"（当前账号范围外或目录缺失）";o.selected=true;select.appendChild(o);});
     select.disabled=!$("#groupAllowlist").checked;
+    $("#groupModelsField").classList.toggle("hidden",select.disabled);
+    updateGroupMappingOptions();
+  }
+  function groupMappingValues(){
+    return Array.from($("#groupMappingRows").children).map(function(row){return {name:row.querySelector("input").value.trim(),sources:Array.from(row.querySelector("select").selectedOptions).map(function(o){return o.value;})};});
+  }
+  function updateGroupMappingOptions(){
+    var data=state.data || {},group={account_ids:Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function(i){return i.value;}),allowlist_enabled:$("#groupAllowlist").checked,model_ids:Array.from($("#groupModels").selectedOptions).map(function(o){return o.value;})};
+    $("#groupMappingRows").querySelectorAll("select").forEach(function(select){
+      var chosen=Array.from(select.selectedOptions).map(function(o){return o.value;}),seen={};select.textContent="";
+      (data.models || []).filter(function(m){return m.source!=="alias"&&groupModelAllowed(m,group,data);}).forEach(function(m){var o=document.createElement("option");o.value=m.id;o.textContent=(m.provider || "codearts")==="codearts"?"codearts/"+m.id:m.id;o.selected=chosen.includes(m.id);seen[m.id]=true;select.appendChild(o);});
+      chosen.filter(function(id){return !seen[id];}).forEach(function(id){var o=document.createElement("option");o.value=id;o.textContent=id+"（当前范围外，请检查账号及白名单）";o.selected=true;select.appendChild(o);});
+    });
+  }
+  function addGroupMapping(mapping){
+    mapping=mapping || {};var holder=mk("div","group-mapping-row"),head=mk("div","group-mapping-name"),field=mk("div","field"),label=mk("label","","公开模型名"),input=document.createElement("input");
+    input.placeholder="deepseek-4.1-flash";input.maxLength=200;input.value=mapping.name || "";input.setAttribute("aria-label","公开模型名");field.appendChild(label);field.appendChild(input);head.appendChild(field);
+    head.appendChild(btn("移除","danger",function(){holder.remove();}));holder.appendChild(head);
+    var sources=mk("div","field"),select=document.createElement("select");select.multiple=true;select.size=6;select.setAttribute("aria-label","映射来源型号");sources.appendChild(mk("label","","来源型号（可多选）"));sources.appendChild(select);holder.appendChild(sources);
+    (mapping.sources || []).forEach(function(id){var o=document.createElement("option");o.value=id;o.selected=true;select.appendChild(o);});
+    $("#groupMappingRows").appendChild(holder);updateGroupMappingOptions();
   }
   function openGroup(group){
     group=group || {};editingGroup=group.id || "";$("#groupTitle").textContent=editingGroup?"编辑账号分组":"创建账号分组";
@@ -1870,10 +1891,12 @@ PY
     var holder=$("#groupAccounts");holder.textContent="";
     ((state.data || {}).accounts || []).forEach(function(a){var label=mk("label","check"),input=document.createElement("input");input.type="checkbox";input.value=a.id;input.checked=(group.account_ids || []).includes(a.id);input.addEventListener("change",function(){updateGroupModels();});label.appendChild(input);label.appendChild(document.createTextNode(a.name+" · "+(a.provider || "codearts")));holder.appendChild(label);});
     if(!holder.children.length)holder.appendChild(mk("span","hint","请先添加账号"));
-    updateGroupModels(group.model_ids || []);$("#groupDialog").showModal();
+    $("#groupMappingRows").textContent="";updateGroupModels(group.model_ids || []);(group.model_mappings || []).forEach(addGroupMapping);$("#groupDialog").showModal();
   }
   function lockGroupForm(busy){$("#groupDialog").querySelectorAll("input,select,button").forEach(function(el){el.disabled=busy;});if(!busy)$("#groupModels").disabled=!$("#groupAllowlist").checked;}
   function closeGroup(){if(!groupSaving)$("#groupDialog").close();}
+  on("#addGroupMapping",function(){addGroupMapping();});
+  $("#groupModels").addEventListener("change",updateGroupMappingOptions);
   on("#addGroup",function(){openGroup();});on("#groupClose",closeGroup);on("#groupCancel",closeGroup);
   $("#groupDialog").addEventListener("cancel",function(e){e.preventDefault();closeGroup();});
   $("#groupAllowlist").addEventListener("change",function(){updateGroupModels();});
@@ -1881,7 +1904,9 @@ PY
   $("#modelSearch").addEventListener("input",function(){if(state.data)renderOverview(state.data);});
   on("#groupSave",function(){
     if(groupSaving)return;var name=$("#groupName").value.trim();if(!name){$("#groupError").textContent="请填写分组名称";return;}
-    var body={id:editingGroup,name:name,account_ids:Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function(i){return i.value;}),allowlist_enabled:$("#groupAllowlist").checked,model_ids:Array.from($("#groupModels").selectedOptions).map(function(o){return o.value;})};
+    var body={id:editingGroup,name:name,account_ids:Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function(i){return i.value;}),allowlist_enabled:$("#groupAllowlist").checked,model_ids:Array.from($("#groupModels").selectedOptions).map(function(o){return o.value;}),model_mappings:groupMappingValues()};
+    var invalid=body.model_mappings.some(function(m){return !/[0-9]/.test(m.name)||/[\s/]/.test(m.name)||!m.sources.length;});
+    if(invalid){$("#groupError").textContent="请填写带版本号且不含空白、斜线的公开名称，并选择来源型号";return;}
     groupSaving=true;lockGroupForm(true);$("#groupError").textContent="";
     return api("/admin/api/groups",{method:"POST",body:body}).then(function(r){if(!r.ok||!r.group)throw new Error("分组保存结果未确认");$("#groupDialog").close();toast("分组已保存","ok");return refresh();}).catch(function(e){$("#groupError").textContent="保存失败："+e.message;}).finally(function(){groupSaving=false;lockGroupForm(false);});
   });

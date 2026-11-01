@@ -71,6 +71,10 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		reject(http.StatusBadRequest, "invalid_request_error", err.Error())
 		return
 	}
+	if err := filterMappedMessages(r.Context(), upReq["thinking"] != nil); err != nil {
+		reject(400, "invalid_request_error", err.Error())
+		return
+	}
 	if model.Provider == provider.Trae && upReq["thinking"] != nil {
 		reject(http.StatusBadRequest, "invalid_request_error", "当前网关暂不支持 Trae 的 Messages 思考控制映射，请省略 thinking 参数")
 		return

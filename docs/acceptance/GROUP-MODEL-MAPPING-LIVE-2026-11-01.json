@@ -1,0 +1,272 @@
+{
+  "checked_at": "2026-10-31T17:21:43.600068+00:00",
+  "public_model": "deepseek-4.1-flash",
+  "sources": [
+    "workbuddy/cn/deepseek-v4.1-flash",
+    "trae/cn/deepseek-v4.1-flash"
+  ],
+  "isolated_instance": true,
+  "production_deployed": false,
+  "checks": [
+    {
+      "name": "deduplicated_public_menu",
+      "passed": true,
+      "seconds": 0.0,
+      "visible_model_ids": [
+        "deepseek-4.1-flash"
+      ],
+      "admin_raw_model_count": 79
+    },
+    {
+      "name": "workbuddy_chat_buffered",
+      "passed": true,
+      "seconds": 1.705,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 508,
+        "output_tokens": 5,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "workbuddy_chat_stream",
+      "passed": true,
+      "seconds": 1.79,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 508,
+        "output_tokens": 5,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "workbuddy_responses_buffered",
+      "passed": true,
+      "seconds": 1.672,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 508,
+        "output_tokens": 5,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "workbuddy_responses_stream",
+      "passed": true,
+      "seconds": 1.698,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 508,
+        "output_tokens": 5,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "workbuddy_messages_buffered",
+      "passed": true,
+      "seconds": 1.727,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 508,
+        "output_tokens": 5,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "workbuddy_messages_stream",
+      "passed": true,
+      "seconds": 1.529,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 510,
+        "output_tokens": 7,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "workbuddy_hidden_direct_call",
+      "passed": true,
+      "seconds": 1.607,
+      "status": 200,
+      "requested_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+      "provider": "workbuddy",
+      "usage": {
+        "known": true,
+        "input_tokens": 508,
+        "output_tokens": 5,
+        "cached_tokens": 256,
+        "reasoning_tokens": 0
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_chat_buffered",
+      "passed": true,
+      "seconds": 1.345,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 43,
+        "output_tokens": 23,
+        "cached_tokens": 0,
+        "reasoning_tokens": 16
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_chat_stream",
+      "passed": true,
+      "seconds": 1.415,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 41,
+        "output_tokens": 17,
+        "cached_tokens": 0,
+        "reasoning_tokens": 12
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_responses_buffered",
+      "passed": true,
+      "seconds": 1.285,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 42,
+        "output_tokens": 20,
+        "cached_tokens": 0,
+        "reasoning_tokens": 14
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_responses_stream",
+      "passed": true,
+      "seconds": 1.187,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 42,
+        "output_tokens": 21,
+        "cached_tokens": 0,
+        "reasoning_tokens": 15
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_messages_buffered",
+      "passed": true,
+      "seconds": 1.613,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 43,
+        "output_tokens": 31,
+        "cached_tokens": 0,
+        "reasoning_tokens": 24
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_messages_stream",
+      "passed": true,
+      "seconds": 1.325,
+      "status": 200,
+      "requested_model": "deepseek-4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 42,
+        "output_tokens": 20,
+        "cached_tokens": 0,
+        "reasoning_tokens": 14
+      },
+      "attempts": 1
+    },
+    {
+      "name": "trae_hidden_direct_call",
+      "passed": true,
+      "seconds": 1.548,
+      "status": 200,
+      "requested_model": "trae/cn/deepseek-v4.1-flash",
+      "physical_model": "trae/cn/deepseek-v4.1-flash",
+      "provider": "trae",
+      "usage": {
+        "known": true,
+        "input_tokens": 42,
+        "output_tokens": 21,
+        "cached_tokens": 0,
+        "reasoning_tokens": 15
+      },
+      "attempts": 1
+    },
+    {
+      "name": "no_bypass_and_same_mapping",
+      "passed": true,
+      "seconds": 0.012,
+      "all_sources_paused": 503,
+      "unversioned_unmapped_name": 404,
+      "outside_group_direct_model": 403,
+      "same_mapping_preserved": true
+    }
+  ],
+  "temporary_credentials_removed": true,
+  "production_configuration_unchanged": true,
+  "passed": 16,
+  "failed": 0
+}
