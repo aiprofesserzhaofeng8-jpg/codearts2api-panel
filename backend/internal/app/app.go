@@ -13,6 +13,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
+	"codearts2api/internal/jobs"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/server"
@@ -42,7 +43,9 @@ func Build(st *store.Store) (*server.Server, error) {
 	credentials.Logf = log.Printf
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
+	credits := &accounts.Credits{}
 	return server.New(st, server.Dependencies{
+		Credits: credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
 		Catalog: catalog.NewRuntime(st, models),
 		Configuration: config.NewManagement(st, func(id string) (config.ModelRef, bool) {
 			model, ok := models.Resolve(id, st.Settings().ModelAliases)

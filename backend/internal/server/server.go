@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"codearts2api/internal/access"
@@ -24,6 +23,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
+	"codearts2api/internal/jobs"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
@@ -34,13 +34,14 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	Credits             *accounts.Credits
+	Rewards             *jobs.Rewards
 	Catalog             *catalog.Runtime
 	Configuration       *config.Management
 	AccessManagement    *access.Management
 	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	Search              *websearch.Client
-	rewardRuntime       accounts.OperationLocks
 	growthRuntime       accounts.OperationLocks
 	growthExecution     growthExecutionState
 	Providers           *provider.Registry
@@ -60,14 +61,12 @@ type Server struct {
 	Logins              *codearts.LoginManager
 	// Limits 是按 API 密钥的自我保护限流（QPS + 在飞并发）。
 	Limits *ratelimit.Limiter
-
-	// 积分额度缓存：额度查询是真实上游请求，切页签 / 连续刷新时没必要每次都打。
-	creditMu    sync.Mutex
-	creditCache map[string]creditCacheEntry
 }
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	Credits             *accounts.Credits
+	Rewards             *jobs.Rewards
 	Catalog             *catalog.Runtime
 	Configuration       *config.Management
 	AccessManagement    *access.Management
@@ -87,7 +86,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()

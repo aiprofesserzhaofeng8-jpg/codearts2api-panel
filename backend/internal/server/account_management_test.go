@@ -55,7 +55,7 @@ func TestAccountManagementHTTPStatusAndOpaqueExport(t *testing.T) {
 
 func TestAccountManagementHTTPFailedDeletePreservesCreditView(t *testing.T) {
 	s := newAdminTestServer(t, "a")
-	s.creditCache = map[string]creditCacheEntry{"a": {}}
+	s.Credits.Store("a", nil, nil)
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAccountManagementHTTPFailedDeletePreservesCreditView(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := adminProbeRequest(t, s, http.MethodPost, "/admin/api/accounts", `{"action":"remove","id":"a"}`)
-	if _, cached := s.creditCache["a"]; w.Code != 500 || !cached || s.Store.Account("a") == nil || !strings.Contains(w.Body.String(), "删除未完成") {
+	if _, _, cached := s.Credits.Cached("a"); w.Code != 500 || !cached || s.Store.Account("a") == nil || !strings.Contains(w.Body.String(), "删除未完成") {
 		t.Fatalf("failed delete lost account or credit view: %s", w.Body.String())
 	}
 	if err := os.Remove(dir); err != nil {
@@ -78,7 +78,7 @@ func TestAccountManagementHTTPFailedDeletePreservesCreditView(t *testing.T) {
 		t.Fatal(err)
 	}
 	w = adminProbeRequest(t, s, http.MethodPost, "/admin/api/accounts", `{"action":"remove","id":"a"}`)
-	if _, cached := s.creditCache["a"]; w.Code != 200 || cached || s.Store.Account("a") != nil {
+	if _, _, cached := s.Credits.Cached("a"); w.Code != 200 || cached || s.Store.Account("a") != nil {
 		t.Fatalf("committed delete left stale view: %s", w.Body.String())
 	}
 }

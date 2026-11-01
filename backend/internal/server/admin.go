@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"codearts2api/internal/accounts"
@@ -177,9 +176,7 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 			writeAccountManagementError(w, err)
 			return
 		}
-		s.creditMu.Lock()
-		delete(s.creditCache, body.ID)
-		s.creditMu.Unlock()
+		s.Credits.Invalidate(body.ID)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "removed_id": body.ID})
 	case "toggle":
 		if err := s.AccountManagement.Toggle(body.ID); err != nil {
@@ -446,24 +443,6 @@ func (s *Server) handleAdminModelProbe(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// creditCacheTTL 是积分额度的缓存时长。
-//
-// 额度查询是一次真实上游请求；切换页签 / 连续刷新时没必要每次都打上游。
-// 控制台点「刷新额度」会带 ?fresh=1 绕过缓存。
-const creditCacheTTL = 60 * time.Second
-
-// creditCacheEntry 是一次额度查询的结果。失败也缓存，避免上游故障时被反复重试。
-type creditCacheEntry struct {
-	info *codearts.CreditInfo
-	err  error
-	at   time.Time
-}
-
-// handleAdminCredits 返回账号的积分额度（上游 snap-manager 统计插件）。
-//
-//	GET /admin/api/credits           → 全部账号
-//	GET /admin/api/credits?id=<账号>  → 指定账号
-//	GET ...?fresh=1                  → 跳过 60 秒缓存
 func (s *Server) handleAdminCredits(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeErr(w, http.StatusMethodNotAllowed, "仅支持 GET", "invalid_request_error")
@@ -482,107 +461,24 @@ func (s *Server) handleAdminCredits(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 每个账号一次上游请求：并发 4 路，避免把单账号 3 个并发会话的上限打满。
-	type creditRow struct {
-		idx int
-		row map[string]any
-	}
-	results := make([]map[string]any, len(targets))
-	ch := make(chan creditRow, len(targets))
-	sem := make(chan struct{}, 4)
-	var wg sync.WaitGroup
-	for i, a := range targets {
-		wg.Add(1)
-		go func(idx int, a *accounts.Account) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			row := map[string]any{"id": a.ID, "name": a.DisplayName()}
-			info, err := s.creditFor(r.Context(), a, fresh)
-			if err != nil {
-				row["ok"] = false
-				row["error"] = err.Error()
-			} else {
-				row["ok"] = true
-				row["credit"] = info
-			}
-			// 只往 channel 写，切片由主 goroutine 汇总，避免并发写。
-			ch <- creditRow{idx: idx, row: row}
-		}(i, a)
-	}
-	wg.Wait()
-	close(ch)
-	for c := range ch {
-		results[c.idx] = c.row
-	}
+	results := s.Credits.Rows(r.Context(), targets, fresh, s.creditOperations())
 
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "accounts": results})
 }
 
-// creditFor 解析凭据并查询积分额度，带短缓存。
-func (s *Server) creditFor(ctx context.Context, a *accounts.Account, fresh bool) (*codearts.CreditInfo, error) {
-	if a.ProviderID() != provider.CodeArts {
-		if !fresh {
-			if info, err, ok := s.cachedCredit(a.ID); ok {
-				return info, err
-			}
-		}
-		ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-		defer cancel()
-		adapter, raw, err := s.providerCredentials(ctx, a)
-		if err != nil {
-			return nil, err
-		}
-		data, err := adapter.Credit(ctx, raw)
-		if err != nil {
-			s.storeCredit(a.ID, nil, err)
-			return nil, err
-		}
-		var info codearts.CreditInfo
-		if err = json.Unmarshal(data, &info); err != nil {
-			return nil, err
-		}
-		s.storeCredit(a.ID, &info, nil)
-		return &info, nil
+func (s *Server) creditOperations() accounts.CreditOperations {
+	return accounts.CreditOperations{
+		Native: func(ctx context.Context, a *accounts.Account) (*accounts.CreditInfo, error) {
+			return s.CodeArts.Credit(ctx, s.Cred, a, s.resolveOptions())
+		},
+		Provider: s.providerCredentials,
 	}
-
-	if !fresh {
-		if info, err, ok := s.cachedCredit(a.ID); ok {
-			return info, err
-		}
-	}
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
-	if err != nil {
-		s.storeCredit(a.ID, nil, err)
-		return nil, err
-	}
-	info, err := s.Up.FetchCreditInfo(ctx, sess)
-	s.storeCredit(a.ID, info, err)
-	return info, err
 }
-
-// cachedCredit 返回 TTL 内的缓存结果。
-func (s *Server) cachedCredit(id string) (*codearts.CreditInfo, error, bool) {
-	s.creditMu.Lock()
-	defer s.creditMu.Unlock()
-	e, ok := s.creditCache[id]
-	if !ok || time.Since(e.at) > creditCacheTTL {
-		return nil, nil, false
-	}
-	return e.info, e.err, true
+func (s *Server) creditFor(ctx context.Context, a *accounts.Account, fresh bool) (*accounts.CreditInfo, error) {
+	return s.Credits.For(ctx, a, fresh, s.creditOperations())
 }
-
-// storeCredit 记录一次额度查询结果。
-func (s *Server) storeCredit(id string, info *codearts.CreditInfo, err error) {
-	s.creditMu.Lock()
-	defer s.creditMu.Unlock()
-	if s.creditCache == nil {
-		s.creditCache = map[string]creditCacheEntry{}
-	}
-	s.creditCache[id] = creditCacheEntry{info: info, err: err, at: time.Now()}
+func (s *Server) cachedCredit(id string) (*accounts.CreditInfo, error, bool) {
+	return s.Credits.Cached(id)
 }
 
 // unixTime 把 Unix 秒转换为时间（0 表示使用默认有效期）。

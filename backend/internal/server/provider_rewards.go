@@ -2,110 +2,20 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/jobs"
 	"codearts2api/internal/provider"
 )
 
-var rewardLocation = time.FixedZone("UTC+8", 8*60*60)
-
-func claimDateFor(a *accounts.Account, now time.Time) string {
-	if a.ProviderID() != provider.CodeArts {
-		return now.In(rewardLocation).Format("2006-01-02")
-	}
-	return now.Format("2006-01-02")
-}
+func claimDateFor(a *accounts.Account, now time.Time) string { return jobs.DateFor(a, now) }
 func (s *Server) dailyRewardsSupported(a *accounts.Account) bool {
-	if a.ProviderID() == provider.CodeArts {
-		return true
-	}
-	if s.Providers == nil {
-		return false
-	}
-	adapter, ok := s.Providers.Get(a.ProviderID())
-	if !ok {
-		return false
-	}
-	_, ok = adapter.(provider.DailyRewards)
-	return ok
+	return jobs.Supported(a, s.Providers)
 }
 func (s *Server) providerDailyStatus(ctx context.Context, a *accounts.Account) (provider.RewardResult, error) {
-	today := claimDateFor(a, time.Now())
-	if a.LastClaimDate == today {
-		return provider.RewardResult{State: "already_claimed", Message: "今日签到已在本网关确认"}, nil
-	}
-	adapter, raw, err := s.providerCredentials(ctx, a)
-	if err != nil {
-		return provider.RewardResult{}, err
-	}
-	rewards, ok := adapter.(provider.DailyRewards)
-	if !ok {
-		return provider.RewardResult{}, fmt.Errorf("此上游每日签到尚未接入")
-	}
-	result, err := rewards.DailyStatus(ctx, raw)
-	if err == nil && result.Confirmed() {
-		if saveErr := s.Store.SaveDailyReward(a.ID, today, result.State, result.Message, true, 0); saveErr != nil {
-			return result, fmt.Errorf("上游已确认签到，但本地状态保存失败")
-		}
-	}
-	return result, err
-}
-func (s *Server) claimProviderDaily(ctx context.Context, a *accounts.Account, today string) (string, error) {
-	release, err := s.rewardRuntime.Acquire(ctx, a.ID)
-	if err != nil {
-		return "", err
-	}
-	defer release()
-	latest := s.Store.Account(a.ID)
-	if latest == nil {
-		return "", fmt.Errorf("账号已删除")
-	}
-	if !latest.Enabled {
-		return "", fmt.Errorf("账号已停用，请启用后再领取")
-	}
-	if latest.LastClaimDate == today {
-		return "今日已确认签到，无需重复领取", nil
-	}
-	if latest.NextClaimAt > time.Now().Unix() {
-		return "", fmt.Errorf("该账号签到暂处于等待期，请在 %s 后重试", time.Unix(latest.NextClaimAt, 0).In(rewardLocation).Format("15:04:05"))
-	}
-	adapter, raw, err := s.providerCredentials(ctx, latest)
-	result := provider.RewardResult{}
-	if err == nil {
-		rewards, ok := adapter.(provider.DailyRewards)
-		if !ok {
-			return "", fmt.Errorf("此上游每日签到尚未接入")
-		}
-		result, err = rewards.ClaimDaily(ctx, raw)
-	}
-	state, message, next := "failed", "", time.Now().Add(30*time.Minute).Unix()
-	confirmed := false
-	if err != nil {
-		message = err.Error()
-	} else {
-		state = result.State
-		message = result.Message
-		confirmed = result.Confirmed()
-		if confirmed {
-			next = 0
-		}
-	}
-	if saveErr := s.Store.SaveDailyReward(a.ID, today, state, message, confirmed, next); saveErr != nil {
-		return message, fmt.Errorf("签到结果保存失败；请先核对上游状态，避免重复提交")
-	}
-	s.creditMu.Lock()
-	delete(s.creditCache, a.ID)
-	s.creditMu.Unlock()
-	if err != nil {
-		return message, err
-	}
-	if !confirmed {
-		return message, fmt.Errorf("%s", message)
-	}
-	return message, nil
+	return s.Rewards.Status(ctx, a, s.rewardOperations())
 }
 func (s *Server) handleProviderWelfare(w http.ResponseWriter, r *http.Request, a *accounts.Account) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)

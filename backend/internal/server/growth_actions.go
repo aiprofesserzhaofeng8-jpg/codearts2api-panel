@@ -466,9 +466,7 @@ func (s *Server) runGrowthChat(ctx context.Context, a *accounts.Account, actions
 		status = 502
 	}
 	recordErr := s.record(chatCtx, "", a, model, true, status, capture.started, len([]rune("请用一句话介绍你自己。")), out, runErr)
-	s.creditMu.Lock()
-	delete(s.creditCache, a.ID)
-	s.creditMu.Unlock()
+	s.Credits.Invalidate(a.ID)
 	// Explicit pre-processing rejections did not complete a chat. Uncertain
 	// network/5xx/stream/report failures retain the checkpoint, including restart.
 	var upstream *provider.Error

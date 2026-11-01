@@ -3,14 +3,13 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/jobs"
 )
 
 // 每日自动领取运营活动福利。
@@ -57,80 +56,17 @@ func (s *Server) StartClaimLoop(ctx context.Context) {
 }
 
 // RunDailyClaim 对尚未领取过的账号各领一次当日活动福利。
-func (s *Server) RunDailyClaim(ctx context.Context) {
-	st := s.Store.Settings()
-	if !st.AutoClaim {
-		return
-	}
-	now := time.Now()
-	if !claimWindowOpen(now, st.ClaimAfterHour, st.ClaimAfterMinute) {
-		return
-	}
-	for _, a := range s.Store.Accounts() {
-		today := claimDateFor(a, now)
-		if !s.dailyRewardsSupported(a) || !a.Enabled || a.LastClaimDate == today || a.NextClaimAt > now.Unix() {
-			continue
-		}
-		if _, err := s.ClaimForAccount(ctx, a, today); err != nil {
-			log.Printf("账号 %s 自动领取活动福利失败: %s", a.DisplayName(), codearts.DescribeClaimError(err))
-		}
-	}
-}
-
-// claimWindowOpen 报告当前是否已过每日领取时刻。
-func claimWindowOpen(now time.Time, hour, minute int) bool {
-	cur := now.Hour()*60 + now.Minute()
-	return cur >= hour*60+minute
-}
-
-// ClaimForAccount 为单个账号领取一次运营活动福利。
-//
-// 返回给控制台展示的一句话。today 为空时按当前本地日期计算。
+func (s *Server) RunDailyClaim(ctx context.Context) { s.Rewards.RunDaily(ctx, s.rewardOperations()) }
 func (s *Server) ClaimForAccount(ctx context.Context, a *accounts.Account, today string) (string, error) {
-	if a.ProviderID() != "codearts" {
-		return s.claimProviderDaily(ctx, a, claimDateFor(a, time.Now()))
+	return s.Rewards.Claim(ctx, a, today, s.rewardOperations())
+}
+func (s *Server) rewardOperations() jobs.RewardOperations {
+	return jobs.RewardOperations{
+		Native: func(ctx context.Context, a *accounts.Account) (string, error) {
+			return s.CodeArts.ClaimWelfare(ctx, s.Cred, a, s.resolveOptions())
+		},
+		Provider: s.providerCredentials, Registry: s.Providers, DescribeError: codearts.DescribeClaimError,
 	}
-	if today == "" {
-		today = time.Now().Format("2006-01-02")
-	}
-	s.Cred.Invalidate(a.ID)
-
-	sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
-	if err != nil {
-		s.Store.MarkClaimResult(a.ID, today, false, err.Error())
-		s.persist()
-		return "", err
-	}
-
-	var (
-		parts    []string
-		firstErr error
-	)
-
-	// 运营活动（每日积分等）
-	if results, err := s.Up.ClaimDailyWelfare(ctx, sess); err != nil {
-		if firstErr == nil {
-			firstErr = err
-		}
-		parts = append(parts, "活动福利："+err.Error())
-	} else if len(results) == 0 {
-		parts = append(parts, "活动福利：暂无可领")
-	} else {
-		for _, r := range results {
-			parts = append(parts, codearts.DescribeWelfareError(r))
-		}
-	}
-
-	msg := strings.Join(parts, "；")
-	// 只要有一项成功就记下当天日期，避免同一轮反复重试
-	ok := firstErr == nil
-	s.Store.MarkClaimResult(a.ID, today, ok, msg)
-	s.persist()
-
-	if !ok {
-		return msg, firstErr
-	}
-	return msg, nil
 }
 
 // WelfareSnapshot 返回某账号的活动福利清单（供控制台展示）。

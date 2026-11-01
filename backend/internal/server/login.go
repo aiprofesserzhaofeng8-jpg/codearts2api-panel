@@ -1,15 +1,12 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"codearts2api/internal/codearts"
 )
 
 // --- 每日签到 ---
@@ -39,24 +36,8 @@ func (s *Server) handleAdminClaim(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	today := time.Now().Format("2006-01-02")
-	results := make([]map[string]any, 0, len(targets))
-	okCount := 0
-	for _, a := range targets {
-		if body.ID == "" && (!a.Enabled || !s.dailyRewardsSupported(a)) {
-			continue
-		}
-		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
-		msg, err := s.ClaimForAccount(ctx, a, today)
-		cancel()
-		row := map[string]any{"id": a.ID, "name": a.DisplayName(), "ok": err == nil, "provider": a.ProviderID()}
-		if err != nil {
-			row["message"] = codearts.DescribeClaimError(err)
-		} else {
-			row["message"] = msg
-			okCount++
-		}
-		results = append(results, row)
-	}
+	results, okCount := s.Rewards.Batch(r.Context(), targets, body.ID != "", today, s.rewardOperations())
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok": true, "date": today, "succeeded": okCount, "total": len(results), "results": results,
 	})

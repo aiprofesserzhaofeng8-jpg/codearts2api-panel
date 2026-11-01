@@ -176,9 +176,7 @@ func (s *Server) claimGrowthReward(ctx context.Context, a *accounts.Account, ada
 	growth := adapter.(provider.GrowthTasks)
 	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks}
 	reward, claimErr := growth.ClaimGrowthReward(ctx, raw, code)
-	s.creditMu.Lock()
-	delete(s.creditCache, a.ID)
-	s.creditMu.Unlock()
+	s.Credits.Invalidate(a.ID)
 	if claimErr != nil {
 		// Never retry a write whose outcome may already have reached upstream.
 		return reply, fmt.Errorf("成长奖励结果未确认，请刷新任务后核对；%w", claimErr)

@@ -2,21 +2,33 @@ package server
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"testing"
 	"time"
 )
 
 func TestProviderCredentialsKeepRewardAndGrowthLocksIndependent(t *testing.T) {
-	s, _, _ := nativeWBServer(t, func(http.ResponseWriter, *http.Request) {
-		t.Error("valid credentials unexpectedly called upstream")
+	entered, finish := make(chan struct{}), make(chan struct{})
+	s, _, _ := nativeWBServer(t, func(w http.ResponseWriter, r *http.Request) {
+		close(entered)
+		<-finish
+		io.WriteString(w, `{"code":0,"data":{}}`)
 	})
 	addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-	releaseReward, err := s.rewardRuntime.Acquire(t.Context(), "wb-cn")
-	if err != nil {
-		t.Fatal(err)
+	done := make(chan error, 1)
+	go func() { _, err := s.ClaimForAccount(t.Context(), s.Store.Account("wb-cn"), ""); done <- err }()
+	defer func() {
+		close(finish)
+		if err := <-done; err != nil {
+			t.Error(err)
+		}
+	}()
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		t.Fatal("claim did not start")
 	}
-	defer releaseReward()
 	releaseGrowth, err := s.growthRuntime.Acquire(t.Context(), "wb-cn")
 	if err != nil {
 		t.Fatal(err)

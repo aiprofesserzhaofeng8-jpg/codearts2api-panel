@@ -12,6 +12,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
+	"codearts2api/internal/jobs"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
@@ -57,6 +58,7 @@ func newConfiguredServer(st *store.Store) *Server {
 }
 
 func attachAccessManagement(s *Server) {
+	attachRewards(s)
 	if s.Catalog == nil {
 		s.Catalog = catalog.NewRuntime(s.Store, s.Reg)
 	}
@@ -78,6 +80,7 @@ func attachAccessManagement(s *Server) {
 
 // Narrow fixture constructors intentionally omit unrelated app services.
 func attachChatExecution(s *Server) *Server {
+	attachRewards(s)
 	if s.Catalog == nil && s.Reg != nil {
 		s.Catalog = catalog.NewRuntime(s.Store, s.Reg)
 	}
@@ -101,4 +104,13 @@ func markModelsFresh(s *Server) {
 		return nil, errors.New("isolated fixture refresh")
 	}
 	_ = s.Catalog.Refresh(context.Background(), catalog.RefreshOperations{Native: fail, Provider: fail})
+}
+
+func attachRewards(s *Server) {
+	if s.Credits == nil {
+		s.Credits = &accounts.Credits{}
+	}
+	if s.Rewards == nil {
+		s.Rewards = jobs.NewRewards(s.Store, s.Credits.Invalidate, log.Printf)
+	}
 }

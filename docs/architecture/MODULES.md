@@ -2,7 +2,7 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调，`catalog.Runtime` 持有目录刷新/缓存及模型测活协调；Store 仍执行原持久化及准入事务。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调，`catalog.Runtime` 持有目录刷新/缓存及模型测活协调，`accounts.Credits` 持有积分查询和短缓存，`jobs.Rewards` 持有每日领奖状态/锁与单轮编排；Store 仍执行原持久化及准入事务。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
@@ -12,7 +12,7 @@
 | `domain` | AccountID、GroupID、ModelRef、稳定错误分类等共享值 | 数据类型及无副作用校验 | 大而全的 Account 方法、数据库、平台常量 |
 | `httpapi` | HTTP 参数、身份入口、协议错误输出 | 现有 `/admin/*`、`/v1/*` 路由 | 直接修改存储数据、自己选择账号 |
 | `gateway` | Request/Attempt 生命周期、准入状态、重试预算、取消 | `Execute`、`BeginRequest`、`AcquireAttempt` | 平台登录协议、持久化文件格式 |
-| `accounts` | 账号元信息、凭据代际、登录会话、刷新协调 | `PreviewLogin`、`ConfirmLogin`、`CredentialsForAttempt` | 模型别名、各平台 HTTP 签名算法 |
+| `accounts` | 账号元信息、凭据代际、登录会话、刷新协调、积分快照/查询短缓存 | `PreviewLogin`、`ConfirmLogin`、`CredentialsForAttempt` | 模型别名、各平台 HTTP 签名算法 |
 | `access` | 管理会话、API Key、Group、白名单和分组映射配置 | `Authenticate`、`SaveGroup`、`CompileAccess` | 选择实际账号、解释上游模型能力 |
 | `config` | 全局/平台/账号池/模型策略配置值、纯校验及管理保存协调 | `SettingsUpdate`、`UpdateSettings`、`SaveModelPolicy` | HTTP、原生凭据、准入事务、配置缓存和平台网络调用 |
 | `catalog` | 目录刷新、刷新状态与模型测活；目标包含原始目录、映射解析、已验证预设、能力元数据 | 已有 `Refresh`、`RefreshIfStale`、`BeginProbe`；目标 `Resolve`、`CompileBindings`、`ListVisible` | 保存分组、占用并发、自动猜测模型等价性 |
@@ -21,7 +21,7 @@
 | `usage` | 用量语义、价格版本、预算规则、结算记录 | `CheckBudget`、`Settle`、`Query` | 上游选号、普通调试日志替代账本 |
 | `upstream` | 最小平台接口、注册表、标准错误与可选能力 | `Stream`、`Refresh`、`Models`、可选 `Search` 等 | HTTP 管理入口、分组权限、全局重试 |
 | `storage` | 状态读写、迁移、原子提交、追加账本与回放 | 各业务定义的存储接口实现 | 持有另一套业务规则或选号算法 |
-| `jobs` | 后台任务状态机、限并发、恢复和调度 | `Start`、`Run`、`Reconcile` | 绕过网关执行计费对话 |
+| `jobs` | 每日领奖状态/锁、串行批量与单轮编排；目标含成长状态机/调度/恢复 | 已有 `Rewards.Claim`、`Status`、`Batch`、`RunDaily`；目标 `Start`、`Run`、`Reconcile` | 绕过网关执行计费对话 |
 | `webui` | 嵌入产物、静态路由、CSP、SPA 路由回退 | `Handler` | 管理业务或开发服务器自动公开 |
 
 这里的函数名是设计约定，不是当前已存在的 Go API。
@@ -108,3 +108,5 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 新增一个使用现有协议的平台，应能通过“实现适配器、注册、能力配置、可选登录表单、测试”完成普通接入。确实需要新的通用协议语义时，单独定义扩展点并验证旧平台。通过新增空实现、吞掉不支持错误或把所有分支搬到同一个新文件，不算完成模块隔离。
 
 M3.15 的 catalog Runtime 借用唯一 Registry，只持有原刷新状态及原三把独立锁。HTTP 投影平台操作和宽松解码，CodeArts 获取/原生 Probe 由 upstream 包装，其余测活继续走原 chatOnce；不创建平行目录、解析器或普通推理入口。目录解析/映射仍由 Registry、access、Store 的既有边界负责，不因目标表存在 `Resolve` 就重复实现。
+
+M3.16：积分数量快照归 accounts，不属于 API 美元费用/预算账本。CodeArts 仅保留 CreditInfo/CreditCategory 别名，原生解析不改；WorkBuddy/Trae 继续返回原 JSON 并按原顺序解析。jobs 每日领奖调用原适配器，不自行解析凭据，不写准入或推理健康状态。领奖、成长、凭据的三组账号锁仍独立；自动领取定时器、活动列表与邀请 HTTP 中剩余的原生调用待后续迁移。
