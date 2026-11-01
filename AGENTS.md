@@ -20,6 +20,8 @@ M3 第七批将 WorkBuddy/Trae 的凭据解析、刷新互斥及提交协调迁�
 
 M3 第八批将 WorkBuddy/Trae 分阶段登录、预览确认与凭据导入迁入 `accounts.ProviderLogins`。app 注入 Store 窄接口和原随机 ID 函数，当前适配器注册表逐次传入，不缓存第二份平台实例。HTTP 只解码 256KiB 参数、遮盖身份并映射原响应；平台仍负责设备/回调协议及身份核验，Store 仍是唯一原子保存方。保留 30s 超时、10 分钟会话、128 会话上限、单会话互斥、检查不保存、显式替换、保存失败可重试及删除后旧授权不能复活账号。登录业务不进入推理热路径；CodeArts 登录与账号管理其余业务仍待后续迁移。
 
+M3 第九批将 CodeArts 浏览器登录的预览、确认保存、重复账号处理迁入 `accounts.BrowserLogins`；`upstream/codearts.BrowserLogin` 适配既有 LoginManager，负责 STS JSON 解析及身份核验。原生 PKCE/DPoP、回调校验、监听器、超时和单会话 Commit 锁不变；保存与失效仍在原 Commit 锁内，Store 仍是唯一原子保存方。轮询不入库、显式替换、失败可重试及删除后不复活保持原语义。普通 CodeArts Manager 凭据解析/刷新本批未迁移，不增加普通推理路径调用。
+
 不要为凑齐目标树创建空包、空服务或无法运行的配置。具体职责和依赖见 `docs/architecture/`。
 
 ## 命令与验证

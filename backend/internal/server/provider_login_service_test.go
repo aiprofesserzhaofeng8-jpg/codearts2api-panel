@@ -22,10 +22,10 @@ func TestProviderLoginHTTPErrorAndRequestBoundaries(t *testing.T) {
 	}{
 		{accounts.LoginInvalid, 400, "invalid_request_error"}, {accounts.LoginMissing, 404, "invalid_request_error"},
 		{accounts.LoginExpired, 410, "invalid_request_error"}, {accounts.LoginConflict, 409, "invalid_request_error"},
-		{accounts.LoginCapacity, 429, "rate_limit_error"}, {accounts.LoginUpstream, 502, "upstream_error"},
+		{accounts.LoginInternal, 500, "server_error"}, {accounts.LoginCapacity, 429, "rate_limit_error"}, {accounts.LoginUpstream, 502, "upstream_error"},
 	} {
 		w := httptest.NewRecorder()
-		writeProviderLoginError(w, &accounts.LoginError{Kind: test.kind, Message: "fixture error"})
+		writeLoginError(w, &accounts.LoginError{Kind: test.kind, Message: "fixture error"})
 		var body struct {
 			Error struct{ Message, Type string }
 		}

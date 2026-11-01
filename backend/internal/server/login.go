@@ -76,16 +76,9 @@ func (s *Server) handleAdminLoginStart(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 
-	st := s.Store.Settings()
-	flow, err := s.Logins.Start(codearts.LoginOptions{
-		PortalHost: body.PortalHost,
-		Locale:     body.Locale,
-		Port:       st.LoginPort,
-		// Login uses the authentication extension version, not the IDE version.
-		PluginVersion: codearts.LoginPluginVersion,
-	})
+	flow, err := s.BrowserLogins.Start(body.PortalHost, body.Locale)
 	if err != nil {
-		writeErr(w, http.StatusInternalServerError, "启动登录失败: "+err.Error(), "server_error")
+		writeLoginError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -93,9 +86,9 @@ func (s *Server) handleAdminLoginStart(w http.ResponseWriter, r *http.Request) {
 		"session_id":  flow.ID,
 		"auth_url":    flow.AuthURL,
 		"port":        flow.Port,
-		"callback":    "http://127.0.0.1:" + strconv.Itoa(flow.Port) + codearts.AuthRedirectPath,
+		"callback":    flow.Callback,
 		"expires_in":  int(5 * time.Minute / time.Second),
-		"hint":        flow.CallbackHint(),
+		"hint":        flow.Hint,
 		"tunnel_hint": "ssh -N -L " + strconv.Itoa(flow.Port) + ":127.0.0.1:" + strconv.Itoa(flow.Port) + " <user>@<server>",
 	})
 }
@@ -114,28 +107,24 @@ func (s *Server) handleAdminLoginPoll(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "缺少 session_id", "invalid_request_error")
 		return
 	}
-	flow := s.Logins.Get(body.SessionID)
-	if flow == nil {
-		writeErr(w, http.StatusNotFound, "登录会话不存在或已过期", "invalid_request_error")
+	preview, err := s.BrowserLogins.Poll(body.SessionID)
+	if err != nil {
+		writeLoginError(w, err)
 		return
 	}
-
-	status, msg, account, sess := flow.Snapshot()
-	resp := map[string]any{"status": string(status), "message": msg}
-
-	if status == codearts.LoginConfirmed && sess != nil {
+	resp := map[string]any{"status": preview.Status, "message": preview.Message}
+	if preview.Ready {
 		resp["ready"] = true
-		resp["saved"] = flow.SavedAccountID() != ""
-		resp["account_id"] = flow.SavedAccountID()
-		resp["account"] = account
-		resp["account_name"] = account
-		resp["access_key"] = codearts.Mask(sess.AccessKey)
-		resp["domain_id"] = codearts.Mask(sess.DomainID)
-		resp["expires_at"] = sess.ExpiresAt.Unix()
-		resp["has_refresh"] = sess.HasRefresh()
-		resp["preview_id"] = loginFingerprint(sess)
-		resp["existing"] = s.Store.FindAccountSession(sess) != nil
-		resp["message"] = "授权已验证，请核对账号后点击确认完成登录"
+		resp["saved"] = preview.Saved
+		resp["account_id"] = preview.AccountID
+		resp["account"] = preview.AccountName
+		resp["account_name"] = preview.AccountName
+		resp["access_key"] = preview.KeyHint
+		resp["domain_id"] = preview.IdentityHint
+		resp["expires_at"] = preview.ExpiresAt
+		resp["has_refresh"] = preview.HasRefresh
+		resp["preview_id"] = preview.PreviewID
+		resp["existing"] = preview.Existing
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -162,59 +151,12 @@ func (s *Server) handleAdminLoginCallback(w http.ResponseWriter, r *http.Request
 		writeErr(w, http.StatusBadRequest, "缺少 session_id 或 url", "invalid_request_error")
 		return
 	}
-	flow := s.Logins.Get(body.SessionID)
-	if flow == nil {
-		writeErr(w, http.StatusNotFound, "登录会话不存在或已过期，请重新发起登录", "invalid_request_error")
-		return
-	}
-	input := strings.TrimSpace(body.URL)
-	var err error
-	switch {
-	case strings.HasPrefix(input, "{"):
-		var sess *codearts.Session
-		var expiry struct {
-			Expires string `json:"expires_at"`
-		}
-		_ = json.Unmarshal([]byte(input), &expiry)
-		expires, expiryErr := time.Parse(time.RFC3339Nano, expiry.Expires)
-		if expiryErr != nil || !expires.After(time.Now()) {
-			writeErr(w, 400, "session JSON 缺少有效的 expires_at 时间，请粘贴完整凭据", "invalid_request_error")
-			return
-		}
-		sess, err = codearts.SessionFromJSON([]byte(input))
-		if err != nil || sess == nil || !sess.Valid(0) || sess.SecurityToken == "" {
-			writeErr(w, 400, "需要有效且完整的 STS session JSON（含 accessKey、secretKey、securitytoken 和 expires_at）", "invalid_request_error")
-			return
-		}
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		_, name, domain, verifyErr := s.Up.CallerIdentity(ctx, sess)
-		cancel()
-		if verifyErr != nil || domain == "" {
-			writeErr(w, 400, "凭据未通过华为身份验证，请检查完整性和有效期", "invalid_request_error")
-			return
-		}
-		if sess.DomainID != "" && sess.DomainID != domain {
-			writeErr(w, 400, "凭据与账号身份不一致", "invalid_request_error")
-			return
-		}
-		sess.DomainID = domain
-		sess.AccountLabel = name
-		sess.Source = "browser-import"
-		err = flow.StageSession(sess)
-	case strings.Contains(input, "://"):
-		_, err = flow.SubmitCallbackURL(input)
-	default:
-		err = flow.SubmitCode(input)
-	}
+	result, err := s.BrowserLogins.Submit(r.Context(), body.SessionID, body.URL)
 	if err != nil {
-		writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
+		writeLoginError(w, err)
 		return
 	}
-	status, message, _, _ := flow.Snapshot()
-	if status == codearts.LoginConfirmed {
-		message = "授权已验证，请检查账号并确认保存"
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "accepted": true, "status": string(status), "message": message})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "accepted": true, "status": result.Status, "message": result.Message})
 }
 
 // handleAdminLoginCancel 取消一次登录。
@@ -227,6 +169,6 @@ func (s *Server) handleAdminLoginCancel(w http.ResponseWriter, r *http.Request) 
 		SessionID string `json:"session_id"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
-	ok := s.Logins.Cancel(body.SessionID)
+	ok := s.BrowserLogins.Cancel(body.SessionID)
 	writeJSON(w, http.StatusOK, map[string]any{"ok": ok})
 }

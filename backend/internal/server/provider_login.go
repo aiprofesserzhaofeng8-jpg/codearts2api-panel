@@ -10,7 +10,7 @@ import (
 )
 
 // Domain errors retain the existing admin API status and error envelope.
-func writeProviderLoginError(w http.ResponseWriter, err error) {
+func writeLoginError(w http.ResponseWriter, err error) {
 	status, kind := http.StatusBadGateway, "upstream_error"
 	var failure *accounts.LoginError
 	if errors.As(err, &failure) {
@@ -26,6 +26,8 @@ func writeProviderLoginError(w http.ResponseWriter, err error) {
 			status = http.StatusConflict
 		case accounts.LoginCapacity:
 			status, kind = http.StatusTooManyRequests, "rate_limit_error"
+		case accounts.LoginInternal:
+			status, kind = http.StatusInternalServerError, "server_error"
 		case accounts.LoginUpstream:
 			kind = "upstream_error"
 		}
@@ -60,7 +62,7 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 		MachineID: body.MachineID, DeviceID: body.DeviceID,
 	}, s.Providers)
 	if err != nil {
-		writeProviderLoginError(w, err)
+		writeLoginError(w, err)
 		return
 	}
 	switch result.State {
@@ -95,7 +97,7 @@ func (s *Server) handleProviderImport(w http.ResponseWriter, r *http.Request) {
 		Provider: body.Provider, Credentials: body.Credentials, Name: body.Name, Replace: body.Replace,
 	}, s.Providers)
 	if err != nil {
-		writeProviderLoginError(w, err)
+		writeLoginError(w, err)
 		return
 	}
 	writeJSON(w, 200, map[string]any{"ok": true, "account_id": id})

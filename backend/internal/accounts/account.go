@@ -18,6 +18,9 @@ type CredentialSnapshot interface {
 	IsPermanent() bool
 }
 
+// ErrAccountExists requires explicit confirmation before replacing an account.
+var ErrAccountExists = errors.New("该账号已存在，请确认更新已有账号")
+
 // ErrCredentialChanged rejects stale credential commits, including deleted accounts.
 var ErrCredentialChanged = errors.New("账号凭据已更新或账号已删除，请重新发起请求")
 

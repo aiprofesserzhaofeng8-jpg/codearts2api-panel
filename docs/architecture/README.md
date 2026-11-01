@@ -1,6 +1,6 @@
 # 项目结构设计 v1
 
-日期：2026-11-01。状态：**M1/M2 已完成，M3 前八批已落地，后续批次及 M4–M7 待实施**。
+日期：2026-11-01。状态：**M1/M2 已完成，M3 前九批已落地，后续批次及 M4–M7 待实施**。
 
 本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。Vue 前端、业务模块拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
 
@@ -21,6 +21,8 @@ WorkBuddy/Trae 单次执行与聚合分离见 [M3 第三批验收](../acceptance
 WorkBuddy/Trae 凭据协调分离见 [M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)。accounts 持有按账号的解析/刷新互斥，平台执行原生刷新，Store 保留条件提交；CodeArts 沿用现有 Manager。
 
 WorkBuddy/Trae 分阶段登录与导入分离见 [M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)。accounts 管授权会话、预览确认和保存协调；HTTP 保留原接口与脱敏，平台保留协议，CodeArts 登录沿用原实现。
+
+CodeArts 登录协调分离见 [M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)。accounts 管预览与保存协调，平台适配器保留原生登录状态机和 STS 核验；普通凭据刷新与其余管理业务仍待分离。
 
 ## 设计决策
 

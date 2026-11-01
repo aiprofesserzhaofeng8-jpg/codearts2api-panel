@@ -2,7 +2,7 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
@@ -65,7 +65,9 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 
 `accounts.ProviderCredentials` 通过使用方定义的 `ProviderCredentialStore` 读取最新快照并条件提交，只依赖 `CredentialAdapter.Normalize/Refresh` 解释不透明凭据。app 注入现有 Store 和动态续期开关，server 只查找原注册表并委托。按账号的刷新锁覆盖最新读取、规范化、刷新及提交；不持 Store 准入锁跨网络。`OperationLocks` 保留独立的刷新、领奖、成长任务锁实例。CodeArts 的 Manager、不可变 Session 指针及专用代际提交继续原样工作；本批不统一凭据格式或重写平台生命周期。
 
-`accounts.ProviderLogins` 经 `ProviderLoginStore` 调用现有查询和原子保存，按操作传入 `LoginAdapters`，不保存另一份适配器注册表。授权流程状态与凭据留在业务内存中；返回类型仅含预览/保存结果，不含凭据或回调正文。HTTP 自行映射开始、等待、预览、保存、取消五种结果，以及原有错误状态码；UID 在 HTTP 端脱敏。平台协议、10 分钟会话/128 上限、30s 截止时间、原会话锁和保存语义均保持不变。登录服务不参与普通生成；CodeArts 登录与账号管理其余入口尚未迁移。
+`accounts.ProviderLogins` 经 `ProviderLoginStore` 调用现有查询和原子保存，按操作传入 `LoginAdapters`，不保存另一份适配器注册表。授权流程状态与凭据留在业务内存中；返回类型仅含预览/保存结果，不含凭据或回调正文。HTTP 自行映射开始、等待、预览、保存、取消五种结果，以及原有错误状态码；UID 在 HTTP 端脱敏。平台协议、10 分钟会话/128 上限、30s 截止时间、原会话锁和保存语义均保持不变。登录服务不参与普通生成；账号管理其余入口尚未迁移。
+
+`accounts.BrowserLogins` 经 `BrowserLoginBackend` 协调 CodeArts 原有浏览器授权，`upstream/codearts.BrowserLogin` 包装同一原生 LoginManager。服务负责预览、确认保存、显式替换和删除后重放保护，适配器解释 STS JSON、核验身份并调用原回调入口。原生单会话 Commit 锁仍包住保存与缓存失效；不新建会话注册表或复制凭据，Store 的查重与保存仍为原事务。CodeArts 普通 Manager 解析/刷新尚未迁出。
 
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 

@@ -29,11 +29,13 @@ func newConfiguredServer(st *store.Store) *Server {
 	credentials.Latest = st.Account
 	credentials.Commit = st.CommitAccountSession
 	credentials.Logf = log.Printf
+	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	return New(st, Dependencies{
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
-		Up: up, Cred: credentials, Logins: codearts.NewLoginManager(up),
+		Up: up, Cred: credentials, Logins: logins,
 		Providers: adapters, Reg: models, Search: websearch.New(),
+		BrowserLogins:       accounts.NewBrowserLogins(st, codeartsup.NewBrowserLogin(logins, up), codearts.RandomHex, func() int { return st.Settings().LoginPort }, credentials.Invalidate),
 		ProviderLogins:      accounts.NewProviderLogins(st, codearts.RandomHex),
 		ProviderCredentials: accounts.NewProviderCredentials(st, func() bool { return st.Settings().AutoRefresh }),
 	})

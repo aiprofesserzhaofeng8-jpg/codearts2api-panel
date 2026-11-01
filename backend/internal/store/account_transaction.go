@@ -9,7 +9,8 @@ import (
 	"codearts2api/internal/codearts"
 )
 
-var ErrAccountExists = errors.New("该账号已存在，请确认更新已有账号")
+// ErrAccountExists preserves the existing store API and error identity.
+var ErrAccountExists = accounts.ErrAccountExists
 
 // Persist the override atomically; a failed write must not change live admission.
 func (s *Store) SetAccountConcurrencyAndSave(id string, limit int) (bool, error) {
@@ -43,7 +44,9 @@ func sameAccountSession(a, b *codearts.Session) bool {
 	return a != nil && b != nil && ((a.DomainID != "" && a.DomainID == b.DomainID) || (a.AccessKey != "" && a.AccessKey == b.AccessKey))
 }
 
-func (s *Store) FindAccountSession(sess *codearts.Session) *accounts.Account {
+func (s *Store) FindAccountSession(snapshot accounts.CredentialSnapshot) *accounts.Account {
+	// The legacy session codec is still interpreted only by its owning platform.
+	sess, _ := snapshot.(*codearts.Session)
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, a := range s.st.Accounts {

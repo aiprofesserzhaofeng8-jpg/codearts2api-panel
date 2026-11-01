@@ -69,6 +69,7 @@ const (
 	LoginConflict
 	LoginCapacity
 	LoginUpstream
+	LoginInternal
 )
 
 type LoginError struct {
