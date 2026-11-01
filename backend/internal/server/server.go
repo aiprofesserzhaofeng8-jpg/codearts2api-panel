@@ -31,6 +31,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	Search              *websearch.Client
 	rewardRuntime       accounts.OperationLocks
@@ -70,6 +71,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	ProviderLogins      *accounts.ProviderLogins
 	ProviderCredentials *accounts.ProviderCredentials
@@ -85,7 +87,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
 	s.localPanelToken = rand.Text()

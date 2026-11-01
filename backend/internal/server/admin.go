@@ -15,6 +15,7 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
+	codeartsup "codearts2api/internal/upstream/codearts"
 )
 
 // handleAdminState 返回控制台首屏所需的全部状态。
@@ -122,17 +123,8 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 
 	switch body.Action {
 	case "concurrency":
-		if strings.TrimSpace(body.ID) == "" || body.MaxInFlight == nil || *body.MaxInFlight < 0 || *body.MaxInFlight > 32 {
-			writeErr(w, 400, "请指定账号及 0–32 的并发上限；0 表示使用全局默认值", "invalid_request_error")
-			return
-		}
-		found, err := s.Store.SetAccountConcurrencyAndSave(body.ID, *body.MaxInFlight)
-		if err != nil {
-			writeErr(w, 500, "并发设置未保存，请检查状态文件目录权限后重试", "server_error")
-			return
-		}
-		if !found {
-			writeErr(w, 404, "账号不存在，请刷新列表", "invalid_request_error")
+		if err := s.AccountManagement.SetConcurrency(body.ID, body.MaxInFlight); err != nil {
+			writeAccountManagementError(w, err)
 			return
 		}
 		writeJSON(w, 200, map[string]any{"ok": true, "id": body.ID, "max_in_flight": *body.MaxInFlight, "pool": s.Store.PoolSnapshot()[body.ID]})
@@ -141,170 +133,115 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		if dir == "" {
 			dir = s.Store.Settings().UserDataDir
 		}
-		results, err := codearts.ImportFromDesktop(dir)
+		results, err := codeartsup.ImportDesktop(dir)
 		if err != nil {
 			writeErr(w, http.StatusBadRequest, "导入失败: "+err.Error(), "invalid_request_error")
 			return
 		}
+		list := make([]*accounts.Account, 0, len(results))
+		for _, result := range results {
+			list = append(list, result.Account)
+		}
+		created := s.AccountManagement.Import(list)
 		imported := make([]map[string]any, 0, len(results))
-		for _, res := range results {
-			isNew := s.Store.UpsertAccount(res.Account)
-			s.Cred.Invalidate(res.Account.ID)
+		for i, result := range results {
 			imported = append(imported, map[string]any{
-				"id": res.Account.ID, "name": res.Account.Name, "dir": res.Dir,
-				"access_key": codearts.Mask(res.AK),
-				"expires_at": res.Expires.Unix(), "new": isNew,
+				"id": result.Account.ID, "name": result.Account.Name, "dir": result.Directory,
+				"access_key": result.KeyHint, "expires_at": result.ExpiresAt, "new": created[i],
 			})
 		}
-		s.persist()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "count": len(imported), "imported": imported})
-
 	case "manual":
-		// 永久 AK/SK：不过期、不续期，忽略 security_token 与 expires_at。
-		if strings.EqualFold(strings.TrimSpace(body.CredentialKind), string(codearts.CredentialKindAKSK)) {
-			acct, err := codearts.ManualAKSKAccount(body.Name, body.AccessKey, body.SecretKey)
-			if err != nil {
-				writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
-				return
-			}
-			isNew := s.Store.UpsertAccount(acct)
-			s.Cred.Invalidate(acct.ID)
-			s.persist()
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": true, "new": isNew, "id": acct.ID, "credential_kind": "aksk",
-			})
-			return
-		}
-		acct, err := codearts.ManualAccount(body.Name, body.AccessKey, body.SecretKey, body.SecurityToken, unixTime(body.ExpiresAt))
+		acct, permanent, err := codeartsup.ManualAccount(codeartsup.ManualAccountOptions{
+			Name: body.Name, AccessKey: body.AccessKey, SecretKey: body.SecretKey,
+			SecurityToken: body.SecurityToken, CredentialKind: body.CredentialKind, ExpiresAt: unixTime(body.ExpiresAt),
+		})
 		if err != nil {
 			writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
 			return
 		}
-		isNew := s.Store.UpsertAccount(acct)
-		s.Cred.Invalidate(acct.ID)
-		s.persist()
-		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "new": isNew, "id": acct.ID})
-
+		isNew := s.AccountManagement.Add(acct)
+		response := map[string]any{"ok": true, "new": isNew, "id": acct.ID}
+		if permanent {
+			response["credential_kind"] = "aksk"
+		}
+		writeJSON(w, http.StatusOK, response)
 	case "session-json":
-		sess, err := codearts.SessionFromJSON([]byte(body.SessionJSON))
+		acct, err := codeartsup.AccountFromSessionJSON(body.Name, body.SessionJSON)
 		if err != nil {
-			writeErr(w, http.StatusBadRequest, "session JSON 解析失败: "+err.Error(), "invalid_request_error")
+			writeAccountManagementError(w, err)
 			return
 		}
-		if sess.AccessKey == "" || sess.SecretKey == "" {
-			writeErr(w, http.StatusBadRequest, "session JSON 里缺少 accessKey / secretKey", "invalid_request_error")
-			return
-		}
-		name := body.Name
-		if name == "" {
-			name = sess.AccountLabel
-		}
-		acct := &accounts.Account{
-			ID: codearts.RandomHex(8), Name: name, Source: "manual",
-			Enabled: true, Status: "ok", Session: sess,
-		}
-		isNew := s.Store.UpsertAccount(acct)
-		s.Cred.Invalidate(acct.ID)
-		s.persist()
+		isNew := s.AccountManagement.Add(acct)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "new": isNew, "id": acct.ID})
-
 	case "remove":
-		if strings.TrimSpace(body.ID) == "" {
-			writeErr(w, 400, "缺少账号 ID", "invalid_request_error")
+		if err := s.AccountManagement.Remove(body.ID); err != nil {
+			writeAccountManagementError(w, err)
 			return
 		}
-		ok, err := s.Store.RemoveAccountAndSave(body.ID)
-		if err != nil {
-			writeErr(w, 500, "删除未完成：无法保存状态文件，请检查目录权限", "server_error")
-			return
-		}
-		if !ok {
-			writeErr(w, 404, "账号已不存在，请刷新列表", "invalid_request_error")
-			return
-		}
-		s.Cred.Invalidate(body.ID)
 		s.creditMu.Lock()
 		delete(s.creditCache, body.ID)
 		s.creditMu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "removed_id": body.ID})
-
 	case "toggle":
-		a := s.Store.Account(body.ID)
-		if a == nil {
-			writeErr(w, http.StatusBadRequest, "账号不存在", "invalid_request_error")
+		if err := s.AccountManagement.Toggle(body.ID); err != nil {
+			writeAccountManagementError(w, err)
 			return
 		}
-		s.Store.SetAccountEnabled(a.ID, !a.Enabled)
-		s.persist()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
-
 	case "clear-errors":
-		s.Store.ClearModelHealth(body.ID)
-		if s.Store.ClearAccountErrors(body.ID) {
-			s.persist()
-		}
+		s.AccountManagement.ClearErrors(body.ID)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	case "pause", "resume":
-		if !s.Store.SetAccountPaused(body.ID, body.Action == "pause") {
-			writeErr(w, http.StatusNotFound, "账号不存在", "invalid_request_error")
+		if err := s.AccountManagement.SetPaused(body.ID, body.Action == "pause"); err != nil {
+			writeAccountManagementError(w, err)
 			return
 		}
-		s.persist()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
-
 	case "export":
-		a := s.Store.Account(body.ID)
-		if a == nil {
-			writeErr(w, http.StatusBadRequest, "账号不存在", "invalid_request_error")
-			return
-		}
-		if a.ProviderID() != provider.CodeArts {
-			writeJSON(w, 200, map[string]any{"ok": true, "name": a.DisplayName(), "session_json": string(a.Credentials), "warning": "此内容含完整上游凭据，请勿公开"})
-			return
-		}
-		s.Cred.Invalidate(a.ID)
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		defer cancel()
-		sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
+		result, err := s.AccountManagement.Export(r.Context(), body.ID)
 		if err != nil {
-			writeErr(w, http.StatusBadGateway, "导出失败: "+err.Error(), "upstream_error")
+			writeAccountManagementError(w, err)
 			return
 		}
-		plain, err := sess.RawJSON()
-		if err != nil {
-			writeErr(w, http.StatusInternalServerError, "序列化失败: "+err.Error(), "server_error")
+		if !result.Native {
+			writeJSON(w, 200, map[string]any{"ok": true, "name": result.Name, "session_json": result.JSON, "warning": "此内容含完整上游凭据，请勿公开"})
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":           true,
-			"name":         a.DisplayName(),
-			"session_json": string(plain),
-			"expires_at":   sess.ExpiresAt.Unix(),
-			"has_refresh":  sess.HasRefresh(),
-			"warning":      "该内容等同于账号登录态（含 refresh_token 与 DPoP 私钥），请勿外传或提交到版本库",
+			"ok": true, "name": result.Name, "session_json": result.JSON,
+			"expires_at": result.ExpiresAt, "has_refresh": result.HasRefresh,
+			"warning": "该内容等同于账号登录态（含 refresh_token 与 DPoP 私钥），请勿外传或提交到版本库",
 		})
-
 	case "reimport":
-		a := s.Store.Account(body.ID)
-		if a == nil {
-			writeErr(w, http.StatusBadRequest, "账号不存在", "invalid_request_error")
+		if err := s.AccountManagement.Reimport(r.Context(), body.ID); err != nil {
+			writeAccountManagementError(w, err)
 			return
 		}
-		s.Cred.Invalidate(a.ID)
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		defer cancel()
-		if _, err := s.Cred.Session(ctx, a, codearts.ResolveOptions{
-			LiveTTL: 0, Margin: 5 * time.Minute, AllowRefresh: true, WriteBack: false,
-		}); err != nil {
-			writeErr(w, http.StatusBadGateway, err.Error(), "upstream_error")
-			return
-		}
-		s.persist()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 
 	default:
 		writeErr(w, http.StatusBadRequest, "未知操作: "+body.Action, "invalid_request_error")
 	}
+}
+
+// writeAccountManagementError maps business semantics to the existing wire errors.
+func writeAccountManagementError(w http.ResponseWriter, err error) {
+	failure, ok := err.(*accounts.ManagementError)
+	if !ok {
+		writeErr(w, 500, err.Error(), "server_error")
+		return
+	}
+	status, kind := http.StatusBadRequest, "invalid_request_error"
+	switch failure.Kind {
+	case accounts.ManagementMissing:
+		status = http.StatusNotFound
+	case accounts.ManagementInternal:
+		status, kind = http.StatusInternalServerError, "server_error"
+	case accounts.ManagementUpstream:
+		status, kind = http.StatusBadGateway, "upstream_error"
+	}
+	writeErr(w, status, failure.Message, kind)
 }
 
 // handleAdminKeys 处理密钥的增删改查。

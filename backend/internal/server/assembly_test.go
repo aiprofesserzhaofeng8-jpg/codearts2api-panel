@@ -2,6 +2,7 @@ package server
 
 import (
 	"log"
+	"time"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
@@ -35,6 +36,13 @@ func newConfiguredServer(st *store.Store) *Server {
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: logins,
 		Providers: adapters, Reg: models, Search: websearch.New(),
+		AccountManagement: accounts.NewManagement(st, &codeartsup.AccountManagement{Manager: credentials, Options: func() codearts.ResolveOptions {
+			settings := st.Settings()
+			options := codearts.DefaultResolveOptions()
+			options.LiveTTL = time.Duration(settings.LiveTTLSeconds) * time.Second
+			options.AllowRefresh, options.WriteBack = settings.AutoRefresh, settings.WriteBackToIDE
+			return options
+		}}, credentials.Invalidate, log.Printf),
 		BrowserLogins:       accounts.NewBrowserLogins(st, codeartsup.NewBrowserLogin(logins, up), codearts.RandomHex, func() int { return st.Settings().LoginPort }, credentials.Invalidate),
 		ProviderLogins:      accounts.NewProviderLogins(st, codearts.RandomHex),
 		ProviderCredentials: accounts.NewProviderCredentials(st, func() bool { return st.Settings().AutoRefresh }),
@@ -50,4 +58,8 @@ func attachChatExecution(s *Server) *Server {
 		s.Completions.MarkStreamOnly = s.Reg.MarkStreamOnly
 	}
 	return s
+}
+
+func attachAccountManagement(s *Server) {
+	s.AccountManagement = accounts.NewManagement(s.Store, &codeartsup.AccountManagement{Manager: s.Cred, Options: s.resolveOptions}, s.Cred.Invalidate, log.Printf)
 }

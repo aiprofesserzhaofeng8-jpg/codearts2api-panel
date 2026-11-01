@@ -24,6 +24,8 @@ M3 第九批将 CodeArts 浏览器登录的预览、确认保存、重复账号�
 
 M3 第十批将 CodeArts 凭据的按账号互斥、短缓存、最新快照读取、条件提交和缓存失效迁入 `accounts.CredentialRuntime[T]`。原 Manager 内嵌同一个业务运行时并单向委托，保留零值、旧回调入口、互斥锁等待语义与不可变 Session 指针。平台仍负责默认策略、IDE 读取/回写、DPoP 刷新、代际内容比较和错误说明；Store 仍是唯一 CAS 提交方。缓存与提交顺序不变；失败不能恢复已轮转 token。该运行时不解释凭据，也不替换 WorkBuddy/Trae 的不透明 JSON 路径及可取消通道锁，不合并锁域。
 
+M3 第十一批将账号增删、导入后的提交、并发设置、启停/暂停、清错、导出与重读协调迁入 `accounts.Management`。CodeArts 手工/桌面/JSON 凭据构造和原生导出留在 `upstream/codearts`，HTTP 保留 DTO、脱敏和状态码映射；app 装配同一原生 Manager。Store 原有严格事务与旧版仅记录保存错误的操作保持区别，缓存只在原时点失效，不增加锁域。普通推理及平台协议不进入这些管理方法。
+
 不要为凑齐目标树创建空包、空服务或无法运行的配置。具体职责和依赖见 `docs/architecture/`。
 
 ## 命令与验证

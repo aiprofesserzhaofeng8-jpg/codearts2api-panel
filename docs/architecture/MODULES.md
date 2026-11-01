@@ -2,7 +2,7 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
@@ -70,6 +70,8 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 `accounts.BrowserLogins` 经 `BrowserLoginBackend` 协调 CodeArts 原有浏览器授权，`upstream/codearts.BrowserLogin` 包装同一原生 LoginManager。服务负责预览、确认保存、显式替换和删除后重放保护，适配器解释 STS JSON、核验身份并调用原回调入口。原生单会话 Commit 锁仍包住保存与缓存失效；不新建会话注册表或复制凭据，Store 的查重与保存仍为原事务。CodeArts 普通凭据协调见下述运行时，平台专有的读取与刷新继续归 Manager。
 
 `accounts.CredentialRuntime[T]` 只协调旧 Session 槽的不可变代际；CodeArts Manager 内嵌同一实例，原 Latest/Commit/Persist/Logf 回调继续由 app 装配。按账号 mutex 覆盖最新快照、平台解析与提交，短缓存和失效共用原锁域；与 WorkBuddy/Trae 的 OperationLocks 分离。平台保留 IDE I/O、DPoP、默认解析参数、错误和内容比较，Store 保留唯一 CAS；不以反射或 JSON 判断代际，不新增缓存或统一凭据格式。原 Manager 的 resolve 是平台策略实现，Session 是单向兼容入口。
+
+`accounts.Management` 负责账号管理的查询、提交与失效顺序，只依赖窄 Store 接口及原生导出/重读能力。删除、并发走原严格保存事务；启停、暂停、导入及重读成功后的收尾保存沿用记录保存失败的旧行为，原生轮转 CAS 错误仍向上传递。HTTP 保留 wire DTO、状态码、凭据导出提示和成功删除后的积分视图缓存清理；CodeArts 手工、JSON、桌面构造与原生序列化归 `upstream/codearts`。WorkBuddy/Trae 导出直接保留不透明凭据字节，不调用原生解析器；账号服务没有新注册表、准入锁或凭据缓存。
 
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 
