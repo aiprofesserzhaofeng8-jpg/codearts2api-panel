@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/gateway"
@@ -40,6 +41,16 @@ func Build(st *store.Store) (*server.Server, error) {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	return server.New(st, server.Dependencies{
+		AccessManagement: access.NewManagement(st, access.ModelResolver{
+			Raw: func(id string) (string, bool) {
+				model, ok := models.ResolveRaw(id)
+				return model.ID, ok
+			},
+			Aliased: func(id string) (string, bool) {
+				model, ok := models.Resolve(id, st.Settings().ModelAliases)
+				return model.ID, ok
+			},
+		}, codearts.Mask, log.Printf),
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: logins,
 		Providers: adapters, Reg: models, Search: websearch.New(),

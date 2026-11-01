@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/gateway"
@@ -32,7 +33,7 @@ func newConfiguredServer(st *store.Store) *Server {
 	credentials.Logf = log.Printf
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
-	return New(st, Dependencies{
+	s := New(st, Dependencies{
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: logins,
 		Providers: adapters, Reg: models, Search: websearch.New(),
@@ -47,6 +48,21 @@ func newConfiguredServer(st *store.Store) *Server {
 		ProviderLogins:      accounts.NewProviderLogins(st, codearts.RandomHex),
 		ProviderCredentials: accounts.NewProviderCredentials(st, func() bool { return st.Settings().AutoRefresh }),
 	})
+	attachAccessManagement(s)
+	return s
+}
+
+func attachAccessManagement(s *Server) {
+	s.AccessManagement = access.NewManagement(s.Store, access.ModelResolver{
+		Raw: func(id string) (string, bool) {
+			model, ok := s.Reg.ResolveRaw(id)
+			return model.ID, ok
+		},
+		Aliased: func(id string) (string, bool) {
+			model, ok := s.Reg.Resolve(id, s.Store.Settings().ModelAliases)
+			return model.ID, ok
+		},
+	}, codearts.Mask, log.Printf)
 }
 
 // Narrow fixture constructors intentionally omit unrelated app services.

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"codearts2api/internal/access"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -9,14 +10,7 @@ import (
 	"codearts2api/internal/provider"
 )
 
-type AccountGroup struct {
-	ModelMappings    []ModelMapping `json:"model_mappings,omitempty"`
-	ID               string         `json:"id"`
-	Name             string         `json:"name"`
-	AccountIDs       []string       `json:"account_ids"`
-	AllowlistEnabled bool           `json:"allowlist_enabled"`
-	ModelIDs         []string       `json:"model_ids"`
-}
+type AccountGroup = access.AccountGroup
 
 type AccessScope struct {
 	ModelMappings    []ModelMapping

@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
@@ -31,6 +32,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	AccessManagement    *access.Management
 	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	Search              *websearch.Client
@@ -71,6 +73,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	AccessManagement    *access.Management
 	AccountManagement   *accounts.Management
 	BrowserLogins       *accounts.BrowserLogins
 	ProviderLogins      *accounts.ProviderLogins
@@ -87,7 +90,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
 	s.localPanelToken = rand.Text()
@@ -560,16 +563,6 @@ func sanitizedSettings(st store.Settings) map[string]any {
 		"language":               st.Language,
 		"admin_password_set":     st.AdminPassword != "",
 	}
-}
-
-// resolveKeyRef 把完整密钥或脱敏密钥解析为完整密钥。
-func (s *Server) resolveKeyRef(ref string) string {
-	for _, k := range s.Store.Keys() {
-		if keyReference(k.Key) == ref || k.Key == ref || codearts.Mask(k.Key) == ref {
-			return k.Key
-		}
-	}
-	return ref
 }
 
 func extractKey(r *http.Request) string {

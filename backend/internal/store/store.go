@@ -2,6 +2,7 @@
 package store
 
 import (
+	"codearts2api/internal/access"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,17 +16,7 @@ import (
 )
 
 // APIKey 是网关对外签发的调用密钥。
-type APIKey struct {
-	GroupID     string      `json:"group_id,omitempty"`
-	Budget      KeyBudget   `json:"budget"`
-	BudgetUsage BudgetUsage `json:"budget_usage"`
-	Key         string      `json:"key"`
-	Name        string      `json:"name"`
-	Enabled     bool        `json:"enabled"`
-	CreatedAt   int64       `json:"created_at"`
-	LastUsed    int64       `json:"last_used"`
-	Requests    int64       `json:"requests"`
-}
+type APIKey = access.APIKey
 
 // Settings 是运行期可调参数。
 type Settings struct {

@@ -1,8 +1,8 @@
 package server
 
 import (
+	"codearts2api/internal/access"
 	"codearts2api/internal/apierr"
-	"codearts2api/internal/store"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -44,15 +44,15 @@ func (s *Server) handleKeyBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Ref    string          `json:"ref"`
-		Budget store.KeyBudget `json:"budget"`
-		Reset  bool            `json:"reset"`
+		Ref    string           `json:"ref"`
+		Budget access.KeyBudget `json:"budget"`
+		Reset  bool             `json:"reset"`
 	}
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&body) != nil {
 		writeErr(w, 400, "预算格式无效", "invalid_request_error")
 		return
 	}
-	if err := s.Store.SetKeyBudgetAndSave(s.resolveKeyRef(body.Ref), body.Budget, body.Reset); err != nil {
+	if err := s.AccessManagement.SetKeyBudget(body.Ref, body.Budget, body.Reset); err != nil {
 		writeErr(w, 400, err.Error(), "invalid_request_error")
 		return
 	}

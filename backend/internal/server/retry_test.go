@@ -42,8 +42,10 @@ func newTestServer(t *testing.T, accounts int, retries int) *Server {
 			Session: &codearts.Session{AccessKey: "ak-" + id, SecretKey: "sk-" + id},
 		})
 	}
-	return attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: codearts.NewClient(), Reg: registry.New(),
+	srv := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: codearts.NewClient(), Reg: registry.New(),
 		Limits: ratelimit.New(rateLimitConfig(st.Settings()), nil)})
+	attachAccessManagement(srv)
+	return srv
 }
 
 // transientErr 模拟上游「每账号 3 个并发会话」打满。

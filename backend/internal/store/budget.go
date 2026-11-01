@@ -1,24 +1,15 @@
 package store
 
 import (
+	"codearts2api/internal/access"
 	"encoding/json"
 	"fmt"
 	"math"
 	"sync"
 )
 
-type KeyBudget struct {
-	MaxRequests int64   `json:"max_requests"`
-	MaxTokens   int64   `json:"max_tokens"`
-	MaxUSD      float64 `json:"max_usd"`
-}
-type BudgetUsage struct {
-	Unpriced   bool    `json:"unpriced"`
-	Requests   int64   `json:"requests"`
-	Tokens     int64   `json:"tokens"`
-	USD        float64 `json:"usd"`
-	Incomplete bool    `json:"incomplete"`
-}
+type KeyBudget = access.KeyBudget
+type BudgetUsage = access.BudgetUsage
 type BudgetError struct{ Message string }
 
 func (e *BudgetError) Error() string             { return e.Message }

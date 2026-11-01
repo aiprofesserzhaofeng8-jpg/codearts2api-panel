@@ -248,7 +248,7 @@ func writeAccountManagementError(w http.ResponseWriter, err error) {
 func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		keys := s.Store.Keys()
+		keys := s.AccessManagement.Keys()
 		safe := make([]map[string]any, 0, len(keys))
 		for _, k := range keys {
 			safe = append(safe, map[string]any{
@@ -267,7 +267,7 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 400, "密钥参数无效", "invalid_request_error")
 			return
 		}
-		k, err := s.Store.AddKeyInGroupAndSave(body.Name, body.GroupID)
+		k, err := s.AccessManagement.AddKey(body.Name, body.GroupID)
 		if err != nil {
 			writeErr(w, 400, err.Error(), "invalid_request_error")
 			return
@@ -275,13 +275,7 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "key": k.Key})
 	case http.MethodDelete:
 		q := r.URL.Query()
-		if ref := q.Get("key"); ref != "" {
-			_ = s.Store.DeleteKey(s.resolveKeyRef(ref))
-		}
-		if ref := q.Get("toggle"); ref != "" {
-			_ = s.Store.ToggleKey(s.resolveKeyRef(ref))
-		}
-		s.persist()
+		s.AccessManagement.ChangeKeys(q.Get("key"), q.Get("toggle"))
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	default:
 		writeErr(w, http.StatusMethodNotAllowed, "不支持的方法", "invalid_request_error")

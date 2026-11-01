@@ -75,6 +75,8 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 
 `gateway.PrepareSummaryAttempt` 经 `SummaryTargetSource` 读取当前强制型号、目录、冷却和纯摘要选项；数据源不解释原生凭据、不选号、不新增缓存。更换目标仍限定在相同平台/地区并复用已绑定传输；首次准备沿用准入结果，重试先复核当前权限和已发生用量的预算进度。server 投影 Context 并委托既有 `checkRequestBudget`，原分组映射与原始白名单校验保留原入口；Store 的原子准入和账本未迁出。`requestpolicy.PrepareSummaryModel` 仅处理已授权型号的协议外壳；换型号删除原顶层 reasoning 控制，再应用备用型号自己的摘要策略。
 
+`access.Management` 只管理分组与密钥配置协调，经 `ManagementStore` 调用原 Store 事务，并借用当前目录/别名解析函数。原始型号来源必须精确命中目录；白名单沿用别名归一化和未知型号保留行为。更新分组时缺省/null 映射继承旧值，显式空列表清除。密钥引用保留原值、稳定 hash 和旧脱敏值的匹配顺序；管理员认证及明文找回入口仍在 HTTP 层。`APIKey`、`AccountGroup`、`ModelMapping`、`KeyBudget`、`BudgetUsage` 的规范定义归 access，Store 以类型别名兼容 schema 6。原子权限发布、预算预留/重置、准入和账本仍属 Store；管理服务不进入推理路径，不建立权限副本。全局设置/模型策略及认证会话尚未随本批迁移。
+
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 
 ## 旧代码迁移表
@@ -88,7 +90,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `server/anthropic.go`、`responses.go` | `httpapi/inference` + `protocol` | HTTP 与纯转换分开，避免复制转换器 |
 | `protocol`、`responsescompat` | `protocol` 中清楚命名的实现 | 首批可保留旧包名；来源许可和测试随迁移保留 |
 | `store/pool.go` | `gateway` 准入状态 + `scheduler` 算法 | 先保留旧 Store 原子入口，再迁移锁与状态 |
-| `store/groups.go`、密钥管理 | `access` + `storage` | 分组事务、预算重置等保持原子语义 |
+| `store/groups.go`、密钥管理 | `access` + `storage` | 配置协调和中立模型已归 access；Store 类型别名兼容，原分组事务、权限发布和预算重置保留至 M5 |
 | `registry`、`server/group_model_mapping.go` | `catalog` + `gateway` | 目录、解析、尝试期型号替换分别归位 |
 | `requestpolicy`、`server/request_policy.go` | `policy` + `gateway` | 提示词恢复已归 gateway，纯提示词/摘要准备归 requestpolicy；公共继承留后续阶段 |
 | `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息及三平台凭据协调已迁出；CodeArts 原生策略、旧状态编码及 Store 条件提交保留，互斥与缓存归 accounts 运行时 |

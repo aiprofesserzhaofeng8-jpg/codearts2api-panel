@@ -1,9 +1,7 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"crypto/sha256"
-	"encoding/hex"
+	"codearts2api/internal/access"
 	"encoding/json"
 	"net/http"
 )
@@ -21,16 +19,13 @@ func (s *Server) handleAdminKeyReveal(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, "缺少密钥标识", "invalid_request_error")
 		return
 	}
-	for _, key := range s.Store.Keys() {
-		if keyReference(key.Key) == body.Key || key.Key == body.Key || codearts.Mask(key.Key) == body.Key {
-			writeJSON(w, 200, map[string]any{"value": key.Key})
-			return
-		}
+	if key, ok := s.AccessManagement.RevealKey(body.Key); ok {
+		writeJSON(w, 200, map[string]any{"value": key})
+		return
 	}
 	writeErr(w, 404, "密钥不存在", "invalid_request_error")
 }
 
 func keyReference(key string) string {
-	sum := sha256.Sum256([]byte(key))
-	return "key_" + hex.EncodeToString(sum[:12])
+	return access.KeyReference(key)
 }

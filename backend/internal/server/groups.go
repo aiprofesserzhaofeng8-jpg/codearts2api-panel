@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"strings"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/provider"
@@ -128,36 +127,14 @@ func (s *Server) checkGroupModel(ctx context.Context, model string) error {
 func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, 200, map[string]any{"groups": s.Store.Groups()})
+		writeJSON(w, 200, map[string]any{"groups": s.AccessManagement.Groups()})
 	case http.MethodPost:
-		var g store.AccountGroup
+		var g access.AccountGroup
 		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 256<<10)).Decode(&g) != nil {
 			writeErr(w, 400, "分组格式无效", "invalid_request_error")
 			return
 		}
-		if g.ID != "" && g.ModelMappings == nil {
-			for _, old := range s.Store.Groups() {
-				if old.ID == g.ID {
-					g.ModelMappings = old.ModelMappings
-				}
-			}
-		}
-		for i := range g.ModelMappings {
-			for j, id := range g.ModelMappings[i].Sources {
-				m, ok := s.Reg.ResolveRaw(id)
-				if !ok {
-					writeErr(w, 400, fmt.Sprintf("原始型号不在当前目录：%s", id), "invalid_request_error")
-					return
-				}
-				g.ModelMappings[i].Sources[j] = m.ID
-			}
-		}
-		for i, id := range g.ModelIDs {
-			if m, ok := s.Reg.Resolve(strings.TrimSpace(id), s.Store.Settings().ModelAliases); ok {
-				g.ModelIDs[i] = m.ID
-			}
-		}
-		saved, err := s.Store.SaveGroup(g)
+		saved, err := s.AccessManagement.SaveGroup(g)
 		if err != nil {
 			writeErr(w, 400, err.Error(), "invalid_request_error")
 			return
@@ -169,7 +146,7 @@ func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 400, "缺少分组标识", "invalid_request_error")
 			return
 		}
-		if err := s.Store.DeleteGroup(id); err != nil {
+		if err := s.AccessManagement.DeleteGroup(id); err != nil {
 			writeErr(w, 409, err.Error(), "invalid_request_error")
 			return
 		}
@@ -191,7 +168,7 @@ func (s *Server) handleKeyGroup(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, "缺少密钥或分组设置", "invalid_request_error")
 		return
 	}
-	if err := s.Store.SetKeyGroupAndSave(s.resolveKeyRef(body.Ref), *body.GroupID); err != nil {
+	if err := s.AccessManagement.SetKeyGroup(body.Ref, *body.GroupID); err != nil {
 		writeErr(w, 400, err.Error(), "invalid_request_error")
 		return
 	}

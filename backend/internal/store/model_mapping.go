@@ -1,6 +1,7 @@
 package store
 
 import (
+	"codearts2api/internal/access"
 	"fmt"
 	"strings"
 	"unicode"
@@ -9,10 +10,7 @@ import (
 )
 
 // ModelMapping is local to one group. Sources are concrete catalog IDs, not aliases.
-type ModelMapping struct {
-	Name    string   `json:"name"`
-	Sources []string `json:"sources"`
-}
+type ModelMapping = access.ModelMapping
 
 func cloneMappings(in []ModelMapping) []ModelMapping {
 	if in == nil {

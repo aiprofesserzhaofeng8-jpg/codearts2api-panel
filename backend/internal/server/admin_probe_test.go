@@ -51,6 +51,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 	})
 	up := codearts.NewClient()
 	s := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: up, Reg: registry.New(), cache: newModelCache()})
+	attachAccessManagement(s)
 	s.Cred = codearts.NewManager(up)
 	attachAccountManagement(s)
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
