@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
@@ -33,6 +34,7 @@ func newConfiguredServer(st *store.Store) *Server {
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: codearts.NewLoginManager(up),
 		Providers: adapters, Reg: models, Search: websearch.New(),
+		ProviderCredentials: accounts.NewProviderCredentials(st, func() bool { return st.Settings().AutoRefresh }),
 	})
 }
 
@@ -40,6 +42,7 @@ func newConfiguredServer(st *store.Store) *Server {
 func attachChatExecution(s *Server) *Server {
 	s.CodeArts = codeartsup.New(s.Up)
 	s.Completions = &gateway.Completions{}
+	s.ProviderCredentials = accounts.NewProviderCredentials(s.Store, func() bool { return s.Store.Settings().AutoRefresh })
 	if s.Reg != nil {
 		s.Completions.MarkStreamOnly = s.Reg.MarkStreamOnly
 	}

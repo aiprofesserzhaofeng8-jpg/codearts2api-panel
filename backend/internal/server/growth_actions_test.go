@@ -396,7 +396,7 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 	close(hold)
 	<-done
 	// Synchronize with the task lock to wait for accounting/cleanup after disconnect.
-	release, err := s.growthRuntime.lock(context.Background(), "wb-cn")
+	release, err := s.growthRuntime.Acquire(context.Background(), "wb-cn")
 	if err != nil {
 		t.Fatal(err)
 	}

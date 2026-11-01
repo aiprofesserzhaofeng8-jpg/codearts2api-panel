@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/gateway"
@@ -30,25 +31,25 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
-	Search             *websearch.Client
-	rewardRuntime      providerRuntime
-	growthRuntime      providerRuntime
-	growthExecution    growthExecutionState
-	Providers          *provider.Registry
-	providerRuntime    providerRuntime
-	providerLogins     providerLoginRuntime
-	AllowLocalAdmin    bool
-	adminSessions      adminSessions
-	adminFailures      adminAttempts
-	responsesReasoning responsesReasoningCache
-	localPanelToken    string
-	Store              *store.Store
-	CodeArts           *codeartsup.Adapter
-	Completions        *gateway.Completions
-	Up                 *codearts.Client
-	Cred               *codearts.Manager
-	Reg                *registry.Registry
-	Logins             *codearts.LoginManager
+	Search              *websearch.Client
+	rewardRuntime       accounts.OperationLocks
+	growthRuntime       accounts.OperationLocks
+	growthExecution     growthExecutionState
+	Providers           *provider.Registry
+	ProviderCredentials *accounts.ProviderCredentials
+	providerLogins      providerLoginRuntime
+	AllowLocalAdmin     bool
+	adminSessions       adminSessions
+	adminFailures       adminAttempts
+	responsesReasoning  responsesReasoningCache
+	localPanelToken     string
+	Store               *store.Store
+	CodeArts            *codeartsup.Adapter
+	Completions         *gateway.Completions
+	Up                  *codearts.Client
+	Cred                *codearts.Manager
+	Reg                 *registry.Registry
+	Logins              *codearts.LoginManager
 	// Limits 是按 API 密钥的自我保护限流（QPS + 在飞并发）。
 	Limits *ratelimit.Limiter
 
@@ -68,19 +69,20 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
-	CodeArts    *codeartsup.Adapter
-	Completions *gateway.Completions
-	Up          *codearts.Client
-	Cred        *codearts.Manager
-	Logins      *codearts.LoginManager
-	Providers   *provider.Registry
-	Reg         *registry.Registry
-	Search      *websearch.Client
+	ProviderCredentials *accounts.ProviderCredentials
+	CodeArts            *codeartsup.Adapter
+	Completions         *gateway.Completions
+	Up                  *codearts.Client
+	Cred                *codearts.Manager
+	Logins              *codearts.LoginManager
+	Providers           *provider.Registry
+	Reg                 *registry.Registry
+	Search              *websearch.Client
 }
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
 	s.localPanelToken = rand.Text()

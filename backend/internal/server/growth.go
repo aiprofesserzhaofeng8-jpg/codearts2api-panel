@@ -127,7 +127,7 @@ func (s *Server) handleGrowthClaim(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	// Only task claims for this account serialize. Never hold credential/store
 	// locks while doing RPC or waiting for upstream accounting to catch up.
-	release, err := s.growthRuntime.lock(ctx, body.ID)
+	release, err := s.growthRuntime.Acquire(ctx, body.ID)
 	if err != nil {
 		writeErr(w, 408, "等待成长任务操作超时", "upstream_error")
 		return

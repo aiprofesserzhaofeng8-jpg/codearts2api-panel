@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
@@ -40,5 +41,6 @@ func Build(st *store.Store) (*server.Server, error) {
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: codearts.NewLoginManager(up),
 		Providers: adapters, Reg: models, Search: websearch.New(),
+		ProviderCredentials: accounts.NewProviderCredentials(st, func() bool { return st.Settings().AutoRefresh }),
 	}), nil
 }

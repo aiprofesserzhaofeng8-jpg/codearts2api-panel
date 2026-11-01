@@ -1,0 +1,758 @@
+{
+  "stage": "structure-m3-7",
+  "date": "2026-11-01",
+  "baseline": "e5fa02f",
+  "version": "0.3.0-structure-m3.7",
+  "scope": [
+    "WorkBuddy/Trae credential normalization and refresh coordination owned by accounts",
+    "original per-account cancellable locks; independent refresh, rewards and growth domains",
+    "platforms retain credential formats and refresh protocols; store retains conditional commits"
+  ],
+  "checks": {
+    "make_check": "passed",
+    "race": {
+      "status": "passed",
+      "tested_packages": 18,
+      "server_seconds": 305.958
+    },
+    "windows_vet": "passed",
+    "windows_amd64_crossbuild": "passed",
+    "windows_execution": "not run",
+    "linux_build": "passed",
+    "docker_build": "passed",
+    "container_version": "codearts2api 0.3.0-structure-m3.7",
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001"
+      }
+    ],
+    "browser": [
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      }
+    ],
+    "launcher_tests": 9,
+    "pi": "passed",
+    "boundaries": {
+      "passed": true,
+      "native_platform_store_web_gateway_upstream_files_identical": true,
+      "direct_imports": {
+        "accounts": [
+          "codearts2api/internal/provider",
+          "context",
+          "encoding/json",
+          "errors",
+          "fmt",
+          "sync",
+          "time"
+        ],
+        "gateway": [
+          "codearts2api/internal/accounts",
+          "codearts2api/internal/protocol",
+          "codearts2api/internal/provider",
+          "codearts2api/internal/requestpolicy",
+          "context",
+          "encoding/json",
+          "errors",
+          "fmt",
+          "strings",
+          "time"
+        ],
+        "requestpolicy": [
+          "codearts2api/internal/protocol",
+          "embed",
+          "encoding/json",
+          "fmt",
+          "regexp",
+          "strings"
+        ],
+        "upstream": [
+          "codearts2api/internal/provider",
+          "context",
+          "encoding/json"
+        ]
+      }
+    },
+    "credential_contract": "24 same-account requests refresh once; cross-account progress; cancelable wait/refresh; CAS rejects relogin/deletion; persistence failure retains rotated token; identity/scope guards and operation-lock isolation passed",
+    "pinned_sub2api_original_tests": "not rerun; converter sources unchanged; project protocol regression passed"
+  },
+  "real_upstreams": {
+    "checks": [
+      {
+        "case": "codearts/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.987,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "codearts/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.837,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.534,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 2.046,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.312,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.521,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "codearts/summary_explicit_buffered",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "summary_attempts": 1,
+        "finish_reason": "stop",
+        "request_log_correlated": true
+      },
+      {
+        "case": "codearts/summary_pi_stream",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash",
+        "summary_attempts": 1,
+        "finish_reason": "stop",
+        "request_log_correlated": true
+      },
+      {
+        "case": "trae/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "client_generation_requests": 12,
+    "met_all_assertions": 12,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted_on_exit": true,
+    "scope_limit": "No shared-account refresh or reward claim. Refresh rotation, concurrent login/deletion and persistence failures use fake adapters with the real Store. No full CLI application or 24-hour acceptance."
+  },
+  "performance": {
+    "rounds": 5,
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "fixed_iterations": {
+      "normal": 500,
+      "codearts_once": 20,
+      "summary_small": 500,
+      "summary_large": 20
+    },
+    "latencies": [
+      {
+        "provider": "codearts",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 22.037,
+          "after": 22.053
+        },
+        "change_percent": 0.07
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.049,
+          "after": 22.996
+        },
+        "change_percent": -0.23
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": false,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.438,
+          "after": 44.519
+        },
+        "change_percent": 0.18
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 22.995,
+          "after": 23.043
+        },
+        "change_percent": 0.21
+      },
+      {
+        "provider": "codearts_summary",
+        "stream": true,
+        "retry": true,
+        "p95_median_ms": {
+          "before": 44.102,
+          "after": 44.861
+        },
+        "change_percent": 1.72
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.16,
+          "after": 22.819
+        },
+        "change_percent": -1.47
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 22.978,
+          "after": 23.224
+        },
+        "change_percent": 1.07
+      },
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.558,
+          "after": 23.63
+        },
+        "change_percent": 0.31
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "retry": false,
+        "p95_median_ms": {
+          "before": 23.301,
+          "after": 22.966
+        },
+        "change_percent": -1.44
+      }
+    ],
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 753500.0,
+          "bytes_op": 145942,
+          "allocs_op": 1118
+        },
+        "after": {
+          "ns_op": 758778.0,
+          "bytes_op": 145984,
+          "allocs_op": 1118
+        },
+        "change_percent": 0.7
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 3581.0,
+          "bytes_op": 942,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 3104.0,
+          "bytes_op": 929,
+          "allocs_op": 20
+        },
+        "change_percent": -13.32
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 26412.0,
+          "bytes_op": 19747,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 32992.0,
+          "bytes_op": 20012,
+          "allocs_op": 142
+        },
+        "change_percent": 24.91
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns_op": 1998246.0,
+          "bytes_op": 2254330,
+          "allocs_op": 164
+        },
+        "after": {
+          "ns_op": 1972762.0,
+          "bytes_op": 2254328,
+          "allocs_op": 164
+        },
+        "change_percent": -1.28
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns_op": 15865394.0,
+          "bytes_op": 17092187,
+          "allocs_op": 173
+        },
+        "after": {
+          "ns_op": 15939183.0,
+          "bytes_op": 17091914,
+          "allocs_op": 173
+        },
+        "change_percent": 0.47
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+        "before": {
+          "ns_op": 632314.0,
+          "bytes_op": 144312,
+          "allocs_op": 512
+        },
+        "after": {
+          "ns_op": 718292.0,
+          "bytes_op": 144285,
+          "allocs_op": 513
+        },
+        "change_percent": 13.6
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+        "before": {
+          "ns_op": 693127.0,
+          "bytes_op": 146491,
+          "allocs_op": 517
+        },
+        "after": {
+          "ns_op": 733670.0,
+          "bytes_op": 146133,
+          "allocs_op": 517
+        },
+        "change_percent": 5.85
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+        "before": {
+          "ns_op": 723940.0,
+          "bytes_op": 255216,
+          "allocs_op": 817
+        },
+        "after": {
+          "ns_op": 727357.0,
+          "bytes_op": 255493,
+          "allocs_op": 817
+        },
+        "change_percent": 0.47
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+        "before": {
+          "ns_op": 760142.0,
+          "bytes_op": 257683,
+          "allocs_op": 832
+        },
+        "after": {
+          "ns_op": 765755.0,
+          "bytes_op": 257224,
+          "allocs_op": 832
+        },
+        "change_percent": 0.74
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=false",
+        "before": {
+          "ns_op": 18231600.0,
+          "bytes_op": 24772404,
+          "allocs_op": 643
+        },
+        "after": {
+          "ns_op": 18773811.0,
+          "bytes_op": 24930110,
+          "allocs_op": 644
+        },
+        "change_percent": 2.97
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=false/stream=true",
+        "before": {
+          "ns_op": 20418615.0,
+          "bytes_op": 26357151,
+          "allocs_op": 649
+        },
+        "after": {
+          "ns_op": 20327031.0,
+          "bytes_op": 26302777,
+          "allocs_op": 649
+        },
+        "change_percent": -0.45
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=false",
+        "before": {
+          "ns_op": 26704105.0,
+          "bytes_op": 38945519,
+          "allocs_op": 1013
+        },
+        "after": {
+          "ns_op": 26540631.0,
+          "bytes_op": 38628790,
+          "allocs_op": 1012
+        },
+        "change_percent": -0.61
+      },
+      {
+        "benchmark": "BenchmarkSummaryExecution/size=1048576/retry=true/stream=true",
+        "before": {
+          "ns_op": 27695794.0,
+          "bytes_op": 40263929,
+          "allocs_op": 1024
+        },
+        "after": {
+          "ns_op": 27863346.0,
+          "bytes_op": 40211556,
+          "allocs_op": 1021
+        },
+        "change_percent": 0.6
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 1419663.0,
+          "bytes_op": 646384,
+          "allocs_op": 14155
+        },
+        "after": {
+          "ns_op": 1420496.0,
+          "bytes_op": 646420,
+          "allocs_op": 14155
+        },
+        "change_percent": 0.06
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1453104.0,
+          "bytes_op": 688179,
+          "allocs_op": 14108
+        },
+        "after": {
+          "ns_op": 1442161.0,
+          "bytes_op": 688246,
+          "allocs_op": 14109
+        },
+        "change_percent": -0.75
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 956218.0,
+          "bytes_op": 263835,
+          "allocs_op": 3131
+        },
+        "after": {
+          "ns_op": 970844.0,
+          "bytes_op": 264212,
+          "allocs_op": 3131
+        },
+        "change_percent": 1.53
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 1001743.0,
+          "bytes_op": 274484,
+          "allocs_op": 3087
+        },
+        "after": {
+          "ns_op": 992931.0,
+          "bytes_op": 274282,
+          "allocs_op": 3087
+        },
+        "change_percent": -0.88
+      }
+    ],
+    "small_case_recheck": {
+      "baseline": "e5fa02f",
+      "rounds": 5,
+      "reason": "Initial small-summary medians exceeded 5%; an unchanged CodeArts control also varied. Preserve initial data and recheck affected cases at higher fixed iteration counts.",
+      "fixed_iterations": {
+        "summary_small": 2000,
+        "codearts_control": 5000
+      },
+      "cpu_affinity": [
+        0,
+        2
+      ],
+      "gomaxprocs": 2,
+      "benchmarks": [
+        {
+          "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+          "before": {
+            "ns_op": 19127.0,
+            "bytes_op": 19739,
+            "allocs_op": 142
+          },
+          "after": {
+            "ns_op": 19020.0,
+            "bytes_op": 19740,
+            "allocs_op": 142
+          },
+          "change_percent": -0.56,
+          "samples_ns": {
+            "before": [
+              19557.0,
+              18794.0,
+              19127.0,
+              18795.0,
+              19641.0
+            ],
+            "after": [
+              19020.0,
+              19011.0,
+              20253.0,
+              18962.0,
+              19033.0
+            ]
+          }
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=false",
+          "before": {
+            "ns_op": 663118.0,
+            "bytes_op": 145326,
+            "allocs_op": 513
+          },
+          "after": {
+            "ns_op": 662952.0,
+            "bytes_op": 145410,
+            "allocs_op": 513
+          },
+          "change_percent": -0.03,
+          "samples_ns": {
+            "before": [
+              644239.0,
+              656117.0,
+              4133024.0,
+              663118.0,
+              1259986.0
+            ],
+            "after": [
+              662952.0,
+              627269.0,
+              628413.0,
+              663884.0,
+              778382.0
+            ]
+          }
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=false/stream=true",
+          "before": {
+            "ns_op": 658397.0,
+            "bytes_op": 147112,
+            "allocs_op": 517
+          },
+          "after": {
+            "ns_op": 689139.0,
+            "bytes_op": 147464,
+            "allocs_op": 517
+          },
+          "change_percent": 4.67,
+          "samples_ns": {
+            "before": [
+              654629.0,
+              650856.0,
+              4478217.0,
+              658397.0,
+              5068517.0
+            ],
+            "after": [
+              689139.0,
+              677069.0,
+              1114348.0,
+              663224.0,
+              699988.0
+            ]
+          }
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=false",
+          "before": {
+            "ns_op": 679321.0,
+            "bytes_op": 256378,
+            "allocs_op": 817
+          },
+          "after": {
+            "ns_op": 679374.0,
+            "bytes_op": 256323,
+            "allocs_op": 817
+          },
+          "change_percent": 0.01,
+          "samples_ns": {
+            "before": [
+              664642.0,
+              679321.0,
+              1240722.0,
+              672292.0,
+              5242928.0
+            ],
+            "after": [
+              672706.0,
+              714416.0,
+              3484426.0,
+              679072.0,
+              679374.0
+            ]
+          }
+        },
+        {
+          "benchmark": "BenchmarkSummaryExecution/size=1024/retry=true/stream=true",
+          "before": {
+            "ns_op": 687899.0,
+            "bytes_op": 258513,
+            "allocs_op": 832
+          },
+          "after": {
+            "ns_op": 682489.0,
+            "bytes_op": 258373,
+            "allocs_op": 832
+          },
+          "change_percent": -0.79,
+          "samples_ns": {
+            "before": [
+              680771.0,
+              687899.0,
+              695571.0,
+              658952.0,
+              3913231.0
+            ],
+            "after": [
+              682489.0,
+              682265.0,
+              5590077.0,
+              668021.0,
+              826846.0
+            ]
+          }
+        }
+      ]
+    },
+    "reviewed_lifecycle_change_range_percent": [
+      -0.88,
+      4.67
+    ],
+    "credential_path_change_range_percent": [
+      -0.88,
+      1.53
+    ],
+    "fixture": {
+      "codearts_ordinary_samples_per_round": 100,
+      "other_samples_per_case_per_round": 40,
+      "concurrency": 2,
+      "upstream_delay_ms": 20,
+      "tracked_normal_and_summary_no_retry_calls": 40,
+      "tracked_summary_retry_calls": 80,
+      "remaining_leases": 0
+    },
+    "assessment": "Initial small-summary medians exceeded 5% and varied with the unchanged control. Higher fixed iteration recheck is retained alongside the initial run. No stable regression above 5% observed in these fixtures; timings include local accounting/storage and are not upstream speed comparisons."
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.7",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "935fddc16db901593db1c191fc9ae572ad2208c2612eff724a0baa1a1cf3833c",
+    "cloud_modified": false
+  },
+  "remaining": [
+    "CodeArts credential boundary and login/account management",
+    "fallback authorization and management business",
+    "process lifecycle",
+    "M4 frontend; M5 admission/storage/ledger; M6 product features; M7 on demand"
+  ]
+}

@@ -54,7 +54,7 @@ func (s *Server) providerDailyStatus(ctx context.Context, a *accounts.Account) (
 	return result, err
 }
 func (s *Server) claimProviderDaily(ctx context.Context, a *accounts.Account, today string) (string, error) {
-	release, err := s.rewardRuntime.lock(ctx, a.ID)
+	release, err := s.rewardRuntime.Acquire(ctx, a.ID)
 	if err != nil {
 		return "", err
 	}

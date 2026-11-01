@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
-	"time"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/gateway"
@@ -16,29 +14,6 @@ import (
 	"codearts2api/internal/upstream"
 )
 
-type providerRuntime struct {
-	mu    sync.Mutex
-	locks map[string]chan struct{}
-}
-
-func (p *providerRuntime) lock(ctx context.Context, id string) (func(), error) {
-	p.mu.Lock()
-	if p.locks == nil {
-		p.locks = map[string]chan struct{}{}
-	}
-	ch := p.locks[id]
-	if ch == nil {
-		ch = make(chan struct{}, 1)
-		p.locks[id] = ch
-	}
-	p.mu.Unlock()
-	select {
-	case ch <- struct{}{}:
-		return func() { <-ch }, nil
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-}
 func (s *Server) providerCredentials(ctx context.Context, acct *accounts.Account) (provider.Adapter, json.RawMessage, error) {
 	if s.Providers == nil {
 		return nil, nil, fmt.Errorf("上游适配器未初始化")
@@ -47,43 +22,11 @@ func (s *Server) providerCredentials(ctx context.Context, acct *accounts.Account
 	if !ok {
 		return nil, nil, fmt.Errorf("上游尚未接入")
 	}
-	release, err := s.providerRuntime.lock(ctx, acct.ID)
+	raw, err := s.ProviderCredentials.Resolve(ctx, acct.ID, adapter)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer release()
-	latest := s.Store.Account(acct.ID)
-	if latest == nil {
-		return nil, nil, accounts.ErrCredentialChanged
-	}
-	raw, identity, err := adapter.Normalize(latest.Credentials)
-	if err != nil {
-		return nil, nil, err
-	}
-	if identity.ID != latest.ExternalID || identity.Scope != latest.Scope {
-		return nil, nil, &provider.Error{Status: 401, AccountFault: true, Message: "上游凭据身份或地区与账号记录不一致，请重新导入"}
-	}
-	if time.Unix(identity.ExpiresAt, 0).After(time.Now().Add(5 * time.Minute)) {
-		return adapter, raw, nil
-	}
-	if !s.Store.Settings().AutoRefresh {
-		return nil, nil, &provider.Error{Status: 401, AccountFault: true, Message: "上游凭据已过期，请重新登录或启用续期"}
-	}
-	updated, err := adapter.Refresh(ctx, raw)
-	if err != nil {
-		return nil, nil, err
-	}
-	normalized, fresh, err := adapter.Normalize(updated)
-	if err != nil {
-		return nil, nil, err
-	}
-	if fresh.ID != identity.ID || fresh.Scope != identity.Scope {
-		return nil, nil, fmt.Errorf("续期账号身份发生变化，拒绝保存")
-	}
-	if err = s.Store.CommitProviderCredentials(acct.ID, latest.Credentials, normalized); err != nil {
-		return nil, nil, err
-	}
-	return adapter, normalized, nil
+	return adapter, raw, nil
 }
 func (s *Server) providerAttempt(ctx context.Context, acct *accounts.Account, model registry.Model) (upstream.StreamSession, error) {
 	startAttempt(ctx, acct, model.ID)

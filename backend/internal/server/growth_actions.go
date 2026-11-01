@@ -77,7 +77,7 @@ func (s *Server) handleGrowthAccept(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
-	release, err := s.growthRuntime.lock(ctx, body.ID)
+	release, err := s.growthRuntime.Acquire(ctx, body.ID)
 	if err != nil {
 		writeErr(w, 408, "等待成长任务操作超时", "upstream_error")
 		return
@@ -174,7 +174,7 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 240*time.Second)
 	defer cancel()
-	release, err := s.growthRuntime.lock(ctx, body.ID)
+	release, err := s.growthRuntime.Acquire(ctx, body.ID)
 	if err != nil {
 		writeErr(w, 408, "等待成长任务操作超时", "upstream_error")
 		return
