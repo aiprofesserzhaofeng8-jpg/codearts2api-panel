@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2 已完成，M3 前九批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行、全局重试循环及 WorkBuddy/Trae 凭据协调、三平台分阶段登录与导入；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)、[M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)、[M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)、[M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)和 [M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)。
+状态：**M1/M2 已完成，M3 前十批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复、摘要准备与执行、全局重试循环及三平台凭据协调、三平台分阶段登录与导入；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)、[M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)、[M3 第五批验收](../acceptance/STRUCTURE-M3-5-2026-11-01.md)、[M3 第六批验收](../acceptance/STRUCTURE-M3-6-2026-11-01.md)、[M3 第七批验收](../acceptance/STRUCTURE-M3-7-2026-11-01.md)、[M3 第八批验收](../acceptance/STRUCTURE-M3-8-2026-11-01.md)、[M3 第九批验收](../acceptance/STRUCTURE-M3-9-2026-11-01.md)和 [M3 第十批验收](../acceptance/STRUCTURE-M3-10-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -61,6 +61,8 @@ M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `
 第八批将 WorkBuddy/Trae 授权会话、检查/预览/确认、取消及导入身份校验协调迁入 `accounts.ProviderLogins`，HTTP 只保留 wire DTO、大小限制、UID 脱敏和错误映射。平台仍实现原生授权、设备绑定、回调核对和身份 Verify；Store 仍原子处理重复与保存。检查不入库、同一回调只交换一次、显式替换、保存失败保留预览、重复确认复用账号 ID、删除后禁止旧授权恢复等语义不变；不合并登录会话锁和刷新/奖励锁。CodeArts 登录、其余账号管理、备用型号授权及进程生命周期仍待迁移，M3 尚未完成。
 
 第九批将 CodeArts 登录预览、确认保存、显式替换及删除后重放保护迁入 `accounts.BrowserLogins`，原生 LoginManager 由 `upstream/codearts.BrowserLogin` 包装；STS 解析、签名身份查询和回调提交归平台适配器。沿用原管理器、不可变 Session 指针及其 Commit 锁，保存成功后仍在该锁内失效缓存；Store 仍执行唯一原子保存。HTTP 保留字段、方法、大小限制与状态码。CodeArts 普通凭据解析/刷新、其余账号管理、备用型号授权及进程生命周期仍待迁移，M3 尚未完成。
+
+第十批将 CodeArts 凭据互斥、缓存、最新快照、条件提交和失效迁入 `accounts.CredentialRuntime[T]`，原 Manager 内嵌这一运行时，保留原构造和回调入口并单向委托。平台仍读取 IDE、执行 DPoP 刷新、解释错误和判断凭据变化；Store 保留原 CAS 与持久化失败后保留轮转凭据的行为。沿用原 mutex、TTL、提交/快照/缓存/回写顺序，不改 WorkBuddy/Trae 的通道锁，也不增加凭据编解码或网络轮次。其余账号管理、备用型号授权及进程生命周期仍待迁移，M3 尚未完成。
 
 抽取 CodeArts 适配器时复用旧客户端；核实 [ADR 0004](../adr/0004-deferred-refactors.md) 提到的 SQLite、DPoP、刷新失败测试缺口当前是否已覆盖。存在缺口先补具体行为测试，不假设旧文档的缺口仍全部存在或已经自动消失。
 

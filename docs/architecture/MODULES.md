@@ -2,7 +2,7 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+已实施部分：`accounts` 持有中立账号、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
 
 ## 责任表
 
@@ -63,11 +63,13 @@ CodeArts 以包装现有客户端和 Manager 的方式接入统一边界，先�
 
 `gateway.RetryDriver` 接收使用方的原子准入及平台策略，不直接导入 Store 或平台。`RetryAttempt` 携带实际型号、带总期限的上下文及释放函数；同一租约内的短恢复必须回报是否消耗另一个尝试槽。server 的 `accountRetryDriver` 保留当前权限/预算和健康写入，`accountRecovery` 保留 WorkBuddy 进入窗口及授权。`CommittedStreamError` 归 gateway，HTTP 入口只报告可见输出边界，保留原始错误链。取消先于平台健康分类，正常结束及分类时租约已经释放；不能把这个抽取视为准入锁或调度算法已经拆出。
 
-`accounts.ProviderCredentials` 通过使用方定义的 `ProviderCredentialStore` 读取最新快照并条件提交，只依赖 `CredentialAdapter.Normalize/Refresh` 解释不透明凭据。app 注入现有 Store 和动态续期开关，server 只查找原注册表并委托。按账号的刷新锁覆盖最新读取、规范化、刷新及提交；不持 Store 准入锁跨网络。`OperationLocks` 保留独立的刷新、领奖、成长任务锁实例。CodeArts 的 Manager、不可变 Session 指针及专用代际提交继续原样工作；本批不统一凭据格式或重写平台生命周期。
+`accounts.ProviderCredentials` 通过使用方定义的 `ProviderCredentialStore` 读取最新快照并条件提交，只依赖 `CredentialAdapter.Normalize/Refresh` 解释不透明凭据。app 注入现有 Store 和动态续期开关，server 只查找原注册表并委托。按账号的刷新锁覆盖最新读取、规范化、刷新及提交；不持 Store 准入锁跨网络。`OperationLocks` 保留独立的刷新、领奖、成长任务锁实例。CodeArts 凭据协调见下述 CredentialRuntime，原 Manager 保留不可变 Session 指针与原生策略；不统一凭据格式或重写平台协议。
 
 `accounts.ProviderLogins` 经 `ProviderLoginStore` 调用现有查询和原子保存，按操作传入 `LoginAdapters`，不保存另一份适配器注册表。授权流程状态与凭据留在业务内存中；返回类型仅含预览/保存结果，不含凭据或回调正文。HTTP 自行映射开始、等待、预览、保存、取消五种结果，以及原有错误状态码；UID 在 HTTP 端脱敏。平台协议、10 分钟会话/128 上限、30s 截止时间、原会话锁和保存语义均保持不变。登录服务不参与普通生成；账号管理其余入口尚未迁移。
 
-`accounts.BrowserLogins` 经 `BrowserLoginBackend` 协调 CodeArts 原有浏览器授权，`upstream/codearts.BrowserLogin` 包装同一原生 LoginManager。服务负责预览、确认保存、显式替换和删除后重放保护，适配器解释 STS JSON、核验身份并调用原回调入口。原生单会话 Commit 锁仍包住保存与缓存失效；不新建会话注册表或复制凭据，Store 的查重与保存仍为原事务。CodeArts 普通 Manager 解析/刷新尚未迁出。
+`accounts.BrowserLogins` 经 `BrowserLoginBackend` 协调 CodeArts 原有浏览器授权，`upstream/codearts.BrowserLogin` 包装同一原生 LoginManager。服务负责预览、确认保存、显式替换和删除后重放保护，适配器解释 STS JSON、核验身份并调用原回调入口。原生单会话 Commit 锁仍包住保存与缓存失效；不新建会话注册表或复制凭据，Store 的查重与保存仍为原事务。CodeArts 普通凭据协调见下述运行时，平台专有的读取与刷新继续归 Manager。
+
+`accounts.CredentialRuntime[T]` 只协调旧 Session 槽的不可变代际；CodeArts Manager 内嵌同一实例，原 Latest/Commit/Persist/Logf 回调继续由 app 装配。按账号 mutex 覆盖最新快照、平台解析与提交，短缓存和失效共用原锁域；与 WorkBuddy/Trae 的 OperationLocks 分离。平台保留 IDE I/O、DPoP、默认解析参数、错误和内容比较，Store 保留唯一 CAS；不以反射或 JSON 判断代际，不新增缓存或统一凭据格式。原 Manager 的 resolve 是平台策略实现，Session 是单向兼容入口。
 
 WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`；`jobs` 管排程、同账号串行、未知结果恢复。前端工作流只消费状态，不复制任务完成算法。
 
@@ -85,7 +87,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `store/groups.go`、密钥管理 | `access` + `storage` | 分组事务、预算重置等保持原子语义 |
 | `registry`、`server/group_model_mapping.go` | `catalog` + `gateway` | 目录、解析、尝试期型号替换分别归位 |
 | `requestpolicy`、`server/request_policy.go` | `policy` + `gateway` | 提示词恢复已归 gateway，纯提示词/摘要准备归 requestpolicy；公共继承留后续阶段 |
-| `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息及 WorkBuddy/Trae 解析/刷新协调已迁出；CodeArts Manager、旧状态编码及条件提交暂留原实现，保留代际校验 |
+| `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息及三平台凭据协调已迁出；CodeArts 原生策略、旧状态编码及 Store 条件提交保留，互斥与缓存归 accounts 运行时 |
 | `provider`、`codearts`、`workbuddy`、`trae` | `upstream` 父包及各平台子包 | 三平台对话边界已接入；原生实现和其余能力待迁，禁止重写成熟协议实现 |
 | `store/usage*`、`pricing`、`budget` | `usage` + `storage` | 结算规则与账本 I/O 分开，预留由准入协调 |
 | `server/growth*`、`claim.go` | `jobs`、平台能力、管理 handler | 任务执行、上游行为与 HTTP 分开 |

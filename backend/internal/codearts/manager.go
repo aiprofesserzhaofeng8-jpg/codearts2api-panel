@@ -3,7 +3,6 @@ package codearts
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"codearts2api/internal/accounts"
@@ -40,21 +39,9 @@ func DefaultResolveOptions() ResolveOptions {
 //  3. 用 refresh_token 自行续期（DPoP + PKCE verifier）
 type Manager struct {
 	Client *Client
-	// Latest and Commit prevent an in-flight refresh overwriting a newer login.
-	Latest func(id string) *Account
-	Commit func(id string, expected, updated *Session) error
-	// Persist 在凭据发生变化时回调，用于把新会话写进状态文件。
-	Persist func(acct *Account) error
-	// Logf 是可选的日志回调。
-	Logf func(format string, args ...any)
-
-	mu       sync.Mutex
-	liveAt   map[string]time.Time
-	liveSess map[string]*Session
-	// acctMu 是「每个账号一把锁」：同一账号的解析（含续期）串行，不同账号并行。
-	//
-	// 锁的粒度写在这里而不是用一把全局锁，理由见 Session 的注释。
-	acctMu map[string]*sync.Mutex
+	// One business runtime owns the existing mutexes, cache and publication hooks.
+	// Native credentials, IDE access, refresh and comparison remain in this package.
+	accounts.CredentialRuntime[*Session]
 }
 
 // ErrSessionChanged preserves the existing caller error identity.
@@ -62,12 +49,7 @@ var ErrSessionChanged = accounts.ErrCredentialChanged
 
 // NewManager 构造凭据管理器。
 func NewManager(c *Client) *Manager {
-	return &Manager{
-		Client:   c,
-		liveAt:   map[string]time.Time{},
-		liveSess: map[string]*Session{},
-		acctMu:   map[string]*sync.Mutex{},
-	}
+	return &Manager{Client: c, CredentialRuntime: accounts.NewCredentialRuntime[*Session]()}
 }
 
 func (m *Manager) logf(format string, args ...any) {
@@ -98,34 +80,22 @@ func (m *Manager) Session(ctx context.Context, acct *Account, opt ResolveOptions
 		opt.Margin = 5 * time.Minute
 	}
 
-	lock := m.accountLock(acct.ID)
-	lock.Lock()
-	defer lock.Unlock()
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if m.Latest != nil {
-		latest := m.Latest(acct.ID)
-		if latest == nil {
-			return nil, ErrSessionChanged
-		}
-		*acct = *latest
-	}
-
-	return m.resolve(ctx, acct, opt)
+	return m.CredentialRuntime.Resolve(ctx, acct, func(ctx context.Context, latest *Account) (*Session, error) {
+		return m.resolve(ctx, latest, opt)
+	})
 }
 
 // resolve 是 Session 的实际解析逻辑。调用方必须已持有该账号的锁。
 func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions) (*Session, error) {
 	stored := StoredSession(acct)
 	// 1) 实时会话（带短缓存）
-	live := m.cachedLive(acct.ID, opt.LiveTTL)
+	live := m.Cached(acct.ID, opt.LiveTTL)
 	if m.Latest != nil && live != nil && live != stored {
 		live = nil
 	}
 	if live == nil && acct.UserData != "" {
 		if s, err := ReadSession(acct.UserData); err == nil {
-			m.setLive(acct.ID, s)
+			m.Remember(acct.ID, s)
 			live = s
 		} else {
 			m.logf("账号 %s 读取 IDE 会话失败: %v", acct.DisplayName(), err)
@@ -180,7 +150,7 @@ func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions
 	if err := m.adopt(acct, &updated); err != nil {
 		return nil, err
 	}
-	m.setLive(acct.ID, &updated)
+	m.Remember(acct.ID, &updated)
 
 	if opt.WriteBack && acct.UserData != "" {
 		if err := writeBackSession(acct.UserData, &updated); err != nil {
@@ -193,53 +163,6 @@ func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions
 	return &updated, nil
 }
 
-// cachedLive 返回 TTL 内缓存的最新会话。
-//
-// 缓存里既有「从 IDE 实时读到」的会话，也有「网关自己续期得到」的会话 ——
-// 后者同样必须缓存：并发的第二个请求要能直接拿到刚轮转过的凭据，
-// 否则它会拿已作废的 refresh_token 再续一次（上游回 STS5.1806）。
-func (m *Manager) cachedLive(id string, ttl time.Duration) *Session {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	at, ok := m.liveAt[id]
-	if !ok || time.Since(at) > ttl {
-		return nil
-	}
-	return m.liveSess[id]
-}
-
-// setLive 记录一份「最新会话」（IDE 实时读取或网关续期结果）。
-func (m *Manager) setLive(id string, s *Session) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	// 允许零值 Manager（&Manager{}）—— 测试里会这么建。
-	if m.liveAt == nil {
-		m.liveAt = map[string]time.Time{}
-	}
-	if m.liveSess == nil {
-		m.liveSess = map[string]*Session{}
-	}
-	m.liveAt[id] = time.Now()
-	m.liveSess[id] = s
-}
-
-// accountLock 返回该账号的互斥锁，不存在则创建。
-//
-// 只持 m.mu 做一次 map 查找，不跨任何 I/O。账号数量是个位数，条目不做回收。
-func (m *Manager) accountLock(id string) *sync.Mutex {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.acctMu == nil {
-		m.acctMu = map[string]*sync.Mutex{}
-	}
-	l, ok := m.acctMu[id]
-	if !ok {
-		l = new(sync.Mutex)
-		m.acctMu[id] = l
-	}
-	return l
-}
-
 // adopt 把新会话记到账号快照上；凭据真的变了就通知持久化。
 //
 // 凭据轮换（IDE 自行续期、网关自行续期）大约每 2 小时一次，changed 为假时
@@ -250,29 +173,7 @@ func (m *Manager) adopt(acct *Account, s *Session) error {
 		stored.AccessKey != s.AccessKey ||
 		stored.SecurityToken != s.SecurityToken ||
 		stored.RefreshToken != s.RefreshToken
-	if changed && m.Commit != nil {
-		if err := m.Commit(acct.ID, stored, s); err != nil {
-			return err
-		}
-	}
-	acct.Session = s
-	if changed && m.Persist != nil {
-		if err := m.Persist(acct); err != nil {
-			m.logf("账号 %s 状态保存失败: %v", acct.DisplayName(), err)
-		}
-	}
-	return nil
-}
-
-// Invalidate 清掉某账号的实时会话缓存（例如用户点了「探活」或刚改过凭据）。
-func (m *Manager) Invalidate(id string) {
-	lock := m.accountLock(id)
-	lock.Lock()
-	defer lock.Unlock()
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.liveAt, id)
-	delete(m.liveSess, id)
+	return m.CredentialRuntime.Adopt(acct, stored, s, changed)
 }
 
 // ImportFromDesktop 扫描本机 CodeArts Agent 的 User Data 目录并导入会话。
