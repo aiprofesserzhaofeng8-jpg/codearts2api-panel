@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/protocol"
@@ -103,7 +104,7 @@ func (s *Server) blockingChat(w http.ResponseWriter, r *http.Request, body []byt
 		outLen int
 	)
 
-	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
+	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
 		res, err := s.chatOnce(ctx, acct, model, body)
 		if err != nil {
 			return err
@@ -147,7 +148,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 		streamErr error
 	)
 
-	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
+	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
 		err := s.streamOnce(ctx, acct, model, body, func(chunk []byte) error {
 			if model.Source == "mapping" {
 				var err error
@@ -211,7 +212,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 //
 // 上游对个别模型（实测 glm-5.3）的非流式接口只回一个空 body 的 400，
 // 这里检测到该特征后自动改用「流式 + 本地聚合」，对客户端保持非流式语义。
-func (s *Server) chatOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte) ([]byte, error) {
+func (s *Server) chatOnce(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte) ([]byte, error) {
 	if mappedPlan(ctx) != nil {
 		var err error
 		model, body, err = s.prepareMappedAttempt(ctx, acct, model, body)
@@ -305,7 +306,7 @@ func (s *Server) aggregateViaStream(ctx context.Context, sess *codearts.Session,
 }
 
 // streamOnce 用指定账号发一次流式请求，逐块回调。
-func (s *Server) streamOnce(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
+func (s *Server) streamOnce(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
 	if mappedPlan(ctx) != nil {
 		var err error
 		model, body, err = s.prepareMappedAttempt(ctx, acct, model, body)
@@ -395,7 +396,7 @@ var waitRetry = func(ctx context.Context, d time.Duration) error {
 // withAccountRetry 选账号并在失败时重试。
 //
 // 返回本次实际使用的账号（可能为 nil），供调用方记录日志归属。
-func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn func(context.Context, *codearts.Account) error) (*codearts.Account, error) {
+func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn func(context.Context, *accounts.Account) error) (*accounts.Account, error) {
 	accts := s.Store.Accounts()
 	if len(accts) == 0 {
 		return nil, apierr.NoAccount
@@ -416,7 +417,7 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 	tried := make(map[string]bool)
 
 	var lastErr error
-	var used *codearts.Account
+	var used *accounts.Account
 	transientWaits := 0
 	for i := 0; i < attempts; i++ {
 		if plan == nil {
@@ -427,7 +428,7 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		if ctx.Err() != nil {
 			return used, ctx.Err()
 		}
-		var acct *codearts.Account
+		var acct *accounts.Account
 		var release func()
 		var accessErr error
 		if plan == nil {
@@ -481,7 +482,7 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		if errors.As(err, &terminal) && terminal.NonRetryableRequest() {
 			return used, err
 		}
-		if errors.Is(err, codearts.ErrSessionChanged) {
+		if errors.Is(err, accounts.ErrCredentialChanged) {
 			return used, err
 		}
 		if promptBlocked(err) {
@@ -597,7 +598,7 @@ func rewriteStream(body []byte, stream bool) ([]byte, error) {
 }
 
 // record 记录一次请求结果。
-func (s *Server) record(ctx context.Context, key string, acct *codearts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) error {
+func (s *Server) record(ctx context.Context, key string, acct *accounts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) error {
 	e := store.LogEntry{
 		AttemptDetails:  requestAttemptDetails(ctx),
 		UsageIncomplete: requestUsageIncomplete(ctx),

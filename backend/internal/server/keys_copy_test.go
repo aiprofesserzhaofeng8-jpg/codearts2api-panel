@@ -20,7 +20,7 @@ func TestAdminCanRetrieveExistingKeysForCopy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s = New(loaded)
+	s = newConfiguredServer(loaded)
 	for _, path := range []string{"/admin/api/state", "/admin/api/keys"} {
 		for _, auth := range []struct {
 			password string

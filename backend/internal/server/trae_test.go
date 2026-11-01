@@ -1,10 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
-	"codearts2api/internal/trae"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +11,11 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
+	"codearts2api/internal/store"
+	"codearts2api/internal/trae"
 )
 
 func nativeTraeServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *trae.Client) {
@@ -28,7 +29,7 @@ func nativeTraeServer(t *testing.T, handler http.HandlerFunc) (*Server, string, 
 		c.RateLimitEnabled = false
 		c.MaxRetries = 1
 	})
-	s := New(st)
+	s := newConfiguredServer(st)
 	up := httptest.NewServer(handler)
 	t.Cleanup(up.Close)
 	c := trae.New()

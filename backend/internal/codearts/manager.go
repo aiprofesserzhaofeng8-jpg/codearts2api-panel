@@ -2,10 +2,11 @@ package codearts
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	"codearts2api/internal/accounts"
 )
 
 // ResolveOptions 控制凭据解析策略。
@@ -56,7 +57,8 @@ type Manager struct {
 	acctMu map[string]*sync.Mutex
 }
 
-var ErrSessionChanged = errors.New("账号凭据已更新或账号已删除，请重新发起请求")
+// ErrSessionChanged preserves the existing caller error identity.
+var ErrSessionChanged = accounts.ErrCredentialChanged
 
 // NewManager 构造凭据管理器。
 func NewManager(c *Client) *Manager {
@@ -115,9 +117,10 @@ func (m *Manager) Session(ctx context.Context, acct *Account, opt ResolveOptions
 
 // resolve 是 Session 的实际解析逻辑。调用方必须已持有该账号的锁。
 func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions) (*Session, error) {
+	stored := StoredSession(acct)
 	// 1) 实时会话（带短缓存）
 	live := m.cachedLive(acct.ID, opt.LiveTTL)
-	if m.Latest != nil && live != nil && live != acct.Session {
+	if m.Latest != nil && live != nil && live != stored {
 		live = nil
 	}
 	if live == nil && acct.UserData != "" {
@@ -136,14 +139,14 @@ func (m *Manager) resolve(ctx context.Context, acct *Account, opt ResolveOptions
 	}
 
 	// 2) 本地缓存的会话
-	if acct.Session != nil && acct.Session.Valid(opt.Margin) {
-		return acct.Session, nil
+	if stored != nil && stored.Valid(opt.Margin) {
+		return stored, nil
 	}
 
 	// 3) 自行续期。优先用实时会话里的 refresh_token（更新），否则用缓存的。
 	fresh := live
 	if fresh == nil || !fresh.HasRefresh() {
-		fresh = acct.Session
+		fresh = stored
 	}
 	if !opt.AllowRefresh || fresh == nil || !fresh.HasRefresh() {
 		if live != nil {
@@ -242,12 +245,13 @@ func (m *Manager) accountLock(id string) *sync.Mutex {
 // 凭据轮换（IDE 自行续期、网关自行续期）大约每 2 小时一次，changed 为假时
 // 不会触发落盘，因此这里不会造成写盘风暴。
 func (m *Manager) adopt(acct *Account, s *Session) error {
-	changed := acct.Session == nil ||
-		acct.Session.AccessKey != s.AccessKey ||
-		acct.Session.SecurityToken != s.SecurityToken ||
-		acct.Session.RefreshToken != s.RefreshToken
+	stored := StoredSession(acct)
+	changed := stored == nil ||
+		stored.AccessKey != s.AccessKey ||
+		stored.SecurityToken != s.SecurityToken ||
+		stored.RefreshToken != s.RefreshToken
 	if changed && m.Commit != nil {
-		if err := m.Commit(acct.ID, acct.Session, s); err != nil {
+		if err := m.Commit(acct.ID, stored, s); err != nil {
 			return err
 		}
 	}

@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"time"
 
-	"codearts2api/internal/codearts"
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 )
 
-func (s *Server) prepareGrowthBuddy(ctx context.Context, a *codearts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, consent bool) (growthReply, bool, error) {
+func (s *Server) prepareGrowthBuddy(ctx context.Context, a *accounts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, consent bool) (growthReply, bool, error) {
 	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks, State: "pending"}
 	ops, ok := adapter.(provider.GrowthBuddyOperations)
 	if !ok {

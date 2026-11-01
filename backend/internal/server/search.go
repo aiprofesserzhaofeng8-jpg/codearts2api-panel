@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
@@ -199,7 +200,7 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 		timeout = min(timeout, time.Duration(settings.RequestTimeout)*time.Second)
 	}
 	var outcome *provider.SearchOutcome
-	call := func(ctx context.Context, a *codearts.Account) error {
+	call := func(ctx context.Context, a *accounts.Account) error {
 		startAttempt(ctx, a, model.ID)
 		if policy.SearchBackend == "searxng" {
 			// Independent backend: never refresh or forward model credentials.
@@ -220,7 +221,7 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 		}
 		return err
 	}
-	var acct *codearts.Account
+	var acct *accounts.Account
 	if policy.SearchBackend == "searxng" {
 		acct, err = s.withExternalSearchAccount(ctx, timeout, model.ID, call)
 	} else {
@@ -240,7 +241,7 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 
 // An external search shares group authorization and concurrency leases, but its
 // success/failure says nothing about model credentials or model account health.
-func (s *Server) withExternalSearchAccount(ctx context.Context, timeout time.Duration, model string, call func(context.Context, *codearts.Account) error) (*codearts.Account, error) {
+func (s *Server) withExternalSearchAccount(ctx context.Context, timeout time.Duration, model string, call func(context.Context, *accounts.Account) error) (*accounts.Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	if err := s.checkRequestBudget(ctx, model); err != nil {

@@ -2,6 +2,8 @@
 
 状态：目标设计。入口见 [总览](README.md)。路径均以未来 `backend/internal/` 为基准。
 
+已实施部分：`accounts` 持有中立账号和凭据代际错误；`app.Build` 装配平台和刷新回调。`server`、`store`、平台包的其余职责仍按下表分批迁移，表中目标接口不能视为全部已实现。
+
 ## 责任表
 
 | 模块 | 数据或行为归属 | 对外入口示意 | 不应承担 |
@@ -60,7 +62,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | 迁移前位置 | 目标归属 | 迁移方式 |
 | --- | --- | --- |
 | `main.go` 及其测试 | `cmd/panel`、`app` | 参数与业务初始化分别移动，构建注入版本保持一致 |
-| `server.New`、Provider 注册 | `app` | 具体平台只在这里装配 |
+| `server.New`、Provider 注册 | `app` | 已完成依赖装配；server.New 接收依赖，HTTP 运行状态仍归 server |
 | `server.go` 中 HTTP 路由和鉴权入口 | `httpapi` | 先代理现有 handler，再逐步抽出业务 |
 | `server/chat.go` 的重试和请求生命周期 | `gateway` | 保留已有取消、输出提交和恢复行为 |
 | `server/anthropic.go`、`responses.go` | `httpapi/inference` + `protocol` | HTTP 与纯转换分开，避免复制转换器 |
@@ -69,7 +71,7 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `store/groups.go`、密钥管理 | `access` + `storage` | 分组事务、预算重置等保持原子语义 |
 | `registry`、`server/group_model_mapping.go` | `catalog` + `gateway` | 目录、解析、尝试期型号替换分别归位 |
 | `requestpolicy`、`server/request_policy.go` | `policy` + `gateway` | 纯准备留 policy，重试执行留 gateway |
-| `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息和平台原始凭据分开，保留代际校验 |
+| `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息已迁出；旧状态编码和条件提交暂留 store，保留代际校验 |
 | `provider`、`codearts`、`workbuddy`、`trae` | `upstream` 父包及各平台子包 | 先包装，后移动，禁止重写成熟协议实现 |
 | `store/usage*`、`pricing`、`budget` | `usage` + `storage` | 结算规则与账本 I/O 分开，预留由准入协调 |
 | `server/growth*`、`claim.go` | `jobs`、平台能力、管理 handler | 任务执行、上游行为与 HTTP 分开 |

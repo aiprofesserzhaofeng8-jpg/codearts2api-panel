@@ -1,9 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
-	"codearts2api/internal/workbuddy"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,6 +14,10 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"codearts2api/internal/provider"
+	"codearts2api/internal/store"
+	"codearts2api/internal/workbuddy"
 )
 
 type growthActionFixture struct {
@@ -248,7 +249,7 @@ func TestGrowthActionsPendingAndPartialFailureDoNotReplayAfterRestart(t *testing
 			if w.Code != 200 || !strings.Contains(w.Body.String(), `"state":"pending"`) || f.chats != 1 || f.claims != 0 {
 				t.Fatal(w.Code, w.Body.String(), f.chats)
 			}
-			restarted := New(s.Store)
+			restarted := newConfiguredServer(s.Store)
 			restarted.Providers = s.Providers
 			restarted.Reg = s.Reg
 			w = runGrowthFixture(restarted, "Model_chat_GLM5.2")

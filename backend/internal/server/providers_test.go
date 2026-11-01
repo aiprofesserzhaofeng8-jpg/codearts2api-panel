@@ -1,11 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
-	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
-	"codearts2api/internal/workbuddy"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,6 +13,12 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
+	"codearts2api/internal/registry"
+	"codearts2api/internal/store"
+	"codearts2api/internal/workbuddy"
 )
 
 func nativeWBServer(t *testing.T, fn http.HandlerFunc) (*Server, string, *workbuddy.Client) {
@@ -31,7 +32,7 @@ func nativeWBServer(t *testing.T, fn http.HandlerFunc) (*Server, string, *workbu
 		c.RateLimitEnabled = false
 		c.MaxRetries = 1
 	})
-	s := New(st)
+	s := newConfiguredServer(st)
 	up := httptest.NewServer(fn)
 	t.Cleanup(up.Close)
 	client := workbuddy.New()

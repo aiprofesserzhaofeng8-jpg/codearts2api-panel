@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"codearts2api/internal/app"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/server"
 	"codearts2api/internal/store"
@@ -122,7 +123,10 @@ func main() {
 		}
 		log.Printf("已创建管理员密码，恢复文件: %s", recovery)
 	}
-	srv := server.New(st)
+	srv, err := app.Build(st)
+	if err != nil {
+		log.Fatalf("初始化服务失败: %v", err)
+	}
 	srv.AllowLocalAdmin = *localAuto
 	srv.ApplyIdentity()
 
@@ -264,7 +268,7 @@ func runExportSession(userData, out string) {
 		log.Fatalf("导出失败: %v", err)
 	}
 	res := results[0]
-	plain, err := res.Account.Session.RawJSON()
+	plain, err := codearts.StoredSession(res.Account).RawJSON()
 	if err != nil {
 		log.Fatalf("序列化失败: %v", err)
 	}

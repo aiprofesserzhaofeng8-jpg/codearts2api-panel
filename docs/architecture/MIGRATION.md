@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2 已完成**。M3–M7 尚未实施。Go 工程已迁入 backend，业务与页面源码保持迁移前内容；结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)。
+状态：**M1/M2 已完成，M3 第一批已落地**。本批迁出中立账号类型和平台依赖装配；HTTP/业务分离、CodeArts 适配包装及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)和 [M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -41,6 +41,10 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 先建立窄接口并由旧实现提供服务，再迁移具体实现。每条请求、账号凭据和账本任一时刻只有一个写入方；禁止新旧流程同时向真实上游发请求来比较输出。
 
 中立账号类型先解决数据边界。CodeArts 专用 Session 由兼容存储表示和适配器解释，不能为了消除一个 import 就把 CodeArts 全部字段搬进 domain。
+
+M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `app.Build`。`codearts.Account` 暂保留类型别名供平台内部及既有测试使用；共享生产代码已使用 `accounts.Account`。旧 `session` 由 `store` 编码器加载成不可变平台值；请求路径仅做类型断言，不序列化、解析或复制凭据。`codearts.StoredSession` 是该兼容值的唯一具体类型入口。WorkBuddy/Trae 继续使用已有不透明 JSON 凭据。
+
+本批没有迁移刷新互斥、准入锁和账本归属；它们仍由原实现负责。`app` 只装配依赖，启动与关闭仍留在 main。下一批先抽取 CodeArts 适配包装和 HTTP/业务调用边界；凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
 
 抽取 CodeArts 适配器时复用旧客户端；核实 [ADR 0004](../adr/0004-deferred-refactors.md) 提到的 SQLite、DPoP、刷新失败测试缺口当前是否已覆盖。存在缺口先补具体行为测试，不假设旧文档的缺口仍全部存在或已经自动消失。
 

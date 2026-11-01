@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"codearts2api/internal/codearts"
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 )
 
@@ -24,7 +24,7 @@ func DefaultPoolSettings() PoolSettings {
 		RateCooldownSec: 60, BreakerThreshold: 3, BreakerCooldownSec: 300}
 }
 
-func accountMaxInFlight(a *codearts.Account, defaults PoolSettings) int {
+func accountMaxInFlight(a *accounts.Account, defaults PoolSettings) int {
 	if a.MaxInFlight >= 1 && a.MaxInFlight <= 32 {
 		return a.MaxInFlight
 	}
@@ -84,26 +84,26 @@ func (s *Store) initPoolLocked() {
 // AcquireAccount atomically selects and leases one account. Release is idempotent,
 // including after deletion, cancellation or a streaming failure. No cooling account
 // is used as a fallback. The caller owns the returned account snapshot.
-func (s *Store) AcquireAccount(session string, exclude map[string]bool) (*codearts.Account, func()) {
+func (s *Store) AcquireAccount(session string, exclude map[string]bool) (*accounts.Account, func()) {
 	return s.AcquireAccountForModel(session, "", exclude)
 }
 
-func (s *Store) AcquireAccountForModel(session, model string, exclude map[string]bool) (*codearts.Account, func()) {
+func (s *Store) AcquireAccountForModel(session, model string, exclude map[string]bool) (*accounts.Account, func()) {
 	a, release, _ := s.AcquireAccountForKey(session, model, exclude, "")
 	return a, release
 }
 
-func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]bool, key string) (*codearts.Account, func(), error) {
+func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]bool, key string) (*accounts.Account, func(), error) {
 	a, _, release, err := s.acquireAccountForModels(session, []string{model}, exclude, key, "")
 	return a, release, err
 }
 
 // AcquireMappedAccount selects the concrete model and leases its account in the
 // same critical section. Current group membership and mappings are rechecked.
-func (s *Store) AcquireMappedAccount(session, public string, models []string, exclude map[string]bool, key string) (*codearts.Account, string, func(), error) {
+func (s *Store) AcquireMappedAccount(session, public string, models []string, exclude map[string]bool, key string) (*accounts.Account, string, func(), error) {
 	return s.acquireAccountForModels(session, models, exclude, key, public)
 }
-func (s *Store) acquireAccountForModels(session string, models []string, exclude map[string]bool, key, public string) (*codearts.Account, string, func(), error) {
+func (s *Store) acquireAccountForModels(session string, models []string, exclude map[string]bool, key, public string) (*accounts.Account, string, func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	access, err := s.accessScopeLocked(key)
@@ -142,7 +142,7 @@ func (s *Store) acquireAccountForModels(session string, models []string, exclude
 	if len(targets) == 0 {
 		return nil, "", func() {}, fmt.Errorf("分组不允许调用此模型")
 	}
-	targetFor := func(a *codearts.Account) string {
+	targetFor := func(a *accounts.Account) string {
 		for _, t := range targets {
 			if a.ProviderID() == t.platform && (t.platform == provider.CodeArts || a.Scope == t.scope) {
 				return t.id
@@ -160,7 +160,7 @@ func (s *Store) acquireAccountForModels(session string, models []string, exclude
 		}
 		s.pool.gcAt = now.Add(time.Minute)
 	}
-	eligible := func(a *codearts.Account) bool {
+	eligible := func(a *accounts.Account) bool {
 		if access.Restricted && !access.AccountIDs[a.ID] {
 			return false
 		}
@@ -170,7 +170,7 @@ func (s *Store) acquireAccountForModels(session string, models []string, exclude
 		}
 		return a.Enabled && !a.Paused && !exclude[a.ID] && a.CooldownUntil <= now.Unix() && s.st.ModelHealth[a.ID][model].CooldownUntil <= now.Unix() && s.pool.inFlight[a.ID] < accountMaxInFlight(a, cfg)
 	}
-	var selected *codearts.Account
+	var selected *accounts.Account
 	if session != "" && cfg.StickyTTLSec > 0 {
 		if b, ok := s.pool.bindings[session]; ok && now.Before(b.expires) {
 			for _, a := range s.st.Accounts {

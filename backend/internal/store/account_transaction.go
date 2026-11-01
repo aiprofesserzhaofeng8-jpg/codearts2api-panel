@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 )
 
@@ -42,18 +43,18 @@ func sameAccountSession(a, b *codearts.Session) bool {
 	return a != nil && b != nil && ((a.DomainID != "" && a.DomainID == b.DomainID) || (a.AccessKey != "" && a.AccessKey == b.AccessKey))
 }
 
-func (s *Store) FindAccountSession(sess *codearts.Session) *codearts.Account {
+func (s *Store) FindAccountSession(sess *codearts.Session) *accounts.Account {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, a := range s.st.Accounts {
-		if sameAccountSession(a.Session, sess) {
+		if sameAccountSession(codearts.StoredSession(a), sess) {
 			return cloneAccount(a)
 		}
 	}
 	return nil
 }
 
-func (s *Store) UpsertAccountAndSave(a *codearts.Account, replace bool) (bool, error) {
+func (s *Store) UpsertAccountAndSave(a *accounts.Account, replace bool) (bool, error) {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
@@ -63,7 +64,7 @@ func (s *Store) UpsertAccountAndSave(a *codearts.Account, replace bool) (bool, e
 	}
 	if !replace {
 		for _, ex := range s.st.Accounts {
-			if ex.ProviderID() == a.ProviderID() && ex.Scope == a.Scope && (sameAccountSession(ex.Session, a.Session) || (a.ExternalID != "" && a.ExternalID == ex.ExternalID)) {
+			if ex.ProviderID() == a.ProviderID() && ex.Scope == a.Scope && (sameAccountSession(codearts.StoredSession(ex), codearts.StoredSession(a)) || (a.ExternalID != "" && a.ExternalID == ex.ExternalID)) {
 				return false, ErrAccountExists
 			}
 		}
@@ -116,7 +117,7 @@ func (s *Store) RemoveAccountAndSave(id string) (bool, error) {
 	return true, nil
 }
 
-func (s *Store) FindProviderAccount(name, scope, id string) *codearts.Account {
+func (s *Store) FindProviderAccount(name, scope, id string) *accounts.Account {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, a := range s.st.Accounts {

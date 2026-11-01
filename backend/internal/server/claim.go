@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 )
@@ -85,7 +86,7 @@ func claimWindowOpen(now time.Time, hour, minute int) bool {
 // ClaimForAccount 为单个账号领取一次运营活动福利。
 //
 // 返回给控制台展示的一句话。today 为空时按当前本地日期计算。
-func (s *Server) ClaimForAccount(ctx context.Context, a *codearts.Account, today string) (string, error) {
+func (s *Server) ClaimForAccount(ctx context.Context, a *accounts.Account, today string) (string, error) {
 	if a.ProviderID() != "codearts" {
 		return s.claimProviderDaily(ctx, a, claimDateFor(a, time.Now()))
 	}
@@ -133,7 +134,7 @@ func (s *Server) ClaimForAccount(ctx context.Context, a *codearts.Account, today
 }
 
 // WelfareSnapshot 返回某账号的活动福利清单（供控制台展示）。
-func (s *Server) WelfareSnapshot(ctx context.Context, a *codearts.Account) (*codearts.WelfareDelivery, error) {
+func (s *Server) WelfareSnapshot(ctx context.Context, a *accounts.Account) (*codearts.WelfareDelivery, error) {
 	sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
 	if err != nil {
 		return nil, err
@@ -147,7 +148,7 @@ func (s *Server) WelfareSnapshot(ctx context.Context, a *codearts.Account) (*cod
 // 不指定时回退到调度池里的下一个账号。响应里带上账号 id/名称，
 // 控制台据此显示「当前查看的是哪个号」，避免用户误以为只有某一个号能领。
 func (s *Server) handleAdminWelfare(w http.ResponseWriter, r *http.Request) {
-	var acct *codearts.Account
+	var acct *accounts.Account
 	if id := r.URL.Query().Get("id"); id != "" {
 		acct = s.Store.Account(id)
 	}
@@ -247,7 +248,7 @@ func (s *Server) handleAdminInvite(w http.ResponseWriter, r *http.Request) {
 		body.CampaignID = 3 // 「推荐码上有礼」
 	}
 
-	var acct *codearts.Account
+	var acct *accounts.Account
 	if body.ID != "" {
 		acct = s.Store.Account(body.ID)
 	}

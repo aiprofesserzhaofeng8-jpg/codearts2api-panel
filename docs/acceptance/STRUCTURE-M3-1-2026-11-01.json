@@ -1,0 +1,485 @@
+{
+  "date": "2026-11-01",
+  "stage": "M3.1",
+  "baseline_commit": "8fc84cf",
+  "completed": [
+    "neutral account metadata and error",
+    "schema-6 legacy account codec",
+    "platform dependency assembly"
+  ],
+  "pending": [
+    "HTTP and business separation",
+    "CodeArts uniform adapter",
+    "independent frontend",
+    "storage/runtime separation"
+  ],
+  "state_schema": 6,
+  "frontend_bytes_unchanged": true,
+  "checks": {
+    "make_check": true,
+    "fresh_full_race": true,
+    "race_test_packages": 14,
+    "final_targeted_race": true,
+    "linux_build": true,
+    "windows_cross_build": true,
+    "windows_vet": true,
+    "windows_native_execution": false,
+    "docker_build": true,
+    "python_launcher_tests": 9,
+    "pi_compaction": true,
+    "sub2api_pinned_tests": true
+  },
+  "browser_smoke": [
+    {
+      "case": "groups-smoke",
+      "passed": true
+    },
+    {
+      "case": "account-create-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-multi-smoke",
+      "passed": true
+    }
+  ],
+  "runtime_smoke": [
+    {
+      "case": "binary",
+      "passed": true,
+      "resources_identical": true,
+      "login": true,
+      "restart_preserves_keys": true,
+      "different_cwd": true
+    },
+    {
+      "case": "container",
+      "passed": true,
+      "resources_identical": true,
+      "login": true,
+      "restart": true,
+      "uid": "10001"
+    }
+  ],
+  "performance": {
+    "before": {
+      "benchmarks": {
+        "BenchmarkModelSelection/legacy": {
+          "ns_op": 1632.0,
+          "bytes_op": 1224,
+          "allocs_op": 10
+        },
+        "BenchmarkModelSelection/raw_in_mapped_group": {
+          "ns_op": 1796.0,
+          "bytes_op": 1288,
+          "allocs_op": 12
+        },
+        "BenchmarkModelSelection/mapped": {
+          "ns_op": 1854.0,
+          "bytes_op": 1288,
+          "allocs_op": 12
+        },
+        "BenchmarkGatewayStreamTiming": {
+          "ns_op": 1007028.0,
+          "bytes_op": 147273,
+          "allocs_op": 1116
+        },
+        "BenchmarkMappedResponseModel": {
+          "ns_op": 3070.0,
+          "bytes_op": 932,
+          "allocs_op": 20
+        },
+        "BenchmarkNonStreamingCodeArtsOnce/1024": {
+          "ns_op": 38743.0,
+          "bytes_op": 19802,
+          "allocs_op": 141
+        },
+        "BenchmarkNonStreamingCodeArtsOnce/1048576": {
+          "ns_op": 3974947.0,
+          "bytes_op": 2256192,
+          "allocs_op": 163
+        },
+        "BenchmarkNonStreamingCodeArtsOnce/8388608": {
+          "ns_op": 16157794.0,
+          "bytes_op": 17092056,
+          "allocs_op": 168
+        }
+      },
+      "capacity": [
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 578776,
+          "p95_ms": 22.388,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 389584,
+          "p95_ms": 22.384,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 187376,
+          "p95_ms": 22.305,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        }
+      ],
+      "median_p95_ms": 22.384
+    },
+    "after": {
+      "benchmarks": {
+        "BenchmarkModelSelection/legacy": {
+          "ns_op": 1518.0,
+          "bytes_op": 1224,
+          "allocs_op": 10
+        },
+        "BenchmarkModelSelection/raw_in_mapped_group": {
+          "ns_op": 1817.0,
+          "bytes_op": 1288,
+          "allocs_op": 12
+        },
+        "BenchmarkModelSelection/mapped": {
+          "ns_op": 1853.0,
+          "bytes_op": 1288,
+          "allocs_op": 12
+        },
+        "BenchmarkGatewayStreamTiming": {
+          "ns_op": 1005626.0,
+          "bytes_op": 147143,
+          "allocs_op": 1116
+        },
+        "BenchmarkMappedResponseModel": {
+          "ns_op": 3267.0,
+          "bytes_op": 932,
+          "allocs_op": 20
+        },
+        "BenchmarkNonStreamingCodeArtsOnce/1024": {
+          "ns_op": 36790.0,
+          "bytes_op": 19790,
+          "allocs_op": 141
+        },
+        "BenchmarkNonStreamingCodeArtsOnce/1048576": {
+          "ns_op": 4098020.0,
+          "bytes_op": 2256656,
+          "allocs_op": 164
+        },
+        "BenchmarkNonStreamingCodeArtsOnce/8388608": {
+          "ns_op": 16328814.0,
+          "bytes_op": 17092275,
+          "allocs_op": 169
+        }
+      },
+      "capacity": [
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 611256,
+          "p95_ms": 22.395,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 369936,
+          "p95_ms": 22.396,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        },
+        {
+          "concurrency": 2,
+          "failures": 0,
+          "heap_growth_bytes": 359768,
+          "p95_ms": 22.225,
+          "peak_upstream_concurrency": 2,
+          "remaining_leases": 0,
+          "samples": 100,
+          "upstream_delay_ms": 20
+        }
+      ],
+      "median_p95_ms": 22.395
+    },
+    "short_chunk_alternating_recheck": {
+      "rows": [
+        {
+          "round": 0,
+          "version": "before",
+          "ns_op": 2975.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 0,
+          "version": "after",
+          "ns_op": 3057.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 1,
+          "version": "after",
+          "ns_op": 3187.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 1,
+          "version": "before",
+          "ns_op": 3029.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 2,
+          "version": "before",
+          "ns_op": 3151.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 2,
+          "version": "after",
+          "ns_op": 3150.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 3,
+          "version": "after",
+          "ns_op": 3190.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 3,
+          "version": "before",
+          "ns_op": 3114.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 4,
+          "version": "before",
+          "ns_op": 3025.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        },
+        {
+          "round": 4,
+          "version": "after",
+          "ns_op": 2957.0,
+          "bytes_op": 931,
+          "allocs_op": 20
+        }
+      ],
+      "before_median_ns": 3029.0,
+      "after_median_ns": 3150.0,
+      "change_percent": 3.99
+    }
+  },
+  "real_upstream": {
+    "checks": [
+      {
+        "case": "codearts/buffered",
+        "passed": false,
+        "physical_model": "deepseek-v4.1-flash",
+        "limitation": "existing CodeArts credentials expired; same result with M2 control; refresh disabled"
+      },
+      {
+        "case": "codearts/stream",
+        "passed": false,
+        "physical_model": "deepseek-v4.1-flash",
+        "limitation": "existing CodeArts credentials expired; same result with M2 control; refresh disabled"
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.445,
+        "usage": {
+          "prompt_tokens": 509,
+          "completion_tokens": 6,
+          "total_tokens": 515,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 256
+          },
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 253,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.349,
+        "usage": {
+          "prompt_tokens": 511,
+          "completion_tokens": 8,
+          "total_tokens": 519,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 511,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0.01,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.618,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 18,
+          "completion_tokens_details": {
+            "reasoning_tokens": 9
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 45,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 9,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 63,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.487,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 34,
+          "completion_tokens_details": {
+            "reasoning_tokens": 23
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 47,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 23,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 81,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "codearts/tool_roundtrip",
+        "passed": false,
+        "limitation": "existing CodeArts credentials expired; same result with M2 control; refresh disabled"
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      }
+    ],
+    "m2_control_same_codearts_failures": true,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted": true
+  },
+  "deployment": {
+    "service": "codearts2api-panel.service",
+    "version": "codearts2api 0.3.0-structure-m3.1",
+    "pid": 2226762,
+    "binary_sha256": "f7add04ea529c61c47df49536b1989e476d32ecb063ff3f2fe66d44ba14f2160",
+    "binary_matches_build": true,
+    "cwd": "/home/white/codearts2api-panel",
+    "health": {
+      "accounts": 13,
+      "models": 8,
+      "ready": 13,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "preserved": {
+      "version": true,
+      "accounts": true,
+      "groups": true,
+      "keys": true,
+      "settings": true,
+      "stats": true,
+      "usage_sequence": true
+    },
+    "state_bytes_unchanged": true,
+    "scope": "local 127.0.0.1:10088",
+    "health_after_catalog_sync": {
+      "accounts": 13,
+      "models": 79,
+      "ready": 13,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  }
+}

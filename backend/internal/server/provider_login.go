@@ -1,8 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,6 +11,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
 )
 
 type providerLoginFlow struct {
@@ -215,7 +217,7 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 		if name == "" {
 			name = f.identity.Name
 		}
-		a := &codearts.Account{ID: codearts.RandomHex(8), Provider: f.provider, Scope: f.scope, ExternalID: f.identity.ID, Credentials: f.credentials, Name: name, Enabled: true, Source: "browser", Status: "ok"}
+		a := &accounts.Account{ID: codearts.RandomHex(8), Provider: f.provider, Scope: f.scope, ExternalID: f.identity.ID, Credentials: f.credentials, Name: name, Enabled: true, Source: "browser", Status: "ok"}
 		if _, err := s.Store.UpsertAccountAndSave(a, body.Replace); err != nil {
 			writeErr(w, 409, "保存失败："+err.Error(), "invalid_request_error")
 			return
@@ -279,7 +281,7 @@ func (s *Server) handleProviderImport(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		name = verified.Name
 	}
-	a := &codearts.Account{ID: codearts.RandomHex(8), Provider: body.Provider, Scope: identity.Scope, ExternalID: identity.ID, Credentials: raw, Name: name, Enabled: true, Source: "session", Status: "ok"}
+	a := &accounts.Account{ID: codearts.RandomHex(8), Provider: body.Provider, Scope: identity.Scope, ExternalID: identity.ID, Credentials: raw, Name: name, Enabled: true, Source: "session", Status: "ok"}
 	if _, err = s.Store.UpsertAccountAndSave(a, body.Replace); err != nil {
 		writeErr(w, 409, fmt.Sprintf("保存失败：%v", err), "invalid_request_error")
 		return

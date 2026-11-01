@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"codearts2api/internal/codearts"
 )
 
 // --- 手工录入：STS 与永久 AK/SK 的形态区分 ---
@@ -40,11 +42,11 @@ func TestAdminAccountsManualAKSKCreatesPermanentCredential(t *testing.T) {
 	if !a.Session.Valid(5 * time.Minute) {
 		t.Error("永久 AK/SK 必须始终有效")
 	}
-	if a.Session.SecurityToken != "" {
-		t.Errorf("永久 AK/SK 不应带 security_token，实际 %q", a.Session.SecurityToken)
+	if codearts.StoredSession(a).SecurityToken != "" {
+		t.Errorf("永久 AK/SK 不应带 security_token，实际 %q", codearts.StoredSession(a).SecurityToken)
 	}
-	if !a.Session.ExpiresAt.IsZero() {
-		t.Errorf("永久 AK/SK 的过期时间应为零值，实际 %v", a.Session.ExpiresAt)
+	if !codearts.StoredSession(a).ExpiresAt.IsZero() {
+		t.Errorf("永久 AK/SK 的过期时间应为零值，实际 %v", codearts.StoredSession(a).ExpiresAt)
 	}
 }
 
@@ -63,7 +65,7 @@ func TestAdminAccountsManualSTSStaysTemporary(t *testing.T) {
 	if a.Session.IsPermanent() {
 		t.Error("未声明 credential_kind 的账号不应被当成永久凭据")
 	}
-	if a.Session.ExpiresAt.IsZero() {
+	if codearts.StoredSession(a).ExpiresAt.IsZero() {
 		t.Error("STS 临时凭据应有过期时间（默认 TTL）")
 	}
 }

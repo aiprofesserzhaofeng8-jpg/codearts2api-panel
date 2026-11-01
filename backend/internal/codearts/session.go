@@ -274,46 +274,6 @@ func parseTime(v string) (time.Time, error) {
 	return time.Time{}, &time.ParseError{Layout: time.RFC3339, Value: v}
 }
 
-// Account 是网关侧的一个 CodeArts 账号。
-type Account struct {
-	Provider    string          `json:"provider,omitempty"`
-	Scope       string          `json:"scope,omitempty"`
-	ExternalID  string          `json:"external_id,omitempty"`
-	Credentials json.RawMessage `json:"provider_credentials,omitempty"`
-
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	Source         string `json:"source"`    // desktop | manual
-	UserData       string `json:"user_data"` // %APPDATA%\codearts-agent
-	Enabled        bool   `json:"enabled"`
-	Paused         bool   `json:"paused"`
-	MaxInFlight    int    `json:"max_in_flight,omitempty"` // 0 inherits the pool default.
-	CooldownUntil  int64  `json:"cooldown_until,omitempty"`
-	CooldownReason string `json:"cooldown_reason,omitempty"`
-	Status         string `json:"status"`
-	Failures       int    `json:"failures"`
-	LastErr        string `json:"last_err,omitempty"`
-	LastUsed       int64  `json:"last_used"`
-	Note           string `json:"note,omitempty"`
-	// 每日运营活动福利的领取记录（按本地日期去重）
-	LastClaimState string `json:"last_claim_state,omitempty"`
-	NextClaimAt    int64  `json:"next_claim_at,omitempty"`
-	LastClaimDate  string `json:"last_claim_date,omitempty"`
-	LastClaimAt    int64  `json:"last_claim_at,omitempty"`
-	LastClaimErr   string `json:"last_claim_err,omitempty"`
-	LastClaimMsg   string `json:"last_claim_msg,omitempty"`
-	// 缓存的凭据（含 refresh_token 与 DPoP 私钥），用于 IDE 未运行时的续期
-	Session *Session `json:"session,omitempty"`
-}
-
-// DisplayName 返回账号展示名。
-func (a *Account) DisplayName() string {
-	if a.Name != "" {
-		return a.Name
-	}
-	return shortID(a.ID)
-}
-
 // ImportResult 是一次桌面端导入的结果。
 type ImportResult struct {
 	Account *Account
@@ -321,12 +281,4 @@ type ImportResult struct {
 	Profile string
 	AK      string
 	Expires time.Time
-}
-
-// ProviderID preserves old state files: omitted provider means CodeArts.
-func (a *Account) ProviderID() string {
-	if a.Provider == "" {
-		return "codearts"
-	}
-	return a.Provider
 }

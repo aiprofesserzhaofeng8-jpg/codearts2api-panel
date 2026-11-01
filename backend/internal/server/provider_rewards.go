@@ -1,23 +1,24 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
 	"context"
 	"fmt"
 	"net/http"
 	"time"
+
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/provider"
 )
 
 var rewardLocation = time.FixedZone("UTC+8", 8*60*60)
 
-func claimDateFor(a *codearts.Account, now time.Time) string {
+func claimDateFor(a *accounts.Account, now time.Time) string {
 	if a.ProviderID() != provider.CodeArts {
 		return now.In(rewardLocation).Format("2006-01-02")
 	}
 	return now.Format("2006-01-02")
 }
-func (s *Server) dailyRewardsSupported(a *codearts.Account) bool {
+func (s *Server) dailyRewardsSupported(a *accounts.Account) bool {
 	if a.ProviderID() == provider.CodeArts {
 		return true
 	}
@@ -31,7 +32,7 @@ func (s *Server) dailyRewardsSupported(a *codearts.Account) bool {
 	_, ok = adapter.(provider.DailyRewards)
 	return ok
 }
-func (s *Server) providerDailyStatus(ctx context.Context, a *codearts.Account) (provider.RewardResult, error) {
+func (s *Server) providerDailyStatus(ctx context.Context, a *accounts.Account) (provider.RewardResult, error) {
 	today := claimDateFor(a, time.Now())
 	if a.LastClaimDate == today {
 		return provider.RewardResult{State: "already_claimed", Message: "今日签到已在本网关确认"}, nil
@@ -52,7 +53,7 @@ func (s *Server) providerDailyStatus(ctx context.Context, a *codearts.Account) (
 	}
 	return result, err
 }
-func (s *Server) claimProviderDaily(ctx context.Context, a *codearts.Account, today string) (string, error) {
+func (s *Server) claimProviderDaily(ctx context.Context, a *accounts.Account, today string) (string, error) {
 	release, err := s.rewardRuntime.lock(ctx, a.ID)
 	if err != nil {
 		return "", err
@@ -106,7 +107,7 @@ func (s *Server) claimProviderDaily(ctx context.Context, a *codearts.Account, to
 	}
 	return message, nil
 }
-func (s *Server) handleProviderWelfare(w http.ResponseWriter, r *http.Request, a *codearts.Account) {
+func (s *Server) handleProviderWelfare(w http.ResponseWriter, r *http.Request, a *accounts.Account) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	result, err := s.providerDailyStatus(ctx, a)

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
@@ -40,14 +41,14 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 			"claimed_today":         a.LastClaimDate == claimDateFor(a, time.Now()),
 			"daily_claim_supported": s.dailyRewardsSupported(a), "last_claim_state": a.LastClaimState, "next_claim_at": a.NextClaimAt,
 		}
-		if a.Session != nil {
-			row["access_key"] = codearts.Mask(a.Session.AccessKey)
-			row["expires_at"] = a.Session.ExpiresAt.Unix()
-			row["expires_in"] = int(a.Session.ExpiresIn().Seconds())
-			row["has_refresh"] = a.Session.HasRefresh()
-			row["domain_id"] = codearts.Mask(a.Session.DomainID)
+		if session := codearts.StoredSession(a); session != nil {
+			row["access_key"] = codearts.Mask(session.AccessKey)
+			row["expires_at"] = session.ExpiresAt.Unix()
+			row["expires_in"] = int(session.ExpiresIn().Seconds())
+			row["has_refresh"] = session.HasRefresh()
+			row["domain_id"] = codearts.Mask(session.DomainID)
 			// 永久 AK/SK 没有过期时间，控制台据此显示「永不过期」而不是 1970。
-			row["permanent"] = a.Session.IsPermanent()
+			row["permanent"] = session.IsPermanent()
 		}
 		if a.ProviderID() != provider.CodeArts && s.Providers != nil {
 			if adapter, ok := s.Providers.Get(a.ProviderID()); ok {
@@ -198,7 +199,7 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		if name == "" {
 			name = sess.AccountLabel
 		}
-		acct := &codearts.Account{
+		acct := &accounts.Account{
 			ID: codearts.RandomHex(8), Name: name, Source: "manual",
 			Enabled: true, Status: "ok", Session: sess,
 		}
@@ -829,7 +830,7 @@ func (s *Server) handleAdminCredits(w http.ResponseWriter, r *http.Request) {
 	var wg sync.WaitGroup
 	for i, a := range targets {
 		wg.Add(1)
-		go func(idx int, a *codearts.Account) {
+		go func(idx int, a *accounts.Account) {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
@@ -857,7 +858,7 @@ func (s *Server) handleAdminCredits(w http.ResponseWriter, r *http.Request) {
 }
 
 // creditFor 解析凭据并查询积分额度，带短缓存。
-func (s *Server) creditFor(ctx context.Context, a *codearts.Account, fresh bool) (*codearts.CreditInfo, error) {
+func (s *Server) creditFor(ctx context.Context, a *accounts.Account, fresh bool) (*codearts.CreditInfo, error) {
 	if a.ProviderID() != provider.CodeArts {
 		if !fresh {
 			if info, err, ok := s.cachedCredit(a.ID); ok {

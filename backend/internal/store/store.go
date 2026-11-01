@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 )
 
@@ -191,7 +192,7 @@ type State struct {
 	Prices                  map[string]ModelPrice             `json:"model_prices,omitempty"`
 	// Version 是 schema 版本（见 StateVersion）。
 	Version  int                 `json:"version"`
-	Accounts []*codearts.Account `json:"accounts"`
+	Accounts []*accounts.Account `json:"accounts"`
 	Keys     []*APIKey           `json:"keys"`
 	Settings Settings            `json:"settings"`
 	Stats    Stats               `json:"stats"`
@@ -508,7 +509,7 @@ func (s *Store) writeState(raw []byte) error {
 // 会被请求路径（MarkAccountResult）与控制台并发读写，直接把内部指针交出去
 // 就是数据竞争。Session 指针可以共享 —— 会话构造完成后不再原地修改，
 // 续期时是整体替换指针。
-func cloneAccount(a *codearts.Account) *codearts.Account {
+func cloneAccount(a *accounts.Account) *accounts.Account {
 	if a == nil {
 		return nil
 	}
@@ -518,8 +519,8 @@ func cloneAccount(a *codearts.Account) *codearts.Account {
 }
 
 // cloneAccounts 批量浅拷贝。
-func cloneAccounts(in []*codearts.Account) []*codearts.Account {
-	out := make([]*codearts.Account, len(in))
+func cloneAccounts(in []*accounts.Account) []*accounts.Account {
+	out := make([]*accounts.Account, len(in))
 	for i, a := range in {
 		out[i] = cloneAccount(a)
 	}
@@ -529,14 +530,14 @@ func cloneAccounts(in []*codearts.Account) []*codearts.Account {
 // --- 账号 ---
 
 // Accounts 返回账号快照（元素是浅拷贝，可直接并发读取）。
-func (s *Store) Accounts() []*codearts.Account {
+func (s *Store) Accounts() []*accounts.Account {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return cloneAccounts(s.st.Accounts)
 }
 
 // Account 按 ID 查找账号，返回快照。
-func (s *Store) Account(id string) *codearts.Account {
+func (s *Store) Account(id string) *accounts.Account {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, a := range s.st.Accounts {
@@ -551,7 +552,7 @@ func (s *Store) Account(id string) *codearts.Account {
 //
 // 入库时拷贝一份：store 拥有自己的副本，调用方之后对入参的修改不会绕过锁
 // 偷偷改到 store 内部状态。
-func (s *Store) UpsertAccount(a *codearts.Account) bool {
+func (s *Store) UpsertAccount(a *accounts.Account) bool {
 	if a == nil {
 		return false
 	}
@@ -560,17 +561,18 @@ func (s *Store) UpsertAccount(a *codearts.Account) bool {
 	return s.upsertAccountLocked(a)
 }
 
-func (s *Store) upsertAccountLocked(a *codearts.Account) bool {
+func (s *Store) upsertAccountLocked(a *accounts.Account) bool {
 	for i, ex := range s.st.Accounts {
 		if ex.ProviderID() != a.ProviderID() || ex.Scope != a.Scope {
 			continue
 		}
 		sameExternal := a.ExternalID != "" && a.ExternalID == ex.ExternalID
 		sameDir := ex.UserData != "" && ex.UserData == a.UserData
-		sameAK := ex.Session != nil && a.Session != nil &&
-			ex.Session.AccessKey != "" && ex.Session.AccessKey == a.Session.AccessKey
-		sameDomain := ex.Session != nil && a.Session != nil &&
-			ex.Session.DomainID != "" && ex.Session.DomainID == a.Session.DomainID
+		oldSession, newSession := codearts.StoredSession(ex), codearts.StoredSession(a)
+		sameAK := oldSession != nil && newSession != nil &&
+			oldSession.AccessKey != "" && oldSession.AccessKey == newSession.AccessKey
+		sameDomain := oldSession != nil && newSession != nil &&
+			oldSession.DomainID != "" && oldSession.DomainID == newSession.DomainID
 		if sameExternal || sameDir || sameAK || sameDomain {
 			a.ID = ex.ID
 			a.Enabled, a.Paused = ex.Enabled, ex.Paused
@@ -600,14 +602,14 @@ func (s *Store) RemoveAccount(id string) bool {
 //
 // 连续失败过多的账号会被跳过；全部不可用时回退到失败最少的那个，
 // 保证不会硬阻塞请求。
-func (s *Store) NextAccount() *codearts.Account {
+func (s *Store) NextAccount() *accounts.Account {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	n := len(s.st.Accounts)
 	if n == 0 {
 		return nil
 	}
-	var best *codearts.Account
+	var best *accounts.Account
 	for i := 0; i < n; i++ {
 		idx := (s.rotate + i) % n
 		a := s.st.Accounts[idx]

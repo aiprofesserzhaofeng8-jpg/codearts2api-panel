@@ -2,8 +2,10 @@ package store
 
 import (
 	"bytes"
-	"codearts2api/internal/codearts"
 	"encoding/json"
+
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/codearts"
 )
 
 // Session values are immutable. Pointer comparison checks the exact generation
@@ -15,11 +17,14 @@ func (s *Store) CommitAccountSession(id string, expected, updated *codearts.Sess
 		if a.ID != id {
 			continue
 		}
-		if a.Session != expected {
+		if codearts.StoredSession(a) != expected {
 			s.mu.Unlock()
 			return codearts.ErrSessionChanged
 		}
-		a.Session = updated
+		a.Session = nil
+		if updated != nil {
+			a.Session = updated
+		}
 		found = true
 		break
 	}
@@ -38,7 +43,7 @@ func (s *Store) CommitProviderCredentials(id string, expected, updated json.RawM
 		if a.ID == id {
 			if !bytes.Equal(a.Credentials, expected) {
 				s.mu.Unlock()
-				return codearts.ErrSessionChanged
+				return accounts.ErrCredentialChanged
 			}
 			a.Credentials = append(json.RawMessage(nil), updated...)
 			found = true
@@ -47,7 +52,7 @@ func (s *Store) CommitProviderCredentials(id string, expected, updated json.RawM
 	}
 	s.mu.Unlock()
 	if !found {
-		return codearts.ErrSessionChanged
+		return accounts.ErrCredentialChanged
 	}
 	return s.Save()
 }

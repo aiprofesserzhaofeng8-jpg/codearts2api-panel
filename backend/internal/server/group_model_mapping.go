@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
-	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
@@ -78,7 +78,7 @@ func (s *Server) resolveMappedModel(r *http.Request, settings store.Settings, ac
 	return publicMappingModel(name), nil
 }
 
-func (s *Server) prepareMappedAttempt(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte) (registry.Model, []byte, error) {
+func (s *Server) prepareMappedAttempt(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte) (registry.Model, []byte, error) {
 	plan := mappedPlan(ctx)
 	if plan == nil {
 		return model, body, nil

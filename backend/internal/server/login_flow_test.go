@@ -81,7 +81,7 @@ func TestBrowserTicketLoginPersistsAccountThroughAdminAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	accounts := reloaded.Accounts()
-	if len(accounts) != 1 || accounts[0].Session.AccessKey != "fixture-ak" || accounts[0].Session.HasRefresh() {
+	if len(accounts) != 1 || codearts.StoredSession(accounts[0]).AccessKey != "fixture-ak" || accounts[0].Session.HasRefresh() {
 		t.Fatal("login account missing or duplicated")
 	}
 	accountID := accounts[0].ID

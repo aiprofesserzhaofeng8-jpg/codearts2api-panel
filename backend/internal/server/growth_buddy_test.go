@@ -1,9 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,6 +8,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"codearts2api/internal/codearts"
+	"codearts2api/internal/provider"
+	"codearts2api/internal/store"
 )
 
 func buddyFixture(t *testing.T) (*Server, *growthActionFixture) {
@@ -110,7 +111,7 @@ func TestGrowthBuddyUnknownAdoptionRecoversWithoutAnotherPaidChat(t *testing.T) 
 	f.mu.Lock()
 	f.ignoreAdoption = false
 	f.mu.Unlock()
-	restarted := New(s.Store)
+	restarted := newConfiguredServer(s.Store)
 	restarted.Providers, restarted.Reg = s.Providers, s.Reg
 	second := runBuddyFixture(t, restarted, "first_buddy", true)
 	if second.State != "claimed" || second.CompletedCalls != 0 || f.chats != 0 || f.reports != 2 || f.agreements != 1 || f.adoptions != 2 || f.claims != 1 {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"codearts2api/internal/codearts"
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/requestpolicy"
@@ -18,7 +18,7 @@ func promptBlocked(err error) bool {
 // The caller resolves credentials once and retains its account lease. Protocol
 // adapters only see the prepared Chat body. A consumed chunk always closes the
 // retry window, including chunks buffered by a non-streaming protocol adapter.
-func (s *Server) runRequestPolicy(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte, run func([]byte, func()) error) error {
+func (s *Server) runRequestPolicy(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte, run func([]byte, func()) error) error {
 	policy := s.Store.Settings().ProviderPolicy(acct.ProviderID())
 	explicit, _ := ctx.Value(summaryIntentKey{}).(bool)
 	if summaryRequest(body, explicit) {

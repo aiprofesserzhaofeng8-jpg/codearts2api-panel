@@ -48,7 +48,7 @@ func TestAccountCommitRequiresDuplicateApprovalAndRollsBack(t *testing.T) {
 	if _, err := s.UpsertAccountAndSave(b, false); err != ErrAccountExists {
 		t.Fatal("duplicate update not gated")
 	}
-	if s.Account("first").Session.AccessKey != "first-ak" {
+	if codearts.StoredSession(s.Account("first")).AccessKey != "first-ak" {
 		t.Fatal("duplicate request changed credentials")
 	}
 	if isNew, err := s.UpsertAccountAndSave(b, true); isNew || err != nil || len(s.Accounts()) != 1 {

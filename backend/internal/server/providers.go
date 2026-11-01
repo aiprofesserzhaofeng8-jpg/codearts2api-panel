@@ -1,9 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
-	"codearts2api/internal/registry"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +8,10 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/provider"
+	"codearts2api/internal/registry"
 )
 
 type providerRuntime struct {
@@ -36,7 +37,7 @@ func (p *providerRuntime) lock(ctx context.Context, id string) (func(), error) {
 		return nil, ctx.Err()
 	}
 }
-func (s *Server) providerCredentials(ctx context.Context, acct *codearts.Account) (provider.Adapter, json.RawMessage, error) {
+func (s *Server) providerCredentials(ctx context.Context, acct *accounts.Account) (provider.Adapter, json.RawMessage, error) {
 	if s.Providers == nil {
 		return nil, nil, fmt.Errorf("上游适配器未初始化")
 	}
@@ -51,7 +52,7 @@ func (s *Server) providerCredentials(ctx context.Context, acct *codearts.Account
 	defer release()
 	latest := s.Store.Account(acct.ID)
 	if latest == nil {
-		return nil, nil, codearts.ErrSessionChanged
+		return nil, nil, accounts.ErrCredentialChanged
 	}
 	raw, identity, err := adapter.Normalize(latest.Credentials)
 	if err != nil {
@@ -82,7 +83,7 @@ func (s *Server) providerCredentials(ctx context.Context, acct *codearts.Account
 	}
 	return adapter, normalized, nil
 }
-func (s *Server) streamProvider(ctx context.Context, acct *codearts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
+func (s *Server) streamProvider(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte, onChunk func([]byte) error) error {
 	startAttempt(ctx, acct, model.ID)
 	adapter, raw, err := s.providerCredentials(ctx, acct)
 	if err != nil {
@@ -113,7 +114,7 @@ func (s *Server) handleProviders(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 200, map[string]any{"providers": s.providerDescriptors()})
 }
-func (s *Server) providerAccountError(ctx context.Context, acct *codearts.Account, model string, err error) bool {
+func (s *Server) providerAccountError(ctx context.Context, acct *accounts.Account, model string, err error) bool {
 	var p *provider.Error
 	if !errors.As(err, &p) {
 		return false

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"codearts2api/internal/codearts"
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 )
 
@@ -20,7 +20,7 @@ func workBuddyTransientStatus(status int) bool {
 
 // One fast recovery, before any upstream output, shares the original lease and
 // total-attempt limit. The window admits retries; it never cuts off generation.
-func (s *Server) runAccountAttempt(ctx context.Context, acct *codearts.Account, model string, fn func(context.Context, *codearts.Account) error, mayRepeat bool) (error, bool) {
+func (s *Server) runAccountAttempt(ctx context.Context, acct *accounts.Account, model string, fn func(context.Context, *accounts.Account) error, mayRepeat bool) (error, bool) {
 	err := fn(ctx, acct)
 	finishAttempt(ctx, err)
 	if !mayRepeat || !canRecoverWorkBuddy(ctx, acct, err) {
@@ -44,7 +44,7 @@ func (s *Server) runAccountAttempt(ctx context.Context, acct *codearts.Account, 
 	return err, true
 }
 
-func canRecoverWorkBuddy(ctx context.Context, acct *codearts.Account, err error) bool {
+func canRecoverWorkBuddy(ctx context.Context, acct *accounts.Account, err error) bool {
 	if err == nil || ctx.Err() != nil || acct.ProviderID() != provider.WorkBuddy {
 		return false
 	}

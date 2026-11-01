@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 )
@@ -30,7 +31,7 @@ type growthReply struct {
 	BuddyError       string                      `json:"buddy_error,omitempty"`
 }
 
-func (s *Server) growthAccount(w http.ResponseWriter, id string, claim bool) *codearts.Account {
+func (s *Server) growthAccount(w http.ResponseWriter, id string, claim bool) *accounts.Account {
 	if id == "" {
 		writeErr(w, 400, "请指定成长任务账号", "invalid_request_error")
 		return nil
@@ -171,7 +172,7 @@ func (s *Server) handleGrowthClaim(w http.ResponseWriter, r *http.Request) {
 }
 
 // Manual and action-driven claims share the existing account lock and confirmation.
-func (s *Server) claimGrowthReward(ctx context.Context, a *codearts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, code string) (growthReply, error) {
+func (s *Server) claimGrowthReward(ctx context.Context, a *accounts.Account, adapter provider.Adapter, raw json.RawMessage, tasks []provider.GrowthTask, code string) (growthReply, error) {
 	growth := adapter.(provider.GrowthTasks)
 	reply := growthReply{OK: true, ID: a.ID, Tasks: tasks}
 	reward, claimErr := growth.ClaimGrowthReward(ctx, raw, code)

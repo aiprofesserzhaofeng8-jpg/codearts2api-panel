@@ -1,8 +1,6 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/provider"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +9,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/provider"
 )
 
 func decodeGrowthBody(w http.ResponseWriter, r *http.Request, v any) bool {
@@ -400,7 +401,7 @@ func (s *Server) handleGrowthRun(w http.ResponseWriter, r *http.Request) {
 	finish()
 }
 
-func (s *Server) runGrowthChat(ctx context.Context, a *codearts.Account, actions provider.GrowthActions, raw json.RawMessage, task provider.GrowthTask, model string) (bool, error) {
+func (s *Server) runGrowthChat(ctx context.Context, a *accounts.Account, actions provider.GrowthActions, raw json.RawMessage, task provider.GrowthTask, model string) (bool, error) {
 	if err := ctx.Err(); err != nil {
 		return false, err
 	}

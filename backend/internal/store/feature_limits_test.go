@@ -1,13 +1,14 @@
 package store
 
 import (
-	"codearts2api/internal/codearts"
 	"errors"
 	"math"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"codearts2api/internal/codearts"
 )
 
 func TestModelHealthIsolationAndRecovery(t *testing.T) {
@@ -47,7 +48,7 @@ func TestModelHealthIsolationAndRecovery(t *testing.T) {
 }
 func TestCredentialCommitRejectsNewLoginAndDeletion(t *testing.T) {
 	s := testPool(t, 1)
-	old := s.Account("0").Session
+	old := codearts.StoredSession(s.Account("0"))
 	newLogin := &codearts.Session{AccessKey: "new-login", SecretKey: "secret"}
 	s.SetAccountSession("0", newLogin)
 	if err := s.CommitAccountSession("0", old, &codearts.Session{AccessKey: "stale-refresh"}); !errors.Is(err, codearts.ErrSessionChanged) {

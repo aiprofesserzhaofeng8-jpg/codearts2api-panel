@@ -80,7 +80,7 @@ func TestConcurrentAccountAccessIsSafe(t *testing.T) {
 				for _, a := range st.Accounts() {
 					_ = a.DisplayName()
 					_ = a.Status
-					_ = a.Session.AccessKey
+					_ = codearts.StoredSession(a).AccessKey
 				}
 			}
 		}()

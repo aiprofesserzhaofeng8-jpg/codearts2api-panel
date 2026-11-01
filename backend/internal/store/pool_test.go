@@ -192,7 +192,7 @@ func TestPoolReloginDeduplicatesRotatedCredentials(t *testing.T) {
 	if s.UpsertAccount(newLogin) || len(s.Accounts()) != 1 || newLogin.ID != "first" {
 		t.Fatal("relogin duplicated the same account")
 	}
-	if a := s.Account("first"); a.Enabled || !a.Paused || a.Session.AccessKey != "rotated" {
+	if a := s.Account("first"); a.Enabled || !a.Paused || codearts.StoredSession(a).AccessKey != "rotated" {
 		t.Fatal("relogin lost operator settings or failed to update credentials")
 	}
 }

@@ -29,7 +29,7 @@ func BenchmarkWorkBuddyRecoverySuccess(b *testing.B) {
 			st.UpdateSettings(func(s *store.Settings) { s.RateLimitEnabled = false; s.MaxRetries = 3 })
 			raw, _ := json.Marshal(workbuddy.Credentials{AccessToken: "bench-access", RefreshToken: "bench-refresh", UID: "bench", Realm: "cn", ExpiresAt: time.Now().Add(time.Hour).Unix()})
 			st.UpsertAccount(&codearts.Account{ID: "bench", Enabled: true, Provider: provider.WorkBuddy, Scope: "cn", ExternalID: "bench", Credentials: raw})
-			s := New(st)
+			s := newConfiguredServer(st)
 			s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "shared", StreamOnly: true}})
 			key := st.AddKey("benchmark").Key
 			fixture := strings.Repeat("data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"text\"}}]}\n\n", 100) + "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":4}}\n\ndata: [DONE]\n\n"

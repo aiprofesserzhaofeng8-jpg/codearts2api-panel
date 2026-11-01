@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
-	"codearts2api/internal/codearts"
 	"codearts2api/internal/protocol"
 	apicompat "codearts2api/internal/responsescompat"
 )
@@ -148,7 +148,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		}
 		return nil
 	}
-	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
+	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
 		state = apicompat.NewChatCompletionsToResponsesStreamState(model.ID)
 		state.CustomTools, state.FunctionTools = custom, functions
 		state.NamespaceTools, state.ToolSearchDeclared = namespaces, toolSearch

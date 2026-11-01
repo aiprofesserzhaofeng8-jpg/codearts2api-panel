@@ -20,11 +20,11 @@ import (
 func poolServer(t *testing.T, n int) *Server {
 	s := newTestServer(t, n, 3)
 	s.Store.UpdateSettings(func(c *store.Settings) { c.Pool = store.DefaultPoolSettings() })
-	s = New(s.Store)
+	s = newConfiguredServer(s.Store)
 	s.AllowLocalAdmin = true
 	s.Reg.Replace([]registry.Model{{ID: "test-model", StreamOnly: true}})
 	for _, a := range s.Store.Accounts() {
-		sess := *a.Session
+		sess := *codearts.StoredSession(a)
 		sess.ExpiresAt = time.Now().Add(time.Hour)
 		s.Store.SetAccountSession(a.ID, &sess)
 	}

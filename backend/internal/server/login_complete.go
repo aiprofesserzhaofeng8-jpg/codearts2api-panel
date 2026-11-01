@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/store"
 )
@@ -45,7 +46,7 @@ func (s *Server) handleAdminLoginComplete(w http.ResponseWriter, r *http.Request
 		if name == "" {
 			name = sess.AccountLabel
 		}
-		a := &codearts.Account{ID: codearts.RandomHex(8), Name: name, Source: "browser", Enabled: true, Status: "ok", Session: sess}
+		a := &accounts.Account{ID: codearts.RandomHex(8), Name: name, Source: "browser", Enabled: true, Status: "ok", Session: sess}
 		_, err := s.Store.UpsertAccountAndSave(a, body.Replace)
 		if err != nil {
 			if errors.Is(err, store.ErrAccountExists) {

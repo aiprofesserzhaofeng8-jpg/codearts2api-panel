@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/protocol"
@@ -106,7 +107,7 @@ func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body 
 		raw    []byte
 		outLen int
 	)
-	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
+	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
 		res, err := s.chatOnce(ctx, acct, model, body)
 		if err != nil {
 			return err
@@ -142,7 +143,7 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 		streamErr error
 	)
 
-	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *codearts.Account) error {
+	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
 		st := newAnthropicStream(w, flusher, msgID, model.ID, promptLen)
 		err := s.streamOnce(ctx, acct, model, body, func(chunk []byte) error {
 			if !started {

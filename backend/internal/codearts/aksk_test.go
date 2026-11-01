@@ -15,7 +15,7 @@ func TestPermanentAKSKNeverExpires(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := acct.Session
+	s := StoredSession(acct)
 	if s == nil {
 		t.Fatal("session not built")
 	}
@@ -44,7 +44,7 @@ func TestPermanentAKSKDoesNotClaimRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := acct.Session
+	s := StoredSession(acct)
 	if s.HasRefresh() {
 		t.Fatal("permanent AK/SK must not advertise refresh capability")
 	}
@@ -76,7 +76,7 @@ func TestManualSTSStillExpires(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := acct.Session
+	s := StoredSession(acct)
 	if s.IsPermanent() {
 		t.Fatal("STS credential must not be marked permanent")
 	}
@@ -92,7 +92,7 @@ func TestManualSTSDefaultsToTTL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := acct.Session
+	s := StoredSession(acct)
 	if s.ExpiresAt.IsZero() {
 		t.Fatal("STS credential should receive a default TTL")
 	}

@@ -23,9 +23,7 @@ import (
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
-	"codearts2api/internal/trae"
 	"codearts2api/internal/websearch"
-	"codearts2api/internal/workbuddy"
 )
 
 // Server 是网关 HTTP 服务。
@@ -64,21 +62,21 @@ type Server struct {
 	creditCache map[string]creditCacheEntry
 }
 
-// New 构造服务。
-func New(st *store.Store) *Server {
-	up := codearts.NewClient()
-	s := &Server{Store: st, Up: up, Search: websearch.New(), Reg: registry.New(), cache: newModelCache()}
+// Dependencies contains upstream services assembled by internal/app.
+type Dependencies struct {
+	Up        *codearts.Client
+	Cred      *codearts.Manager
+	Logins    *codearts.LoginManager
+	Providers *provider.Registry
+	Reg       *registry.Registry
+	Search    *websearch.Client
+}
+
+// New constructs HTTP runtime state using the supplied application services.
+func New(st *store.Store, deps Dependencies) *Server {
+	s := &Server{Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
 	s.localPanelToken = rand.Text()
-	s.Providers = provider.NewRegistry()
-	_ = s.Providers.Register(workbuddy.New())
-	_ = s.Providers.Register(trae.New())
-	s.Cred = codearts.NewManager(up)
-	// 凭据解析拿到的是账号快照，所以续期 / 跟随 IDE 得到的新会话必须显式写回 store，
-	// 否则只对那一次请求生效（IDE 关闭后就再也拿不到）。
-	s.Cred.Latest = st.Account
-	s.Cred.Commit = st.CommitAccountSession
-	s.Cred.Logf = log.Printf
-	s.Logins = codearts.NewLoginManager(up)
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
 	return s
 }

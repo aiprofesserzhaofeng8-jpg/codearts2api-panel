@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
-	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
@@ -24,7 +24,7 @@ func groupKey(ctx context.Context) string {
 func groupDenied() error {
 	return &provider.Error{Status: 403, Message: "当前 API Key 的分组不允许调用此模型或没有对应账号"}
 }
-func scopeAllows(scope store.AccessScope, accounts []*codearts.Account, model registry.Model) bool {
+func scopeAllows(scope store.AccessScope, accounts []*accounts.Account, model registry.Model) bool {
 	if !scope.Restricted {
 		return true
 	}

@@ -1,12 +1,14 @@
 package server
 
 import (
-	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
 	"context"
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/codearts"
+	"codearts2api/internal/store"
 )
 
 type usageContextKey struct{}
@@ -199,7 +201,7 @@ func markSummary(ctx context.Context, attempt int) {
 	}
 }
 
-func startAttempt(ctx context.Context, acct *codearts.Account, model string) {
+func startAttempt(ctx context.Context, acct *accounts.Account, model string) {
 	resetUsage(ctx)
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		c.account = acct.DisplayName()
