@@ -208,7 +208,7 @@ func TestProviderModelRefreshAndTraeRejection(t *testing.T) {
 	if _, ok := s.Reg.Resolve("workbuddy/cn/shared", nil); !ok {
 		t.Fatal("provider catalog missing")
 	}
-	if s.cache.loadedAt.IsZero() {
+	if s.Catalog.LoadedAt().IsZero() {
 		t.Fatal("provider-only refresh not cached")
 	}
 	w := responseRequest(s, key, "/v1/responses", `{"model":"trae/cn/shared","input":"hello"}`)

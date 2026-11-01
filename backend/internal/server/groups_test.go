@@ -54,7 +54,7 @@ func TestGroupModelsAndThreeProtocolsShareScope(t *testing.T) {
 	s.Store.UpsertAccount(&codearts.Account{ID: "outside", Provider: "trae", Scope: "cn", ExternalID: "other", Enabled: true})
 	s.Reg.ReplaceProvider("workbuddy", "cn", []provider.Model{{ID: "shared", StreamOnly: true}, {ID: "blocked", StreamOnly: true}, {ID: "shared", StreamOnly: true}})
 	s.Reg.ReplaceProvider("trae", "cn", []provider.Model{{ID: "shared", StreamOnly: true}})
-	s.cache.loadedAt = time.Now()
+	markModelsFresh(s)
 	g, err := s.Store.SaveGroup(store.AccountGroup{Name: "wb", AccountIDs: []string{"wb-cn"}, AllowlistEnabled: true, ModelIDs: []string{"workbuddy/cn/shared"}})
 	if err != nil {
 		t.Fatal(err)
@@ -140,7 +140,7 @@ func TestGroupAdminBindingAndBoundDeletion(t *testing.T) {
 func TestGroupResolvedTargetsAndRevalidation(t *testing.T) {
 	s := poolServer(t, 2)
 	s.Reg.Replace([]registry.Model{{ID: "test-model"}, {ID: "blocked"}})
-	s.cache.loadedAt = time.Now()
+	markModelsFresh(s)
 	s.Store.UpdateSettings(func(st *store.Settings) {
 		st.ModelAliases["allowed-alias"] = "test-model"
 		st.ModelAliases["blocked-alias"] = "blocked"

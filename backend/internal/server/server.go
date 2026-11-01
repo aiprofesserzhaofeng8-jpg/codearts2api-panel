@@ -20,6 +20,7 @@ import (
 	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
@@ -33,6 +34,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	Catalog             *catalog.Runtime
 	Configuration       *config.Management
 	AccessManagement    *access.Management
 	AccountManagement   *accounts.Management
@@ -59,15 +61,6 @@ type Server struct {
 	// Limits 是按 API 密钥的自我保护限流（QPS + 在飞并发）。
 	Limits *ratelimit.Limiter
 
-	// 上游模型清单 / 额度的内存缓存
-	cache *modelCache
-
-	// probeMu 保证同一时刻只有一个模型测活任务在跑。
-	//
-	// 每次探测都是一次真实上游请求（真实扣积分），两个并发的全量探测不仅成本翻倍，
-	// 还会把单账号 3 个并发会话的上限打满，测出假「不可用」。
-	probeMu sync.Mutex
-
 	// 积分额度缓存：额度查询是真实上游请求，切页签 / 连续刷新时没必要每次都打。
 	creditMu    sync.Mutex
 	creditCache map[string]creditCacheEntry
@@ -75,6 +68,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	Catalog             *catalog.Runtime
 	Configuration       *config.Management
 	AccessManagement    *access.Management
 	AccountManagement   *accounts.Management
@@ -93,9 +87,9 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
-		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
+		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
 	return s

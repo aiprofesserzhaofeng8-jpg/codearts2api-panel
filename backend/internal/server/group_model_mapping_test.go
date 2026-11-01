@@ -90,8 +90,7 @@ func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http
 		t.Fatal(err)
 	}
 	_ = s.Handler()
-	s.cache = newModelCache()
-	s.cache.loadedAt = time.Now()
+	markModelsFresh(s)
 	return s, k.Key, g
 }
 func mappedBody(path string, stream bool, model string) string {

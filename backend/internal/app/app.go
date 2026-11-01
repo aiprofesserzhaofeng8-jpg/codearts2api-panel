@@ -9,6 +9,7 @@ import (
 
 	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
@@ -42,6 +43,7 @@ func Build(st *store.Store) (*server.Server, error) {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	return server.New(st, server.Dependencies{
+		Catalog: catalog.NewRuntime(st, models),
 		Configuration: config.NewManagement(st, func(id string) (config.ModelRef, bool) {
 			model, ok := models.Resolve(id, st.Settings().ModelAliases)
 			platform := model.Provider

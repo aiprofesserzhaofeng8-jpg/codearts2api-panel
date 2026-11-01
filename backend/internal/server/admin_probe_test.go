@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
@@ -50,7 +51,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 		s.MaxRetries = 1
 	})
 	up := codearts.NewClient()
-	s := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: up, Reg: registry.New(), cache: newModelCache()})
+	s := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: up, Reg: registry.New()})
 	attachAccessManagement(s)
 	s.Cred = codearts.NewManager(up)
 	attachAccountManagement(s)
@@ -87,31 +88,12 @@ func adminProbeRequest(t *testing.T, s *Server, method, target, body string) *ht
 
 // --- 纯函数 ---
 
-// TestDedupeModels 校验去空白、去空值、去重。
-//
-// 重复 ID 会变成两次真实上游请求（真实扣积分），调用方没有任何理由需要重复探测。
-func TestDedupeModels(t *testing.T) {
-	got := dedupeModels([]string{" glm-5.3 ", "", "glm-5.3", "GLM-5.2", "  ", "GLM-5.2"})
-	want := []string{"glm-5.3", "GLM-5.2"}
-	if len(got) != len(want) {
-		t.Fatalf("dedupeModels = %v，期望 %v", got, want)
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Errorf("第 %d 项 = %q，期望 %q", i, got[i], want[i])
-		}
-	}
-	if empty := dedupeModels(nil); len(empty) != 0 {
-		t.Errorf("nil 输入应返回空切片，实际 %v", empty)
-	}
-}
-
 // --- 测活接口的闸门 ---
 
 // TestModelProbeRejectsTooManyModels 一次请求的模型数有上限：每个模型都是真实扣费。
 func TestModelProbeRejectsTooManyModels(t *testing.T) {
 	s := newAdminTestServer(t, "a")
-	models := make([]string, probeMaxModels+1)
+	models := make([]string, catalog.ProbeMaxModels+1)
 	for i := range models {
 		models[i] = fmt.Sprintf("m%d", i)
 	}
@@ -121,8 +103,8 @@ func TestModelProbeRejectsTooManyModels(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("状态码 = %d，期望 400（body: %s）", rec.Code, rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), fmt.Sprint(probeMaxModels)) {
-		t.Errorf("错误信息应说明上限 %d，实际：%s", probeMaxModels, rec.Body.String())
+	if !strings.Contains(rec.Body.String(), fmt.Sprint(catalog.ProbeMaxModels)) {
+		t.Errorf("错误信息应说明上限 %d，实际：%s", catalog.ProbeMaxModels, rec.Body.String())
 	}
 }
 
@@ -140,8 +122,11 @@ func TestModelProbeNoAccounts(t *testing.T) {
 // 且会打满单账号 3 个并发会话的上限、测出假「不可用」。
 func TestModelProbeRejectsConcurrentRun(t *testing.T) {
 	s := newAdminTestServer(t, "a")
-	s.probeMu.Lock()
-	defer s.probeMu.Unlock()
+	run, err := s.Catalog.BeginProbe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer run.Close()
 
 	rec := adminProbeRequest(t, s, http.MethodPost, "/admin/api/models/probe", `{"models":["glm-5.3"]}`)
 	if rec.Code != http.StatusConflict {

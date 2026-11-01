@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -11,6 +10,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
@@ -77,9 +77,7 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	s.cache.mu.RLock()
-	cacheErr := s.cache.err
-	s.cache.mu.RUnlock()
+	cacheErr := s.Catalog.Error()
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"today":           today,
@@ -419,175 +417,33 @@ func (s *Server) defaultProbeModel() (registry.Model, bool) {
 	return s.Reg.Resolve(st.DefaultModel, st.ModelAliases)
 }
 
-// probeMaxModels 是一次测活请求允许探测的模型数上限。
-//
-// 每个模型都是一次真实上游请求、真实扣积分，因此必须有上限：上游清单异常变大时，
-// 不能让一次点击变成无界的消耗。超限要求调用方分批，而不是静默截断。
-const probeMaxModels = 64
-
-// probeAttemptTimeout 是「一个模型 × 一个账号」的探测超时。
-//
-// 上游正常几百毫秒到几秒就返回；30 秒还没回基本可判定这次尝试无望，
-// 早点换下一个账号，避免「多账号 × 多模型」把整个请求拖到客户端超时。
-const probeAttemptTimeout = 30 * time.Second
-
-// handleAdminModelProbe 逐个模型做一次最小真实请求，返回每个模型是否可用。
-//
-// 与 handleAdminCheckin 的区别：那个只探一个默认模型、判断的是「账号通不通」；
-// 这个遍历当前模型清单，判断的是「这个账号能不能用某个模型」——上游会把当前
-// 套餐未注册的模型也列进 /v1/models，只有真打一次才知道能不能用。
-//
-// 成本约束：一次探测 = 一次真实上游请求（max_tokens=8，真实扣积分），因此有三道闸门：
-// 单次请求的模型数上限、同一时刻只允许一个测活任务、每次尝试的超时。
-// 前端在全量测活前还要用户二次确认。
+// handleAdminModelProbe retains the task gate before permissive HTTP decoding.
 func (s *Server) handleAdminModelProbe(w http.ResponseWriter, r *http.Request) {
-	// 同一时刻只允许一个测活任务：两个并发的全量探测会把成本翻倍，也会把单账号
-	// 3 个并发会话的上限打满 —— 结果反而测出「不可用」，把用户引到错误结论上。
-	if !s.probeMu.TryLock() {
-		writeErr(w, http.StatusConflict, "已有测活任务在运行，请等它结束后再试", "invalid_request_error")
+	run, err := s.Catalog.BeginProbe()
+	if err != nil {
+		writeErr(w, http.StatusConflict, err.Error(), "invalid_request_error")
 		return
 	}
-	defer s.probeMu.Unlock()
-
+	defer run.Close()
 	var body struct {
 		ID     string   `json:"id"`
 		Models []string `json:"models"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
-
-	targets := s.Store.Accounts()
-	if body.ID != "" {
-		targets = nil
-		if a := s.Store.Account(body.ID); a != nil {
-			targets = append(targets, a)
-		}
-	}
-	if len(targets) == 0 {
-		writeErr(w, http.StatusBadRequest, "没有可用账号", "invalid_request_error")
+	result, err := run.Run(r.Context(), body.ID, body.Models, catalog.ProbeOperations{
+		Native: func(ctx context.Context, a *accounts.Account, model string) error {
+			return s.CodeArts.Probe(ctx, s.Cred, a, s.resolveOptions(), model)
+		},
+		Provider: s.chatOnce,
+	})
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
 		return
-	}
-
-	// 未指定模型时探测当前清单里的全部模型。
-	want := body.Models
-	if len(want) == 0 {
-		st := s.Store.Settings()
-		for _, m := range s.Reg.List(st.ModelAliases) {
-			// 别名与本体重复探测没有意义，只探上游真实 ID。
-			if m.Source == "alias" {
-				continue
-			}
-			want = append(want, m.ID)
-		}
-	}
-	want = dedupeModels(want)
-	if len(want) == 0 {
-		writeErr(w, http.StatusBadRequest, "模型清单为空", "invalid_request_error")
-		return
-	}
-	if len(want) > probeMaxModels {
-		writeErr(w, http.StatusBadRequest,
-			fmt.Sprintf("一次最多测活 %d 个模型（当前 %d 个），请分批进行", probeMaxModels, len(want)),
-			"invalid_request_error")
-		return
-	}
-
-	// 并发上限按模型数收敛：每个探测都是一次真实上游请求，串行太慢、
-	// 全并发又会撞单账号 3 会话的限制。
-	limit := 4
-	results := make([]map[string]any, len(want))
-	sem := make(chan struct{}, limit)
-	var wg sync.WaitGroup
-	for i, modelID := range want {
-		wg.Add(1)
-		go func(idx int, modelID string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			row := map[string]any{"model": modelID}
-			// 依次尝试账号，任一账号能用即判定该模型可用。
-			for _, a := range targets {
-				upstream, scope, _ := provider.ParseModel(modelID)
-				if a.ProviderID() != upstream || (upstream != provider.CodeArts && a.Scope != scope) {
-					continue
-				}
-				if upstream != provider.CodeArts {
-					ctx, cancel := context.WithTimeout(r.Context(), probeAttemptTimeout)
-					model, ok := s.Reg.Resolve(modelID, nil)
-					var err error
-					if !ok {
-						err = fmt.Errorf("模型不存在")
-					} else {
-						body, _ := json.Marshal(map[string]any{"model": modelID, "messages": []map[string]string{{"role": "user", "content": "Reply OK."}}, "max_tokens": 64})
-						_, err = s.chatOnce(ctx, a, model, body)
-					}
-					cancel()
-					row["ok"] = err == nil
-					row["account"] = a.DisplayName()
-					if err != nil {
-						row["error"] = err.Error()
-						continue
-					}
-					break
-				}
-				// 客户端断开后不必再花积分试下一个账号。
-				if r.Context().Err() != nil {
-					row["ok"] = false
-					row["error"] = "测活已取消"
-					break
-				}
-				ctx, cancel := context.WithTimeout(r.Context(), probeAttemptTimeout)
-				sess, err := s.Cred.Session(ctx, a, s.resolveOptions())
-				if err != nil {
-					row["ok"] = false
-					row["error"] = err.Error()
-					row["account"] = a.DisplayName()
-					cancel()
-					continue
-				}
-				err = s.Up.Probe(ctx, sess, modelID)
-				cancel()
-				if err == nil {
-					row["ok"] = true
-					row["account"] = a.DisplayName()
-					break
-				}
-				row["ok"] = false
-				row["error"] = err.Error()
-				row["account"] = a.DisplayName()
-			}
-			results[idx] = row
-		}(i, modelID)
-	}
-	wg.Wait()
-
-	okCount := 0
-	for _, row := range results {
-		if row["ok"] == true {
-			okCount++
-		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok": true, "total": len(results), "available": okCount,
-		"unavailable": len(results) - okCount, "results": results,
+		"ok": true, "total": result.Total, "available": result.Available,
+		"unavailable": result.Total - result.Available, "results": result.Results,
 	})
-}
-
-// dedupeModels 去掉空值、首尾空白与重复的模型 ID。
-//
-// 重复 ID 会变成两次真实扣费，而调用方（控制台）没有任何理由需要重复探测。
-func dedupeModels(ids []string) []string {
-	seen := make(map[string]bool, len(ids))
-	out := make([]string, 0, len(ids))
-	for _, id := range ids {
-		id = strings.TrimSpace(id)
-		if id == "" || seen[id] {
-			continue
-		}
-		seen[id] = true
-		out = append(out, id)
-	}
-	return out
 }
 
 // creditCacheTTL 是积分额度的缓存时长。

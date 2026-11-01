@@ -41,7 +41,7 @@ func TestAssemblyRestoresAndGuardsCredentialGenerations(t *testing.T) {
 			t.Fatalf("missing platform %s", id)
 		}
 	}
-	if srv.Configuration == nil || srv.AccessManagement == nil || srv.AccountManagement == nil || srv.Cred.Client != srv.Up || srv.BrowserLogins == nil || srv.ProviderLogins == nil || srv.ProviderCredentials == nil || srv.CodeArts == nil || srv.Completions == nil || srv.Logins == nil || srv.Search == nil || srv.Reg == nil || srv.Limits == nil {
+	if srv.Catalog == nil || srv.Configuration == nil || srv.AccessManagement == nil || srv.AccountManagement == nil || srv.Cred.Client != srv.Up || srv.BrowserLogins == nil || srv.ProviderLogins == nil || srv.ProviderCredentials == nil || srv.CodeArts == nil || srv.Completions == nil || srv.Logins == nil || srv.Search == nil || srv.Reg == nil || srv.Limits == nil {
 		t.Fatal("incomplete dependencies")
 	}
 	stale := st.Account("fixture")

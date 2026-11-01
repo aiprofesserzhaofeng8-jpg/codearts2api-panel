@@ -3,100 +3,36 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
-	"sync"
 	"time"
 
-	"codearts2api/internal/apierr"
+	"codearts2api/internal/accounts"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 )
 
-// modelCache 记录模型清单的刷新状态（清单本体在 registry 里）。
-type modelCache struct {
-	mu             sync.RWMutex
-	refreshMu      sync.Mutex
-	providerErrors map[string]string
-	err            string
-	loadedAt       time.Time
-}
-
-func newModelCache() *modelCache { return &modelCache{} }
-
-// errEmptyModelList 表示上游 200 但没返回任何可用模型。
-var errEmptyModelList = errors.New("上游未返回任何可用模型")
-
-// RefreshModels 从上游拉取模型清单并写入注册表。
-//
-// 2026-10 起免费权益通道下线，模型清单只有一个来源：`GET /v1/model/builtin`
-// （积分通道）。拉取失败时保留现有清单，只记录错误。
+// RefreshModels borrows the existing credential and platform operations.
 func (s *Server) RefreshModels(ctx context.Context) error {
-	s.cache.refreshMu.Lock()
-	defer s.cache.refreshMu.Unlock()
-	failures := s.refreshProviderModels(ctx)
-	err := s.refreshCodeArtsModels(ctx)
-	if err != nil && !errors.Is(err, apierr.NoAccount) {
-		failures[provider.CodeArts] = err.Error()
-	}
-	s.cache.mu.Lock()
-	s.cache.loadedAt = time.Now()
-	s.cache.providerErrors = failures
-	s.cache.err = ""
-	if err != nil && (!errors.Is(err, apierr.NoAccount) || len(failures) > 0) {
-		s.cache.err = err.Error()
-	}
-	s.cache.mu.Unlock()
-	if err != nil {
-		for _, a := range s.Store.Accounts() {
-			if a.Enabled && a.ProviderID() != provider.CodeArts {
-				if _, failed := failures[a.ProviderID()+"/"+a.Scope]; !failed {
-					return nil
-				}
+	return s.Catalog.Refresh(ctx, s.catalogRefreshOperations())
+}
+func (s *Server) catalogRefreshOperations() catalog.RefreshOperations {
+	return catalog.RefreshOperations{
+		Native: func(ctx context.Context, a *accounts.Account) ([]provider.Model, error) {
+			return s.CodeArts.Models(ctx, s.Cred, a, s.resolveOptions())
+		},
+		Provider: func(ctx context.Context, a *accounts.Account) ([]provider.Model, error) {
+			adapter, raw, err := s.providerCredentials(ctx, a)
+			if err != nil {
+				return nil, err
 			}
-		}
-		return err
+			return adapter.Models(ctx, raw)
+		},
 	}
-	return nil
 }
-func (s *Server) refreshCodeArtsModels(ctx context.Context) error {
-	acct := s.Store.NextAccount()
-	if acct == nil {
-		return apierr.NoAccount
-	}
-	sess, err := s.Cred.Session(ctx, acct, s.resolveOptions())
-	if err != nil {
-		return err
-	}
-	list, err := s.Up.FetchBuiltinModels(ctx, sess)
-	if err != nil {
-		return err
-	}
-	models := registry.FromBuiltin(list)
-	if len(models) == 0 {
-		return errEmptyModelList
-	}
-	s.Reg.ReplaceProvider(provider.CodeArts, "", models)
-	return nil
-}
-
-// refreshModelsIfStale 在缓存过期时后台刷新一次模型清单。
 func (s *Server) refreshModelsIfStale(maxAge time.Duration) {
-	s.cache.mu.RLock()
-	stale := time.Since(s.cache.loadedAt) > maxAge
-	s.cache.mu.RUnlock()
-	if !stale {
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	if err := s.RefreshModels(ctx); err != nil {
-		s.cache.mu.Lock()
-		s.cache.err = err.Error()
-		s.cache.loadedAt = time.Now()
-		s.cache.mu.Unlock()
-	}
+	s.Catalog.RefreshIfStale(maxAge, s.catalogRefreshOperations())
 }
 
 // handleModels 实现 GET /v1/models。
@@ -206,11 +142,5 @@ func modelProvider(m registry.Model) string {
 }
 
 func (s *Server) providerModelErrors() map[string]string {
-	s.cache.mu.RLock()
-	defer s.cache.mu.RUnlock()
-	out := map[string]string{}
-	for k, v := range s.cache.providerErrors {
-		out[k] = v
-	}
-	return out
+	return s.Catalog.ProviderErrors()
 }

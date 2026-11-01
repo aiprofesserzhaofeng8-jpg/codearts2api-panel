@@ -1,11 +1,14 @@
 package server
 
 import (
+	"context"
+	"errors"
 	"log"
 	"time"
 
 	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
@@ -54,6 +57,9 @@ func newConfiguredServer(st *store.Store) *Server {
 }
 
 func attachAccessManagement(s *Server) {
+	if s.Catalog == nil {
+		s.Catalog = catalog.NewRuntime(s.Store, s.Reg)
+	}
 	s.Configuration = config.NewManagement(s.Store, func(id string) (config.ModelRef, bool) {
 		model, ok := s.Reg.Resolve(id, s.Store.Settings().ModelAliases)
 		return config.ModelRef{ID: model.ID, Provider: modelProvider(model), Scope: model.Scope}, ok
@@ -72,6 +78,9 @@ func attachAccessManagement(s *Server) {
 
 // Narrow fixture constructors intentionally omit unrelated app services.
 func attachChatExecution(s *Server) *Server {
+	if s.Catalog == nil && s.Reg != nil {
+		s.Catalog = catalog.NewRuntime(s.Store, s.Reg)
+	}
 	s.CodeArts = codeartsup.New(s.Up)
 	s.Completions = &gateway.Completions{}
 	s.ProviderCredentials = accounts.NewProviderCredentials(s.Store, func() bool { return s.Store.Settings().AutoRefresh })
@@ -83,4 +92,13 @@ func attachChatExecution(s *Server) *Server {
 
 func attachAccountManagement(s *Server) {
 	s.AccountManagement = accounts.NewManagement(s.Store, &codeartsup.AccountManagement{Manager: s.Cred, Options: s.resolveOptions}, s.Cred.Invalidate, log.Printf)
+}
+
+// A failed isolated refresh warms metadata without mutating fixture catalogs or
+// resolving credentials. Failed refreshes retain the same TTL as successful ones.
+func markModelsFresh(s *Server) {
+	fail := func(context.Context, *accounts.Account) ([]provider.Model, error) {
+		return nil, errors.New("isolated fixture refresh")
+	}
+	_ = s.Catalog.Refresh(context.Background(), catalog.RefreshOperations{Native: fail, Provider: fail})
 }

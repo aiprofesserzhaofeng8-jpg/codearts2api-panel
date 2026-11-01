@@ -99,30 +99,3 @@ func (s *Server) providerAccountError(ctx context.Context, acct *accounts.Accoun
 
 	return true
 }
-func (s *Server) refreshProviderModels(ctx context.Context) map[string]string {
-	errs := map[string]string{}
-	seen := map[string]bool{}
-	for _, a := range s.Store.Accounts() {
-		if !a.Enabled || a.ProviderID() == provider.CodeArts {
-			continue
-		}
-		key := a.ProviderID() + "/" + a.Scope
-		if seen[key] {
-			continue
-		}
-		adapter, raw, err := s.providerCredentials(ctx, a)
-		if err != nil {
-			errs[key] = err.Error()
-			continue
-		}
-		models, err := adapter.Models(ctx, raw)
-		if err != nil {
-			errs[key] = err.Error()
-			continue
-		}
-		s.Reg.ReplaceProvider(a.ProviderID(), a.Scope, models)
-		seen[key] = true
-		delete(errs, key)
-	}
-	return errs
-}
