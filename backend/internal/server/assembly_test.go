@@ -34,6 +34,7 @@ func newConfiguredServer(st *store.Store) *Server {
 		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: codearts.NewLoginManager(up),
 		Providers: adapters, Reg: models, Search: websearch.New(),
+		ProviderLogins:      accounts.NewProviderLogins(st, codearts.RandomHex),
 		ProviderCredentials: accounts.NewProviderCredentials(st, func() bool { return st.Settings().AutoRefresh }),
 	})
 }

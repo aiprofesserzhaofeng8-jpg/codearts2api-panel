@@ -37,7 +37,7 @@ type Server struct {
 	growthExecution     growthExecutionState
 	Providers           *provider.Registry
 	ProviderCredentials *accounts.ProviderCredentials
-	providerLogins      providerLoginRuntime
+	ProviderLogins      *accounts.ProviderLogins
 	AllowLocalAdmin     bool
 	adminSessions       adminSessions
 	adminFailures       adminAttempts
@@ -69,6 +69,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	ProviderLogins      *accounts.ProviderLogins
 	ProviderCredentials *accounts.ProviderCredentials
 	CodeArts            *codeartsup.Adapter
 	Completions         *gateway.Completions
@@ -82,7 +83,7 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search, cache: newModelCache()}
 	s.localPanelToken = rand.Text()
