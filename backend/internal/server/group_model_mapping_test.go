@@ -15,6 +15,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
+	"codearts2api/internal/requestpolicy"
 	"codearts2api/internal/store"
 	"codearts2api/internal/trae"
 	"codearts2api/internal/workbuddy"
@@ -30,7 +31,7 @@ func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http
 		return func(w http.ResponseWriter, r *http.Request) {
 			raw, _ := io.ReadAll(r.Body)
 			text := string(raw)
-			if !strings.Contains(text, summaryGuidance) && !strings.Contains(text, summaryRetryGuidance) && (!strings.Contains(text, platform+"-PROMPT") || strings.Contains(text, "CLIENT-PROMPT") || strings.Contains(text, mappedPublic)) {
+			if !strings.Contains(text, requestpolicy.SummaryGuidance) && !strings.Contains(text, requestpolicy.SummaryRetryGuidance) && (!strings.Contains(text, platform+"-PROMPT") || strings.Contains(text, "CLIENT-PROMPT") || strings.Contains(text, mappedPublic)) {
 				t.Errorf("wrong platform prompt or public ID leaked to %s: %s", platform, text)
 			}
 			for _, other := range []string{provider.CodeArts, provider.WorkBuddy, provider.Trae} {

@@ -8,6 +8,8 @@ import (
 
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
+	"codearts2api/internal/requestpolicy"
+	"codearts2api/internal/store"
 )
 
 func TestClientSummaryAdaptation(t *testing.T) {
@@ -76,4 +78,13 @@ func TestTraeClientProfileAvailableWithoutManualPolicy(t *testing.T) {
 			t.Fatalf("invalid automatic Trae recommendation: status=%d %s", w.Code, w.Body.String())
 		}
 	}
+}
+
+// Apply defaults in the legacy client-profile fixture; live requests use Store policies.
+func adaptClientRequest(body []byte, model string) ([]byte, error) {
+	p, ok := store.DefaultModelPolicies()[model]
+	if !ok || !p.SummaryEnabled || !requestpolicy.IsSummaryRequest(body, false) {
+		return body, nil
+	}
+	return requestpolicy.PrepareSummary(body, requestpolicy.SummaryOptions{MaxTokens: p.SummaryMaxTokens, DisableThinking: p.DisableSummaryThinking}, false)
 }

@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2 已完成，M3 前三批已落地**。已迁出中立账号类型、平台依赖装配和三平台普通单次执行；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)和 [M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)。
+状态：**M1/M2 已完成，M3 前四批已落地**。已迁出中立账号类型、平台依赖装配、三平台普通单次执行、提示词恢复及摘要准备；其余 HTTP/业务分离及 M4–M7 仍待实施。结果见 [M2 验收](../acceptance/STRUCTURE-M2-2026-11-01.md)、[M3 第一批验收](../acceptance/STRUCTURE-M3-1-2026-11-01.md)、[M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)、[M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)和 [M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)。
 
 ## 阶段和完成条件
 
@@ -44,11 +44,13 @@ M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收�
 
 M3 第一批已实现 `accounts.Account`、`accounts.ErrCredentialChanged` 和 `app.Build`。`codearts.Account` 暂保留类型别名供平台内部及既有测试使用；共享生产代码已使用 `accounts.Account`。旧 `session` 由 `store` 编码器加载成不可变平台值；请求路径仅做类型断言，不序列化、解析或复制凭据。`codearts.StoredSession` 是该兼容值的唯一具体类型入口。WorkBuddy/Trae 继续使用已有不透明 JSON 凭据。
 
-前三批均未迁移刷新互斥、准入锁和账本归属；它们仍由原实现负责。`app` 只装配依赖，启动与关闭仍留在 main。凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
+前四批均未迁移刷新互斥、准入锁和账本归属；它们仍由原实现负责。`app` 只装配依赖，启动与关闭仍留在 main。凭据兼容槽在持久化接口迁移阶段退出，不为新平台扩展它。
 
 第二批以 `upstream/codearts` 借用既有不可变凭据，包装原客户端的对话与业务错误过滤；`gateway.Completions` 负责已选中账号的普通单次执行、原有空响应回退及使用回调。SSE 聚合和流式选项归 `protocol`。不新增配置、锁、重试预算、凭据写入方或网络探测。普通流式仍立即交付，只有原来需要聚合的路径聚合。
 
 第三批以 `upstream.BindStream` 绑定 WorkBuddy/Trae 原有适配器及已解析凭据，传递实际型号、会话与请求标识；gateway 只依赖最小流式能力，不要求两平台伪造原生非流式接口。非流式聚合维持原 32MiB 上限，错误和取消直接传回，分片观察和用量顺序不变。平台原生协议及页面不改。凭据解析/刷新互斥、摘要编排、提示词恢复、全局重试和管理接口仍在 server，后续逐项迁移。
+
+第四批将有限的提示词恢复迁入 `gateway.RunPromptPolicy`，纯摘要识别/请求准备迁入 `requestpolicy`。server 投影当前平台设置，保留摘要豁免和计量/权限预算 hook；gateway 不依赖 Store 或具体平台。恢复仍最多一次，仍复用账号、凭据、型号和租约；上游任何已观察分片均关闭恢复窗口。摘要执行、备用型号权限、缓冲完整性检查、重试/冷却和结算尚未迁移，公共提示词继承也没有在重构中隐式启用。客户端默认策略的旧测试 helper 已移到测试文件，生产不保留重复的摘要准备实现。
 
 抽取 CodeArts 适配器时复用旧客户端；核实 [ADR 0004](../adr/0004-deferred-refactors.md) 提到的 SQLite、DPoP、刷新失败测试缺口当前是否已覆盖。存在缺口先补具体行为测试，不假设旧文档的缺口仍全部存在或已经自动消失。
 

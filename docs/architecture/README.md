@@ -1,6 +1,6 @@
 # 项目结构设计 v1
 
-日期：2026-11-01。状态：**M1/M2 已完成，M3 前三批已落地，后续批次及 M4–M7 待实施**。
+日期：2026-11-01。状态：**M1/M2 已完成，M3 前四批已落地，后续批次及 M4–M7 待实施**。
 
 本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。Vue 前端、业务模块拆分、公共提示词继承和多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
 
@@ -11,6 +11,8 @@
 CodeArts 对话适配包装、普通单次执行与协议聚合见 [M3 第二批验收](../acceptance/STRUCTURE-M3-2-2026-11-01.md)。这两批尚未完成整个 HTTP/业务分离。
 
 WorkBuddy/Trae 单次执行与聚合分离见 [M3 第三批验收](../acceptance/STRUCTURE-M3-3-2026-11-01.md)。三平台已共享单次执行边界，全局请求编排和管理业务仍待分离。
+
+提示词恢复和摘要准备分离见 [M3 第四批验收](../acceptance/STRUCTURE-M3-4-2026-11-01.md)。恢复编排归 gateway，纯摘要准备归 requestpolicy；全局换号、摘要执行、凭据和管理业务继续分批迁移。
 
 ## 设计决策
 
@@ -37,7 +39,8 @@ WorkBuddy/Trae 单次执行与聚合分离见 [M3 第三批验收](../acceptance
 - 通用账号已迁入 [accounts](../../backend/internal/accounts/account.go)，仅依赖标准库。旧 `session` 字段通过不透明只读接口保留，由 [兼容编码器](../../backend/internal/store/account_codec.go) 在加载状态时还原 CodeArts 会话，保持 schema 6 和代际指针。
 - [app.Build](../../backend/internal/app/app.go) 创建平台客户端、注册 WorkBuddy/Trae 并连接刷新提交回调；Server 接收明确依赖，不再负责创建和注册平台客户端。进程生命周期暂留在 main。
 - [gateway.Completions](../../backend/internal/gateway/completions.go) 执行已授权、已选号的单次 CodeArts 对话，借助 [CodeArts 适配包装](../../backend/internal/upstream/codearts/adapter.go) 调用既有签名客户端；普通流式即时回调，非流式保留原空响应回退。摘要和全局重试仍在 server，准入仍在 Store。
-- WorkBuddy/Trae 经 [upstream.BindStream](../../backend/internal/upstream/stream.go) 绑定已解析凭据及请求标识，同样调用 `gateway.Completions`；各自原生适配器不变。非流式仍由流式聚合，维持 32MiB 上限；凭据刷新与提示词编排仍在原入口。
+- WorkBuddy/Trae 经 [upstream.BindStream](../../backend/internal/upstream/stream.go) 绑定已解析凭据及请求标识，同样调用 `gateway.Completions`；各自原生适配器不变。非流式仍由流式聚合，维持 32MiB 上限；凭据刷新仍在原入口；提示词恢复由 gateway 执行，server 提供原计量及权限/预算 hook。
+- [gateway.RunPromptPolicy](../../backend/internal/gateway/prompt_policy.go) 负责有限的提示词恢复；[摘要准备](../../backend/internal/requestpolicy/summary.go) 保留原识别规则和请求参数。摘要实际执行、全局换号、准入和账本未迁移。
 - [平台接口](../../backend/internal/provider/provider.go) 已存在；搜索、奖励、成长任务采用可选能力接口，可以继续利用。
 - [协议转换](../../backend/internal/protocol/anthropic.go)、[Responses 兼容](../../backend/internal/responsescompat/chatcompletions_responses_bridge.go)、[提示词处理](../../backend/internal/requestpolicy/request_policy.go) 已有可复用边界。
 - [console.js](../../backend/internal/server/web/console.js) 集中多个管理功能；[web.go](../../backend/internal/server/web.go) 将 HTML、JS、CSS 编入二进制。

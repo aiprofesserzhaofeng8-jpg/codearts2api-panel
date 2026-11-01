@@ -424,7 +424,7 @@ func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn
 		if errors.Is(err, accounts.ErrCredentialChanged) {
 			return used, err
 		}
-		if promptBlocked(err) {
+		if gateway.PromptBlocked(err) {
 			return used, err
 		}
 		var external *provider.Error

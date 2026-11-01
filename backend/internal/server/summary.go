@@ -9,6 +9,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
+	"codearts2api/internal/requestpolicy"
 	"codearts2api/internal/store"
 )
 
@@ -22,7 +23,7 @@ func (e *summaryFailure) NonRetryableRequest() bool { return true }
 func (s *Server) summaryPolicy(ctx context.Context, body []byte, model string) (store.ModelPolicy, bool) {
 	explicit, _ := ctx.Value(summaryIntentKey{}).(bool)
 	p, ok := s.Store.ModelPolicy(model)
-	return p, ok && p.SummaryEnabled && summaryRequest(body, explicit)
+	return p, ok && p.SummaryEnabled && requestpolicy.IsSummaryRequest(body, explicit)
 }
 
 // Retain private chunks until a complete textual summary exists. This makes a
@@ -77,7 +78,7 @@ func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, mode
 			delete(request, "reasoning_effort")
 			requestBody = mustJSON(request)
 		}
-		request, err := adaptSummary(requestBody, policy, attempt > 0)
+		request, err := requestpolicy.PrepareSummary(requestBody, requestpolicy.SummaryOptions{MaxTokens: policy.SummaryMaxTokens, DisableThinking: policy.DisableSummaryThinking}, attempt > 0)
 		if err != nil {
 			return nil, err
 		}

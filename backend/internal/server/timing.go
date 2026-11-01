@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/store"
 )
@@ -142,7 +143,7 @@ func failureKind(ctx context.Context, err error) string {
 	if errors.As(err, &upstream) && upstream.AccountFault {
 		return "credentials"
 	}
-	if promptBlocked(err) {
+	if gateway.PromptBlocked(err) {
 		return "content_blocked"
 	}
 	status := apierr.From(err).Status

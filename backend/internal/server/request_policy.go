@@ -2,18 +2,12 @@ package server
 
 import (
 	"context"
-	"errors"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/provider"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/requestpolicy"
 )
-
-func promptBlocked(err error) bool {
-	var blocked interface{ PromptBlocked() bool }
-	return errors.As(err, &blocked) && blocked.PromptBlocked()
-}
 
 // The caller resolves credentials once and retains its account lease. Protocol
 // adapters only see the prepared Chat body. A consumed chunk always closes the
@@ -21,27 +15,16 @@ func promptBlocked(err error) bool {
 func (s *Server) runRequestPolicy(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte, run func([]byte, func()) error) error {
 	policy := s.Store.Settings().ProviderPolicy(acct.ProviderID())
 	explicit, _ := ctx.Value(summaryIntentKey{}).(bool)
-	if summaryRequest(body, explicit) {
+	if requestpolicy.IsSummaryRequest(body, explicit) {
 		policy.PromptMode, policy.PromptFallback = "passthrough", false
 	}
-	prepared, err := requestpolicy.PrepareBody(body, policy.PromptMode, policy.PromptText, policy.Sanitize)
-	if err != nil {
-		return &provider.Error{Status: 400, Message: err.Error()}
-	}
-	emitted := false
-	observe := func() { emitted = true }
-	err = run(prepared, observe)
-	if policy.PromptMode != "passthrough" || !policy.PromptFallback || emitted || !promptBlocked(err) || ctx.Err() != nil {
-		return err
-	}
-	finishAttempt(ctx, err)
-	if err = s.checkRequestBudget(ctx, model.ID); err != nil {
-		return err
-	}
-	prepared, err = requestpolicy.PrepareBody(body, "custom", requestpolicy.FallbackSystemPrompt, policy.Sanitize)
-	if err != nil {
-		return &provider.Error{Status: 400, Message: err.Error()}
-	}
-	startAttempt(ctx, acct, model.ID)
-	return run(prepared, observe)
+	return gateway.RunPromptPolicy(ctx, body, gateway.PromptPolicy{
+		Mode: policy.PromptMode, Text: policy.PromptText, Fallback: policy.PromptFallback, Sanitize: policy.Sanitize,
+	}, gateway.PromptRecovery{
+		BeforeRetry: func(err error) error {
+			finishAttempt(ctx, err)
+			return s.checkRequestBudget(ctx, model.ID)
+		},
+		StartRetry: func() { startAttempt(ctx, acct, model.ID) },
+	}, run)
 }

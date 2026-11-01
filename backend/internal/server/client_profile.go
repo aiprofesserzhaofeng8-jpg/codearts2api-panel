@@ -2,16 +2,12 @@ package server
 
 import (
 	"codearts2api/internal/apierr"
-	"codearts2api/internal/protocol"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/store"
 	"encoding/json"
 	"net/http"
 	"strings"
 )
-
-const summaryGuidance = "Produce a concise checkpoint, not an exhaustive transcript. Keep the summary under 1800 words. Preserve required headings, user goal, active constraints, essential paths/IDs, completed work, blockers and concrete next steps. Deduplicate repeated attempts. Do not reproduce source code, long logs or full tool output. Finish every required section within this limit."
-const summaryRetryGuidance = "The previous summary exceeded the output budget. This is a replacement attempt, not a continuation. Finish a much shorter checkpoint under 900 words. Preserve only actionable essentials and required headings. Do not quote the transcript."
 
 type summaryIntentKey struct{}
 
@@ -127,86 +123,7 @@ func unsupportedCapability(w http.ResponseWriter, r *http.Request) {
 	writeErr(w, 501, "当前码道上游不支持此原生能力；请使用客户端文本摘要和显式历史，勿将协议转换视为原生压缩", "unsupported_capability")
 }
 
-func summaryRequest(body []byte, explicit bool) bool {
-	var req struct {
-		Tools    []json.RawMessage `json:"tools"`
-		Messages []struct {
-			Role    string          `json:"role"`
-			Content json.RawMessage `json:"content"`
-		} `json:"messages"`
-	}
-	if json.Unmarshal(body, &req) != nil || len(req.Tools) > 0 {
-		return false
-	}
-	if explicit {
-		return true
-	}
-	for _, m := range req.Messages {
-		var text string
-		_ = json.Unmarshal(m.Content, &text)
-		if (m.Role == "system" || m.Role == "developer") && strings.HasPrefix(text, "You are a context summarization assistant.") {
-			return true
-		}
-	}
-	return false
-}
-func adaptSummary(body []byte, p store.ModelPolicy, retry bool) ([]byte, error) {
-	var req map[string]json.RawMessage
-	if err := json.Unmarshal(body, &req); err != nil {
-		return nil, err
-	}
-	var messages []map[string]json.RawMessage
-	if err := json.Unmarshal(req["messages"], &messages); err != nil {
-		return nil, err
-	}
-	guidance := summaryGuidance
-	if retry {
-		guidance = summaryRetryGuidance
-	}
-	added := false
-	for _, m := range messages {
-		var role, text string
-		_ = json.Unmarshal(m["role"], &role)
-		_ = json.Unmarshal(m["content"], &text)
-		if role == "system" || role == "developer" {
-			if !strings.Contains(text, guidance) {
-				text += "\n\n" + guidance
-			}
-			m["content"], _ = json.Marshal(text)
-			added = true
-			break
-		}
-	}
-	if !added {
-		role, _ := json.Marshal("system")
-		text, _ := json.Marshal(guidance)
-		messages = append([]map[string]json.RawMessage{{"role": role, "content": text}}, messages...)
-	}
-	if p.DisableSummaryThinking {
-		req["thinking"] = json.RawMessage(`{"type":"disabled"}`)
-		delete(req, "reasoning_effort")
-	}
-	cap := p.SummaryMaxTokens
-	for _, field := range []string{"max_tokens", "max_completion_tokens"} {
-		var n int
-		if json.Unmarshal(req[field], &n) == nil && n > 0 {
-			cap = min(cap, n)
-		}
-	}
-	req["max_tokens"], _ = json.Marshal(cap)
-	delete(req, "max_completion_tokens")
-	req["messages"], _ = json.Marshal(messages)
-	req["stream"] = json.RawMessage("true")
-	return protocol.RequestStreamUsage(mustJSON(req))
-}
 func mustJSON(v any) []byte { b, _ := json.Marshal(v); return b }
-func adaptClientRequest(body []byte, model string) ([]byte, error) {
-	p, ok := store.DefaultModelPolicies()[model]
-	if !ok || !p.SummaryEnabled || !summaryRequest(body, false) {
-		return body, nil
-	}
-	return adaptSummary(body, p, false)
-}
 
 // Recommendations for new providers use declared catalog bounds, never model-name guesses.
 func (s *Server) modelPolicyFor(m registry.Model) (store.ModelPolicy, bool) {

@@ -1,0 +1,407 @@
+{
+  "stage": "structure-m3-4",
+  "date": "2026-11-01",
+  "baseline": "22b6c04",
+  "version": "0.3.0-structure-m3.4",
+  "scope": [
+    "bounded prompt recovery execution in gateway",
+    "pure summary detection and request preparation in requestpolicy",
+    "server retains attempt accounting and access/budget hooks"
+  ],
+  "checks": {
+    "make_check": "passed",
+    "race": {
+      "status": "passed",
+      "tested_packages": 17,
+      "server_seconds": 305.84
+    },
+    "windows_vet": "passed",
+    "windows_amd64_crossbuild": "passed",
+    "windows_execution": "not run",
+    "linux_build": "passed",
+    "docker_build": "passed",
+    "container_version": "0.3.0-structure-m3.4",
+    "runtime": [
+      {
+        "case": "binary",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart_preserves_keys": true,
+        "different_cwd": true
+      },
+      {
+        "case": "container",
+        "passed": true,
+        "resources_identical": true,
+        "login": true,
+        "restart": true,
+        "uid": "10001"
+      }
+    ],
+    "browser": [
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      }
+    ],
+    "launcher_tests": 9,
+    "pi": "passed",
+    "boundaries": {
+      "passed": true,
+      "native_platform_store_web_files_identical": true,
+      "direct_imports": {
+        "gateway": [
+          "codearts2api/internal/protocol",
+          "codearts2api/internal/provider",
+          "codearts2api/internal/requestpolicy",
+          "context",
+          "errors",
+          "fmt"
+        ],
+        "requestpolicy": [
+          "codearts2api/internal/protocol",
+          "embed",
+          "encoding/json",
+          "fmt",
+          "regexp",
+          "strings"
+        ],
+        "upstream": [
+          "codearts2api/internal/provider",
+          "context",
+          "encoding/json"
+        ]
+      }
+    },
+    "pinned_sub2api_original_tests": "not rerun; converter sources unchanged; project protocol regression passed"
+  },
+  "real_upstreams": {
+    "checks": [
+      {
+        "case": "codearts/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.24,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "codearts/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 0.848,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.464,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": false,
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "failure_kind": "system_marker_mismatch",
+        "status": 200
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.36,
+        "policy_mode": "custom"
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.572,
+        "policy_mode": "passthrough"
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "codearts/summary_explicit_buffered",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash"
+      },
+      {
+        "case": "codearts/summary_pi_stream",
+        "passed": true,
+        "requests": 1,
+        "physical_model": "deepseek-v4.1-flash"
+      },
+      {
+        "case": "trae/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.395,
+        "policy_mode": "passthrough"
+      }
+    ],
+    "generation_requests": 13,
+    "met_content_assertions": 12,
+    "remaining_leases": 0,
+    "shared_credentials_refreshed": false,
+    "production_state_modified": false,
+    "isolated_credentials_deleted_on_exit": true,
+    "baseline_comparison": {
+      "additional_generation_requests": 1,
+      "workbuddy_passthrough_system_marker_mismatch": true,
+      "current_focused_recheck_passed": true
+    },
+    "assessment": "One current WorkBuddy marker mismatch also occurred on the previous binary; the current focused recheck passed. No evidence attributes this behavior to the migration; upstream behavior has not been eliminated.",
+    "scope_limit": "No forced real content block or truncation; these faults covered with controlled native-client fixtures. No full CLI application acceptance."
+  },
+  "performance": {
+    "baseline": "22b6c04",
+    "cpu_affinity": [
+      0,
+      2
+    ],
+    "gomaxprocs": 2,
+    "capacity_rounds": 5,
+    "benchmark_rounds": 5,
+    "benchmarks": [
+      {
+        "benchmark": "BenchmarkGatewayStreamTiming",
+        "before": {
+          "ns_op": 764932.0,
+          "bytes_op": 145832,
+          "allocs_op": 1114
+        },
+        "after": {
+          "ns_op": 786926.0,
+          "bytes_op": 145994,
+          "allocs_op": 1114
+        },
+        "change_percent": 2.88
+      },
+      {
+        "benchmark": "BenchmarkMappedResponseModel",
+        "before": {
+          "ns_op": 2375.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "after": {
+          "ns_op": 2385.0,
+          "bytes_op": 928,
+          "allocs_op": 20
+        },
+        "change_percent": 0.42
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1024",
+        "before": {
+          "ns_op": 19162.0,
+          "bytes_op": 19741,
+          "allocs_op": 142
+        },
+        "after": {
+          "ns_op": 18936.0,
+          "bytes_op": 19741,
+          "allocs_op": 142
+        },
+        "change_percent": -1.18
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/1048576",
+        "before": {
+          "ns_op": 2119431.0,
+          "bytes_op": 2255037,
+          "allocs_op": 165
+        },
+        "after": {
+          "ns_op": 2104328.0,
+          "bytes_op": 2255076,
+          "allocs_op": 165
+        },
+        "change_percent": -0.71
+      },
+      {
+        "benchmark": "BenchmarkNonStreamingCodeArtsOnce/8388608",
+        "before": {
+          "ns_op": 15987091.0,
+          "bytes_op": 17092142,
+          "allocs_op": 173
+        },
+        "after": {
+          "ns_op": 16135347.0,
+          "bytes_op": 17091975,
+          "allocs_op": 173
+        },
+        "change_percent": 0.93
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=false",
+        "before": {
+          "ns_op": 1448371.0,
+          "bytes_op": 646281,
+          "allocs_op": 14149
+        },
+        "after": {
+          "ns_op": 1412862.0,
+          "bytes_op": 646342,
+          "allocs_op": 14149
+        },
+        "change_percent": -2.45
+      },
+      {
+        "benchmark": "BenchmarkTraeStreamSuccess/stream=true",
+        "before": {
+          "ns_op": 1430604.0,
+          "bytes_op": 688288,
+          "allocs_op": 14105
+        },
+        "after": {
+          "ns_op": 1437859.0,
+          "bytes_op": 688243,
+          "allocs_op": 14104
+        },
+        "change_percent": 0.51
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=false",
+        "before": {
+          "ns_op": 991330.0,
+          "bytes_op": 264505,
+          "allocs_op": 3125
+        },
+        "after": {
+          "ns_op": 966835.0,
+          "bytes_op": 264546,
+          "allocs_op": 3125
+        },
+        "change_percent": -2.47
+      },
+      {
+        "benchmark": "BenchmarkWorkBuddyRecoverySuccess/stream=true",
+        "before": {
+          "ns_op": 965444.0,
+          "bytes_op": 274631,
+          "allocs_op": 3083
+        },
+        "after": {
+          "ns_op": 971308.0,
+          "bytes_op": 275232,
+          "allocs_op": 3083
+        },
+        "change_percent": 0.61
+      }
+    ],
+    "latencies": [
+      {
+        "provider": "workbuddy",
+        "stream": false,
+        "p95_median_ms": {
+          "before": 23.444,
+          "after": 23.429
+        },
+        "change_percent": -0.06
+      },
+      {
+        "provider": "workbuddy",
+        "stream": true,
+        "p95_median_ms": {
+          "before": 23.035,
+          "after": 23.17
+        },
+        "change_percent": 0.59
+      },
+      {
+        "provider": "trae",
+        "stream": false,
+        "p95_median_ms": {
+          "before": 22.918,
+          "after": 23.284
+        },
+        "change_percent": 1.6
+      },
+      {
+        "provider": "trae",
+        "stream": true,
+        "p95_median_ms": {
+          "before": 22.956,
+          "after": 23.056
+        },
+        "change_percent": 0.44
+      }
+    ],
+    "fixture": {
+      "requests_per_case_per_round": 40,
+      "concurrency": 2,
+      "upstream_delay_ms": 20,
+      "both_http_hops_use_sockets": true,
+      "calls_equal_requests": true,
+      "remaining_leases": 0
+    },
+    "assessment": "No stable regression above 5% observed under the controlled fixture; no universal zero-overhead claim."
+  },
+  "local_deployment": {
+    "version": "0.3.0-structure-m3.4",
+    "host": "127.0.0.1",
+    "port": 10088,
+    "before_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "after_health": {
+      "accounts": 4,
+      "models": 83,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "schema": 6,
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "state_byte_identical": true,
+    "credentials_and_ledger_unchanged": true,
+    "runtime_hash_matches_build": true,
+    "runtime_sha256": "af8d3f4e5eebaeeb411ef1b12e928da6b2dcb52bc52d06f0745c6534c73bec07",
+    "cloud_modified": false
+  },
+  "remaining": [
+    "global account retry and WorkBuddy short recovery",
+    "summary completeness/fallback execution",
+    "credential acquisition and refresh ownership",
+    "management business and process lifecycle separation",
+    "M4 frontend; M5 admission/storage/ledger; M6 product features; M7 on demand"
+  ]
+}
