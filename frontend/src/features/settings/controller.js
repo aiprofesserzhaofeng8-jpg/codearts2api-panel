@@ -8,13 +8,20 @@ import { adminLogin } from '../../app/session';
 import { listen } from '../../shared/lifecycle';
 import { refresh } from '../../shared/refresh';
 const settingsState = {};
+const promptFields = {PromptMode:'prompt_mode', PromptText:'prompt_text',PromptFallback:'prompt_fallback',Sanitize:'sanitize'};
+function readPrompt(prefix) { return Object.fromEntries(Object.entries(promptFields).map(([suffix,key])=>{const el=document.getElementById(prefix+suffix);return [key,el.type==='checkbox'?el.checked:el.value];})); }
+function applyInheritedPrompt(prefix) {
+ const common=readPrompt('sCommon');
+ Object.entries(promptFields).forEach(([suffix,key])=>{const el=document.getElementById(prefix+suffix),inherit=document.getElementById(prefix+suffix+'Inherit').checked;el.disabled=inherit;if(inherit){if(el.type==='checkbox')el.checked=common[key];else el.value=common[key];}});
+}
 settingsState.settingsDirty = false;
 
 settingsState.providerPolicyFields = [{ key: "codearts", prefix: "sCA" }, { key: "workbuddy", prefix: "sWB" }, { key: "trae", prefix: "sTR" }];
 
 export function readProviderPolicy(key) {
     var def = settingsState.providerPolicyFields.find(function (item) { return item.key === key; }), field = function (name) { return document.getElementById(def.prefix + name); };
-    return { prompt_mode: field("PromptMode").value, prompt_text: field("PromptText").value, prompt_fallback: field("PromptFallback").checked, sanitize: field("Sanitize").checked, search_enabled: field("Search").checked, search_scope: key === "workbuddy" ? field("SearchScope").value : "cn", search_backend: key === "workbuddy" ? "native" : "searxng", search_url: key === "workbuddy" ? "" : field("SearchURL").value.trim() };
+    var overrides={};Object.entries(promptFields).forEach(([suffix,key])=>{if(!field(suffix+'Inherit').checked){const el=field(suffix);overrides[key]=el.type==='checkbox'?el.checked:el.value;}});
+    return { prompt_overrides:Object.keys(overrides).length===4 ? null : overrides, prompt_mode: field("PromptMode").value, prompt_text: field("PromptText").value, prompt_fallback: field("PromptFallback").checked, sanitize: field("Sanitize").checked, search_enabled: field("Search").checked, search_scope: key === "workbuddy" ? field("SearchScope").value : "cn", search_backend: key === "workbuddy" ? "native" : "searxng", search_url: key === "workbuddy" ? "" : field("SearchURL").value.trim() };
 }
 
 export function renderSettings(s) {
@@ -23,12 +30,17 @@ export function renderSettings(s) {
     domState.$("#sPw").placeholder = s.admin_password_set ? "已设置，留空则不修改" : "未设置";
     if (settingsState.settingsDirty)
         return;
+    const common=s.common_prompt || {prompt_mode:'passthrough',prompt_text:'',prompt_fallback:true,sanitize:true};
+    Object.entries(promptFields).forEach(([suffix,key])=>{const el=document.getElementById('sCommon'+suffix);if(el.type==='checkbox')el.checked=common[key];else el.value=common[key] || '';});
     settingsState.providerPolicyFields.forEach(function (def) {
         var config = s[def.key] || {}, field = function (name) { return document.getElementById(def.prefix + name); };
         field("PromptMode").value = config.prompt_mode || (def.key === "workbuddy" ? "custom" : "passthrough");
         field("PromptText").value = config.prompt_text || "";
         field("PromptFallback").checked = config.prompt_fallback !== false;
         field("Sanitize").checked = config.sanitize !== false;
+        const overrides=config.prompt_overrides;
+        Object.entries(promptFields).forEach(([suffix,key])=>{const el=field(suffix);field(suffix+'Inherit').checked=overrides!=null && overrides[key]==null;if(overrides?.[key]!=null){if(el.type==='checkbox')el.checked=overrides[key];else el.value=overrides[key];}});
+        applyInheritedPrompt(def.prefix);
         field("Search").checked = def.key === "workbuddy" ? config.search_enabled !== false : !!config.search_enabled;
         if (def.key === "workbuddy")
             field("SearchScope").value = config.search_scope || "cn";
@@ -82,6 +94,8 @@ export function clearSettingsDirty() {
 }
 
 export function mountSettings() {
+settingsState.providerPolicyFields.forEach(def=>Object.keys(promptFields).forEach(suffix=>listen(document.getElementById(def.prefix+suffix+'Inherit'),'change',()=>applyInheritedPrompt(def.prefix))));
+Object.keys(promptFields).forEach(suffix=>listen(document.getElementById('sCommon'+suffix),'input',()=>settingsState.providerPolicyFields.forEach(def=>applyInheritedPrompt(def.prefix))));
 on("#saveSettings", function () {
     var aliases;
     try {
@@ -92,6 +106,7 @@ on("#saveSettings", function () {
         return;
     }
     var body = {
+        common_prompt:readPrompt("sCommon"),
         codearts: readProviderPolicy("codearts"), workbuddy: readProviderPolicy("workbuddy"), trae: readProviderPolicy("trae"),
         pool: {
             strategy: domState.$("#sPoolStrategy").value,

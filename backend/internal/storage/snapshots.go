@@ -66,6 +66,9 @@ func (s *Store) Settings() Settings {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	cp := s.st.Settings
+	cp.CodeArts = cp.CodeArts.Clone()
+	cp.Trae = cp.Trae.Clone()
+	cp.WorkBuddy = cp.WorkBuddy.Clone()
 	cp.ModelAliases = map[string]string{}
 	for k, v := range s.st.Settings.ModelAliases {
 		cp.ModelAliases[k] = v

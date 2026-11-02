@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 )
 
@@ -35,5 +36,42 @@ func BenchmarkAdmissionSelection(b *testing.B) {
 				}
 			})
 		}
+	}
+}
+
+// Quantify optional M6 rule cost independently from the unchanged legacy path.
+// This uses real admission, snapshot cloning, model selection and lease release.
+func BenchmarkProductAdmissionRules(b *testing.B) {
+	for _, count := range []int{0, 79, 512} {
+		b.Run(fmt.Sprintf("rules=%d", count), func(b *testing.B) {
+			s, err := Open(filepath.Join(b.TempDir(), "state.json"))
+			if err != nil {
+				b.Fatal(err)
+			}
+			s.UpsertAccount(&accounts.Account{ID: "wb", Provider: "workbuddy", Scope: "cn", Enabled: true})
+			rules := []access.ModelRule{}
+			off := false
+			for i := 0; i < count; i++ {
+				rules = append(rules, access.ModelRule{ID: fmt.Sprintf("workbuddy/cn/fixture-%d", i), Visible: &off})
+			}
+			g, err := s.SaveGroup(AccountGroup{Name: "bench", AccountIDs: []string{"wb"}, ModelRules: rules, ModelMappings: []ModelMapping{{Name: "deepseek-4.1-flash", Sources: []string{"workbuddy/cn/deepseek-v4.1-flash"}}}})
+			if err != nil {
+				b.Fatal(err)
+			}
+			k, err := s.AddKeyInGroupAndSave("bench", g.ID)
+			if err != nil {
+				b.Fatal(err)
+			}
+			s.pool.now = func() time.Time { return time.Unix(100, 0) }
+			b.ReportAllocs()
+			b.ResetTimer()
+			for range b.N {
+				a, _, release, err := s.AcquireMappedAccount("", "deepseek-4.1-flash", []string{"workbuddy/cn/deepseek-v4.1-flash"}, nil, k.Key)
+				release()
+				if err != nil || a == nil {
+					b.Fatal(err)
+				}
+			}
+		})
 	}
 }

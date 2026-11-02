@@ -59,6 +59,7 @@ architecture: frontend
 	$(PYTHON) -m unittest discover -s tools -p test_check_architecture.py
 
 check: frontend-check vet vet-linux test console architecture
+	$(PYTHON) -m unittest discover -s tools -p test_convert_state_v7_to_v6.py
 
 clean:
 	rm -f $(BIN) $(BIN).exe

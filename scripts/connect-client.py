@@ -133,7 +133,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('client', choices=['pi', 'codex', 'claude'])
     parser.add_argument('--url', default=os.environ.get('CODEARTS_BASE_URL', 'http://127.0.0.1:10087'))
-    parser.add_argument('--model', default='deepseek-v4.1-flash')
+    parser.add_argument('--model', default='', help='Explicit model; otherwise use the group client preference or request default')
     parser.add_argument('--config-dir', type=Path)
     parser.add_argument('--check-sandbox', action='store_true', help='Also validate the native Codex sandbox without a model request')
     parser.add_argument('--check', action='store_true', help='Validate connectivity and write client profile without launching a model request')

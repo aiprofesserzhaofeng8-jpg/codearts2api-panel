@@ -44,9 +44,22 @@ func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"groups": s.AccessManagement.Groups()})
 	case http.MethodPost:
 		var g access.AccountGroup
-		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 256<<10)).Decode(&g) != nil {
+		var raw json.RawMessage
+		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 256<<10)).Decode(&raw) != nil || json.Unmarshal(raw, &g) != nil {
 			writeErr(w, 400, "分组格式无效", "invalid_request_error")
 			return
+		}
+		var fields map[string]json.RawMessage
+		_ = json.Unmarshal(raw, &fields)
+		for _, old := range s.AccessManagement.Groups() {
+			if old.ID == g.ID {
+				if _, ok := fields["default_model"]; !ok {
+					g.DefaultModel = old.DefaultModel
+				}
+				if _, ok := fields["client_default_model"]; !ok {
+					g.ClientDefaultModel = old.ClientDefaultModel
+				}
+			}
 		}
 		saved, err := s.AccessManagement.SaveGroup(g)
 		if err != nil {
@@ -87,4 +100,12 @@ func (s *Server) handleKeyGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, map[string]any{"ok": true})
+}
+
+func (s *Server) handleMappingPresets(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
+		return
+	}
+	writeJSON(w, 200, s.Routing.Presets())
 }

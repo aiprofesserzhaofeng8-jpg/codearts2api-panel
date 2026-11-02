@@ -3,6 +3,7 @@ package config
 import "encoding/json"
 
 type SettingsUpdate struct {
+	CommonPrompt      json.RawMessage   `json:"common_prompt"`
 	CodeArts          json.RawMessage   `json:"codearts"`
 	Trae              json.RawMessage   `json:"trae"`
 	WorkBuddy         json.RawMessage   `json:"workbuddy"`

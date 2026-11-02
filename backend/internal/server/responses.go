@@ -45,6 +45,15 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		reject(400, "请求体解析失败: "+err.Error(), "invalid_request_error")
 		return
 	}
+	requestedModel := req.Model
+	// Keep the legacy Responses requirement unless a group default was explicitly
+	// configured. Conversion validates a concrete model; routing still records the
+	// original request and rechecks current permissions at admission.
+	if strings.TrimSpace(req.Model) == "" {
+		if scope, err := s.Store.AccessScope(groupKey(r.Context())); err == nil && scope.DefaultModel != "" {
+			req.Model = scope.DefaultModel
+		}
+	}
 	configureInference(r.Context(), start, req.Stream)
 	if err := validateResponsesRequest(body, &req); err != nil {
 		reject(400, err.Error(), "invalid_request_error")
@@ -65,7 +74,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	settings := s.Store.Settings()
-	model, err := s.resolveModelForRequest(r, settings, req.Model)
+	model, err := s.resolveModelForRequest(r, settings, requestedModel)
 	if err != nil {
 		reject(apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return

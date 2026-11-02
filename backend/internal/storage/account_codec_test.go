@@ -77,7 +77,7 @@ func TestAccountCodecPreservesLegacySchemaAndCredentialGeneration(t *testing.T) 
 	if err := json.Unmarshal(written, &wire); err != nil {
 		t.Fatal(err)
 	}
-	if wire.Version != 6 || !reflect.DeepEqual(normalizedJSON(t, []byte(legacyAccountsJSON)), normalizedJSON(t, wire.Accounts)) {
+	if wire.Version != StateVersion || !reflect.DeepEqual(normalizedJSON(t, []byte(legacyAccountsJSON)), normalizedJSON(t, wire.Accounts)) {
 		t.Fatal("schema or serialized account fields changed")
 	}
 	reloaded, err := Open(path)

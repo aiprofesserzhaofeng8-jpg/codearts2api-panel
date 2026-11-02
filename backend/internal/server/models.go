@@ -78,7 +78,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"object": "list", "data": data})
+	writeJSON(w, http.StatusOK, map[string]any{"object": "list", "data": data, "default_model": s.Routing.ClientDefault(groupKey(r.Context()))})
 }
 
 // handleAdminRefreshModels 强制刷新模型清单（控制台按钮）。

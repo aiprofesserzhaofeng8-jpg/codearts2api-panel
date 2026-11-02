@@ -1,6 +1,13 @@
 <template>
 <section v-once id="tab-settings" role="tabpanel" aria-labelledby="nav-settings">
-        <div v-once class="card">
+        <div v-once class="card"><div class="card-head"><h2>公共提示词默认值</h2></div><div class="card-body">
+<div class="field"><label for="sCommonPromptMode">系统提示词</label><select id="sCommonPromptMode"><option value="passthrough">透传客户端提示词</option><option value="custom">自定义（替换 system / developer）</option></select></div>
+<div class="field"><label for="sCommonPromptText">自定义提示词</label><textarea id="sCommonPromptText" maxlength="65536" rows="4"></textarea></div>
+<label class="check"><input id="sCommonPromptFallback" type="checkbox">透传遇明确拦截时重试一次</label>
+<label class="check"><input id="sCommonSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
+<p class="hint">平台勾选“继承公共值”的项目才会采用这里的设置；搜索仍由各平台独立配置。</p>
+</div></div>
+<div v-once class="card">
           <div v-once class="card-head">
             <div v-once>
               <h2>运行设置</h2>
@@ -185,11 +192,15 @@
 
           <div v-once class="settings-group">
             <h3>CodeArts</h3>
-            <div v-once class="field"><label for="sCAPromptMode">系统提示词</label><select id="sCAPromptMode"><option value="passthrough">透传客户端提示词</option><option value="custom">自定义（替换客户端 system / developer）</option></select></div>
-            <div v-once class="field"><label for="sCAPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sCAPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
+            <label class="check prompt-inherit"><input id="sCAPromptModeInherit" type="checkbox">继承公共值 · 模式</label>
+<div v-once class="field"><label for="sCAPromptMode">系统提示词</label><select id="sCAPromptMode"><option value="passthrough">透传客户端提示词</option><option value="custom">自定义（替换客户端 system / developer）</option></select></div>
+            <label class="check prompt-inherit"><input id="sCAPromptTextInherit" type="checkbox">继承公共值 · 提示词</label>
+<div v-once class="field"><label for="sCAPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sCAPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
             <div v-once class="row">
-              <label class="check"><input id="sCAPromptFallback" type="checkbox">透传遇明确内容策略拦截时，使用中性提示词重试一次</label>
-              <label class="check"><input id="sCASanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
+              <label class="check prompt-inherit"><input id="sCAPromptFallbackInherit" type="checkbox">继承公共值 · 拦截恢复</label>
+<label class="check"><input id="sCAPromptFallback" type="checkbox">透传遇明确内容策略拦截时，使用中性提示词重试一次</label>
+              <label class="check prompt-inherit"><input id="sCASanitizeInherit" type="checkbox">继承公共值 · 清洗</label>
+<label class="check"><input id="sCASanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
             </div>
             <div v-once class="field"><label for="sCASearchURL">独立搜索后端 · SearXNG</label><input id="sCASearchURL" type="url" maxlength="2048" placeholder="http://127.0.0.1:8080/search"></div>
             <p class="group-hint">使用启用 JSON 输出的 SearXNG 服务；不使用 CodeArts 原生搜索或其他平台账号。</p>
@@ -199,24 +210,32 @@
           <div v-once class="settings-group">
             <h3>WorkBuddy</h3>
             <div v-once class="field-grid cols-2">
-              <div v-once class="field"><label for="sWBPromptMode">系统提示词</label><select id="sWBPromptMode"><option value="custom">自定义（替换客户端 system / developer）</option><option value="passthrough">透传客户端提示词</option></select></div>
+              <label class="check prompt-inherit"><input id="sWBPromptModeInherit" type="checkbox">继承公共值 · 模式</label>
+<div v-once class="field"><label for="sWBPromptMode">系统提示词</label><select id="sWBPromptMode"><option value="custom">自定义（替换客户端 system / developer）</option><option value="passthrough">透传客户端提示词</option></select></div>
               <div v-once class="field"><label for="sWBSearchScope">默认搜索地区</label><select id="sWBSearchScope"><option value="cn">国内</option><option value="global">国际</option></select></div>
             </div>
-            <div v-once class="field"><label for="sWBPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sWBPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
+            <label class="check prompt-inherit"><input id="sWBPromptTextInherit" type="checkbox">继承公共值 · 提示词</label>
+<div v-once class="field"><label for="sWBPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sWBPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
             <div v-once class="row">
               <label class="check"><input id="sWBSearch" type="checkbox">启用联网搜索</label>
-              <label class="check"><input id="sWBPromptFallback" type="checkbox">透传遇内容策略拦截时，使用中性提示词重试一次</label>
-              <label class="check"><input id="sWBSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
+              <label class="check prompt-inherit"><input id="sWBPromptFallbackInherit" type="checkbox">继承公共值 · 拦截恢复</label>
+<label class="check"><input id="sWBPromptFallback" type="checkbox">透传遇内容策略拦截时，使用中性提示词重试一次</label>
+              <label class="check prompt-inherit"><input id="sWBSanitizeInherit" type="checkbox">继承公共值 · 清洗</label>
+<label class="check"><input id="sWBSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
             </div>
           </div>
 
           <div v-once class="settings-group">
             <h3>Trae</h3>
-            <div v-once class="field"><label for="sTRPromptMode">系统提示词</label><select id="sTRPromptMode"><option value="passthrough">透传客户端提示词</option><option value="custom">自定义（替换客户端 system / developer）</option></select></div>
-            <div v-once class="field"><label for="sTRPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sTRPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
+            <label class="check prompt-inherit"><input id="sTRPromptModeInherit" type="checkbox">继承公共值 · 模式</label>
+<div v-once class="field"><label for="sTRPromptMode">系统提示词</label><select id="sTRPromptMode"><option value="passthrough">透传客户端提示词</option><option value="custom">自定义（替换客户端 system / developer）</option></select></div>
+            <label class="check prompt-inherit"><input id="sTRPromptTextInherit" type="checkbox">继承公共值 · 提示词</label>
+<div v-once class="field"><label for="sTRPromptText">自定义提示词（留空使用内置工程助手提示词）</label><textarea id="sTRPromptText" maxlength="65536" rows="5" placeholder="输入系统提示词"></textarea></div>
             <div v-once class="row">
-              <label class="check"><input id="sTRPromptFallback" type="checkbox">透传遇明确内容策略拦截时，使用中性提示词重试一次</label>
-              <label class="check"><input id="sTRSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
+              <label class="check prompt-inherit"><input id="sTRPromptFallbackInherit" type="checkbox">继承公共值 · 拦截恢复</label>
+<label class="check"><input id="sTRPromptFallback" type="checkbox">透传遇明确内容策略拦截时，使用中性提示词重试一次</label>
+              <label class="check prompt-inherit"><input id="sTRSanitizeInherit" type="checkbox">继承公共值 · 清洗</label>
+<label class="check"><input id="sTRSanitize" type="checkbox">仅清洗系统提示词中的客户端模板</label>
             </div>
             <div v-once class="field"><label for="sTRSearchURL">独立搜索后端 · SearXNG</label><input id="sTRSearchURL" type="url" maxlength="2048" placeholder="http://127.0.0.1:8080/search"></div>
             <p class="group-hint">使用启用 JSON 输出的 SearXNG 服务；不使用 Trae 原生搜索或其他平台账号。</p>

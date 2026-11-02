@@ -4,6 +4,7 @@ package config
 
 // Settings 是运行期可调参数。
 type Settings struct {
+	CommonPrompt   PromptSettings    `json:"common_prompt"`
 	CodeArts       ProviderSettings  `json:"codearts"`
 	Trae           ProviderSettings  `json:"trae"`
 	WorkBuddy      WorkBuddySettings `json:"workbuddy"`

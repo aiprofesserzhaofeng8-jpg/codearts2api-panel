@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/config"
 )
 
 // legacyDefaultModels 是已不存在的旧默认模型名。
@@ -22,6 +23,7 @@ var legacyDefaultModels = map[string]bool{
 // DefaultSettings 返回默认设置。
 func DefaultSettings() Settings {
 	return Settings{
+		CommonPrompt:   config.DefaultPromptSettings(),
 		Pool:           DefaultPoolSettings(),
 		WorkBuddy:      DefaultWorkBuddySettings(),
 		CodeArts:       DefaultProviderSettings("codearts"),
@@ -102,6 +104,8 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 6:
+			s.st.Version = 7
 		case 5:
 			s.st.Version = 6
 		case 4:
@@ -128,6 +132,9 @@ func (s *Store) migrate() error {
 func (s *Store) applyDefaults() {
 	def := DefaultSettings()
 	st := &s.st.Settings
+	if st.CommonPrompt.Validate() != nil {
+		st.CommonPrompt = def.CommonPrompt
+	}
 	if st.CodeArts.ValidateFor("codearts") != nil {
 		st.CodeArts = def.CodeArts
 	}

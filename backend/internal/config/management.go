@@ -39,19 +39,49 @@ func (m *Management) UpdateSettings(body SettingsUpdate, allowClearPassword bool
 		}
 	}
 	current := m.Settings()
+	common := current.CommonPrompt
+	if len(body.CommonPrompt) > 0 {
+		if string(body.CommonPrompt) == "null" || json.Unmarshal(body.CommonPrompt, &common) != nil {
+			return errors.New("公共提示词格式错误")
+		}
+		if err := common.Validate(); err != nil {
+			return err
+		}
+	}
 	policies := map[string]ProviderSettings{}
 	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae} {
 		if len(raw) == 0 {
 			continue
 		}
-		config := current.ProviderPolicy(name)
+		config := current.ConfiguredProvider(name).Clone()
+		// Overrides are a replacement object: {} means inherit all, not a merge
+		// with the previous optional fields. Other legacy platform fields PATCH.
+		var fields map[string]json.RawMessage
+		if json.Unmarshal(raw, &fields) == nil {
+			if _, present := fields["prompt_overrides"]; present {
+				config.PromptOverrides = nil
+			}
+		}
+
 		if string(raw) == "null" || json.Unmarshal(raw, &config) != nil {
 			return errors.New(name + " 配置格式错误")
 		}
 		if err := config.ValidateFor(name); err != nil {
 			return err
 		}
+		if err := config.ResolvePrompt(common).ValidateFor(name); err != nil {
+			return err
+		}
 		policies[name] = config
+	}
+	for _, name := range []string{"codearts", "trae", "workbuddy"} {
+		candidate, ok := policies[name]
+		if !ok {
+			candidate = current.ConfiguredProvider(name)
+		}
+		if err := candidate.ResolvePrompt(common).ValidateFor(name); err != nil {
+			return err
+		}
 	}
 	poolConfig := m.Settings().Pool
 	if len(body.Pool) > 0 {
@@ -69,6 +99,9 @@ func (m *Management) UpdateSettings(body SettingsUpdate, allowClearPassword bool
 		return errors.New("管理员密码不能超过 4096 字节")
 	}
 	m.store.UpdateSettings(func(st *Settings) {
+		if len(body.CommonPrompt) > 0 {
+			st.CommonPrompt = common
+		}
 		if config, ok := policies["workbuddy"]; ok {
 			st.WorkBuddy = config
 		}

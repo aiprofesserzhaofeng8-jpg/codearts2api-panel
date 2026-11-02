@@ -46,6 +46,30 @@ func (m *Management) Groups() []AccountGroup { return m.store.Groups() }
 // empty list clears them. Catalog normalization precedes the original atomic
 // membership/allowlist/force-model validation and persistence in Store.
 func (m *Management) SaveGroup(group AccountGroup) (AccountGroup, error) {
+	var old AccountGroup
+	for _, g := range m.store.Groups() {
+		if group.ID != "" && g.ID == group.ID {
+			old = g
+		}
+	}
+	previous := map[string]bool{}
+	for _, r := range old.ModelRules {
+		previous[r.ID] = true
+	}
+	for _, mapping := range old.ModelMappings {
+		for _, id := range mapping.Sources {
+			previous[id] = true
+		}
+	}
+	public := map[string]bool{}
+	mappings := group.ModelMappings
+	if mappings == nil {
+		mappings = old.ModelMappings
+	}
+	for _, m := range mappings {
+		public[m.Name] = true
+	}
+
 	if group.ID != "" && group.ModelMappings == nil {
 		for _, old := range m.store.Groups() {
 			if old.ID == group.ID {
@@ -53,10 +77,27 @@ func (m *Management) SaveGroup(group AccountGroup) (AccountGroup, error) {
 			}
 		}
 	}
+	if group.ID != "" && group.ModelRules == nil {
+		for _, old := range m.store.Groups() {
+			if old.ID == group.ID {
+				group.ModelRules = old.ModelRules
+			}
+		}
+	}
+	for i := range group.ModelRules {
+		if canonical, ok := m.models.Raw(group.ModelRules[i].ID); ok {
+			group.ModelRules[i].ID = canonical
+		} else if !public[group.ModelRules[i].ID] && !previous[group.ModelRules[i].ID] {
+			return group, fmt.Errorf("模型规则不在当前目录或分组映射中：%s", group.ModelRules[i].ID)
+		}
+	}
 	for i := range group.ModelMappings {
 		for j, id := range group.ModelMappings[i].Sources {
 			canonical, ok := m.models.Raw(id)
 			if !ok {
+				if previous[id] {
+					continue
+				}
 				return group, fmt.Errorf("原始型号不在当前目录：%s", id)
 			}
 			group.ModelMappings[i].Sources[j] = canonical
@@ -65,6 +106,17 @@ func (m *Management) SaveGroup(group AccountGroup) (AccountGroup, error) {
 	for i, id := range group.ModelIDs {
 		if canonical, ok := m.models.Aliased(strings.TrimSpace(id)); ok {
 			group.ModelIDs[i] = canonical
+		}
+	}
+	for _, name := range []string{group.DefaultModel, group.ClientDefaultModel} {
+		if name == "" || public[name] {
+			continue
+		}
+		if len(group.ModelMappings) > 0 {
+			return group, fmt.Errorf("配置映射后默认模型须选择统一名称：%s", name)
+		}
+		if _, ok := m.models.Raw(name); !ok {
+			return group, fmt.Errorf("默认模型不在当前目录：%s", name)
 		}
 	}
 	return m.store.SaveGroup(group)

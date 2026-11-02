@@ -9,17 +9,17 @@ import (
 	"codearts2api/internal/provider"
 )
 
-// Each provider owns an independent value snapshot; settings never inherit
-// from another provider at request time.
+// Platform settings own search and optional field-level common prompt overrides.
 type ProviderSettings struct {
-	PromptMode     string `json:"prompt_mode"`
-	PromptText     string `json:"prompt_text"`
-	PromptFallback bool   `json:"prompt_fallback"`
-	Sanitize       bool   `json:"sanitize"`
-	SearchEnabled  bool   `json:"search_enabled"`
-	SearchScope    string `json:"search_scope"`
-	SearchBackend  string `json:"search_backend"`
-	SearchURL      string `json:"search_url"`
+	PromptOverrides *PromptOverrides `json:"prompt_overrides"`
+	PromptMode      string           `json:"prompt_mode"`
+	PromptText      string           `json:"prompt_text"`
+	PromptFallback  bool             `json:"prompt_fallback"`
+	Sanitize        bool             `json:"sanitize"`
+	SearchEnabled   bool             `json:"search_enabled"`
+	SearchScope     string           `json:"search_scope"`
+	SearchBackend   string           `json:"search_backend"`
+	SearchURL       string           `json:"search_url"`
 }
 
 func DefaultProviderSettings(name string) ProviderSettings {
@@ -63,14 +63,5 @@ func (w ProviderSettings) ValidateFor(name string) error {
 }
 
 func (s Settings) ProviderPolicy(name string) ProviderSettings {
-	switch name {
-	case provider.CodeArts:
-		return s.CodeArts
-	case provider.Trae:
-		return s.Trae
-	case provider.WorkBuddy:
-		return s.WorkBuddy
-	default:
-		return ProviderSettings{}
-	}
+	return s.ConfiguredProvider(name).ResolvePrompt(s.CommonPrompt)
 }

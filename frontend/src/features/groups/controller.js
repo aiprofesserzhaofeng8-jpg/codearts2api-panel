@@ -10,6 +10,8 @@ const groupsState = {};
 groupsState.editingGroup = "";
 
 groupsState.groupSaving = false;
+groupsState.rules = {};
+groupsState.presets = null;
 
 
 
@@ -85,6 +87,7 @@ export function updateGroupModels(selected) {
     select.disabled = !domState.$("#groupAllowlist").checked;
     domState.$("#groupModelsField").classList.toggle("hidden", select.disabled);
     updateGroupMappingOptions();
+    updateGroupRules();
 }
 
 export function groupMappingValues() {
@@ -106,12 +109,13 @@ export function addGroupMapping(mapping) {
     var holder = mk("div", "group-mapping-row"), head = mk("div", "group-mapping-name"), field = mk("div", "field"), label = mk("label", "", "公开模型名"), input = document.createElement("input");
     input.placeholder = "deepseek-4.1-flash";
     input.maxLength = 200;
+    input.addEventListener("input", updateGroupRules);
     input.value = mapping.name || "";
     input.setAttribute("aria-label", "公开模型名");
     field.appendChild(label);
     field.appendChild(input);
     head.appendChild(field);
-    head.appendChild(btn("移除", "danger", function () { holder.remove(); }));
+    head.appendChild(btn("移除", "danger", function () { holder.remove(); updateGroupRules(); }));
     holder.appendChild(head);
     var sources = mk("div", "field"), select = document.createElement("select");
     select.multiple = true;
@@ -123,11 +127,15 @@ export function addGroupMapping(mapping) {
     (mapping.sources || []).forEach(function (id) { var o = document.createElement("option"); o.value = id; o.selected = true; select.appendChild(o); });
     domState.$("#groupMappingRows").appendChild(holder);
     updateGroupMappingOptions();
+    updateGroupRules();
 }
 
 export function openGroup(group) {
     group = group || {};
     groupsState.editingGroup = group.id || "";
+    groupsState.rules = Object.fromEntries((group.model_rules || []).map(r => [r.id, {...r}]));
+    groupsState.presets = null;
+    domState.$("#applyGroupPresets").disabled = true;
     domState.$("#groupTitle").textContent = groupsState.editingGroup ? "编辑账号分组" : "创建账号分组";
     domState.$("#groupName").value = group.name || "";
     domState.$("#groupAllowlist").checked = !!group.allowlist_enabled;
@@ -140,7 +148,12 @@ export function openGroup(group) {
     domState.$("#groupMappingRows").textContent = "";
     updateGroupModels(group.model_ids || []);
     (group.model_mappings || []).forEach(addGroupMapping);
+    updateGroupRules();
+    domState.$("#groupDefaultModel").value = group.default_model || "";
+    domState.$("#groupClientDefaultModel").value = group.client_default_model || "";
     domState.$("#groupDialog").showModal();
+    const current = ++groupsState.epoch || (groupsState.epoch = 1);
+    api("/admin/api/groups/presets").then(p => { if (groupsState.epoch !== current || !domState.$("#groupDialog").open) return; groupsState.presets = p; domState.$("#applyGroupPresets").disabled = groupsState.groupSaving; }).catch(e => {if (!isAbortError(e)) toast("读取映射预设失败：" + e.message, "err");});
 }
 
 export function lockGroupForm(busy) { domState.$("#groupDialog").querySelectorAll("input,select,button").forEach(function (el) { el.disabled = busy; }); if (!busy)
@@ -150,6 +163,7 @@ export function closeGroup() { if (!groupsState.groupSaving)
     domState.$("#groupDialog").close(); }
 
 export function mountGroups() {
+on("#applyGroupPresets", applyGroupPresets);
 on("#addGroupMapping", function () { addGroupMapping(); });
 listen(domState.$("#groupModels"), "change", updateGroupMappingOptions);
 on("#addGroup", function () { openGroup(); });
@@ -165,7 +179,7 @@ on("#groupSave", function () {
         domState.$("#groupError").textContent = "请填写分组名称";
         return;
     }
-    var body = { id: groupsState.editingGroup, name: name, account_ids: Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function (i) { return i.value; }), allowlist_enabled: domState.$("#groupAllowlist").checked, model_ids: Array.from(domState.$("#groupModels").selectedOptions).map(function (o) { return o.value; }), model_mappings: groupMappingValues() };
+    var body = { id: groupsState.editingGroup, name: name, account_ids: Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(function (i) { return i.value; }), allowlist_enabled: domState.$("#groupAllowlist").checked, model_ids: Array.from(domState.$("#groupModels").selectedOptions).map(function (o) { return o.value; }), model_mappings: groupMappingValues(), model_rules: Object.values(groupsState.rules), default_model: domState.$("#groupDefaultModel").value, client_default_model: domState.$("#groupClientDefaultModel").value };
     var invalid = body.model_mappings.some(function (m) { return !/[0-9]/.test(m.name) || /[\s/]/.test(m.name) || !m.sources.length; });
     if (invalid) {
         domState.$("#groupError").textContent = "请填写带版本号且不含空白、斜线的公开名称，并选择来源型号";
@@ -177,4 +191,45 @@ on("#groupSave", function () {
     return api("/admin/api/groups", { method: "POST", body: body }).then(function (r) { if (!r.ok || !r.group)
         throw new Error("分组保存结果未确认"); domState.$("#groupDialog").close(); toast("分组已保存", "ok"); return refresh(); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#groupError").textContent = "保存失败：" + e.message; }).finally(function () { groupsState.groupSaving = false; lockGroupForm(false); });
 });
+}
+
+export function updateGroupRules() {
+    const data = serverState.data || {}, mappings = groupMappingValues();
+    const group = {account_ids: Array.from(document.querySelectorAll('#groupAccounts input:checked')).map(i => i.value), allowlist_enabled: domState.$("#groupAllowlist").checked, model_ids: Array.from(domState.$("#groupModels").selectedOptions).map(o => o.value)};
+    const ids = [...new Set([...mappings.map(m => m.name).filter(Boolean), ...(data.models || []).filter(m => m.source !== 'alias' && groupModelAllowed(m, group, data)).map(m => m.id), ...Object.keys(groupsState.rules)])];
+    const holder = domState.$('#groupModelRules'); holder.textContent = '';
+    ids.forEach(id => {
+        const rule = groupsState.rules[id] || {}, line = row([cell(id)]);
+        ['visible','callable'].forEach(key => {
+            const td = cell(''), input = document.createElement('input'); input.type = 'checkbox'; input.setAttribute('aria-label', id + (key === 'visible' ? ' 显示' : ' 允许调用'));
+            input.checked = rule[key] ?? (key === 'callable' || !mappings.length || mappings.some(m => m.name === id));
+            input.addEventListener('change', () => {groupsState.rules[id] = {...(groupsState.rules[id] || {id}), [key]:input.checked}; updateGroupDefaults(ids, mappings);});
+            td.appendChild(input); line.appendChild(td);
+        }); holder.appendChild(line);
+    });
+    updateGroupDefaults(ids, mappings);
+}
+function updateGroupDefaults(ids, mappings) {
+    ['groupDefaultModel','groupClientDefaultModel'].forEach(field => {
+        const select = domState.$('#'+field), chosen = select.value; select.textContent = '';
+        const option = document.createElement('option'); option.value='';option.textContent=field==='groupDefaultModel'?'沿用全局默认':'不指定';select.appendChild(option);
+        ids.filter(id => (!mappings.length || mappings.some(m=>m.name===id)) && groupsState.rules[id]?.callable !== false && (field!=='groupClientDefaultModel' || (groupsState.rules[id]?.visible ?? (!mappings.length || mappings.some(m=>m.name===id))))).forEach(id=>{const o=document.createElement('option');o.value=id;o.textContent=id;select.appendChild(o);});
+        if (chosen && !Array.from(select.options).some(o=>o.value===chosen)) {const o=document.createElement('option');o.value=chosen;o.textContent=chosen+'（请检查可见性及调用权限）';select.appendChild(o);}
+        select.value=chosen;
+    });
+}
+function applyGroupPresets() {
+    if (!groupsState.presets) return;
+    const data=serverState.data || {}, existing=groupMappingValues();
+    const allowed = new Set(Array.from(domState.$('#groupModels').options).map(o=>o.value).filter(id => !domState.$('#groupAllowlist').checked || Array.from(domState.$('#groupModels').selectedOptions).some(o=>o.value===id)));
+    let count=0;
+    groupsState.presets.mappings.forEach(p=>{
+        if (existing.some(m=>m.name.toLowerCase()===p.name.toLowerCase())) return;
+        const sources=p.sources.filter(s=>s.available && allowed.has(s.id) && groupsState.rules[s.id]?.callable!==false && (data.models || []).some(m=>m.id===s.id)).map(s=>s.id);
+        if (sources.length) {addGroupMapping({name:p.name,sources});count++;}
+    });
+    const mappings=groupMappingValues();
+    // Suggest once in the unsaved editor; administrator can clear either field.
+    if (count && !domState.$('#groupDefaultModel').value) {domState.$('#groupDefaultModel').value=mappings[0].name;domState.$('#groupClientDefaultModel').value=mappings[0].name;}
+    toast(count ? '已添加 '+count+' 项预设，请检查来源并保存' : '没有可添加的预设；已有映射保持不变', count?'ok':'');
 }

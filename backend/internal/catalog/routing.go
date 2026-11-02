@@ -117,7 +117,13 @@ func (s *Routing) ResolveMapped(settings config.Settings, scope access.AccessSco
 	}
 	name := strings.TrimSpace(requested)
 	if name == "" {
-		name = settings.DefaultModel
+		name = scope.DefaultModel
+		if name == "" {
+			name = settings.DefaultModel
+		}
+	}
+	if !scope.Callable(name) {
+		return provider.Model{}, nil, GroupDenied()
 	}
 	if strings.Contains(name, "/") {
 		m, ok := s.directory.ResolveRaw(name)
@@ -146,18 +152,27 @@ func (s *Routing) VisibleModels(key string) ([]provider.Model, error) {
 	settings := s.store.Settings()
 	list := s.store.Accounts()
 	out := []provider.Model{}
+	listingScope := scope
+	listingScope.ModelRules = nil
 	if len(scope.ModelMappings) > 0 {
 		for _, mapping := range scope.ModelMappings {
-			plan := s.MappingPlan(scope, mapping.Name)
+			if !scope.Visible(mapping.Name, true) {
+				continue
+			}
+			plan := s.MappingPlan(listingScope, mapping.Name)
 			if len(plan.IDs) > 0 {
 				out = append(out, PublicMappingModel(mapping.Name))
 			}
 		}
-		return out, nil
 	}
+
 	for _, m := range s.directory.List(settings.ModelAliases) {
 		resolved, ok := s.directory.Resolve(m.ID, settings.ModelAliases)
-		if ok && ScopeAllows(scope, list, resolved) {
+		if ok && scope.Visible(m.ID, len(scope.ModelMappings) == 0) && ScopeAllows(listingScope, list, resolved) {
+			if len(scope.ModelMappings) > 0 && ModelProvider(resolved) == provider.CodeArts {
+				m.ID = "codearts/" + resolved.ID
+				m.Source = resolved.Source
+			}
 			out = append(out, m)
 		}
 	}
@@ -171,7 +186,14 @@ func (s *Routing) Resolve(key string, settings config.Settings, requested string
 	if len(scope.ModelMappings) > 0 {
 		return s.ResolveMapped(settings, scope, requested)
 	}
-	m, err := s.ResolveDefault(settings, requested)
+	effective := requested
+	if settings.ForceModel == "" && strings.TrimSpace(effective) == "" && scope.DefaultModel != "" {
+		effective = scope.DefaultModel
+	}
+	if effective != "" && !scope.Callable(effective) {
+		return provider.Model{}, nil, GroupDenied()
+	}
+	m, err := s.ResolveDefault(settings, effective)
 	if err != nil {
 		var missing *provider.ModelNotFound
 		if scope.Restricted && errors.As(err, &missing) {
@@ -215,7 +237,7 @@ func (s *Routing) Check(key, model string, search bool, plan *ModelPlan, fallbac
 				allowed = true
 			}
 		}
-		if !found || (!allowed && !fallback()) {
+		if !found || !scope.Callable(plan.Public) || (!allowed && !fallback()) {
 			return GroupDenied()
 		}
 	}
@@ -261,4 +283,26 @@ func (s *Routing) ModelPolicy(key string, model provider.Model, policies *config
 		return config.ModelPolicy{}, false
 	}
 	return config.CommonModelPolicy(plan.IDs, func(id string) (config.ModelPolicy, bool) { return policies.For(plan.Models[id]) })
+}
+
+// ClientDefault is advisory and never participates in request model resolution.
+func (s *Routing) ClientDefault(key string) string {
+	scope, err := s.store.AccessScope(key)
+	if err != nil {
+		return ""
+	}
+	name := scope.ClientDefaultModel
+	if name == "" || !scope.Callable(name) {
+		return ""
+	}
+	list, err := s.VisibleModels(key)
+	if err != nil {
+		return ""
+	}
+	for _, m := range list {
+		if m.ID == name {
+			return name
+		}
+	}
+	return ""
 }

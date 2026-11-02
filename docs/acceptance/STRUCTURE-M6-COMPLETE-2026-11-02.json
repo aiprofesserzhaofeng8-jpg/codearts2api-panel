@@ -1,0 +1,326 @@
+{
+  "milestone": "M6",
+  "status": "complete",
+  "date": "2026-11-02",
+  "baseline": "aa53f6c92a9a6846bb471a49d54a586b7eb8e480",
+  "local_tag": "milestone/structure-m6-complete-20261102",
+  "version": "0.3.0-structure-m6",
+  "schema": 7,
+  "features": [
+    "explicit_versioned_presets",
+    "group_inference_default",
+    "independent_client_preference",
+    "independent_model_visibility_and_callability",
+    "common_prompt_field_inheritance"
+  ],
+  "checks": {
+    "make_check": true,
+    "complete_race_packages": 25,
+    "complete_race_test_events": 1537,
+    "final_product_race": true,
+    "browser_suites": 11,
+    "final_product_ui": true,
+    "converter_tests": 2,
+    "launcher_tests": 9,
+    "pi_compaction_tests": true,
+    "windows_vet_and_build": true,
+    "docker_runtime": {
+      "passed": true,
+      "cases": [
+        "isolated empty container health",
+        "production index and strict CSP",
+        "all referenced production assets served",
+        "login Cookie and authenticated management API",
+        "logout revokes management session",
+        "non-root read-only runtime without Node"
+      ],
+      "build_id": "9f5a44e93f344b5be5e4",
+      "image_id": "sha256:6d0dca38c161c291bcaff0e9cddd6c1af03a5427766b3d78fb39a5cb1e9b5cba"
+    },
+    "development_lifecycle": {
+      "passed": true,
+      "cwd_independent": true,
+      "isolated_backend": true,
+      "vite_proxy": true,
+      "sigint_exit_code": 0,
+      "both_ports_released": true
+    },
+    "data_roundtrip": {
+      "passed": true,
+      "legacy_state_semantics_preserved": true,
+      "m5_refuses_schema7_without_writing": true,
+      "latest_credentials_and_usage_preserved": true,
+      "journal_sidecar_copied": true,
+      "converted_m5_startup": true,
+      "inheritance_flattened_false_empty_preserved": true,
+      "unsupported_permissions_refused": true,
+      "future_schema_refused_without_writing": true,
+      "shared_state_written": false,
+      "isolated_data_deleted": true
+    }
+  },
+  "performance": {
+    "baseline": "M5 aa53f6c",
+    "paired_rounds": 5,
+    "microbenchmarks": 21,
+    "microbenchmark_percent_range": [
+      -2.7,
+      3.45
+    ],
+    "capacity_scenarios": 9,
+    "capacity_records": 90,
+    "initial_p95_signal_percent": 5.11,
+    "isolated_recheck_rounds": 7,
+    "isolated_recheck_change_percent": {
+      "p50_ms": 0.03,
+      "p95_ms": -0.66,
+      "requests_per_second": -0.18,
+      "first_output_p95_ms": -1.96
+    },
+    "optional_admission_rules_median_ns": {
+      "0": 472.3,
+      "79": 1005.0,
+      "512": 3451.0
+    },
+    "stable_regression_observed": false
+  },
+  "real_acceptance": {
+    "checks": [
+      {
+        "case": "workbuddy/hidden-list",
+        "passed": true
+      },
+      {
+        "case": "workbuddy/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.5,
+        "policy_mode": "custom",
+        "usage": {
+          "prompt_tokens": 30,
+          "completion_tokens": 7,
+          "total_tokens": 37,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 30,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "workbuddy/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.837,
+        "policy_mode": "passthrough",
+        "usage": {
+          "prompt_tokens": 18,
+          "completion_tokens": 7,
+          "total_tokens": 25,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 18,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0,
+          "cached_tokens": 0
+        }
+      },
+      {
+        "case": "trae/hidden-list",
+        "passed": true
+      },
+      {
+        "case": "trae/buffered",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.383,
+        "policy_mode": "custom",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 19,
+          "completion_tokens_details": {
+            "reasoning_tokens": 9
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 59,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 9,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 78,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "trae/stream",
+        "passed": true,
+        "logical_model": "m3-live-1",
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "seconds": 1.404,
+        "policy_mode": "passthrough",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 31,
+          "completion_tokens_details": {
+            "reasoning_tokens": 22
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 45,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 22,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 76,
+          "total_tokens_total": 0
+        }
+      },
+      {
+        "case": "workbuddy/v1/messages/buffered",
+        "passed": true,
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "workbuddy/v1/responses/stream",
+        "passed": true,
+        "physical_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "trae/v1/messages/buffered",
+        "passed": true,
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "trae/v1/responses/stream",
+        "passed": true,
+        "physical_model": "trae/cn/deepseek-v4.1-flash",
+        "logical_model": "m3-live-1",
+        "request_log_correlated": true
+      },
+      {
+        "case": "workbuddy/tool_roundtrip",
+        "passed": true,
+        "requests": 2
+      },
+      {
+        "case": "workbuddy/native_search",
+        "passed": true,
+        "results": 1,
+        "request_log_correlated": true
+      },
+      {
+        "case": "workbuddy/disabled-and-unknown",
+        "passed": true,
+        "rejected_before_upstream": true
+      },
+      {
+        "case": "trae/disabled-and-unknown",
+        "passed": true,
+        "rejected_before_upstream": true
+      }
+    ],
+    "final_passed": 14,
+    "upstream_requests": 13,
+    "providers": [
+      "workbuddy",
+      "trae"
+    ],
+    "physical_model_ids": [
+      "workbuddy/cn/deepseek-v4.1-flash",
+      "trae/cn/deepseek-v4.1-flash"
+    ],
+    "discovered_models": 79,
+    "credentials_refreshed": false,
+    "isolated_credentials_deleted": true,
+    "initial_log_correlation_assertions_corrected_and_rechecked": 2,
+    "codearts": "not_run_expired_credentials"
+  },
+  "local_deployment": {
+    "passed": true,
+    "old_pid": 3688424,
+    "new_pid": 3689579,
+    "cwd": "/home/white/codearts2api-panel",
+    "version": "0.3.0-structure-m6",
+    "binary_sha256": "a78d00c4cc8c50e6478d92e381b12075e5af04607932c71a1b0223539a39ebfc",
+    "frontend_build": "9f5a44e93f344b5be5e4",
+    "schema": 7,
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "accounts": 4,
+    "groups": 3,
+    "keys": 4,
+    "legacy_state_semantics_preserved": true,
+    "credentials_unchanged": true,
+    "management_requires_login": true,
+    "url": "http://127.0.0.1:10088",
+    "cloud_changed": false,
+    "github_changed": false,
+    "startup_catalog_readiness_waited": true,
+    "latest_state_rollback_exercised": true
+  },
+  "limits": [
+    "CodeArts real inference not run because stored credentials expired; controlled native protocol cases passed",
+    "Windows built and vetted, not run natively",
+    "Settings retain pre-existing logged Save failure semantics; no multi-admin optimistic concurrency",
+    "No cloud update, GitHub push or public release",
+    "Not multi-instance; no shared-file concurrent writers"
+  ]
+}

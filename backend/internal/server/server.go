@@ -148,6 +148,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/state", s.withAdminAuth(s.handleAdminState))
 	mux.HandleFunc("/admin/api/accounts", s.withAdminAuth(s.handleAdminAccounts))
 	mux.HandleFunc("/admin/api/keys/budget", s.withAdminAuth(s.handleKeyBudget))
+	mux.HandleFunc("/admin/api/groups/presets", s.withAdminAuth(s.handleMappingPresets))
 	mux.HandleFunc("/admin/api/groups", s.withAdminAuth(s.handleAdminGroups))
 	mux.HandleFunc("/admin/api/keys/group", s.withAdminAuth(s.handleKeyGroup))
 	mux.HandleFunc("/admin/api/keys/reveal", s.withAdminAuth(s.handleAdminKeyReveal))
@@ -539,6 +540,7 @@ func (s *Server) resolveOptions() codearts.ResolveOptions {
 // sanitizedSettings 返回可下发给前端的设置（管理密码不外泄）。
 func sanitizedSettings(st storage.Settings) map[string]any {
 	return map[string]any{
+		"common_prompt":          st.CommonPrompt,
 		"pool":                   st.Pool,
 		"workbuddy":              st.WorkBuddy,
 		"codearts":               st.CodeArts,

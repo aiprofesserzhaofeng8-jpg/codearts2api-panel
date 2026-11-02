@@ -39,7 +39,11 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
 		return
 	}
-	model, err := s.resolveModelForRequest(r, s.Store.Settings(), r.URL.Query().Get("model"))
+	requested := r.URL.Query().Get("model")
+	if requested == "" {
+		requested = s.Routing.ClientDefault(groupKey(r.Context()))
+	}
+	model, err := s.resolveModelForRequest(r, s.Store.Settings(), requested)
 	if err != nil {
 		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
 		return

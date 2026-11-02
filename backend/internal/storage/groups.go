@@ -16,6 +16,7 @@ type AccessScope = access.AccessScope
 
 func cloneGroup(g AccountGroup) AccountGroup {
 	g.ModelMappings = cloneMappings(g.ModelMappings)
+	g.ModelRules = access.CloneModelRules(g.ModelRules)
 	g.AccountIDs = append([]string{}, g.AccountIDs...)
 	g.ModelIDs = append([]string{}, g.ModelIDs...)
 	return g
@@ -53,7 +54,7 @@ func (s *Store) accessScopeLocked(key string) (AccessScope, error) {
 			if g.ID != k.GroupID {
 				continue
 			}
-			p := AccessScope{ModelMappings: cloneMappings(g.ModelMappings), Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
+			p := AccessScope{DefaultModel: g.DefaultModel, ClientDefaultModel: g.ClientDefaultModel, ModelRules: access.CloneModelRules(g.ModelRules), ModelMappings: cloneMappings(g.ModelMappings), Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
 			for _, id := range g.AccountIDs {
 				p.AccountIDs[id] = true
 			}
@@ -144,6 +145,9 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 				}
 			}
 		}
+	}
+	if err := validateGroupOptions(g); err != nil {
+		return g, err
 	}
 	index := -1
 	if g.ID != "" {

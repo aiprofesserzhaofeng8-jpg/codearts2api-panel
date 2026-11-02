@@ -1306,7 +1306,20 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
+                "properties": {
+                  "common_prompt": {
+                    "$ref": "#/components/schemas/PromptSettings"
+                  },
+                  "codearts": {
+                    "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "workbuddy": {
+                    "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "trae": {
+                    "$ref": "#/components/schemas/ProviderSettings"
+                  }
+                },
                 "additionalProperties": true
               }
             }
@@ -2057,6 +2070,31 @@
           }
         ]
       }
+    },
+    "/admin/api/groups/presets": {
+      "get": {
+        "operationId": "get__admin_api_groups_presets",
+        "responses": {
+          "200": {
+            "description": "Versioned suggestions cross-checked with current directory. Never automatically saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingPresets"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2188,6 +2226,24 @@
               "$ref": "#/components/schemas/ModelMapping"
             },
             "description": "On update, absent or null preserves mappings; [] clears them. Names include a version. Sources are original platform-qualified IDs."
+          },
+          "default_model": {
+            "type": "string",
+            "description": "Only fills omitted/empty request model; does not rescue unknown model names. Empty inherits global default."
+          },
+          "client_default_model": {
+            "type": "string",
+            "description": "Optional visible/callable client preference, separate from inference default."
+          },
+          "model_rules": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ModelRule"
+            },
+            "description": "Absent/null preserves existing rules on update; [] clears. Overrides never bypass membership or raw allowlist."
           }
         },
         "required": [
@@ -2482,7 +2538,20 @@
           },
           "settings": {
             "type": "object",
-            "properties": {},
+            "properties": {
+              "common_prompt": {
+                "$ref": "#/components/schemas/PromptSettings"
+              },
+              "codearts": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "workbuddy": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "trae": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              }
+            },
             "additionalProperties": true
           },
           "stats": {
@@ -2535,6 +2604,180 @@
           "ok"
         ],
         "additionalProperties": true
+      },
+      "ModelRule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "visible": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Absent/null inherits list default; independent of call permission."
+          },
+          "callable": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Absent/null allows calls subject to group/source permissions. False also excludes physical sources from mappings."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "PromptSettings": {
+        "type": "object",
+        "properties": {
+          "prompt_mode": {
+            "type": "string",
+            "enum": [
+              "custom",
+              "passthrough",
+              null
+            ]
+          },
+          "prompt_text": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "prompt_fallback": {
+            "type": "boolean"
+          },
+          "sanitize": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PromptOverrides": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "prompt_mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "custom",
+              "passthrough",
+              null
+            ]
+          },
+          "prompt_text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 65536
+          },
+          "prompt_fallback": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "sanitize": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "description": "Null keeps legacy platform policy. {} inherits all common fields. Null/missing fields inherit; false and empty string explicitly override.",
+        "additionalProperties": false
+      },
+      "ProviderSettings": {
+        "type": "object",
+        "properties": {
+          "prompt_mode": {
+            "type": "string",
+            "enum": [
+              "custom",
+              "passthrough",
+              null
+            ]
+          },
+          "prompt_text": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "prompt_fallback": {
+            "type": "boolean"
+          },
+          "sanitize": {
+            "type": "boolean"
+          },
+          "prompt_overrides": {
+            "$ref": "#/components/schemas/PromptOverrides"
+          },
+          "search_enabled": {
+            "type": "boolean"
+          },
+          "search_scope": {
+            "type": "string"
+          },
+          "search_backend": {
+            "type": "string"
+          },
+          "search_url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "MappingPresets": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "available": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "available"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "sources"
+              ]
+            }
+          }
+        },
+        "required": [
+          "version",
+          "mappings"
+        ]
       }
     },
     "securitySchemes": {

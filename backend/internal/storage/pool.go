@@ -79,7 +79,7 @@ func (s *Store) acquireAccountForModels(session string, models []string, exclude
 		return nil, "", func() {}, err
 	}
 	allowedSources, mapped := access.Mapping(public)
-	if public != "" && !mapped {
+	if public != "" && (!mapped || !access.Callable(public)) {
 		return nil, "", func() {}, fmt.Errorf("分组统一模型已删除")
 	}
 	type target struct{ id, platform, scope string }

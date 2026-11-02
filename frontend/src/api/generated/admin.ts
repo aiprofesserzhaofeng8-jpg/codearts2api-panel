@@ -628,6 +628,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/api/groups/presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get__admin_api_groups_presets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -673,6 +689,12 @@ export interface components {
             model_ids: string[] | null;
             /** @description On update, absent or null preserves mappings; [] clears them. Names include a version. Sources are original platform-qualified IDs. */
             model_mappings?: components["schemas"]["ModelMapping"][] | null;
+            /** @description Only fills omitted/empty request model; does not rescue unknown model names. Empty inherits global default. */
+            default_model?: string;
+            /** @description Optional visible/callable client preference, separate from inference default. */
+            client_default_model?: string;
+            /** @description Absent/null preserves existing rules on update; [] clears. Overrides never bypass membership or raw allowlist. */
+            model_rules?: components["schemas"]["ModelRule"][] | null;
         } & {
             [key: string]: unknown;
         };
@@ -762,6 +784,11 @@ export interface components {
             keys: components["schemas"]["Key"][];
             models: components["schemas"]["Model"][] | null;
             settings: {
+                common_prompt?: components["schemas"]["PromptSettings"];
+                codearts?: components["schemas"]["ProviderSettings"];
+                workbuddy?: components["schemas"]["ProviderSettings"];
+                trae?: components["schemas"]["ProviderSettings"];
+            } & {
                 [key: string]: unknown;
             };
             stats: {
@@ -781,6 +808,52 @@ export interface components {
             ok: boolean;
         } & {
             [key: string]: unknown;
+        };
+        ModelRule: {
+            id: string;
+            /** @description Absent/null inherits list default; independent of call permission. */
+            visible?: boolean | null;
+            /** @description Absent/null allows calls subject to group/source permissions. False also excludes physical sources from mappings. */
+            callable?: boolean | null;
+        };
+        PromptSettings: {
+            /** @enum {string} */
+            prompt_mode?: "custom" | "passthrough" | null;
+            prompt_text?: string;
+            prompt_fallback?: boolean;
+            sanitize?: boolean;
+        };
+        /** @description Null keeps legacy platform policy. {} inherits all common fields. Null/missing fields inherit; false and empty string explicitly override. */
+        PromptOverrides: {
+            /** @enum {string|null} */
+            prompt_mode?: "custom" | "passthrough" | null;
+            prompt_text?: string | null;
+            prompt_fallback?: boolean | null;
+            sanitize?: boolean | null;
+        } | null;
+        ProviderSettings: {
+            /** @enum {string} */
+            prompt_mode?: "custom" | "passthrough" | null;
+            prompt_text?: string;
+            prompt_fallback?: boolean;
+            sanitize?: boolean;
+            prompt_overrides?: components["schemas"]["PromptOverrides"];
+            search_enabled?: boolean;
+            search_scope?: string;
+            search_backend?: string;
+            search_url?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        MappingPresets: {
+            version: number;
+            mappings: {
+                name: string;
+                sources: {
+                    id: string;
+                    available: boolean;
+                }[];
+            }[];
         };
     };
     responses: never;
@@ -1840,6 +1913,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    common_prompt?: components["schemas"]["PromptSettings"];
+                    codearts?: components["schemas"]["ProviderSettings"];
+                    workbuddy?: components["schemas"]["ProviderSettings"];
+                    trae?: components["schemas"]["ProviderSettings"];
+                } & {
                     [key: string]: unknown;
                 };
             };
@@ -2431,6 +2509,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    get__admin_api_groups_presets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Versioned suggestions cross-checked with current directory. Never automatically saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MappingPresets"];
                 };
             };
         };
