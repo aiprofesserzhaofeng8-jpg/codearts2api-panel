@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"codearts2api/internal/ratelimit"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 const interruptionBeforeHeaders = -1
@@ -50,7 +50,7 @@ func interruptionServer(t *testing.T, upstream string, handler http.HandlerFunc)
 			return transport.RoundTrip(cloned)
 		})}
 	}
-	s.Store.UpdateSettings(func(c *store.Settings) {
+	s.Store.UpdateSettings(func(c *storage.Settings) {
 		c.MaxRetries = 3
 		c.Pool.MaxInFlight = 1
 		c.RequestTimeout = 1

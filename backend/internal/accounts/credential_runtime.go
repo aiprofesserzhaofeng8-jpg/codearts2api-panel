@@ -10,7 +10,7 @@ import (
 // not interpret credentials or replace ProviderCredentials' opaque JSON path.
 // The platform owns resolution policy, IDE I/O, refresh and generation equality.
 // Its zero value is ready to use; do not copy a runtime after first use.
-type CredentialRuntime[T CredentialSnapshot] struct {
+type CredentialRuntime[T any] struct {
 	Latest  func(string) *Account
 	Commit  func(id string, expected, updated T) error
 	Persist func(*Account) error
@@ -22,7 +22,7 @@ type CredentialRuntime[T CredentialSnapshot] struct {
 	acctMu   map[string]*sync.Mutex
 }
 
-func NewCredentialRuntime[T CredentialSnapshot]() CredentialRuntime[T] {
+func NewCredentialRuntime[T any]() CredentialRuntime[T] {
 	return CredentialRuntime[T]{liveAt: map[string]time.Time{}, liveSess: map[string]T{}, acctMu: map[string]*sync.Mutex{}}
 }
 
@@ -96,7 +96,7 @@ func (m *CredentialRuntime[T]) Adopt(acct *Account, expected, updated T, changed
 			return err
 		}
 	}
-	acct.Session = updated
+	acct.NativeCredential = updated
 	if changed && m.Persist != nil {
 		if err := m.Persist(acct); err != nil && m.Logf != nil {
 			m.Logf("账号 %s 状态保存失败: %v", acct.DisplayName(), err)

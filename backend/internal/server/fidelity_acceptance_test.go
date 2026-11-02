@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // Verify business data after the entire gateway/provider request path, rather
@@ -104,7 +104,7 @@ func TestFidelityBusinessDataAtEachUpstream(t *testing.T) {
 					} else {
 						s, key, model, acct = providerPolicyServer(t, name, handler)
 					}
-					s.Store.UpdateSettings(func(st *store.Settings) {
+					s.Store.UpdateSettings(func(st *storage.Settings) {
 						p := &st.CodeArts
 						if name == "workbuddy" {
 							p = &st.WorkBuddy

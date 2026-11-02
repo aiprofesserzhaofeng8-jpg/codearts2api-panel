@@ -30,16 +30,16 @@ func TestAdminAccountsManualAKSKCreatesPermanentCredential(t *testing.T) {
 		t.Fatalf("应有 1 个账号，实际 %d", len(accts))
 	}
 	a := accts[0]
-	if a.Session == nil {
+	if codearts.StoredSession(a) == nil {
 		t.Fatal("账号没有 Session")
 	}
-	if !a.Session.IsPermanent() {
+	if !codearts.StoredSession(a).IsPermanent() {
 		t.Error("credential_kind=aksk 的账号应标记为永久凭据")
 	}
-	if a.Session.HasRefresh() {
+	if codearts.StoredSession(a).HasRefresh() {
 		t.Error("永久 AK/SK 不应声称可续期")
 	}
-	if !a.Session.Valid(5 * time.Minute) {
+	if !codearts.StoredSession(a).Valid(5 * time.Minute) {
 		t.Error("永久 AK/SK 必须始终有效")
 	}
 	if codearts.StoredSession(a).SecurityToken != "" {
@@ -62,7 +62,7 @@ func TestAdminAccountsManualSTSStaysTemporary(t *testing.T) {
 	}
 
 	a := s.Store.Accounts()[0]
-	if a.Session.IsPermanent() {
+	if codearts.StoredSession(a).IsPermanent() {
 		t.Error("未声明 credential_kind 的账号不应被当成永久凭据")
 	}
 	if codearts.StoredSession(a).ExpiresAt.IsZero() {

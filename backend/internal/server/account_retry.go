@@ -35,25 +35,22 @@ type accountRetryDriver struct {
 }
 
 func (d *accountRetryDriver) Acquire(ctx context.Context, tried map[string]bool) (gateway.RetryAttempt, error) {
-	if d.plan == nil {
-		if err := d.s.checkRequestBudget(ctx, d.model); err != nil {
-			return gateway.RetryAttempt{}, err
-		}
+	request := gateway.AdmissionRequest{Session: d.session, Model: d.model, Key: groupKey(ctx), Exclude: tried}
+	if d.plan != nil {
+		request.Mapped = true
+		request.Public = d.plan.Public
+		request.Sources = d.plan.IDs
 	}
-	if err := ctx.Err(); err != nil {
+	selected, err := d.s.Admission.Acquire(ctx, request, d.s.checkRequestBudget)
+	if err != nil {
+		var denied *gateway.AdmissionDenied
+		if errors.As(err, &denied) {
+			return gateway.RetryAttempt{}, groupDenied()
+		}
 		return gateway.RetryAttempt{}, err
 	}
-	var acct *accounts.Account
-	var release func()
-	var accessErr error
-	if d.plan == nil {
-		acct, release, accessErr = d.s.Store.AcquireAccountForKey(d.session, d.model, tried, groupKey(ctx))
-	} else {
-		acct, d.model, release, accessErr = d.s.Store.AcquireMappedAccount(d.session, d.plan.Public, d.plan.IDs, tried, groupKey(ctx))
-	}
-	if accessErr != nil {
-		return gateway.RetryAttempt{}, groupDenied()
-	}
+	acct, release := selected.Account, selected.Release
+	d.model = selected.Model
 	if acct != nil && d.plan != nil {
 		ctx = withRoutingModel(ctx, d.model)
 		if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {

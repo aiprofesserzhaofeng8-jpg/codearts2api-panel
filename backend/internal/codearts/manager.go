@@ -193,13 +193,13 @@ func ImportFromDesktop(explicit string) ([]*ImportResult, error) {
 		out = append(out, &ImportResult{
 			Dir: dir,
 			Account: &Account{
-				ID:       RandomHex(8),
-				Name:     name,
-				Source:   "desktop",
-				UserData: dir,
-				Enabled:  true,
-				Status:   "ok",
-				Session:  sess,
+				ID:               RandomHex(8),
+				Name:             name,
+				Source:           "desktop",
+				UserData:         dir,
+				Enabled:          true,
+				Status:           "ok",
+				NativeCredential: sess,
 			},
 			AK:      sess.AccessKey,
 			Expires: sess.ExpiresAt,
@@ -235,7 +235,7 @@ func ManualAccount(name, ak, sk, sts string, expires time.Time) (*Account, error
 		Source:  "manual",
 		Enabled: true,
 		Status:  "ok",
-		Session: &Session{
+		NativeCredential: &Session{
 			AccountLabel:  name,
 			AccessKey:     ak,
 			SecretKey:     sk,
@@ -264,7 +264,7 @@ func ManualAKSKAccount(name, ak, sk string) (*Account, error) {
 		Source:  "manual-aksk",
 		Enabled: true,
 		Status:  "ok",
-		Session: &Session{
+		NativeCredential: &Session{
 			AccountLabel:   name,
 			AccessKey:      ak,
 			SecretKey:      sk,

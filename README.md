@@ -25,6 +25,8 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 
 前端工程化 M4 已完成：独立 Vue/Vite 构建、页面组件、统一 API 客户端和契约类型；生产仍为单 Go 二进制。开发命令及所有权规则见 [前端说明](frontend/README.md)，验收见 [M4 报告](docs/acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。
 
+运行与存储 M5 已完成：准入协调、纯调度和用量计算已分离，storage 保留唯一事务与账本，schema 6 不变。验证和限制见 [M5 报告](docs/acceptance/STRUCTURE-M5-COMPLETE-2026-11-02.md)。
+
 ## 功能特性
 
 | 功能 | 说明 |

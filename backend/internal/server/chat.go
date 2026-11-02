@@ -16,7 +16,7 @@ import (
 	"codearts2api/internal/protocol"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // chatRequest 是 OpenAI Chat Completions 的请求体（仅取网关需要处理的字段）。
@@ -315,7 +315,7 @@ func rewriteModel(body []byte, model string, stream bool) ([]byte, error) {
 
 // record 记录一次请求结果。
 func (s *Server) record(ctx context.Context, key string, acct *accounts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) error {
-	e := store.LogEntry{
+	e := storage.LogEntry{
 		AttemptDetails:  requestAttemptDetails(ctx),
 		UsageIncomplete: requestUsageIncomplete(ctx),
 		RequestID:       requestID(ctx),

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 )
 
@@ -149,7 +150,7 @@ func (s *Server) runGrowthChat(ctx context.Context, a *accounts.Account, actions
 			return false, err
 		}
 	}
-	budget, err := s.Store.BeginKeyBudget("")
+	budget, err := s.Admission.Reserve("")
 	if err != nil {
 		return false, fmt.Errorf("用量账本不可用，未开始付费对话")
 	}
@@ -160,7 +161,11 @@ func (s *Server) runGrowthChat(ctx context.Context, a *accounts.Account, actions
 			exclude[other.ID] = true
 		}
 	}
-	leased, release := s.Store.AcquireAccountForModel("", model, exclude)
+	selected, _ := s.Admission.Lease(gateway.AdmissionRequest{Model: model, Exclude: exclude})
+	leased, release := selected.Account, selected.Release
+	if release == nil {
+		release = func() {}
+	}
 	defer release()
 	if leased == nil || leased.ID != a.ID {
 		return false, fmt.Errorf("该账号繁忙、暂停或冷却中，未开始付费对话")

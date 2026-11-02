@@ -18,7 +18,7 @@ import (
 	"codearts2api/internal/protocol"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 const searchQueryPrefix = protocol.SearchQueryPrefix
@@ -35,7 +35,7 @@ type searchMessagesRequest = protocol.SearchMessagesRequest
 
 func searchQuery(req searchMessagesRequest) string          { return protocol.SearchQuery(req) }
 func providerSearchModel(name, scope string) registry.Model { return catalog.SearchModel(name, scope) }
-func resolveSearchTarget(settings store.Settings, requested string) (registry.Model, store.ProviderSettings, error) {
+func resolveSearchTarget(settings storage.Settings, requested string) (registry.Model, storage.ProviderSettings, error) {
 	return catalog.ResolveSearchTarget(settings, requested)
 }
 
@@ -44,7 +44,7 @@ func (s *Server) handleSearchMessages(w http.ResponseWriter, r *http.Request) {
 		writeAnthropicErr(w, 405, "invalid_request_error", "仅支持 POST")
 		return
 	}
-	if err := s.Store.CheckSearchBudget(extractKey(r)); err != nil {
+	if err := s.Admission.CheckSearch(extractKey(r)); err != nil {
 		writeAnthropicErr(w, 402, "permission_error", err.Error())
 		return
 	}
@@ -151,11 +151,11 @@ func (a externalSearchAdmission) Check(ctx context.Context) error {
 }
 func (a externalSearchAdmission) Acquire(ctx context.Context) (*accounts.Account, func(), error) {
 	session, _ := ctx.Value(routingSessionKey{}).(string)
-	acct, release, err := a.server.Store.AcquireAccountForKey(session, a.model, nil, groupKey(ctx))
+	selected, err := a.server.Admission.Lease(gateway.AdmissionRequest{Session: session, Model: a.model, Key: groupKey(ctx)})
 	if err != nil {
 		return nil, nil, groupDenied()
 	}
-	return acct, release, nil
+	return selected.Account, selected.Release, nil
 }
 func (s *Server) withExternalSearchAccount(ctx context.Context, timeout time.Duration, model string, call func(context.Context, *accounts.Account) error) (*accounts.Account, error) {
 	return gateway.RunExternalSearchAccount(ctx, timeout, externalSearchAdmission{s, model}, call)

@@ -2,7 +2,7 @@ package server
 
 import (
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -229,7 +229,7 @@ func TestSummaryFallbackModelAndPerAttemptPrices(t *testing.T) {
 	if err := s.Store.SetModelPolicyAndSave("deepseek-v4.1-flash", p); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Store.SetPriceAndSave("backup-model", store.ModelPrice{Currency: "USD", Input: 2, Output: 4, Cached: 1}); err != nil {
+	if err := s.Store.SetPriceAndSave("backup-model", storage.ModelPrice{Currency: "USD", Input: 2, Output: 4, Cached: 1}); err != nil {
 		t.Fatal(err)
 	}
 	w := responseRequest(s, key, "/v1/chat/completions", `{"model":"deepseek-v4.1-flash","messages":[{"role":"system","content":"You are a context summarization assistant."},{"role":"user","content":"history"}]}`)

@@ -16,7 +16,7 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/websearch"
 )
 
@@ -49,8 +49,8 @@ func policySuccess(w http.ResponseWriter, name string, streaming bool) {
 	w.Header().Set("Content-Type", "application/json")
 	io.WriteString(w, `{"choices":[{"message":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],"usage":{"prompt_tokens":12,"completion_tokens":4}}`)
 }
-func updateProviderPolicy(s *Server, name string, f func(*store.ProviderSettings)) {
-	s.Store.UpdateSettings(func(st *store.Settings) {
+func updateProviderPolicy(s *Server, name string, f func(*storage.ProviderSettings)) {
+	s.Store.UpdateSettings(func(st *storage.Settings) {
 		if name == provider.CodeArts {
 			f(&st.CodeArts)
 		} else {
@@ -74,8 +74,8 @@ func TestOtherProviderPoliciesAcrossProtocols(t *testing.T) {
 						json.Unmarshal(raw, &obj)
 						policySuccess(w, name, obj.Stream)
 					})
-					s.Store.UpdateSettings(func(st *store.Settings) { st.WorkBuddy.PromptText = "OTHER-PROMPT" })
-					updateProviderPolicy(s, name, func(p *store.ProviderSettings) { p.PromptMode = "custom"; p.PromptText = "OWN-PROMPT" })
+					s.Store.UpdateSettings(func(st *storage.Settings) { st.WorkBuddy.PromptText = "OTHER-PROMPT" })
+					updateProviderPolicy(s, name, func(p *storage.ProviderSettings) { p.PromptMode = "custom"; p.PromptText = "OWN-PROMPT" })
 					req := map[string]any{"model": model, "stream": stream, "max_tokens": 64, "messages": []any{map[string]string{"role": "system", "content": "CLIENT-PROMPT"}, map[string]string{"role": "user", "content": "You are Claude Code, Anthropic's official CLI for Claude. 11128"}}}
 					if path == "/v1/responses" {
 						delete(req, "messages")
@@ -146,8 +146,8 @@ func TestOtherProviderPromptRetryBoundaries(t *testing.T) {
 						}
 						policySuccess(w, name, obj.Stream)
 					})
-					s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3 })
-					updateProviderPolicy(s, name, func(p *store.ProviderSettings) {
+					s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3 })
+					updateProviderPolicy(s, name, func(p *storage.ProviderSettings) {
 						p.Sanitize = false
 						p.PromptFallback = mode != "disabled"
 						if mode == "custom" {
@@ -188,7 +188,7 @@ func TestOtherProviderPromptRetryBoundaries(t *testing.T) {
 func TestProviderSummaryAndIndependentSwitches(t *testing.T) {
 	for _, name := range []string{provider.CodeArts, provider.WorkBuddy, provider.Trae} {
 		s := newTestServer(t, 0, 1)
-		s.Store.UpdateSettings(func(st *store.Settings) { st.CodeArts.PromptMode = "custom"; st.Trae.PromptMode = "custom" })
+		s.Store.UpdateSettings(func(st *storage.Settings) { st.CodeArts.PromptMode = "custom"; st.Trae.PromptMode = "custom" })
 		body := []byte(`{"messages":[{"role":"system","content":"SUMMARY"},{"role":"user","content":"please summarize"}]}`)
 		ctx := context.WithValue(t.Context(), summaryIntentKey{}, true)
 		calls := 0
@@ -226,9 +226,9 @@ func TestExternalSearchIsolationGroupsAndHealth(t *testing.T) {
 				io.WriteString(w, `{"results":[{"title":"Example","url":"https://example.test","content":"snippet"}]}`)
 			}))
 			defer backend.Close()
-			updateProviderPolicy(s, name, func(p *store.ProviderSettings) { p.SearchEnabled = true; p.SearchURL = backend.URL })
+			updateProviderPolicy(s, name, func(p *storage.ProviderSettings) { p.SearchEnabled = true; p.SearchURL = backend.URL })
 			model := providerSearchModel(name, "cn").ID
-			g, err := s.Store.SaveGroup(store.AccountGroup{Name: "only", AccountIDs: []string{account}, AllowlistEnabled: true, ModelIDs: []string{model}})
+			g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "only", AccountIDs: []string{account}, AllowlistEnabled: true, ModelIDs: []string{model}})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -278,12 +278,12 @@ func TestExternalSearchIsolationGroupsAndHealth(t *testing.T) {
 			}
 			g.ModelIDs = []string{model}
 			s.Store.SaveGroup(g)
-			updateProviderPolicy(s, name, func(p *store.ProviderSettings) { p.SearchEnabled = false })
+			updateProviderPolicy(s, name, func(p *storage.ProviderSettings) { p.SearchEnabled = false })
 			if w = responseRequest(s, key.Key, "/v1/search/messages", body); w.Code != 403 || searchCalls != 3 {
 				t.Fatal("disabled bypass")
 			}
-			updateProviderPolicy(s, name, func(p *store.ProviderSettings) { p.SearchEnabled = true })
-			s.Store.UpdateSettings(func(st *store.Settings) { st.Pool.MaxInFlight = 1 })
+			updateProviderPolicy(s, name, func(p *storage.ProviderSettings) { p.SearchEnabled = true })
+			s.Store.UpdateSettings(func(st *storage.Settings) { st.Pool.MaxInFlight = 1 })
 			_, release, e := s.Store.AcquireAccountForKey("busy", model, nil, key.Key)
 			if e != nil {
 				t.Fatal(e)
@@ -296,7 +296,7 @@ func TestExternalSearchIsolationGroupsAndHealth(t *testing.T) {
 			if s.Store.PoolSnapshot()[account].InFlight != 0 {
 				t.Fatal("lease leak")
 			}
-			if err = s.Store.SetKeyBudgetAndSave(key.Key, store.KeyBudget{MaxTokens: 1000}, true); err != nil {
+			if err = s.Store.SetKeyBudgetAndSave(key.Key, storage.KeyBudget{MaxTokens: 1000}, true); err != nil {
 				t.Fatal(err)
 			}
 			if w = responseRequest(s, key.Key, "/v1/search/messages", body); w.Code != 402 || searchCalls != 3 {
@@ -320,7 +320,7 @@ func TestExternalSearchCancellation(t *testing.T) {
 		}
 	}))
 	t.Cleanup(backend.Close)
-	updateProviderPolicy(s, provider.Trae, func(p *store.ProviderSettings) { p.SearchEnabled = true; p.SearchURL = backend.URL })
+	updateProviderPolicy(s, provider.Trae, func(p *storage.ProviderSettings) { p.SearchEnabled = true; p.SearchURL = backend.URL })
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	req := httptest.NewRequest("POST", "/v1/search/trae/messages", strings.NewReader(strings.Replace(searchBody, "workbuddy/cn/web-search", "client-label", 1))).WithContext(ctx)

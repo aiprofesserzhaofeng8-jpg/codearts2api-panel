@@ -15,12 +15,12 @@ import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
-func runtimeFixture(t *testing.T, accts ...*accounts.Account) (*Runtime, *store.Store, *registry.Registry) {
+func runtimeFixture(t *testing.T, accts ...*accounts.Account) (*Runtime, *storage.Store, *registry.Registry) {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +198,7 @@ func TestProbeCancellationAndPlatformScope(t *testing.T) {
 	directory.Replace([]provider.Model{{ID: "native"}})
 	directory.ReplaceProvider("workbuddy", "cn", []provider.Model{{ID: "first"}})
 	directory.ReplaceProvider("workbuddy", "global", []provider.Model{{ID: "first"}})
-	st.UpdateSettings(func(s *store.Settings) { s.ModelAliases["duplicate"] = "native" })
+	st.UpdateSettings(func(s *storage.Settings) { s.ModelAliases["duplicate"] = "native" })
 	run, err := r.BeginProbe()
 	if err != nil {
 		t.Fatal(err)

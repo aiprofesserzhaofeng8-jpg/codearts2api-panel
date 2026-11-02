@@ -14,7 +14,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func scopedModelRequest(s *Server, key string) *httptest.ResponseRecorder {
@@ -55,7 +55,7 @@ func TestGroupModelsAndThreeProtocolsShareScope(t *testing.T) {
 	s.Reg.ReplaceProvider("workbuddy", "cn", []provider.Model{{ID: "shared", StreamOnly: true}, {ID: "blocked", StreamOnly: true}, {ID: "shared", StreamOnly: true}})
 	s.Reg.ReplaceProvider("trae", "cn", []provider.Model{{ID: "shared", StreamOnly: true}})
 	markModelsFresh(s)
-	g, err := s.Store.SaveGroup(store.AccountGroup{Name: "wb", AccountIDs: []string{"wb-cn"}, AllowlistEnabled: true, ModelIDs: []string{"workbuddy/cn/shared"}})
+	g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "wb", AccountIDs: []string{"wb-cn"}, AllowlistEnabled: true, ModelIDs: []string{"workbuddy/cn/shared"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestGroupModelsAndThreeProtocolsShareScope(t *testing.T) {
 	if len(ids) != 1 || ids[0] != "workbuddy/cn/shared" {
 		t.Fatal("catalog not scoped/deduplicated", ids)
 	}
-	s.Store.UpdateSettings(func(st *store.Settings) { st.ModelAliases["bypass"] = "workbuddy/cn/blocked" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.ModelAliases["bypass"] = "workbuddy/cn/blocked" })
 	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/responses", "/v1/messages"} {
 		for _, model := range []string{"workbuddy/cn/blocked", "trae/cn/shared", "bypass"} {
 			body := map[string]any{"model": model, "max_tokens": 32, "messages": []map[string]string{{"role": "user", "content": "hi"}}}
@@ -120,7 +120,7 @@ func TestGroupAdminBindingAndBoundDeletion(t *testing.T) {
 		t.Fatal(w.Body.String())
 	}
 	var result struct {
-		Group store.AccountGroup `json:"group"`
+		Group storage.AccountGroup `json:"group"`
 	}
 	json.Unmarshal(w.Body.Bytes(), &result)
 	w = adminProbeRequest(t, s, "POST", "/admin/api/keys/group", string(mustJSON(map[string]any{"ref": keyReference(k.Key), "group_id": result.Group.ID})))
@@ -141,11 +141,11 @@ func TestGroupResolvedTargetsAndRevalidation(t *testing.T) {
 	s := poolServer(t, 2)
 	s.Reg.Replace([]registry.Model{{ID: "test-model"}, {ID: "blocked"}})
 	markModelsFresh(s)
-	s.Store.UpdateSettings(func(st *store.Settings) {
+	s.Store.UpdateSettings(func(st *storage.Settings) {
 		st.ModelAliases["allowed-alias"] = "test-model"
 		st.ModelAliases["blocked-alias"] = "blocked"
 	})
-	g, err := s.Store.SaveGroup(store.AccountGroup{Name: "restricted", AccountIDs: []string{"a"}, AllowlistEnabled: true, ModelIDs: []string{"test-model"}})
+	g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "restricted", AccountIDs: []string{"a"}, AllowlistEnabled: true, ModelIDs: []string{"test-model"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,12 +173,12 @@ func TestGroupResolvedTargetsAndRevalidation(t *testing.T) {
 	if w.Code != 404 || strings.Contains(w.Body.String(), "blocked") {
 		t.Fatal("unknown model exposed other group catalog", w.Body.String())
 	}
-	s.Store.UpdateSettings(func(st *store.Settings) { st.ForceModel = "blocked" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.ForceModel = "blocked" })
 	w = responseRequest(s, k.Key, "/v1/chat/completions", `{"model":"test-model","messages":[{"role":"user","content":"hi"}]}`)
 	if w.Code != 403 {
 		t.Fatal("forced model bypass", w.Code)
 	}
-	s.Store.UpdateSettings(func(st *store.Settings) { st.ForceModel = "" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.ForceModel = "" })
 	ctx := context.WithValue(context.Background(), groupKeyContext{}, k.Key)
 	ctx = context.WithValue(ctx, routingModelKey{}, "test-model")
 	calls := 0
@@ -214,7 +214,7 @@ func TestGroupDeniesForbiddenSummaryFallback(t *testing.T) {
 	for _, a := range s.Store.Accounts() {
 		accountIDs = append(accountIDs, a.ID)
 	}
-	g, err := s.Store.SaveGroup(store.AccountGroup{Name: "primary only", AccountIDs: accountIDs, AllowlistEnabled: true, ModelIDs: []string{"deepseek-v4.1-flash"}})
+	g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "primary only", AccountIDs: accountIDs, AllowlistEnabled: true, ModelIDs: []string{"deepseek-v4.1-flash"}})
 	if err != nil {
 		t.Fatal(err)
 	}

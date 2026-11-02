@@ -24,7 +24,7 @@ import (
 	"codearts2api/internal/app"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/server"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type credentialTransport func(*http.Request) (*http.Response, error)
@@ -33,7 +33,7 @@ func (f credentialTransport) RoundTrip(r *http.Request) (*http.Response, error) 
 
 // Exercise the assembled native refresh, runtime and real conditional store
 // transaction together, without contacting an external token endpoint.
-func credentialFixture(t *testing.T, beforeReply func()) (*server.Server, *store.Store, *codearts.Session, *atomic.Int32) {
+func credentialFixture(t *testing.T, beforeReply func()) (*server.Server, *storage.Store, *codearts.Session, *atomic.Int32) {
 	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -42,11 +42,11 @@ func credentialFixture(t *testing.T, beforeReply func()) (*server.Server, *store
 	encode := func(v *big.Int) string { return base64.RawURLEncoding.EncodeToString(v.FillBytes(make([]byte, 32))) }
 	jwk, _ := json.Marshal(map[string]string{"kty": "EC", "crv": "P-256", "x": encode(key.X), "y": encode(key.Y), "d": encode(key.D)})
 	original := &codearts.Session{AccessKey: "fixture-old-ak", SecretKey: "fixture-old-sk", DomainID: "fixture-domain", RefreshToken: "fixture-original-token", CodeVerifier: "fixture-verifier", DPoPPrivateJWK: jwk, ExpiresAt: time.Now().Add(-time.Hour)}
-	st, err := store.Open(filepath.Join(t.TempDir(), "data", "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "data", "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpsertAccount(&accounts.Account{ID: "fixture", Name: "Fixture", Enabled: true, Session: original})
+	st.UpsertAccount(&accounts.Account{ID: "fixture", Name: "Fixture", Enabled: true, NativeCredential: original})
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestCredentialRuntimeAssembledConcurrentRefreshPublishesOnce(t *testing.T) 
 	if count != 16 || calls.Load() != 1 || latest.RefreshToken != "fixture-rotated-token" || latest.Source != "refresh" || string(latest.DPoPPrivateJWK) != string(original.DPoPPrivateJWK) {
 		t.Fatal("rotation or native credential continuity failed")
 	}
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || codearts.StoredSession(reopened.Account("fixture")).RefreshToken != latest.RefreshToken {
 		t.Fatal("rotation not durable", err)
 	}
@@ -147,7 +147,7 @@ func TestCredentialRuntimeAssembledSaveFailureKeepsRotatedGeneration(t *testing.
 	if latest == original || latest.RefreshToken != "fixture-rotated-token" {
 		t.Fatal("single-use token rolled back after persistence failure")
 	}
-	got, err := srv.Cred.Session(t.Context(), &accounts.Account{ID: "fixture", Session: original}, codearts.ResolveOptions{AllowRefresh: false})
+	got, err := srv.Cred.Session(t.Context(), &accounts.Account{ID: "fixture", NativeCredential: original}, codearts.ResolveOptions{AllowRefresh: false})
 	if err != nil || got != latest || calls.Load() != 1 {
 		t.Fatal("retry reused old token or lost rotated generation", err)
 	}
@@ -166,7 +166,7 @@ func TestCredentialRuntimeAssembledSaveFailureKeepsRotatedGeneration(t *testing.
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || codearts.StoredSession(reopened.Account("fixture")).RefreshToken != latest.RefreshToken {
 		t.Fatal("rotation not recoverable", err)
 	}
@@ -197,7 +197,7 @@ func TestCredentialRuntimeAssembledStaleRefreshRejected(t *testing.T) {
 					t.Fatal(err)
 				}
 			} else {
-				if _, err := st.UpsertAccountAndSave(&accounts.Account{ID: "fixture", Session: fresh}, true); err != nil {
+				if _, err := st.UpsertAccountAndSave(&accounts.Account{ID: "fixture", NativeCredential: fresh}, true); err != nil {
 					t.Fatal(err)
 				}
 			}

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // Identical HTTP fixture runs against both the frozen baseline and this tree.
@@ -21,7 +21,7 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 	s := newAdminTestServer(t)
 	s.AllowLocalAdmin = false
 	// Legacy plaintext verification is retained; later cases exercise the hash.
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "contract-secret" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "contract-secret" })
 	var cookie *http.Cookie
 	call := func(label, method, path, body, password, origin, site string, tlsOn bool) *httptest.ResponseRecorder {
 		r := httptest.NewRequest(method, "http://panel.example"+path, strings.NewReader(body))
@@ -130,7 +130,7 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 	w = call("login/hashed", "POST", "/admin/auth/login", `{"password":"contract-secret"}`, "", "", "", false)
 	cookie = w.Result().Cookies()[0]
 	call("session/hashed", "GET", "/admin/auth/session", "", "", "", "", false)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "new-secret" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "new-secret" })
 	call("session/password-changed", "GET", "/admin/auth/session", "", "", "", "", false)
 	call("pricing/password-changed", "GET", "/admin/api/pricing", "", "", "", "", false)
 	cookie = nil
@@ -166,11 +166,11 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 }
 
 func BenchmarkAdminSessionPricingHTTP(b *testing.B) {
-	st, err := store.Open(b.TempDir() + "/state.json")
+	st, err := storage.Open(b.TempDir() + "/state.json")
 	if err != nil {
 		b.Fatal(err)
 	}
-	st.UpdateSettings(func(settings *store.Settings) { settings.AdminPassword = "benchmark-fixture" })
+	st.UpdateSettings(func(settings *storage.Settings) { settings.AdminPassword = "benchmark-fixture" })
 	s := newConfiguredServer(st)
 	request := httptest.NewRequest("POST", "http://panel.example/admin/auth/login", strings.NewReader(`{"password":"benchmark-fixture"}`))
 	w := httptest.NewRecorder()

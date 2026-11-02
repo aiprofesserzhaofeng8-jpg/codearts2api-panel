@@ -13,7 +13,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	codeartsup "codearts2api/internal/upstream/codearts"
 )
 
@@ -94,7 +94,7 @@ func TestBrowserLoginSaveFailureRetryAndConcurrentReplay(t *testing.T) {
 		t.Fatal("confirmation replay saved/invalidate more than once")
 	}
 	old := s.Store.Accounts()[0]
-	reloaded, err := store.Open(s.Store.Path())
+	reloaded, err := storage.Open(s.Store.Path())
 	if err != nil || len(reloaded.Accounts()) != 1 {
 		t.Fatal("save not durable", err)
 	}
@@ -141,11 +141,11 @@ func TestBrowserLoginHTTPBoundaries(t *testing.T) {
 		if w.Code != 405 {
 			t.Fatalf("%s method=%d", route, w.Code)
 		}
-		s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "fixture-password" })
+		s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "fixture-password" })
 		if w := browserAdmin(s, route, `{}`); w.Code != 401 {
 			t.Fatalf("%s auth=%d", route, w.Code)
 		}
-		s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "" })
+		s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "" })
 	}
 	for _, tc := range []struct {
 		route, body string

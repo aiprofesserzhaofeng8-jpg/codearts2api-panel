@@ -18,7 +18,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // The identical fixture is compiled against the frozen baseline. The signed
@@ -28,15 +28,15 @@ func BenchmarkSummaryExecution(b *testing.B) {
 		for _, retry := range []bool{false, true} {
 			for _, stream := range []bool{false, true} {
 				b.Run(fmt.Sprintf("size=%d/retry=%v/stream=%v", size, retry, stream), func(b *testing.B) {
-					st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+					st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 					if err != nil {
 						b.Fatal(err)
 					}
-					st.UpdateSettings(func(settings *store.Settings) { settings.RateLimitEnabled = false })
+					st.UpdateSettings(func(settings *storage.Settings) { settings.RateLimitEnabled = false })
 					s := newConfiguredServer(st)
 					s.Reg.Replace([]registry.Model{{ID: "deepseek-v4.1-flash"}})
 					sess := &codearts.Session{AccessKey: "benchmark-ak", SecretKey: "benchmark-sk", ExpiresAt: time.Now().Add(time.Hour)}
-					st.UpsertAccount(&codearts.Account{ID: "summary-benchmark", Enabled: true, Session: sess})
+					st.UpsertAccount(&codearts.Account{ID: "summary-benchmark", Enabled: true, NativeCredential: sess})
 					s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 						raw, _ := io.ReadAll(r.Body)
 						if retry && !strings.Contains(string(raw), requestpolicy.SummaryRetryGuidance) {
@@ -92,7 +92,7 @@ func TestAcceptanceSummaryCapacity(t *testing.T) {
 					io.WriteString(w, summaryFixture("COMPLETE_SUMMARY", "stop", 4, 2))
 				})
 				s.Reg.Replace([]registry.Model{{ID: "deepseek-v4.1-flash"}})
-				s.Store.UpdateSettings(func(c *store.Settings) { c.RateLimitEnabled = false; c.Pool.MaxInFlight = 2; c.MaxRetries = 1 })
+				s.Store.UpdateSettings(func(c *storage.Settings) { c.RateLimitEnabled = false; c.Pool.MaxInFlight = 2; c.MaxRetries = 1 })
 				s.ApplyRateLimit()
 				gateway := httptest.NewServer(s.Handler())
 				defer gateway.Close()
@@ -101,6 +101,8 @@ func TestAcceptanceSummaryCapacity(t *testing.T) {
 				body := fmt.Sprintf(`{"model":"deepseek-v4.1-flash","stream":%v,"max_tokens":512,"messages":[{"role":"system","content":"You are a context summarization assistant."},{"role":"user","content":"history"}]}`, stream)
 				times := make(chan float64, 40)
 				var failures atomic.Int32
+				firstOutputs := make(chan float64, 40)
+				batchStarted := time.Now()
 				for range 20 {
 					var wg sync.WaitGroup
 					for range 2 {
@@ -113,9 +115,10 @@ func TestAcceptanceSummaryCapacity(t *testing.T) {
 								failures.Add(1)
 								return
 							}
-							raw, err := io.ReadAll(response.Body)
+							raw, first, err := acceptanceReadOutput(response.Body, started, "COMPLETE_SUMMARY")
+							firstOutputs <- first
 							response.Body.Close()
-							if err != nil || response.StatusCode != 200 || !strings.Contains(string(raw), "COMPLETE_SUMMARY") || strings.Contains(string(raw), "PRIVATE_PARTIAL") {
+							if err != nil || first <= 0 || response.StatusCode != 200 || !strings.Contains(string(raw), "COMPLETE_SUMMARY") || strings.Contains(string(raw), "PRIVATE_PARTIAL") {
 								failures.Add(1)
 							}
 							times <- float64(time.Since(started).Microseconds()) / 1000
@@ -123,6 +126,9 @@ func TestAcceptanceSummaryCapacity(t *testing.T) {
 					}
 					wg.Wait()
 				}
+				elapsed := time.Since(batchStarted)
+				close(firstOutputs)
+				firstTimes := acceptanceTimes(firstOutputs)
 				close(times)
 				var latencies []float64
 				for value := range times {
@@ -136,7 +142,7 @@ func TestAcceptanceSummaryCapacity(t *testing.T) {
 				if len(latencies) != 40 || calls.Load() != int32(expected) || peak.Load() != 2 || failures.Load() != 0 || s.Store.PoolSnapshot()[account].InFlight != 0 {
 					t.Fatalf("summary count/capacity/lease failure: samples=%d calls=%d peak=%d failures=%d", len(latencies), calls.Load(), peak.Load(), failures.Load())
 				}
-				data, _ := json.Marshal(map[string]any{"provider": "codearts_summary", "retry": retry, "stream": stream, "samples": 40, "p95_ms": latencies[37], "upstream_delay_ms": 20, "concurrency": 2, "peak": peak.Load(), "calls": calls.Load(), "expected_calls": expected, "failures": failures.Load(), "remaining_leases": 0})
+				data, _ := json.Marshal(map[string]any{"provider": "codearts_summary", "retry": retry, "stream": stream, "samples": 40, "p95_ms": latencies[37], "p50_ms": latencies[19], "requests_per_second": 40 / elapsed.Seconds(), "first_output_p95_ms": firstTimes[37], "upstream_delay_ms": 20, "concurrency": 2, "peak": peak.Load(), "calls": calls.Load(), "expected_calls": expected, "failures": failures.Load(), "remaining_leases": 0})
 				fmt.Printf("SUMMARY_PERF %s\n", data)
 			})
 		}

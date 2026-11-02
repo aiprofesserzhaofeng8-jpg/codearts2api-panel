@@ -7,11 +7,11 @@ import (
 	"runtime"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestBootstrapAccess(t *testing.T) {
-	st, err := store.Open(filepath.Join(t.TempDir(), "data", "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "data", "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,11 +42,11 @@ func TestBootstrapAccess(t *testing.T) {
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Fatal("bootstrap secrets must be private")
 	}
-	loaded, err := store.Open(st.Path())
+	loaded, err := storage.Open(st.Path())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !store.VerifyAdminPassword(loaded.Settings().AdminPassword, access["admin_password"]) || !loaded.ValidKey(access["api_key"]) {
+	if !storage.VerifyAdminPassword(loaded.Settings().AdminPassword, access["admin_password"]) || !loaded.ValidKey(access["api_key"]) {
 		t.Fatal("bootstrap not persisted")
 	}
 	if loaded.Settings().WriteBackToIDE || loaded.Settings().AutoClaim {

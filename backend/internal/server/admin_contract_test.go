@@ -1,7 +1,7 @@
 package server
 
 import (
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"math"
 	"net/http/httptest"
@@ -100,14 +100,14 @@ func TestManagementContractMatchesHandlers(t *testing.T) {
 		}
 	}
 	s := poolServer(t, 1)
-	group, err := s.Store.SaveGroup(store.AccountGroup{Name: "contract-fixture", AccountIDs: []string{s.Store.Accounts()[0].ID}})
+	group, err := s.Store.SaveGroup(storage.AccountGroup{Name: "contract-fixture", AccountIDs: []string{s.Store.Accounts()[0].ID}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.Store.AddKeyInGroupAndSave("contract-fixture", group.ID); err != nil {
 		t.Fatal(err)
 	}
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "contract-fixture" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "contract-fixture" })
 	handler := s.Handler()
 	for path, name := range map[string]string{"/health": "Health", "/admin/auth/session": "AdminSession", "/admin/api/state": "State"} {
 		w := httptest.NewRecorder()

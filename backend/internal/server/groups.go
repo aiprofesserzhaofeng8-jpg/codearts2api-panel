@@ -8,7 +8,7 @@ import (
 	"codearts2api/internal/access"
 	"codearts2api/internal/catalog"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type groupKeyContext struct{}
@@ -21,7 +21,7 @@ func groupDenied() error { return catalog.GroupDenied() }
 func (s *Server) visibleModels(ctx context.Context) ([]registry.Model, error) {
 	return s.Routing.VisibleModels(groupKey(ctx))
 }
-func (s *Server) resolveModelForRequest(r *http.Request, settings store.Settings, requested string) (registry.Model, error) {
+func (s *Server) resolveModelForRequest(r *http.Request, settings storage.Settings, requested string) (registry.Model, error) {
 	if c, ok := r.Context().Value(usageContextKey{}).(*usageCapture); ok {
 		c.requestedModel = requested
 	}

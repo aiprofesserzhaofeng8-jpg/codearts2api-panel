@@ -1,17 +1,25 @@
 # 模块、数据归属与依赖
 
-状态：M3 业务边界已完成；表中目标命名和 M4–M7 能力仍按迁移计划实施。入口见 [总览](README.md)。路径均以 `backend/internal/` 为基准。
+状态：M3/M4/M5 已完成；M6–M7 能力按迁移计划实施。入口见 [总览](README.md)。路径均以 `backend/internal/` 为基准。
 
-已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调，`catalog.Runtime` 持有目录刷新/缓存及模型测活协调，`accounts.Credits` 持有积分查询和短缓存，`jobs.Rewards` 持有每日领奖状态/锁与单轮编排；Store 仍执行原持久化及准入事务。`catalog.Routing` 负责请求解析和分组映射，`gateway.RunSearch` 负责搜索编排，`protocol` 负责纯搜索查询及映射外壳；成长、活动、价格、管理员会话和应用生命周期也已按下方逐批记录迁出。表中未来接口不能视为全部已实现，原子准入/存储职责留 M5。
+已实施部分：`accounts` 持有中立账号、账号管理协调、凭据代际错误及 WorkBuddy/Trae 凭据解析/刷新、登录/导入协调，以及 CodeArts 浏览器登录预览/确认、凭据互斥/缓存/提交协调；`app.Build` 装配平台和刷新回调；`upstream/codearts` 包装既有对话客户端及原生浏览器登录管理器，`upstream.BindStream` 绑定既有流式适配器；`gateway.Completions` 执行三平台已选中的普通单次对话，`gateway.RunPromptPolicy` 负责有限提示词恢复，`requestpolicy` 持有纯摘要识别/准备，`gateway.RunSummary` 持有完整性缓冲与有限截断重试，`PrepareSummaryAttempt` 持有备用型号准备协调，`RunAccountRetry`/`RunRecovery` 持有重试与租约生命周期；`protocol` 持有唯一的 SSE 聚合及流式选项实现。`access.Management` 持有分组与密钥管理协调，`config.Management` 持有全局设置与模型策略管理协调，`catalog.Runtime` 持有目录刷新/缓存及模型测活协调，`accounts.Credits` 持有积分查询和短缓存，`jobs.Rewards` 持有每日领奖状态/锁与单轮编排；Store 仍执行原持久化及准入事务。`catalog.Routing` 负责请求解析和分组映射，`gateway.RunSearch` 负责搜索编排，`protocol` 负责纯搜索查询及映射外壳；成长、活动、价格、管理员会话和应用生命周期也已按下方逐批记录迁出。M5 当前实现见下节；其余未来接口不能视为全部已实现。
+
+## M5 当前归属
+
+`gateway.Admission` 通过自身的 AdmissionStore 借用唯一 storage；`scheduler.Select/Legacy` 为纯算法。storage 保留权限复核/选号/占位事务、全部锁、黏性、冷却、预算预留和账本。usage 定义用量 DTO、成本及报表纯规则，access 定义预算检查与密码规则。store 只有别名/委托，架构检查禁止生产代码依赖它。没有第二份权限快照或并发计数。
+
+旧原生槽现在是无平台方法约束的 NativeCredential 值，仍由 storage 兼容编码器一次解码并保留不可变指针；WorkBuddy/Trae 字节路径独立。下方 M3 逐批说明保留当时状态，当前事务保证和限制以 [ADR 0009](../adr/0009-runtime-storage-ownership.md) 为准。
 
 ## 责任表
+
+表中入口为职责示意；HTTP 当前包仍叫 server，共享值分别归 accounts/access/config/usage，不为目标名称创建空 domain/httpapi 包。
 
 | 模块 | 数据或行为归属 | 对外入口示意 | 不应承担 |
 | --- | --- | --- | --- |
 | `app` | 进程生命周期、依赖装配、配置热生效装配 | `Build`、`Start`、`Close` | 业务判定和平台协议 |
 | `domain` | AccountID、GroupID、ModelRef、稳定错误分类等共享值 | 数据类型及无副作用校验 | 大而全的 Account 方法、数据库、平台常量 |
 | `httpapi` | HTTP 参数、身份入口、协议错误输出 | 现有 `/admin/*`、`/v1/*` 路由 | 直接修改存储数据、自己选择账号 |
-| `gateway` | Request/Attempt 生命周期、准入状态、重试预算、取消 | `Execute`、`BeginRequest`、`AcquireAttempt` | 平台登录协议、持久化文件格式 |
+| `gateway` | Request/Attempt 生命周期、准入协调、重试预算、取消 | `Admission`、`RunAccountRetry`、`RunSummary` | 平台登录协议、持久化文件格式 |
 | `accounts` | 账号元信息、凭据代际、登录会话、刷新协调、积分快照/查询短缓存 | `PreviewLogin`、`ConfirmLogin`、`CredentialsForAttempt` | 模型别名、各平台 HTTP 签名算法 |
 | `access` | 管理会话、API Key、Group、白名单和分组映射配置 | `Authenticate`、`SaveGroup`、`CompileAccess` | 选择实际账号、解释上游模型能力 |
 | `config` | 全局/平台/账号池/模型策略配置值、纯校验及管理保存协调 | `SettingsUpdate`、`UpdateSettings`、`SaveModelPolicy` | HTTP、原生凭据、准入事务、配置缓存和平台网络调用 |
@@ -92,8 +100,8 @@ WorkBuddy 成长任务事件、依赖、官方接口留在 `upstream/workbuddy`�
 | `server/chat.go` 的重试和请求生命周期 | `gateway` | 三平台普通单次执行已迁出；提示词恢复已迁；摘要执行已迁；全局重试循环已迁；平台策略和原子准入暂留，保留取消和输出边界 |
 | `server/anthropic.go`、`responses.go` | `httpapi/inference` + `protocol` | HTTP 与纯转换分开，避免复制转换器 |
 | `protocol`、`responsescompat` | `protocol` 中清楚命名的实现 | 首批可保留旧包名；来源许可和测试随迁移保留 |
-| `store/pool.go` | `gateway` 准入状态 + `scheduler` 算法 | 先保留旧 Store 原子入口，再迁移锁与状态 |
-| `store/groups.go`、密钥管理 | `access` + `storage` | 配置协调和中立模型已归 access；Store 类型别名兼容，原分组事务、权限发布和预算重置保留至 M5 |
+| `store/pool.go` | `gateway` 协调 + `scheduler` 算法 + `storage` 事务 | 已完成；状态与锁保留一个所有者 |
+| `store/groups.go`、密钥管理 | `access` + `storage` | 配置协调和中立模型已归 access；Store 类型别名兼容，原分组事务、权限发布和预算重置由 storage 唯一持有 |
 | `registry`、`server/group_model_mapping.go` | `catalog` + `gateway` | 目录、解析、尝试期型号替换分别归位 |
 | `requestpolicy`、`server/request_policy.go` | `policy` + `gateway` | 提示词恢复已归 gateway，纯提示词/摘要准备归 requestpolicy；公共继承留后续阶段 |
 | `codearts.Account`、凭据提交 | `accounts` + `storage` 兼容编码器 | 元信息及三平台凭据协调已迁出；CodeArts 原生策略、旧状态编码及 Store 条件提交保留，互斥与缓存归 accounts 运行时 |

@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/workbuddy"
 )
 
@@ -412,7 +412,7 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 func TestGrowthActionsRespectPaidModelSwitchWithoutBlockingEligibleClaims(t *testing.T) {
 	f := newGrowthActionFixture()
 	s := growthActionsServer(t, f)
-	s.Store.UpdateSettings(func(settings *store.Settings) { settings.AllowCreditModels = false })
+	s.Store.UpdateSettings(func(settings *storage.Settings) { settings.AllowCreditModels = false })
 	if w := runGrowthFixture(s, "Model_chat_GLM5.2"); w.Code != 403 || f.chats != 0 || f.accepts != 0 {
 		t.Fatal("paid model switch bypassed", w.Code, w.Body.String())
 	}

@@ -12,7 +12,7 @@ import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type usageSnapshot struct {
@@ -113,8 +113,8 @@ func finishAttempt(ctx context.Context, err error) {
 	c.attemptErrorKind = failureKind(ctx, err)
 }
 
-func (c *usageCapture) attemptDetail() store.RequestAttempt {
-	return store.RequestAttempt{Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage,
+func (c *usageCapture) attemptDetail() storage.RequestAttempt {
+	return storage.RequestAttempt{Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage,
 		DurationMS: c.attemptDurationMS, FirstTokenMS: c.attemptFirstMS, Status: c.attemptStatus, UpstreamStatus: c.upstreamStatus, ErrorKind: c.attemptErrorKind}
 }
 

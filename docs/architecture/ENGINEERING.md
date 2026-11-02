@@ -1,6 +1,6 @@
 # 前端、API、构建与部署
 
-状态：M4 前端工程已实施，见 [前端说明](../../frontend/README.md) 和 [M4 验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。下文未涉及的存储及扩展保证仍为后续目标。入口见 [总览](README.md)。
+状态：M4 前端工程已实施，见 [前端说明](../../frontend/README.md) 和 [M4 验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。M5 存储边界见 [ADR 0009](../adr/0009-runtime-storage-ownership.md)，多实例扩展仍为后续目标。入口见 [总览](README.md)。
 
 ## 前端工程
 

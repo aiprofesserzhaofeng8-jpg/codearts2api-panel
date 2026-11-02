@@ -13,15 +13,15 @@ func TestRefreshCannotOverwriteConcurrentLogin(t *testing.T) {
 	endpoint := startFakeTokenServer(t, func(string) { close(entered); <-proceed })
 	m := managerForTest(endpoint)
 	var mu sync.Mutex
-	current := &Account{ID: "a", Session: refreshableSession(t, "original")}
+	current := &Account{ID: "a", NativeCredential: refreshableSession(t, "original")}
 	m.Latest = func(id string) *Account { mu.Lock(); defer mu.Unlock(); copy := *current; return &copy }
 	m.Commit = func(id string, expected, updated *Session) error {
 		mu.Lock()
 		defer mu.Unlock()
-		if current.Session != expected {
+		if current.NativeCredential != expected {
 			return ErrSessionChanged
 		}
-		current.Session = updated
+		current.NativeCredential = updated
 		return nil
 	}
 	old := *current
@@ -33,7 +33,7 @@ func TestRefreshCannotOverwriteConcurrentLogin(t *testing.T) {
 	<-entered
 	fresh := &Session{AccessKey: "manual-new", SecretKey: "secret", ExpiresAt: time.Now().Add(time.Hour)}
 	mu.Lock()
-	current.Session = fresh
+	current.NativeCredential = fresh
 	mu.Unlock()
 	close(proceed)
 	if err := <-done; !errors.Is(err, ErrSessionChanged) {

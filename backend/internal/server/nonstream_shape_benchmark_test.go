@@ -9,7 +9,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // Includes signed Client.Chat, response-body read, envelope validation and
@@ -18,7 +18,7 @@ import (
 func BenchmarkNonStreamingCodeArtsOnce(b *testing.B) {
 	for _, size := range []int{1024, 1 << 20, 8 << 20} {
 		b.Run(fmt.Sprint(size), func(b *testing.B) {
-			st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+			st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 			if err != nil {
 				b.Fatal(err)
 			}

@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // TestV1AuthAnonymousOnlyFromLocal 回归：未签发密钥时，匿名调用只允许本机直连。
@@ -40,7 +40,7 @@ func TestV1AuthAnonymousOnlyFromLocal(t *testing.T) {
 // TestV1AuthAllowAnonymousOptIn 显式打开 allow_anonymous 后才允许非本机匿名调用。
 func TestV1AuthAllowAnonymousOptIn(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AllowAnonymous = true })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AllowAnonymous = true })
 	h := s.withAuth(okHandler())
 
 	rec := httptest.NewRecorder()

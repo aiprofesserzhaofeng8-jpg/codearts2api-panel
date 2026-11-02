@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/trae"
 )
 
@@ -116,7 +116,7 @@ func TestAcceptanceWelfareContract(t *testing.T) {
 		w.WriteHeader(500)
 	})
 	wb.AllowLocalAdmin = true
-	wb.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "" })
+	wb.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addWB(t, wb, "cn", time.Now().Add(time.Hour).Unix())
 	native(wb)
 	wb.Store.SetAccountEnabled("wb-cn", false)
@@ -151,7 +151,7 @@ func TestAcceptanceWelfareContract(t *testing.T) {
 		}
 	})
 	tr.AllowLocalAdmin = true
-	tr.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "" })
+	tr.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addTrae(t, tr)
 	request("trae/claimable", tr, "GET", "/admin/api/welfare?id=trae-acct", "")
 	credits = false

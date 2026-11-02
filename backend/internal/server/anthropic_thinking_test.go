@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // Both the client-facing request and the controlled upstream use real HTTP.
@@ -91,7 +91,7 @@ func TestMessagesThinkingAtProviderBoundary(t *testing.T) {
 						})
 						model, account = "test-model", "a"
 					}
-					s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3 })
+					s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3 })
 					before := s.Store.Account(account)
 					gateway := httptest.NewServer(s.Handler())
 					defer gateway.Close()

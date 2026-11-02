@@ -8,7 +8,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type usageContextKey struct{}
@@ -27,17 +27,17 @@ type usageCapture struct {
 	attemptErrorKind  string
 	attemptObserved   bool
 	accountID         string
-	details           []store.RequestAttempt
+	details           []storage.RequestAttempt
 	account           string
 	model             string
-	usage             store.TokenUsage
+	usage             storage.TokenUsage
 	protocol          string
 	id                string
 	finish            string
 	kind              string
 	attempts          int
 	summaryAttempts   int
-	previous          store.TokenUsage
+	previous          storage.TokenUsage
 }
 
 func withUsageCapture(ctx context.Context, protocol string) context.Context {
@@ -50,7 +50,7 @@ func resetUsage(ctx context.Context) {
 			c.details = append(c.details, c.attemptDetail())
 		}
 		addUsage(&c.previous, c.usage)
-		c.usage = store.TokenUsage{}
+		c.usage = storage.TokenUsage{}
 		c.finish = ""
 		c.attempts++
 		c.attemptStarted = time.Now()
@@ -105,15 +105,15 @@ func captureUsage(ctx context.Context, raw []byte) {
 	if cached == 0 {
 		cached = u.CacheHit
 	}
-	c.usage = store.TokenUsage{Known: true, InputTokens: max(0, *u.Prompt), OutputTokens: max(0, *u.Completion), CachedTokens: min(max(0, cached), max(0, *u.Prompt)), ReasoningTokens: min(max(0, u.CompletionDetails.Reasoning), max(0, *u.Completion))}
+	c.usage = storage.TokenUsage{Known: true, InputTokens: max(0, *u.Prompt), OutputTokens: max(0, *u.Completion), CachedTokens: min(max(0, cached), max(0, *u.Prompt)), ReasoningTokens: min(max(0, u.CompletionDetails.Reasoning), max(0, *u.Completion))}
 }
-func requestUsage(ctx context.Context) store.TokenUsage {
+func requestUsage(ctx context.Context) storage.TokenUsage {
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		total := c.previous
 		addUsage(&total, c.usage)
 		return total
 	}
-	return store.TokenUsage{}
+	return storage.TokenUsage{}
 }
 
 func requestProtocol(ctx context.Context) string {
@@ -123,7 +123,7 @@ func requestProtocol(ctx context.Context) string {
 	return ""
 }
 
-func addUsage(total *store.TokenUsage, u store.TokenUsage) {
+func addUsage(total *storage.TokenUsage, u storage.TokenUsage) {
 	if !u.Known {
 		return
 	}
@@ -186,20 +186,20 @@ func startAttempt(ctx context.Context, acct *accounts.Account, model string) {
 		c.model = model
 	}
 }
-func requestAttemptDetails(ctx context.Context) []store.RequestAttempt {
+func requestAttemptDetails(ctx context.Context) []storage.RequestAttempt {
 	c, ok := ctx.Value(usageContextKey{}).(*usageCapture)
 	if !ok || c.attempts == 0 {
 		return nil
 	}
-	out := append([]store.RequestAttempt(nil), c.details...)
+	out := append([]storage.RequestAttempt(nil), c.details...)
 	return append(out, c.attemptDetail())
 }
 
-func currentAttemptUsage(ctx context.Context) store.TokenUsage {
+func currentAttemptUsage(ctx context.Context) storage.TokenUsage {
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		return c.usage
 	}
-	return store.TokenUsage{}
+	return storage.TokenUsage{}
 }
 
 func requestUsageIncomplete(ctx context.Context) bool {

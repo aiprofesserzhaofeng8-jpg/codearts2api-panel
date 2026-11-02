@@ -10,19 +10,19 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // The exact same benchmark also runs against the frozen baseline. It includes
 // authentication, retries/leases, SSE decoding, forwarding and the final log.
 // The upstream is controlled: these numbers do not measure provider latency.
 func BenchmarkGatewayStreamTiming(b *testing.B) {
-	st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 	if err != nil {
 		b.Fatal(err)
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.RateLimitEnabled = false; s.MaxRetries = 1 })
-	st.UpsertAccount(&codearts.Account{ID: "bench", Enabled: true, Status: "ok", Session: &codearts.Session{AccessKey: "ak", SecretKey: "sk", ExpiresAt: time.Now().Add(time.Hour)}})
+	st.UpdateSettings(func(s *storage.Settings) { s.RateLimitEnabled = false; s.MaxRetries = 1 })
+	st.UpsertAccount(&codearts.Account{ID: "bench", Enabled: true, Status: "ok", NativeCredential: &codearts.Session{AccessKey: "ak", SecretKey: "sk", ExpiresAt: time.Now().Add(time.Hour)}})
 	s := newConfiguredServer(st)
 	s.Reg.Replace([]registry.Model{{ID: "test-model", StreamOnly: true}})
 	key := st.AddKey("benchmark").Key

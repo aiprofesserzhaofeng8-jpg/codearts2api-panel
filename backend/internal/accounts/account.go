@@ -4,19 +4,7 @@ package accounts
 import (
 	"encoding/json"
 	"errors"
-	"time"
 )
-
-// CredentialSnapshot is the immutable view used by the legacy Session slot.
-// Only the storage codec and owning platform interpret its concrete value.
-// New platforms use Credentials; this interface is not their credential contract.
-// It never causes parsing or serialization on request admission.
-type CredentialSnapshot interface {
-	Valid(time.Duration) bool
-	ExpiresIn() time.Duration
-	HasRefresh() bool
-	IsPermanent() bool
-}
 
 // ErrAccountExists requires explicit confirmation before replacing an account.
 var ErrAccountExists = errors.New("该账号已存在，请确认更新已有账号")
@@ -52,9 +40,10 @@ type Account struct {
 	LastClaimAt    int64  `json:"last_claim_at,omitempty"`
 	LastClaimErr   string `json:"last_claim_err,omitempty"`
 	LastClaimMsg   string `json:"last_claim_msg,omitempty"`
-	// Session preserves the legacy on-disk session field during M3 migration.
-	// Keep the immutable platform value; never copy platform fields into this type.
-	Session CredentialSnapshot `json:"session,omitempty"`
+	// NativeCredential is an opaque immutable platform generation. The storage
+	// codec retains schema 6's session key; new platforms use Credentials.
+	// Only its owning adapter and codec interpret this value, never admission.
+	NativeCredential any `json:"session,omitempty"`
 }
 
 // DisplayName 返回账号展示名。

@@ -3,7 +3,7 @@ package server
 import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/config"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,7 +11,7 @@ import (
 
 type summaryIntentKey struct{}
 
-func profileFromPolicy(model string, p store.ModelPolicy) map[string]any {
+func profileFromPolicy(model string, p storage.ModelPolicy) map[string]any {
 	return map[string]any{"version": 1, "model": model, "context_window": p.ContextWindow, "max_output_tokens": p.MaxOutputTokens,
 		"context_basis": p.Source, "compaction": map[string]int{"reserve_tokens": p.ReserveTokens, "keep_recent_tokens": p.KeepRecentTokens, "trigger_tokens": p.TriggerTokens},
 		"protocols": []string{"chat_completions", "responses", "anthropic_messages"}, "pi_summary_adapter": p.SummaryEnabled,
@@ -28,7 +28,7 @@ func boolInt(v bool) int {
 
 // Kept as a pure default helper for callers/tests; live clients use Store policies.
 func clientProfile(model string) map[string]any {
-	p, ok := store.DefaultModelPolicies()[model]
+	p, ok := storage.DefaultModelPolicies()[model]
 	if !ok {
 		return nil
 	}

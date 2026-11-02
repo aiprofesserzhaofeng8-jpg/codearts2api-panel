@@ -17,17 +17,17 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/workbuddy"
 )
 
 func nativeWBServer(t *testing.T, fn http.HandlerFunc) (*Server, string, *workbuddy.Client) {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(c *store.Settings) {
+	st.UpdateSettings(func(c *storage.Settings) {
 		c.AdminPassword = "admin-fixture"
 		c.RateLimitEnabled = false
 		c.MaxRetries = 1
@@ -74,7 +74,7 @@ func TestWorkBuddyThreeProtocolsAndProviderUsage(t *testing.T) {
 					io.WriteString(w, summaryFixture("WB_COMPLETE", "stop", 10, 4))
 				})
 				addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-				s.Store.UpsertAccount(&codearts.Account{ID: "ca", Enabled: true, Session: &codearts.Session{AccessKey: "must-not-leak", SecretKey: "must-not-leak"}})
+				s.Store.UpsertAccount(&codearts.Account{ID: "ca", Enabled: true, NativeCredential: &codearts.Session{AccessKey: "must-not-leak", SecretKey: "must-not-leak"}})
 				body := map[string]any{"model": "workbuddy/cn/shared", "messages": []map[string]string{{"role": "user", "content": "hi"}}, "stream": stream, "max_tokens": 64}
 				if path == "/v1/responses" {
 					delete(body, "messages")
@@ -154,7 +154,7 @@ func TestWorkBuddyStagedLoginSaveReplayAndDeletion(t *testing.T) {
 		t.Fatal("save replay not idempotent")
 	}
 	acct := s.Store.Accounts()[0]
-	if acct.ProviderID() != "workbuddy" || acct.Scope != "cn" || acct.Session != nil {
+	if acct.ProviderID() != "workbuddy" || acct.Scope != "cn" || acct.NativeCredential != nil {
 		t.Fatal("credential types mixed")
 	}
 	s.Store.RemoveAccountAndSave(acct.ID)
@@ -274,7 +274,7 @@ func TestProviderStreamFailureDoesNotReplay(t *testing.T) {
 		calls++
 		io.WriteString(w, "data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"partial\"}}]}\n\n")
 	})
-	s.Store.UpdateSettings(func(c *store.Settings) { c.MaxRetries = 3 })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.MaxRetries = 3 })
 	addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
 	a := s.Store.Account("wb-cn")
 	a.ID = "wb-other"

@@ -15,7 +15,7 @@ import (
 	"codearts2api/internal/jobs"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/trae"
 	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/usage"
@@ -25,7 +25,7 @@ import (
 
 // Tests in package server cannot import app (it consumes server). Supply
 // explicit fixture dependencies; production assembly lives only in app.Build.
-func newConfiguredServer(st *store.Store) *Server {
+func newConfiguredServer(st *storage.Store) *Server {
 	up := codearts.NewClient()
 	adapters := provider.NewRegistry()
 	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New()} {
@@ -40,7 +40,8 @@ func newConfiguredServer(st *store.Store) *Server {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	s := New(st, Dependencies{
-		CodeArts: codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
+		Admission: gateway.NewAdmission(st),
+		CodeArts:  codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: logins,
 		Providers: adapters, Reg: models, Search: websearch.New(),
 		AccountManagement: accounts.NewManagement(st, &codeartsup.AccountManagement{Manager: credentials, Options: func() codearts.ResolveOptions {
@@ -82,6 +83,7 @@ func attachAccessManagement(s *Server) {
 
 // Narrow fixture constructors intentionally omit unrelated app services.
 func attachChatExecution(s *Server) *Server {
+	s.Admission = gateway.NewAdmission(s.Store)
 	attachModelPolicies(s)
 	attachRewards(s)
 	if s.Catalog == nil && s.Reg != nil {

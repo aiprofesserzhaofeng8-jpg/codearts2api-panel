@@ -9,7 +9,7 @@ import (
 
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestConfigurationValidationAndIndependentPartialUpdates(t *testing.T) {
@@ -43,20 +43,20 @@ func TestConfigurationRetainsLegacySettingsAndStrictPolicySaveFailures(t *testin
 	if err := manager.UpdateSettings(config.SettingsUpdate{MaxRetries: &retries}, false); err != nil || logged != 1 || st.Settings().MaxRetries != retries {
 		t.Fatal("legacy configuration Save failure no longer retains memory changes", err)
 	}
-	policy := store.DefaultModelPolicies()["deepseek-v4.1-flash"]
+	policy := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 	policy.SummaryRetry = false
 	if err := srv.Configuration.SaveModelPolicy("deepseek-v4.1-flash", policy); !errors.Is(err, config.ErrModelPolicySave) || !reflect.DeepEqual(policies, st.ModelPolicies()) {
 		t.Fatal("model policy Save failure changed the published snapshot", err)
 	}
 	restore()
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || reopened.Settings().MaxRetries != before.MaxRetries || !reflect.DeepEqual(policies, reopened.ModelPolicies()) {
 		t.Fatal("failed configuration writes changed durable state", err)
 	}
 	if err = st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err = store.Open(st.Path())
+	reopened, err = storage.Open(st.Path())
 	if err != nil || reopened.Settings().MaxRetries != retries {
 		t.Fatal("legacy settings could not be persisted after recovery", err)
 	}
@@ -67,8 +67,8 @@ func TestConfigurationPolicyUsesCurrentAliasesAndEnforcesProviderScope(t *testin
 	srv.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "first"}, {ID: "second"}})
 	srv.Reg.ReplaceProvider(provider.WorkBuddy, "global", []provider.Model{{ID: "second"}})
 	srv.Reg.ReplaceProvider(provider.Trae, "cn", []provider.Model{{ID: "second"}})
-	st.UpdateSettings(func(s *store.Settings) { s.ModelAliases["current-target"] = "workbuddy/cn/first" })
-	policy := store.DefaultModelPolicies()["deepseek-v4.1-flash"]
+	st.UpdateSettings(func(s *storage.Settings) { s.ModelAliases["current-target"] = "workbuddy/cn/first" })
+	policy := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 	policy.SummaryEnabled, policy.SummaryFallbackModel = false, " current-target "
 	if err := srv.Configuration.SaveModelPolicy("workbuddy/cn/second", policy); err != nil {
 		t.Fatal(err)
@@ -84,7 +84,7 @@ func TestConfigurationPolicyUsesCurrentAliasesAndEnforcesProviderScope(t *testin
 			t.Fatal("invalid fallback crossed model/provider/scope boundary", fallback, err)
 		}
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.ModelAliases["current-target"] = "workbuddy/cn/second" })
+	st.UpdateSettings(func(s *storage.Settings) { s.ModelAliases["current-target"] = "workbuddy/cn/second" })
 	policy.SummaryFallbackModel = "current-target"
 	if err := srv.Configuration.SaveModelPolicy("workbuddy/cn/second", policy); err == nil {
 		t.Fatal("model policy manager cached an old alias")

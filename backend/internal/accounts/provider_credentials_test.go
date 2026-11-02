@@ -14,7 +14,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type credentialFixture struct {
@@ -56,13 +56,13 @@ func (a *credentialAdapter) Refresh(ctx context.Context, raw json.RawMessage) (j
 	return a.refresh(ctx, raw)
 }
 
-func credentialStore(t *testing.T, valid bool) (*store.Store, *accounts.ProviderCredentials) {
+func credentialStore(t *testing.T, valid bool) (*storage.Store, *accounts.ProviderCredentials) {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state-dir", "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state-dir", "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.AutoRefresh = true })
+	st.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = true })
 	st.UpsertAccount(&accounts.Account{ID: "a", Provider: provider.WorkBuddy, Scope: "cn", ExternalID: "user", Credentials: rawCredential("original", "user", "cn", valid)})
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
@@ -87,17 +87,17 @@ func TestProviderCredentialsNormalPathAndHotRefreshSetting(t *testing.T) {
 	acct := st.Account("a")
 	acct.Credentials = rawCredential("expired", "user", "cn", false)
 	st.UpsertAccount(acct)
-	st.UpdateSettings(func(s *store.Settings) { s.AutoRefresh = false })
+	st.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = false })
 	_, err = service.Resolve(t.Context(), "a", a)
 	var fault *provider.Error
 	if !errors.As(err, &fault) || fault.Status != 401 || !fault.AccountFault || a.refreshes.Load() != 0 {
 		t.Fatal("disabled refresh changed behavior", err)
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.AutoRefresh = true })
+	st.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = true })
 	if _, err = service.Resolve(t.Context(), "a", a); err != nil || a.refreshes.Load() != 1 {
 		t.Fatal("current refresh setting was not observed", err)
 	}
-	reloaded, err := store.Open(st.Path())
+	reloaded, err := storage.Open(st.Path())
 	if err != nil || !sameCredentialJSON(reloaded.Account("a").Credentials, st.Account("a").Credentials) {
 		t.Fatal("refresh was not persisted", err)
 	}
@@ -217,7 +217,7 @@ func TestProviderCredentialsPersistenceFailureRetainsRotatedGeneration(t *testin
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	reloaded, err := store.Open(st.Path())
+	reloaded, err := storage.Open(st.Path())
 	if err != nil || !sameCredentialJSON(reloaded.Account("a").Credentials, fresh) {
 		t.Fatal("rotated token could not be recovered", err)
 	}

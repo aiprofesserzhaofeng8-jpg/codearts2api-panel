@@ -17,7 +17,7 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/server"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/trae"
 	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/usage"
@@ -25,7 +25,7 @@ import (
 	"codearts2api/internal/workbuddy"
 )
 
-func Build(st *store.Store) (*server.Server, error) {
+func Build(st *storage.Store) (*server.Server, error) {
 	if st == nil {
 		return nil, fmt.Errorf("application store is required")
 	}
@@ -46,6 +46,7 @@ func Build(st *store.Store) (*server.Server, error) {
 	models := registry.New()
 	credits := &accounts.Credits{}
 	return server.New(st, server.Dependencies{
+		Admission:     gateway.NewAdmission(st),
 		AdminSessions: &access.AdminSessions{}, Pricing: usage.NewManagement(st),
 		Welfare: jobs.NewWelfare(st),
 		Growth:  jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),

@@ -8,7 +8,7 @@ import (
 	"codearts2api/internal/catalog"
 	"codearts2api/internal/protocol"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // Per-request projection only; catalog owns resolution, Store owns admission.
@@ -39,7 +39,7 @@ func filterMappedMessages(ctx context.Context, thinking bool) error {
 	return mappedPlan(ctx).FilterMessages(thinking)
 }
 
-func (s *Server) requestModelPolicy(r *http.Request, model registry.Model) (store.ModelPolicy, bool) {
+func (s *Server) requestModelPolicy(r *http.Request, model registry.Model) (storage.ModelPolicy, bool) {
 	return s.Routing.ModelPolicy(groupKey(r.Context()), model, s.ModelPolicies)
 }
 

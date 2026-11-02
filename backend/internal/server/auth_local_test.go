@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // okHandler 是一个永远返回 200 的处理器，用来观察鉴权是否放行。
@@ -81,7 +81,7 @@ func TestAdminAuthBlocksProxiedRequests(t *testing.T) {
 // TestAdminAuthPasswordTakesPrecedence 设了密码后，任何来源都必须带密码。
 func TestAdminAuthPasswordTakesPrecedence(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "s3cret" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "s3cret" })
 	h := s.withAdminAuth(okHandler())
 
 	cases := []struct {

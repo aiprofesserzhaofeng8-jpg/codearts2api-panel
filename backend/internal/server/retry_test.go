@@ -12,17 +12,17 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // newTestServer 构造一个只有内存状态的最小 Server（不触碰网络）。
 func newTestServer(t *testing.T, accounts int, retries int) *Server {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(s *store.Settings) {
+	st.UpdateSettings(func(s *storage.Settings) {
 		s.MaxRetries = retries
 		// 这个 helper 的用例关心的是重试序列，不是限流；默认关掉以免
 		// 「连发多个请求」的用例被 429 干扰。限流自己的测试单独建服务。
@@ -35,11 +35,11 @@ func newTestServer(t *testing.T, accounts int, retries int) *Server {
 		// AccessKey 必须唯一：UpsertAccount 按 AK 去重，全用 "ak" 会被合并成一个账号。
 		id := string(rune('a' + i))
 		st.UpsertAccount(&codearts.Account{
-			ID:      id,
-			Name:    "acct-" + id,
-			Enabled: true,
-			Status:  "ok",
-			Session: &codearts.Session{AccessKey: "ak-" + id, SecretKey: "sk-" + id},
+			ID:               id,
+			Name:             "acct-" + id,
+			Enabled:          true,
+			Status:           "ok",
+			NativeCredential: &codearts.Session{AccessKey: "ak-" + id, SecretKey: "sk-" + id},
 		})
 	}
 	srv := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: codearts.NewClient(), Reg: registry.New(),

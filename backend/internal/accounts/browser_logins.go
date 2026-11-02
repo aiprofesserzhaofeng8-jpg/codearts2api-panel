@@ -25,8 +25,9 @@ type BrowserLoginStart struct {
 // BrowserCredential borrows an immutable generation only inside the backend /
 // business boundary. Display hints are already masked by the owning platform.
 type BrowserCredential struct {
-	Value                                    CredentialSnapshot
+	Value                                    any
 	Name, Fingerprint, KeyHint, IdentityHint string
+	HasRefresh                               bool
 	ExpiresAt                                int64
 }
 type BrowserLoginSnapshot struct {
@@ -40,7 +41,7 @@ type BrowserLoginFlow interface {
 }
 type BrowserLoginStore interface {
 	Account(string) *Account
-	FindAccountSession(CredentialSnapshot) *Account
+	FindAccountSession(any) *Account
 	UpsertAccountAndSave(*Account, bool) (bool, error)
 }
 
@@ -93,7 +94,7 @@ func (s *BrowserLogins) Poll(id string) (BrowserLoginPreview, error) {
 		result.KeyHint = credential.KeyHint
 		result.IdentityHint = credential.IdentityHint
 		result.ExpiresAt = credential.ExpiresAt
-		result.HasRefresh = credential.Value.HasRefresh()
+		result.HasRefresh = credential.HasRefresh
 		result.PreviewID = credential.Fingerprint
 		result.Existing = s.store.FindAccountSession(credential.Value) != nil
 		result.Message = "授权已验证，请核对账号后点击确认完成登录"
@@ -128,7 +129,7 @@ func (s *BrowserLogins) Confirm(body BrowserLoginConfirmation) (string, error) {
 		if name == "" {
 			name = credential.Name
 		}
-		account := &Account{ID: s.randomID(8), Name: name, Source: "browser", Enabled: true, Status: "ok", Session: credential.Value}
+		account := &Account{ID: s.randomID(8), Name: name, Source: "browser", Enabled: true, Status: "ok", NativeCredential: credential.Value}
 		if _, err := s.store.UpsertAccountAndSave(account, body.Replace); err != nil {
 			if errors.Is(err, ErrAccountExists) {
 				return "", err

@@ -53,10 +53,11 @@ func (w *Welfare) AccountOptions(registry *provider.Registry) []map[string]any {
 		if !Supported(a, registry) {
 			continue
 		}
+		credential, _ := a.NativeCredential.(interface{ IsPermanent() bool })
 		out = append(out, map[string]any{
 			"id": a.ID, "name": a.DisplayName(), "provider": a.ProviderID(),
 			"enabled": a.Enabled, "status": a.Status,
-			"permanent": a.Session != nil && a.Session.IsPermanent(),
+			"permanent": credential != nil && credential.IsPermanent(),
 		})
 	}
 	return out

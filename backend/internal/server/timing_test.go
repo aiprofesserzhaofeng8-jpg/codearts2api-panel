@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestFirstUsefulDeltaAndAttemptTiming(t *testing.T) {
@@ -75,7 +75,7 @@ func TestRejectedInferenceLoggedWithoutUsageOrAccountPenalty(t *testing.T) {
 					t.Error("invalid request reached upstream")
 					return nil, errors.New("unreachable")
 				})
-				if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxRequests: 1, MaxTokens: 64}, false); err != nil {
+				if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxRequests: 1, MaxTokens: 64}, false); err != nil {
 					t.Fatal(err)
 				}
 				before := s.Store.Account("a")
@@ -111,7 +111,7 @@ func TestRejectedInferenceLoggedWithoutUsageOrAccountPenalty(t *testing.T) {
 				if l.Protocol != protocol || l.Status != want || l.ErrorKind != "invalid_request" || l.RequestID == "" || l.Attempts != 0 || len(l.AttemptDetails) != 0 || l.Usage.Known || l.UsageIncomplete || l.FirstTokenMS != nil {
 					t.Fatalf("rejected inference accounting incorrect: %+v", l)
 				}
-				if usage := s.Store.Keys()[0].BudgetUsage; usage != (store.BudgetUsage{}) {
+				if usage := s.Store.Keys()[0].BudgetUsage; usage != (storage.BudgetUsage{}) {
 					t.Fatalf("rejected request consumed/invalidated budget: %+v", usage)
 				}
 				after := s.Store.Account("a")

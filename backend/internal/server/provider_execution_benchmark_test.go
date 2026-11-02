@@ -17,7 +17,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/trae"
 )
 
@@ -27,11 +27,11 @@ import (
 func BenchmarkTraeStreamSuccess(b *testing.B) {
 	for _, stream := range []bool{false, true} {
 		b.Run(fmt.Sprintf("stream=%v", stream), func(b *testing.B) {
-			st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+			st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 			if err != nil {
 				b.Fatal(err)
 			}
-			st.UpdateSettings(func(c *store.Settings) { c.RateLimitEnabled = false; c.MaxRetries = 3 })
+			st.UpdateSettings(func(c *storage.Settings) { c.RateLimitEnabled = false; c.MaxRetries = 3 })
 			raw, _ := json.Marshal(trae.Credentials{AccessToken: "bench", UID: "bench", Scope: "cn", ClientID: trae.ClientID, MachineID: "machine", DeviceID: "device", ExpiresAt: time.Now().Add(time.Hour).Unix()})
 			st.UpsertAccount(&accounts.Account{ID: "bench", Enabled: true, Provider: provider.Trae, Scope: "cn", ExternalID: "bench", Credentials: raw})
 			s := newConfiguredServer(st)
@@ -82,7 +82,7 @@ func TestAcceptanceStreamProviderCapacity(t *testing.T) {
 					w.Header().Set("Content-Type", "text/event-stream")
 					_, _ = io.WriteString(w, interruptionPayload(platform, "fixture-complete", true))
 				})
-				s.Store.UpdateSettings(func(c *store.Settings) { c.RateLimitEnabled = false; c.Pool.MaxInFlight = 2; c.MaxRetries = 1 })
+				s.Store.UpdateSettings(func(c *storage.Settings) { c.RateLimitEnabled = false; c.Pool.MaxInFlight = 2; c.MaxRetries = 1 })
 				s.ApplyRateLimit()
 				gateway := httptest.NewServer(s.Handler())
 				defer gateway.Close()
@@ -91,6 +91,8 @@ func TestAcceptanceStreamProviderCapacity(t *testing.T) {
 				body := fmt.Sprintf(`{"model":%q,"stream":%v,"messages":[{"role":"user","content":"hi"}]}`, model, stream)
 				latencies := make(chan float64, 40)
 				var failures atomic.Int32
+				firstOutputs := make(chan float64, 40)
+				batchStarted := time.Now()
 				for range 20 {
 					var wg sync.WaitGroup
 					for range 2 {
@@ -103,9 +105,10 @@ func TestAcceptanceStreamProviderCapacity(t *testing.T) {
 								failures.Add(1)
 								return
 							}
-							raw, err := io.ReadAll(resp.Body)
+							raw, first, err := acceptanceReadOutput(resp.Body, started, "fixture-complete")
+							firstOutputs <- first
 							resp.Body.Close()
-							if err != nil || resp.StatusCode != 200 || !strings.Contains(string(raw), "fixture-complete") || !stream && !acceptanceCompletionOK(raw, "fixture-complete") {
+							if err != nil || first <= 0 || resp.StatusCode != 200 || !strings.Contains(string(raw), "fixture-complete") || !stream && !acceptanceCompletionOK(raw, "fixture-complete") {
 								failures.Add(1)
 							}
 							latencies <- float64(time.Since(started).Microseconds()) / 1000
@@ -113,6 +116,9 @@ func TestAcceptanceStreamProviderCapacity(t *testing.T) {
 					}
 					wg.Wait()
 				}
+				elapsed := time.Since(batchStarted)
+				close(firstOutputs)
+				firstTimes := acceptanceTimes(firstOutputs)
 				close(latencies)
 				var times []float64
 				for elapsed := range latencies {
@@ -122,7 +128,7 @@ func TestAcceptanceStreamProviderCapacity(t *testing.T) {
 				if len(times) != 40 || calls.Load() != 40 || peak.Load() != 2 || failures.Load() != 0 || s.Store.PoolSnapshot()[account].InFlight != 0 {
 					t.Fatalf("capacity/count/lease failure: samples=%d calls=%d peak=%d failures=%d", len(times), calls.Load(), peak.Load(), failures.Load())
 				}
-				data, _ := json.Marshal(map[string]any{"provider": platform, "stream": stream, "samples": 40, "p95_ms": times[37], "upstream_delay_ms": 20, "concurrency": 2, "peak": peak.Load(), "calls": calls.Load(), "failures": failures.Load(), "remaining_leases": 0})
+				data, _ := json.Marshal(map[string]any{"provider": platform, "stream": stream, "samples": 40, "p95_ms": times[37], "p50_ms": times[19], "requests_per_second": 40 / elapsed.Seconds(), "first_output_p95_ms": firstTimes[37], "upstream_delay_ms": 20, "concurrency": 2, "peak": peak.Load(), "calls": calls.Load(), "failures": failures.Load(), "remaining_leases": 0})
 				fmt.Printf("PROVIDER_PERF %s\n", data)
 			})
 		}

@@ -63,7 +63,7 @@ func AccountFromSessionJSON(name, input string) (*accounts.Account, error) {
 	if name == "" {
 		name = session.AccountLabel
 	}
-	return &accounts.Account{ID: native.RandomHex(8), Name: name, Source: "manual", Enabled: true, Status: "ok", Session: session}, nil
+	return &accounts.Account{ID: native.RandomHex(8), Name: name, Source: "manual", Enabled: true, Status: "ok", NativeCredential: session}, nil
 }
 
 type DesktopImport struct {

@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/workbuddy"
 )
 
@@ -44,7 +44,7 @@ func TestSearchProtocolAuthBudgetAndUsage(t *testing.T) {
 	if calls != 0 {
 		t.Fatal("unauthorized upstream call")
 	}
-	if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxRequests: 1}, false); err != nil {
+	if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxRequests: 1}, false); err != nil {
 		t.Fatal(err)
 	}
 	w := responseRequest(s, key, "/v1/search/messages", searchBody)
@@ -73,7 +73,7 @@ func TestSearchValidationAndDisabledSwitch(t *testing.T) {
 			t.Fatalf("invalid request accepted %d", w.Code)
 		}
 	}
-	s.Store.UpdateSettings(func(st *store.Settings) { st.WorkBuddy.SearchEnabled = false })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.WorkBuddy.SearchEnabled = false })
 	if w := responseRequest(s, key, "/v1/search/messages", searchBody); w.Code != 403 {
 		t.Fatal("disabled search accepted")
 	}
@@ -92,7 +92,7 @@ func TestSearchGroupScopeWhitelistAndPoolLease(t *testing.T) {
 	})
 	addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
 	addWB(t, s, "global", time.Now().Add(time.Hour).Unix())
-	g, err := s.Store.SaveGroup(store.AccountGroup{Name: "search", AccountIDs: []string{"wb-cn"}, AllowlistEnabled: true, ModelIDs: []string{"workbuddy/cn/shared"}})
+	g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "search", AccountIDs: []string{"wb-cn"}, AllowlistEnabled: true, ModelIDs: []string{"workbuddy/cn/shared"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ func TestSearchRotationCoolingAndRefresh(t *testing.T) {
 	second.ExternalID = "second"
 	second.Credentials = mustJSON(workbuddy.Credentials{AccessToken: "second", RefreshToken: "refresh", UID: "second", Realm: "cn", ExpiresAt: time.Now().Add(time.Hour).Unix()})
 	s.Store.UpsertAccount(second)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 2 })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 2 })
 	w := responseRequest(s, key, "/v1/search/messages", searchBody)
 	if w.Code != 200 || calls != 2 {
 		t.Fatalf("rotation %d %s", w.Code, w.Body.String())
@@ -211,7 +211,7 @@ func TestWorkBuddyPromptFallbackBoundaries(t *testing.T) {
 				io.WriteString(w, summaryFixture("fallback-ok", "stop", 8, 3))
 			})
 			addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-			s.Store.UpdateSettings(func(st *store.Settings) {
+			s.Store.UpdateSettings(func(st *storage.Settings) {
 				st.WorkBuddy.PromptMode = tc.mode
 				st.WorkBuddy.PromptText = "CUSTOM"
 				st.WorkBuddy.PromptFallback = tc.enabled
@@ -255,7 +255,7 @@ func TestWorkBuddyPolicyAcrossProtocols(t *testing.T) {
 				io.WriteString(w, summaryFixture("OK", "stop", 2, 1))
 			})
 			addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-			s.Store.UpdateSettings(func(st *store.Settings) { st.WorkBuddy.PromptText = "CUSTOM" })
+			s.Store.UpdateSettings(func(st *storage.Settings) { st.WorkBuddy.PromptText = "CUSTOM" })
 			input := "You are Claude Code, Anthropic's official CLI for Claude."
 			req := map[string]any{"model": "workbuddy/cn/shared", "max_tokens": 16, "messages": []any{map[string]any{"role": "system", "content": "CLIENT"}, map[string]any{"role": "user", "content": input}}}
 			if path == "/v1/messages" {
@@ -323,7 +323,7 @@ func TestSearchMeteredBudgetsFailBeforeUpstream(t *testing.T) {
 	calls := 0
 	s, key, _ := nativeWBServer(t, func(w http.ResponseWriter, r *http.Request) { calls++ })
 	addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-	for _, budget := range []store.KeyBudget{{MaxTokens: 100}, {MaxUSD: 10}} {
+	for _, budget := range []storage.KeyBudget{{MaxTokens: 100}, {MaxUSD: 10}} {
 		if err := s.Store.SetKeyBudgetAndSave(key, budget, true); err != nil {
 			t.Fatal(err)
 		}

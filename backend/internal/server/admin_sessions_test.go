@@ -1,7 +1,7 @@
 package server
 
 import (
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"crypto/tls"
 	"encoding/json"
 	"net/http"
@@ -15,7 +15,7 @@ import (
 func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 	s := poolServer(t, 0)
 	s.AllowLocalAdmin = false
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "session-test-secret" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "session-test-secret" })
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 		t.Fatal("expired session accepted")
 	}
 	cookie = login()
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "new-password" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "new-password" })
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -97,11 +97,11 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 	if len(events) < 5 {
 		t.Fatal("missing login/mutation audit")
 	}
-	loaded, err := store.Open(s.Store.Path())
+	loaded, err := storage.Open(s.Store.Path())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !store.VerifyAdminPassword(loaded.Settings().AdminPassword, "new-password") {
+	if !storage.VerifyAdminPassword(loaded.Settings().AdminPassword, "new-password") {
 		t.Fatal("password migration failed")
 	}
 }

@@ -30,9 +30,9 @@ func TestAccountProbePreservesNativePayloadAndSessionHintsOnFailure(t *testing.T
 				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(reply)), Request: r}, nil
 			})}
 			session := &legacy.Session{AccessKey: "fixture-ak", SecretKey: "fixture-sk", CredentialKind: legacy.CredentialKindAKSK}
-			account := &accounts.Account{ID: "fixture", Source: "manual", Session: session}
+			account := &accounts.Account{ID: "fixture", Source: "manual", NativeCredential: session}
 			if outcome == "no-session" {
-				account.Session = nil
+				account.NativeCredential = nil
 			}
 			manager := legacy.NewManager(client)
 			info, err := New(client).ProbeAccount(t.Context(), manager, account, legacy.ResolveOptions{}, func() (string, error) {

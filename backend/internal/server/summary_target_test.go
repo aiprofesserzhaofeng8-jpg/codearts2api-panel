@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
@@ -30,7 +30,7 @@ func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
 					})
 					onlyMappedPlatform(s, provider.CodeArts)
 					s.Reg.ReplaceProvider(provider.CodeArts, "", []provider.Model{{ID: "test-model"}, {ID: "backup-model"}})
-					policy := store.DefaultModelPolicies()["deepseek-v4.1-flash"]
+					policy := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 					policy.SummaryFallbackModel = "backup-model"
 					if err := s.Store.SetModelPolicyAndSave("test-model", policy); err != nil {
 						t.Fatal(err)
@@ -40,7 +40,7 @@ func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
 						t.Fatal(err)
 					}
 					if mutation == "budget" {
-						if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxTokens: 14}, false); err != nil {
+						if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxTokens: 14}, false); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -56,7 +56,7 @@ func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
 							group.ModelMappings[0].Sources = []string{"workbuddy/cn/shared", "trae/cn/shared"}
 						case "force":
 							status = 422
-							s.Store.UpdateSettings(func(settings *store.Settings) { settings.ForceModel = "test-model" })
+							s.Store.UpdateSettings(func(settings *storage.Settings) { settings.ForceModel = "test-model" })
 							return
 						case "cooldown":
 							status = 422

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Check direct and transitive production import boundaries with the pinned Go toolchain.
 
-Legacy registry/apierr/store/native bridges remain visible and are not certified
-as migrated. Rules apply to dependencies, never file counts or source line counts.
+Legacy registry/apierr/native bridges remain visible. The old store facade is
+one-way and forbidden to production consumers. Rules check actual dependencies.
 """
 import argparse
 from collections import deque
@@ -14,10 +14,10 @@ import sys
 PREFIX = "codearts2api/internal/"
 NEUTRAL = {
     "access", "accounts", "catalog", "config", "gateway", "jobs", "protocol",
-    "provider", "ratelimit", "requestpolicy", "responsescompat", "upstream", "usage",
+    "provider", "scheduler", "ratelimit", "requestpolicy", "responsescompat", "upstream", "usage",
 }
 PLATFORMS = {"codearts", "workbuddy", "trae"}
-PURE = {"access", "protocol", "ratelimit", "responsescompat", "usage"}
+PURE = {"access", "protocol", "ratelimit", "responsescompat", "scheduler", "usage"}
 
 
 def neutral(relative):
@@ -53,6 +53,12 @@ def violations(packages):
                     reason = "platforms must not import each other"
             if relative != "app" and top in {"app", "server", "httpapi"} and relative not in {"server", "httpapi"}:
                 reason = "lower modules must not import application or HTTP assembly"
+            if top == "store" and owner != "store":
+                reason = "production code must not depend on the deprecated Store facade"
+            if owner == "store" and local and top != "storage":
+                reason = "deprecated Store facade must delegate only to storage"
+            if owner == "storage" and (dep == "net/http" or dep.startswith("net/http/")):
+                reason = "storage must not own HTTP transport"
             if reason:
                 errors.append(f"{name} -> {dep}: {reason}")
     # A legacy helper can hide a forbidden dependency from a direct-only rule.

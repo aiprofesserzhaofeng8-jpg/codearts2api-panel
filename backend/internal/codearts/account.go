@@ -12,6 +12,6 @@ func StoredSession(a *accounts.Account) *Session {
 	if a == nil {
 		return nil
 	}
-	session, _ := a.Session.(*Session)
+	session, _ := a.NativeCredential.(*Session)
 	return session
 }

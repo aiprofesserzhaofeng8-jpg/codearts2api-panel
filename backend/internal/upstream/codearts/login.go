@@ -50,7 +50,7 @@ func loginCredential(sess *legacy.Session) accounts.BrowserCredential {
 		return accounts.BrowserCredential{}
 	}
 	sum := sha256.Sum256([]byte(sess.DomainID + "\x00" + sess.AccessKey))
-	return accounts.BrowserCredential{Value: sess, Name: sess.AccountLabel, Fingerprint: hex.EncodeToString(sum[:]), KeyHint: legacy.Mask(sess.AccessKey), IdentityHint: legacy.Mask(sess.DomainID), ExpiresAt: sess.ExpiresAt.Unix()}
+	return accounts.BrowserCredential{Value: sess, HasRefresh: sess.HasRefresh(), Name: sess.AccountLabel, Fingerprint: hex.EncodeToString(sum[:]), KeyHint: legacy.Mask(sess.AccessKey), IdentityHint: legacy.Mask(sess.DomainID), ExpiresAt: sess.ExpiresAt.Unix()}
 }
 func (f browserFlow) Snapshot() accounts.BrowserLoginSnapshot {
 	status, message, name, sess := f.flow.Snapshot()

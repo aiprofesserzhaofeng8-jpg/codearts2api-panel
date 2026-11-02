@@ -2,7 +2,7 @@ package server
 
 import (
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -18,7 +18,7 @@ func TestBudgetsAcrossProtocols(t *testing.T) {
 				return responseUpstream(r, responsesTextFixture), nil
 			})
 			s.Reg.MarkStreamOnly("test-model")
-			if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxRequests: 1}, false); err != nil {
+			if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxRequests: 1}, false); err != nil {
 				t.Fatal(err)
 			}
 			body := `{"model":"test-model","messages":[{"role":"user","content":"hi"}],"max_tokens":100}`
@@ -55,7 +55,7 @@ func TestBudgetStopsSummaryRetry(t *testing.T) {
 		return responseUpstream(r, summaryFixture("partial", "length", 10, 8)), nil
 	})
 	s.Reg.Replace([]registry.Model{{ID: "deepseek-v4.1-flash"}})
-	if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxTokens: 15}, false); err != nil {
+	if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxTokens: 15}, false); err != nil {
 		t.Fatal(err)
 	}
 	w := responseRequest(s, key, "/v1/chat/completions", `{"model":"deepseek-v4.1-flash","messages":[{"role":"system","content":"You are a context summarization assistant."},{"role":"user","content":"history"}]}`)

@@ -16,7 +16,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/trae"
 	"codearts2api/internal/workbuddy"
 )
@@ -25,7 +25,7 @@ const mappedPublic = "deepseek-4.1-flash"
 
 var mappedSources = []string{"test-model", "workbuddy/cn/shared", "trae/cn/shared"}
 
-func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http.Request)) (*Server, string, store.AccountGroup) {
+func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http.Request)) (*Server, string, storage.AccountGroup) {
 	t.Helper()
 	handler := func(platform string) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +54,7 @@ func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http
 		handler(provider.CodeArts)(w, r)
 		return w.Result(), nil
 	})
-	s.Store.UpdateSettings(func(st *store.Settings) {
+	s.Store.UpdateSettings(func(st *storage.Settings) {
 		st.MaxRetries = 2
 		st.Pool.Strategy = "sequential_exhaust"
 		st.CodeArts.PromptMode = "custom"
@@ -81,7 +81,7 @@ func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http
 	for _, p := range []string{provider.WorkBuddy, provider.Trae} {
 		s.Reg.ReplaceProvider(p, "cn", []provider.Model{{ID: "shared", StreamOnly: true, Context: 131072, MaxOutput: 8192}})
 	}
-	g, err := s.Store.SaveGroup(store.AccountGroup{Name: "mapped", AccountIDs: []string{"a", "wb-cn", "trae-acct"}, AllowlistEnabled: true, ModelIDs: slices.Clone(mappedSources), ModelMappings: []store.ModelMapping{{Name: mappedPublic, Sources: slices.Clone(mappedSources)}}})
+	g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "mapped", AccountIDs: []string{"a", "wb-cn", "trae-acct"}, AllowlistEnabled: true, ModelIDs: slices.Clone(mappedSources), ModelMappings: []storage.ModelMapping{{Name: mappedPublic, Sources: slices.Clone(mappedSources)}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestMappedModelAllProtocolsChoosePhysicalSource(t *testing.T) {
 func TestMappedModelSameNameSwitchesProviderAndSticks(t *testing.T) {
 	s, key, _ := mappedFixture(t, nil)
 	s.Store.SetAccountPaused("a", true)
-	call := func() store.LogEntry {
+	call := func() storage.LogEntry {
 		w := responseRequest(s, key, "/v1/chat/completions", mappedBody("/v1/chat/completions", false, mappedPublic))
 		if w.Code != 200 {
 			t.Fatal(w.Code, w.Body.String())
@@ -211,7 +211,7 @@ func TestMappedModelCatalogExplicitCallsAndPermissions(t *testing.T) {
 			t.Fatal("unmapped short name bypass", name, w.Code)
 		}
 	}
-	g.ModelMappings = []store.ModelMapping{{Name: mappedPublic, Sources: []string{"workbuddy/cn/shared"}}}
+	g.ModelMappings = []storage.ModelMapping{{Name: mappedPublic, Sources: []string{"workbuddy/cn/shared"}}}
 	g.AccountIDs = []string{"wb-cn"}
 	g.ModelIDs = []string{"workbuddy/cn/shared"}
 	if _, err := s.Store.SaveGroup(g); err != nil {
@@ -221,7 +221,7 @@ func TestMappedModelCatalogExplicitCallsAndPermissions(t *testing.T) {
 		t.Fatal("direct ID bypass", w.Code, w.Body.String())
 	}
 	// The same public name has an independent source set in another group.
-	other, err := s.Store.SaveGroup(store.AccountGroup{Name: "other", AccountIDs: []string{"trae-acct"}, ModelMappings: []store.ModelMapping{{Name: mappedPublic, Sources: []string{"trae/cn/shared"}}}})
+	other, err := s.Store.SaveGroup(storage.AccountGroup{Name: "other", AccountIDs: []string{"trae-acct"}, ModelMappings: []storage.ModelMapping{{Name: mappedPublic, Sources: []string{"trae/cn/shared"}}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,7 +270,7 @@ func TestMappedModelPlanRejectsDeletedMapping(t *testing.T) {
 func TestMappedModelProfileDoesNotResolveNameCollision(t *testing.T) {
 	s, key, _ := mappedFixture(t, nil)
 	s.Reg.ReplaceProvider(provider.CodeArts, "", []provider.Model{{ID: "test-model"}, {ID: mappedPublic}})
-	p := store.DefaultModelPolicies()["deepseek-v4.1-flash"]
+	p := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 	if err := s.Store.SetModelPolicyAndSave(mappedPublic, p); err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +324,7 @@ func TestMappedModelSummaryFallbackKeepsRawPermissions(t *testing.T) {
 			})
 			onlyMappedPlatform(s, provider.CodeArts)
 			s.Reg.ReplaceProvider(provider.CodeArts, "", []provider.Model{{ID: "test-model"}, {ID: "backup-model"}})
-			p := store.DefaultModelPolicies()["deepseek-v4.1-flash"]
+			p := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 			p.SummaryFallbackModel = "backup-model"
 			if err := s.Store.SetModelPolicyAndSave("test-model", p); err != nil {
 				t.Fatal(err)
@@ -375,18 +375,18 @@ func TestMappedResponsePreservesOpaqueData(t *testing.T) {
 func TestMappedModelBudgetUsesPhysicalPrice(t *testing.T) {
 	s, key, _ := mappedFixture(t, nil)
 	onlyMappedPlatform(s, provider.WorkBuddy)
-	if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxUSD: 1}, false); err != nil {
+	if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxUSD: 1}, false); err != nil {
 		t.Fatal(err)
 	}
 	// A configured price on the public spelling must not make an unpriced upstream usable.
-	if err := s.Store.SetPriceAndSave(mappedPublic, store.ModelPrice{Currency: "USD"}); err != nil {
+	if err := s.Store.SetPriceAndSave(mappedPublic, storage.ModelPrice{Currency: "USD"}); err != nil {
 		t.Fatal(err)
 	}
 	w := responseRequest(s, key, "/v1/chat/completions", mappedBody("/v1/chat/completions", false, mappedPublic))
 	if w.Code < 400 {
 		t.Fatal("budget accepted missing physical price")
 	}
-	if err := s.Store.SetPriceAndSave("workbuddy/cn/shared", store.ModelPrice{Currency: "USD", Input: 2, Output: 5, Cached: 1}); err != nil {
+	if err := s.Store.SetPriceAndSave("workbuddy/cn/shared", storage.ModelPrice{Currency: "USD", Input: 2, Output: 5, Cached: 1}); err != nil {
 		t.Fatal(err)
 	}
 	w = responseRequest(s, key, "/v1/chat/completions", mappedBody("/v1/chat/completions", false, mappedPublic))

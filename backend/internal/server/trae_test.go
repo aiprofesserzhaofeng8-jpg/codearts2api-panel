@@ -14,17 +14,17 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/trae"
 )
 
 func nativeTraeServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *trae.Client) {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(c *store.Settings) {
+	st.UpdateSettings(func(c *storage.Settings) {
 		c.AdminPassword = "admin-fixture"
 		c.RateLimitEnabled = false
 		c.MaxRetries = 1
@@ -71,7 +71,7 @@ func TestTraeThreeProtocolsAndAccounting(t *testing.T) {
 					io.WriteString(w, traeTextFixture)
 				})
 				addTrae(t, s)
-				s.Store.UpsertAccount(&codearts.Account{ID: "ca", Enabled: true, Session: &codearts.Session{AccessKey: "ca-secret", SecretKey: "ca-secret"}})
+				s.Store.UpsertAccount(&codearts.Account{ID: "ca", Enabled: true, NativeCredential: &codearts.Session{AccessKey: "ca-secret", SecretKey: "ca-secret"}})
 				body := map[string]any{"model": "trae/cn/shared", "messages": []map[string]string{{"role": "user", "content": "hi"}}, "stream": stream, "max_tokens": 64}
 				if path == "/v1/responses" {
 					delete(body, "messages")
@@ -203,7 +203,7 @@ func TestTraeStreamFailureCannotReplayAndUnknownUsageRemainsUnknown(t *testing.T
 		io.WriteString(w, "event: output\ndata: {\"response\":\"partial-once\"}\n\n")
 	})
 	addTrae(t, s)
-	s.Store.UpdateSettings(func(c *store.Settings) { c.MaxRetries = 3 })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.MaxRetries = 3 })
 	a := s.Store.Account("trae-acct")
 	a.ID = "trae-second"
 	a.ExternalID = "second"

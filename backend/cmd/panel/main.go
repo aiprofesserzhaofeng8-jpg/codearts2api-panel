@@ -21,7 +21,7 @@ import (
 
 	"codearts2api/internal/app"
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // version 由构建时注入：-ldflags "-X main.version=1.0.0"
@@ -53,7 +53,7 @@ func main() {
 		*dataPath = defaultDataPath()
 	}
 
-	st, err := store.Open(*dataPath)
+	st, err := storage.Open(*dataPath)
 	if err != nil {
 		log.Fatalf("打开状态文件失败: %v", err)
 	}
@@ -77,7 +77,7 @@ func main() {
 
 	// 命令行 / 环境变量优先级高于状态文件；设置后立即落盘。
 	if *adminPw != "" {
-		st.UpdateSettings(func(s *store.Settings) { s.AdminPassword = *adminPw })
+		st.UpdateSettings(func(s *storage.Settings) { s.AdminPassword = *adminPw })
 		if err := st.Save(); err != nil {
 			log.Printf("保存管理密码失败: %v", err)
 		} else {
@@ -85,17 +85,17 @@ func main() {
 		}
 	}
 	if *userData != "" {
-		st.UpdateSettings(func(s *store.Settings) { s.UserDataDir = *userData })
+		st.UpdateSettings(func(s *storage.Settings) { s.UserDataDir = *userData })
 	}
 	if *noRefresh {
-		st.UpdateSettings(func(s *store.Settings) {
+		st.UpdateSettings(func(s *storage.Settings) {
 			s.AutoRefresh = false
 			s.WriteBackToIDE = false
 		})
 		log.Printf("已关闭网关自行续期，仅读取 IDE 会话")
 	}
 	if *anon {
-		st.UpdateSettings(func(s *store.Settings) { s.AllowAnonymous = true })
+		st.UpdateSettings(func(s *storage.Settings) { s.AllowAnonymous = true })
 		log.Printf("⚠️  已允许匿名调用 /v1/*（未签发密钥时任何能访问本端口的人都可以消耗账号额度）")
 	}
 
@@ -105,7 +105,7 @@ func main() {
 
 	if st.Settings().AdminPassword == "" && !*localAuto {
 		password := codearts.RandomHex(24)
-		st.UpdateSettings(func(settings *store.Settings) { settings.AdminPassword = password })
+		st.UpdateSettings(func(settings *storage.Settings) { settings.AdminPassword = password })
 		if err := st.Save(); err != nil {
 			log.Fatalf("保存管理密码失败: %v", err)
 		}
@@ -136,7 +136,7 @@ func main() {
 }
 
 // autoImport 在启动时尝试导入本机桌面端登录态。
-func autoImport(st *store.Store, dir string) {
+func autoImport(st *storage.Store, dir string) {
 	results, err := codearts.ImportFromDesktop(dir)
 	if err != nil {
 		log.Printf("未自动导入桌面端登录态（可在控制台手动导入）: %v", err)
@@ -162,7 +162,7 @@ func autoImport(st *store.Store, dir string) {
 }
 
 // runImport 只做导入并打印结果。
-func runImport(st *store.Store, dir string) {
+func runImport(st *storage.Store, dir string) {
 	results, err := codearts.ImportFromDesktop(dir)
 	if err != nil {
 		log.Fatalf("导入失败: %v", err)
@@ -179,7 +179,7 @@ func runImport(st *store.Store, dir string) {
 		}
 		fmt.Printf("%s账号 %s\nUser Data: %s\nAccess Key: %s\n有效期至: %s\n可续期: %v\n\n",
 			state, res.Account.Name, res.Dir, codearts.Mask(res.AK),
-			res.Expires.Local().Format("2006-01-02 15:04:05"), res.Account.Session.HasRefresh())
+			res.Expires.Local().Format("2006-01-02 15:04:05"), codearts.StoredSession(res.Account).HasRefresh())
 	}
 	if err := st.Save(); err != nil {
 		log.Fatalf("保存失败: %v", err)
@@ -220,7 +220,7 @@ func runExportSession(userData, out string) {
 	fmt.Fprintf(os.Stderr, "   - 账号 %s，凭据有效期至 %s，可续期 %v\n",
 		res.Account.DisplayName(),
 		res.Expires.Local().Format("2006-01-02 15:04:05"),
-		res.Account.Session.HasRefresh())
+		codearts.StoredSession(res.Account).HasRefresh())
 }
 
 // defaultDataPath 返回默认状态文件路径（可执行文件同目录）。

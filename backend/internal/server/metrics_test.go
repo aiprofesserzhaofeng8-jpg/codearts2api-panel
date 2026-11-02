@@ -11,7 +11,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // TestMetricsExposesStats 校验 /metrics 的输出格式与关键指标。
@@ -30,12 +30,12 @@ func TestMetricsExposesStats(t *testing.T) {
 	} {
 		s.Store.UpsertAccount(&codearts.Account{
 			ID: spec.id, Name: spec.id, Enabled: spec.enabled, Status: spec.status,
-			Session: &codearts.Session{AccessKey: "ak" + string(rune('0'+i)), SecretKey: "sk"},
+			NativeCredential: &codearts.Session{AccessKey: "ak" + string(rune('0'+i)), SecretKey: "sk"},
 		})
 	}
 	// 制造一点统计量。
-	s.Store.Record(store.LogEntry{Model: "m", Status: 200}, 42)
-	s.Store.Record(store.LogEntry{Model: "m", Status: 500, Err: "boom"}, 0)
+	s.Store.Record(storage.LogEntry{Model: "m", Status: 200}, 42)
+	s.Store.Record(storage.LogEntry{Model: "m", Status: 500, Err: "boom"}, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	req.Host = "127.0.0.1:10087"
@@ -98,7 +98,7 @@ func TestMetricsReadyMatchesAccountAvailability(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newTestServer(t, 0, 1)
-			a := &codearts.Account{ID: "a", Name: "a", Session: &codearts.Session{AccessKey: "ak", SecretKey: "sk"}}
+			a := &codearts.Account{ID: "a", Name: "a", NativeCredential: &codearts.Session{AccessKey: "ak", SecretKey: "sk"}}
 			a.Enabled, a.Paused, a.Status, a.MaxInFlight = !tc.disabled, tc.paused, tc.status, tc.limit
 			if tc.cooldown != 0 {
 				a.CooldownUntil = time.Now().Add(time.Duration(tc.cooldown) * time.Second).Unix()
@@ -156,12 +156,12 @@ func TestMetricsReadyIsGlobalNotModelSpecific(t *testing.T) {
 func BenchmarkMetricsSnapshot(b *testing.B) {
 	for _, count := range []int{12, 1000} {
 		b.Run(fmt.Sprint(count), func(b *testing.B) {
-			st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+			st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 			if err != nil {
 				b.Fatal(err)
 			}
 			for i := 0; i < count; i++ {
-				st.UpsertAccount(&codearts.Account{ID: fmt.Sprint(i), Enabled: true, Status: "ok", Session: &codearts.Session{AccessKey: fmt.Sprint("ak-", i)}})
+				st.UpsertAccount(&codearts.Account{ID: fmt.Sprint(i), Enabled: true, Status: "ok", NativeCredential: &codearts.Session{AccessKey: fmt.Sprint("ak-", i)}})
 			}
 			s := &Server{Store: st, Reg: registry.New()}
 			req := httptest.NewRequest("GET", "/metrics", nil)
@@ -189,7 +189,7 @@ func TestMetricsRequiresAdminAuth(t *testing.T) {
 	}
 
 	// 设了管理密码后，携带正确密码即可访问（Prometheus 用 Bearer）。
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "pw" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "pw" })
 	req = httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	req.RemoteAddr = "203.0.113.9:12345"
 	req.Header.Set("Authorization", "Bearer pw")

@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // rateLimitedServer 构造一个限流参数被压到最小的服务：桶容量 1、qps 1。
@@ -14,7 +14,7 @@ import (
 func rateLimitedServer(t *testing.T, enabled bool) *Server {
 	t.Helper()
 	s := newTestServer(t, 0, 1)
-	s.Store.UpdateSettings(func(st *store.Settings) {
+	s.Store.UpdateSettings(func(st *storage.Settings) {
 		st.RateLimitEnabled = enabled
 		st.RateLimitQPS = 1
 		st.RateLimitBurst = 1

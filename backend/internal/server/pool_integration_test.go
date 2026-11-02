@@ -14,12 +14,12 @@ import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func poolServer(t *testing.T, n int) *Server {
 	s := newTestServer(t, n, 3)
-	s.Store.UpdateSettings(func(c *store.Settings) { c.Pool = store.DefaultPoolSettings() })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.Pool = storage.DefaultPoolSettings() })
 	s = newConfiguredServer(s.Store)
 	s.AllowLocalAdmin = true
 	s.Reg.Replace([]registry.Model{{ID: "test-model", StreamOnly: true}})
@@ -34,7 +34,7 @@ func poolServer(t *testing.T, n int) *Server {
 func TestHTTPPoolPreservesPromptToolsAndSignedRequest(t *testing.T) {
 	s := poolServer(t, 1)
 	key := s.Store.AddKey("test").Key
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "administrator" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "administrator" })
 	var received map[string]any
 	s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		if !strings.HasPrefix(r.Header.Get("Authorization"), "SDK-HMAC-SHA256 ") {
@@ -117,7 +117,7 @@ func TestPoolRateLimitRotatesAndPersistsCooldown(t *testing.T) {
 	if s.Store.PoolSnapshot()[seen[0]].State != "cooling" {
 		t.Fatal("rate limited account not cooling")
 	}
-	reopened, err := store.Open(s.Store.Path())
+	reopened, err := storage.Open(s.Store.Path())
 	if err != nil {
 		t.Fatal(err)
 	}

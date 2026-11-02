@@ -9,7 +9,7 @@ import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // TestResolveModelRejectsUnknown 锁定「未知模型名 → 404，不静默回落」。
@@ -23,7 +23,7 @@ func TestResolveModelRejectsUnknown(t *testing.T) {
 		{ModelID: "glm-5.3", ModelName: "GLM-5.3", Enable: true},
 		{ModelID: "GLM-5.2", ModelName: "GLM-5.2", Enable: true},
 	}))
-	settings := store.DefaultSettings()
+	settings := storage.DefaultSettings()
 
 	// 已下线的旧模型名：解析失败，且错误信息里带上可用模型。
 	_, err := s.resolveModel(settings, "glm-5.3-flash")
@@ -62,7 +62,7 @@ func TestResolveModelPriority(t *testing.T) {
 		{ModelID: "GLM-5.2", Enable: true},
 	}))
 
-	settings := store.DefaultSettings()
+	settings := storage.DefaultSettings()
 	settings.DefaultModel = "GLM-5.2"
 
 	if m, err := s.resolveModel(settings, ""); err != nil || m.ID != "GLM-5.2" {

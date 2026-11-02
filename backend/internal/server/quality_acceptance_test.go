@@ -1,9 +1,10 @@
 package server
 
 import (
+	"bufio"
 	"bytes"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,7 +24,7 @@ import (
 func TestAcceptanceGatewayLatencyAndCapacity(t *testing.T) {
 	s := poolServer(t, 1)
 	s.Reg.Replace([]registry.Model{{ID: "test-model"}})
-	s.Store.UpdateSettings(func(c *store.Settings) { c.RateLimitEnabled = false; c.MaxRetries = 1 })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.RateLimitEnabled = false; c.MaxRetries = 1 })
 	s.ApplyRateLimit()
 	key := s.Store.AddKey("acceptance fixture").Key
 	var active, peak atomic.Int32
@@ -53,6 +54,8 @@ func TestAcceptanceGatewayLatencyAndCapacity(t *testing.T) {
 	var times []float64
 	var mu sync.Mutex
 	var failures atomic.Int32
+	outputs := make(chan float64, 100)
+	batchStarted := time.Now()
 	for round := 0; round < 50; round++ {
 		var wg sync.WaitGroup
 		for n := 0; n < 2; n++ {
@@ -67,7 +70,11 @@ func TestAcceptanceGatewayLatencyAndCapacity(t *testing.T) {
 					failures.Add(1)
 					return
 				}
-				raw, _ := io.ReadAll(resp.Body)
+				raw, first, readErr := acceptanceReadOutput(resp.Body, start, "fixture-complete")
+				if readErr != nil || first <= 0 {
+					failures.Add(1)
+				}
+				outputs <- first
 				resp.Body.Close()
 				if resp.StatusCode != 200 || !acceptanceCompletionOK(raw, "fixture-complete") {
 					failures.Add(1)
@@ -79,6 +86,9 @@ func TestAcceptanceGatewayLatencyAndCapacity(t *testing.T) {
 		}
 		wg.Wait()
 	}
+	elapsed := time.Since(batchStarted)
+	close(outputs)
+	firstOutputs := acceptanceTimes(outputs)
 	runtime.GC()
 	var after runtime.MemStats
 	runtime.ReadMemStats(&after)
@@ -88,7 +98,7 @@ func TestAcceptanceGatewayLatencyAndCapacity(t *testing.T) {
 	}
 	p95 := times[94]
 	growth := int64(after.HeapAlloc) - int64(before.HeapAlloc)
-	metrics := map[string]any{"samples": len(times), "concurrency": 2, "upstream_delay_ms": 20, "p95_ms": p95, "peak_upstream_concurrency": peak.Load(), "heap_growth_bytes": growth, "failures": failures.Load(), "remaining_leases": s.Store.PoolSnapshot()["a"].InFlight}
+	metrics := map[string]any{"samples": len(times), "concurrency": 2, "upstream_delay_ms": 20, "p95_ms": p95, "p50_ms": times[49], "requests_per_second": 100 / elapsed.Seconds(), "first_output_p95_ms": firstOutputs[94], "peak_upstream_concurrency": peak.Load(), "heap_growth_bytes": growth, "failures": failures.Load(), "remaining_leases": s.Store.PoolSnapshot()["a"].InFlight}
 	raw, _ := json.Marshal(metrics)
 	fmt.Printf("QUALITY_PERF %s\n", raw)
 	if failures.Load() != 0 || p95 >= 500 || peak.Load() > 2 || growth >= 32<<20 || s.Store.PoolSnapshot()["a"].InFlight != 0 {
@@ -118,7 +128,7 @@ func TestAcceptanceConcurrencyLadder(t *testing.T) {
 			t.Run(fmt.Sprintf("stream=%t/concurrency=%d", stream, limit), func(t *testing.T) {
 				s := poolServer(t, 1)
 				s.Reg.Replace([]registry.Model{{ID: "test-model"}})
-				s.Store.UpdateSettings(func(c *store.Settings) {
+				s.Store.UpdateSettings(func(c *storage.Settings) {
 					c.RateLimitEnabled = false
 					c.MaxRetries = 1
 					c.Pool.MaxInFlight = limit
@@ -247,7 +257,7 @@ func TestAcceptanceConcurrencyLadder(t *testing.T) {
 }
 func TestAcceptanceCapacityRejectsAndRecovers(t *testing.T) {
 	s := poolServer(t, 1)
-	s.Store.UpdateSettings(func(c *store.Settings) { c.MaxRetries = 1 })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.MaxRetries = 1 })
 	a, r1 := s.Store.AcquireAccountForModel("", "test-model", nil)
 	b, r2 := s.Store.AcquireAccountForModel("", "test-model", nil)
 	if a == nil || b == nil {
@@ -264,4 +274,32 @@ func TestAcceptanceCapacityRejectsAndRecovers(t *testing.T) {
 		t.Fatal("capacity never recovered")
 	}
 	release()
+}
+
+// Observe the first complete fixture content line at the client, then drain the
+// response. Role-only frames and the summary's private partial are not output.
+func acceptanceReadOutput(body io.Reader, started time.Time, marker string) ([]byte, float64, error) {
+	reader := bufio.NewReader(body)
+	var raw []byte
+	for {
+		line, err := reader.ReadBytes('\n')
+		raw = append(raw, line...)
+		if bytes.Contains(line, []byte(marker)) {
+			first := float64(time.Since(started).Microseconds()) / 1000
+			rest, err := io.ReadAll(reader)
+			return append(raw, rest...), first, err
+		}
+		if err != nil {
+			return raw, 0, err
+		}
+	}
+}
+
+func acceptanceTimes(values <-chan float64) []float64 {
+	var result []float64
+	for value := range values {
+		result = append(result, value)
+	}
+	sort.Float64s(result)
+	return result
 }

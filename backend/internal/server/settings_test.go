@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // postSettings 直接调用设置接口（绕过 HTTP 鉴权，只测字段语义）。
@@ -34,21 +34,21 @@ func postSettings(t *testing.T, s *Server, body string) map[string]any {
 // 「本机直连」兜底 —— 配合反向代理就是一个静默提权链。
 func TestAdminPasswordEmptyDoesNotClear(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "keepme" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "keepme" })
 
 	postSettings(t, s, `{"admin_password":""}`)
-	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "keepme") {
+	if got := s.Store.Settings().AdminPassword; !storage.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("空字符串清除了管理密码: %q", got)
 	}
 
 	postSettings(t, s, `{"admin_password":"   "}`)
-	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "keepme") {
+	if got := s.Store.Settings().AdminPassword; !storage.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("空白字符串清除了管理密码: %q", got)
 	}
 
 	// 不带该字段（null）也不应改动
 	postSettings(t, s, `{"default_model":"GLM-5.2"}`)
-	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "keepme") {
+	if got := s.Store.Settings().AdminPassword; !storage.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("未携带该字段却改动了管理密码: %q", got)
 	}
 }
@@ -58,13 +58,13 @@ func TestAdminPasswordSetAndClear(t *testing.T) {
 	s := newTestServer(t, 0, 1)
 
 	postSettings(t, s, `{"admin_password":"  s3cret  "}`)
-	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "s3cret") {
+	if got := s.Store.Settings().AdminPassword; !storage.VerifyAdminPassword(got, "s3cret") {
 		t.Errorf("设置管理密码失败（应去掉两端空白）: %q", got)
 	}
 
 	// 不带 clear 标志的 false 不应清除
 	postSettings(t, s, `{"clear_admin_password":false}`)
-	if got := s.Store.Settings().AdminPassword; !store.VerifyAdminPassword(got, "s3cret") {
+	if got := s.Store.Settings().AdminPassword; !storage.VerifyAdminPassword(got, "s3cret") {
 		t.Errorf("clear_admin_password=false 却清除了密码: %q", got)
 	}
 
@@ -76,7 +76,7 @@ func TestAdminPasswordSetAndClear(t *testing.T) {
 
 // TestSanitizedSettingsHidesAdminPassword 下发给前端的设置里不能出现密码本体。
 func TestSanitizedSettingsHidesAdminPassword(t *testing.T) {
-	st := store.DefaultSettings()
+	st := storage.DefaultSettings()
 	st.AdminPassword = "topsecret"
 	out := sanitizedSettings(st)
 

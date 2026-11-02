@@ -2,9 +2,9 @@
 
 ## 当前布局与阶段
 
-Go 模块位于 `backend/`，模块名为 `codearts2api`。服务入口为 `backend/cmd/panel`，诊断入口为 `backend/cmd/probe`。当前沿用成熟平台底层实现及嵌入页面，逐批抽取业务边界；独立前端和存储拆分按 `docs/architecture/MIGRATION.md` 后续实施。
+Go 模块位于 `backend/`，模块名为 `codearts2api`。服务入口为 `backend/cmd/panel`，诊断入口为 `backend/cmd/probe`。M3/M4/M5 已完成：业务边界、独立前端及运行/存储职责已分离，平台底层协议继续沿用成熟实现；M6/M7 按 `docs/architecture/MIGRATION.md` 后续实施。
 
-M3 第一批已将中立账号迁入 `internal/accounts`，平台依赖装配迁入 `internal/app`。共享代码使用 `accounts.Account`；`codearts.Account` 仅为迁移别名。旧 `session` 槽由 store 兼容编码器读取、CodeArts 解释，不能为新平台继续往该接口堆方法或往中立账号添加平台字段。请求路径不能为了读取旧会话而反复解析 JSON。
+M3 第一批已将中立账号迁入 `internal/accounts`，平台依赖装配迁入 `internal/app`。共享代码使用 `accounts.Account`；`codearts.Account` 仅为迁移别名。旧 `session` 槽由 storage 兼容编码器读取、CodeArts 解释，不能为新平台继续扩展该槽或往中立账号添加平台字段。请求路径不能为了读取旧会话而反复解析 JSON。
 
 M3 第二批将 CodeArts 对话传输包装为 `internal/upstream/codearts`，普通单次执行归 `internal/gateway.Completions`，SSE 聚合及请求流式选项归 `internal/protocol`。适配器借用已选中的不可变凭据；不能另建 JSON 凭据解码路径。gateway 不导入 HTTP、Store 或具体平台，不增加选号、刷新或重试层。该批尚未迁移的摘要、全局重试和其他平台执行按后续批次逐项处理。
 
@@ -55,6 +55,12 @@ M3 已完成搜索执行、统一请求型号解析和整体验收，当前记�
 前端源码在 `frontend/src`，Vue 预编译页面及独立原生 DOM 控制器各自独占节点。保持 `v-once` 所有权边界，不能与响应式 DOM 更新混用。旧 server/web 已删除，`internal/webui` 仅嵌入本次生成的 dist。新基础设施为 TypeScript，遗留控制器为 JS；具体规则见 `frontend/README.md` 和 ADR 0008。
 
 先运行 `make frontend` 再执行直接 Go 命令。`make build/check/race/e2e` 自动构建必要资源；`build.sh` 包含锁定依赖安装、前端检查和构建。dist、node_modules、真实账号与浏览器测试产物不入库。API 类型从 `api/admin.openapi.yaml` 生成，`python3 tools/check_api_types.py` 检查同步。切页只取消读取，不能自动取消已提交写操作。
+
+## 当前运行与存储（M5 已完成）
+
+准入协调归 gateway.Admission，storage 实现 AdmissionStore 和各业务窄接口；scheduler 只有纯选择算法，usage 持有用量 DTO、成本和报表规则，access 持有预算/密码纯规则。storage 是锁、状态、租约、预算预留、凭据 CAS、账本和文件提交的唯一所有者；旧 store 只有类型别名/委托，生产代码禁止导入。不得把权限检查、实际型号选择和占位拆成独立快照操作，不另建锁域或权限缓存。
+
+共享账号旧槽已改为 NativeCredential 不透明值，schema 6 仍使用 session 键。只在兼容加载时解码，CodeArts 解释同一个不可变代际；WorkBuddy/Trae 保持不透明 JSON。严格保存回滚、历史设置保存失败只记日志和轮转凭据落盘失败仍保留新代际必须分别保留。日志嵌套值仍只读；未实现无锁发布或多进程共写。具体取舍与验收见 ADR 0009 和 M5 完成记录。
 
 ## 命令与验证
 

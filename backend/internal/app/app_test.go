@@ -14,21 +14,21 @@ import (
 	"codearts2api/internal/app"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestAssemblyRestoresAndGuardsCredentialGenerations(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "state.json")
-	st, err := store.Open(path)
+	st, err := storage.Open(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	original := &codearts.Session{AccessKey: "original", SecretKey: "fixture", ExpiresAt: time.Now().Add(time.Hour)}
-	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, Session: original})
+	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, NativeCredential: original})
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	st, err = store.Open(path)
+	st, err = storage.Open(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestAssemblyRestoresAndGuardsCredentialGenerations(t *testing.T) {
 	if err := srv.Cred.Commit("fixture", expected, original); !errors.Is(err, accounts.ErrCredentialChanged) || err != codearts.ErrSessionChanged {
 		t.Fatal("stale refresh overwrote newer login")
 	}
-	reloaded, err := store.Open(path)
+	reloaded, err := storage.Open(path)
 	if err != nil || codearts.StoredSession(reloaded.Account("fixture")).AccessKey != "fresh" {
 		t.Fatal("assembled commit did not persist refresh", err)
 	}
@@ -76,12 +76,12 @@ func TestAssemblyRestoresAndGuardsCredentialGenerations(t *testing.T) {
 
 func TestAssemblyRetainsRotatedCredentialOnSaveFailure(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "state-dir")
-	st, err := store.Open(filepath.Join(dir, "state.json"))
+	st, err := storage.Open(filepath.Join(dir, "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	original := &codearts.Session{AccessKey: "original", SecretKey: "fixture"}
-	st.UpsertAccount(&accounts.Account{ID: "fixture", Session: original})
+	st.UpsertAccount(&accounts.Account{ID: "fixture", NativeCredential: original})
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestAssemblyRetainsRotatedCredentialOnSaveFailure(t *testing.T) {
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	reloaded, err := store.Open(st.Path())
+	reloaded, err := storage.Open(st.Path())
 	if err != nil || codearts.StoredSession(reloaded.Account("fixture")).AccessKey != "rotated" {
 		t.Fatal("rotated credential was not recoverable", err)
 	}

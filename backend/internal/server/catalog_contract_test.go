@@ -18,7 +18,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // The identical test is compiled in a private frozen baseline checkout. It
@@ -102,7 +102,7 @@ func TestAcceptanceCatalogContract(t *testing.T) {
 	mode = "success"
 	record("refresh-recovered", adminProbeRequest(t, s, "POST", refresh, "{}"))
 	state("recovered-state", s)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.ModelAliases["fresh-alias"] = "fresh" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.ModelAliases["fresh-alias"] = "fresh" })
 	for _, fixture := range []struct{ label, method, body string }{
 		{"probe-dedupe-order", "POST", `{"models":[" good ","bad","good","fallback"," "]}`},
 		{"probe-selected-account", "POST", `{"id":"b","models":["fallback"]}`},
@@ -163,7 +163,7 @@ func TestAcceptanceCatalogContract(t *testing.T) {
 		io.WriteString(w, summaryFixture("OK", "stop", 10, 4))
 	})
 	wb.AllowLocalAdmin = true
-	wb.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "" })
+	wb.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addWB(t, wb, "cn", time.Now().Add(time.Hour).Unix())
 	addWB(t, wb, "global", time.Now().Add(time.Hour).Unix())
 	wb.Reg.ReplaceProvider(provider.Trae, "cn", []provider.Model{{ID: "retained"}})
@@ -193,12 +193,12 @@ func TestAcceptanceCatalogContract(t *testing.T) {
 }
 
 func BenchmarkCatalogWarmModels(b *testing.B) {
-	st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 	if err != nil {
 		b.Fatal(err)
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.RateLimitEnabled = false })
-	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, Session: &codearts.Session{
+	st.UpdateSettings(func(s *storage.Settings) { s.RateLimitEnabled = false })
+	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, NativeCredential: &codearts.Session{
 		AccessKey: "fixture-ak", SecretKey: "fixture-sk", CredentialKind: codearts.CredentialKindAKSK,
 	}})
 	s := newConfiguredServer(st)

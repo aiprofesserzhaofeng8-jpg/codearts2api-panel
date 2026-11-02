@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func anthropicToolChunk(index int, id, name, args string) string {
@@ -174,7 +174,7 @@ func TestAnthropicToolFailuresAndTruncation(t *testing.T) {
 				calls++
 				return responseUpstream(r, anthropicToolFixture(tc.chunks, tc.finish)), nil
 			})
-			s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3 })
+			s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3 })
 			w := responseRequest(s, key, "/v1/messages", `{"model":"test-model","stream":true,"messages":[{"role":"user","content":"fixture"}]}`)
 			_, stop, failed := readAnthropicBlocks(t, w.Body.String())
 			log := s.Store.Logs(1)[0]

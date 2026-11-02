@@ -83,8 +83,8 @@ func TestManagerRefreshesDifferentAccountsInParallel(t *testing.T) {
 	})
 
 	m := managerForTest(tokenURL)
-	slow := &Account{ID: "slow-acct", Name: "slow", Session: refreshableSession(t, "slow")}
-	other := &Account{ID: "other-acct", Name: "other", Session: refreshableSession(t, "other")}
+	slow := &Account{ID: "slow-acct", Name: "slow", NativeCredential: refreshableSession(t, "slow")}
+	other := &Account{ID: "other-acct", Name: "other", NativeCredential: refreshableSession(t, "other")}
 
 	slowDone := make(chan error, 1)
 	go func() {
@@ -140,8 +140,8 @@ func TestManagerRefreshesSameAccountOnce(t *testing.T) {
 	m := managerForTest(tokenURL)
 	// 两个独立的账号快照：模拟两个并发请求各自从 store 取到快照。
 	snapshots := []*Account{
-		{ID: "same-acct", Name: "same", Session: refreshableSession(t, "same")},
-		{ID: "same-acct", Name: "same", Session: refreshableSession(t, "same")},
+		{ID: "same-acct", Name: "same", NativeCredential: refreshableSession(t, "same")},
+		{ID: "same-acct", Name: "same", NativeCredential: refreshableSession(t, "same")},
 	}
 
 	type result struct {

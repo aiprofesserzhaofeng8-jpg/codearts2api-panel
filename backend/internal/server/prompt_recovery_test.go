@@ -10,7 +10,7 @@ import (
 
 	"codearts2api/internal/provider"
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // A prompt recovery must retain the original lease but recheck current access
@@ -21,7 +21,7 @@ func TestPromptRecoveryRetainsLeaseAndRechecksAccess(t *testing.T) {
 			for _, revoke := range []bool{false, true} {
 				t.Run(fmt.Sprintf("%s/stream=%v/revoke=%v", platform, stream, revoke), func(t *testing.T) {
 					var s *Server
-					var group store.AccountGroup
+					var group storage.AccountGroup
 					var account string
 					var calls atomic.Int32
 					var firstAuth string
@@ -57,7 +57,7 @@ func TestPromptRecoveryRetainsLeaseAndRechecksAccess(t *testing.T) {
 						w.Header().Set("Content-Type", "text/event-stream")
 						io.WriteString(w, interruptionPayload(platform, "POLICY_RECOVERED", true))
 					})
-					s.Store.UpdateSettings(func(settings *store.Settings) {
+					s.Store.UpdateSettings(func(settings *storage.Settings) {
 						p := settings.ProviderPolicy(platform)
 						p.PromptMode = "passthrough"
 						p.Sanitize = false
@@ -72,7 +72,7 @@ func TestPromptRecoveryRetainsLeaseAndRechecksAccess(t *testing.T) {
 						}
 					})
 					var err error
-					group, err = s.Store.SaveGroup(store.AccountGroup{Name: "prompt recovery", AccountIDs: []string{account}, AllowlistEnabled: true, ModelIDs: []string{model}})
+					group, err = s.Store.SaveGroup(storage.AccountGroup{Name: "prompt recovery", AccountIDs: []string{account}, AllowlistEnabled: true, ModelIDs: []string{model}})
 					if err != nil {
 						t.Fatal(err)
 					}

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestProviderLoginHTTPErrorAndRequestBoundaries(t *testing.T) {
@@ -34,11 +34,11 @@ func TestProviderLoginHTTPErrorAndRequestBoundaries(t *testing.T) {
 			t.Fatalf("error mapping: %d %s", w.Code, w.Body.String())
 		}
 	}
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "fixture-admin" })
+	st.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "fixture-admin" })
 	s := newConfiguredServer(st)
 	for _, route := range []string{"/admin/api/provider-login", "/admin/api/provider-import"} {
 		for _, test := range []struct {
@@ -123,7 +123,7 @@ func TestProviderLoginPersistenceFailureCanRetryWithoutExchange(t *testing.T) {
 	if replay := providerAdmin(s, body); replay.Code != 200 || len(s.Store.Accounts()) != 1 || calls != 1 {
 		t.Fatal("save replay mutated accounts")
 	}
-	reloaded, err := store.Open(s.Store.Path())
+	reloaded, err := storage.Open(s.Store.Path())
 	if err != nil || len(reloaded.Accounts()) != 1 {
 		t.Fatal("saved account not recoverable", err)
 	}

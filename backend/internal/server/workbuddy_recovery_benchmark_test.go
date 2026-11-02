@@ -12,7 +12,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/workbuddy"
 )
 
@@ -22,11 +22,11 @@ import (
 func BenchmarkWorkBuddyRecoverySuccess(b *testing.B) {
 	for _, stream := range []bool{false, true} {
 		b.Run(fmt.Sprintf("stream=%v", stream), func(b *testing.B) {
-			st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+			st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 			if err != nil {
 				b.Fatal(err)
 			}
-			st.UpdateSettings(func(s *store.Settings) { s.RateLimitEnabled = false; s.MaxRetries = 3 })
+			st.UpdateSettings(func(s *storage.Settings) { s.RateLimitEnabled = false; s.MaxRetries = 3 })
 			raw, _ := json.Marshal(workbuddy.Credentials{AccessToken: "bench-access", RefreshToken: "bench-refresh", UID: "bench", Realm: "cn", ExpiresAt: time.Now().Add(time.Hour).Unix()})
 			st.UpsertAccount(&codearts.Account{ID: "bench", Enabled: true, Provider: provider.WorkBuddy, Scope: "cn", ExternalID: "bench", Credentials: raw})
 			s := newConfiguredServer(st)

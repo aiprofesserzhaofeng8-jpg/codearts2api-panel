@@ -16,7 +16,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // --- 测试脚手架 ---
@@ -42,11 +42,11 @@ func probeFakeResponse(r *http.Request, status int, body string) *http.Response 
 // 不会发起续期网络请求，测试因此只需伪造推理端点。
 func newAdminTestServer(t *testing.T, ids ...string) *Server {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(s *store.Settings) {
+	st.UpdateSettings(func(s *storage.Settings) {
 		s.RateLimitEnabled = false
 		s.MaxRetries = 1
 	})
@@ -59,7 +59,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 	for _, id := range ids {
 		st.UpsertAccount(&codearts.Account{
 			ID: id, Name: "acct-" + id, Enabled: true, Status: "ok",
-			Session: &codearts.Session{
+			NativeCredential: &codearts.Session{
 				AccessKey: "ak" + id, SecretKey: "sk" + id,
 				CredentialKind: codearts.CredentialKindAKSK,
 			},

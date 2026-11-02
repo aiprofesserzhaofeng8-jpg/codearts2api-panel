@@ -9,7 +9,7 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestClientSummaryAdaptation(t *testing.T) {
@@ -82,7 +82,7 @@ func TestTraeClientProfileAvailableWithoutManualPolicy(t *testing.T) {
 
 // Apply defaults in the legacy client-profile fixture; live requests use Store policies.
 func adaptClientRequest(body []byte, model string) ([]byte, error) {
-	p, ok := store.DefaultModelPolicies()[model]
+	p, ok := storage.DefaultModelPolicies()[model]
 	if !ok || !p.SummaryEnabled || !requestpolicy.IsSummaryRequest(body, false) {
 		return body, nil
 	}

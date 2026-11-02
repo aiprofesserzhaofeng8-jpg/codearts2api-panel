@@ -1,7 +1,7 @@
 package server
 
 import (
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -16,7 +16,7 @@ func TestAdminUsageRejectsInvalidFilters(t *testing.T) {
 			t.Errorf("%s => %d", query, w.Code)
 		}
 	}
-	s.Store.Record(store.LogEntry{Time: 100, Status: 200}, 0)
+	s.Store.Record(storage.LogEntry{Time: 100, Status: 200}, 0)
 	w := httptest.NewRecorder()
 	s.handleAdminUsage(w, httptest.NewRequest("GET", "/admin/api/usage?start=100&end=101&page=1&page_size=20", nil))
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"total":1`) {

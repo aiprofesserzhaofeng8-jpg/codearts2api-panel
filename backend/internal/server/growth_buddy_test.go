@@ -11,7 +11,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func buddyFixture(t *testing.T) (*Server, *growthActionFixture) {
@@ -140,7 +140,7 @@ func TestGrowthBuddyExistingOwnershipAndLostAcknowledgement(t *testing.T) {
 	t.Run("already owned without paid models", func(t *testing.T) {
 		s, f := buddyFixture(t)
 		f.owned = true
-		s.Store.UpdateSettings(func(settings *store.Settings) { settings.AllowCreditModels = false })
+		s.Store.UpdateSettings(func(settings *storage.Settings) { settings.AllowCreditModels = false })
 		reply := runBuddyFixture(t, s, "first_buddy", false)
 		if reply.State != "prepared" || reply.Buddy == nil || !reply.Buddy.Owned || f.chats+f.reports+f.agreements+f.adoptions != 0 {
 			t.Fatal("existing ownership caused new actions", reply)
@@ -160,7 +160,7 @@ func TestGrowthBuddyActivityDoesNotUsePaidSwitchOrCheckpoint(t *testing.T) {
 	for _, corrupt := range []bool{false, true} {
 		t.Run(fmt.Sprint(corrupt), func(t *testing.T) {
 			s, f := buddyFixture(t)
-			s.Store.UpdateSettings(func(settings *store.Settings) { settings.AllowCreditModels = false })
+			s.Store.UpdateSettings(func(settings *storage.Settings) { settings.AllowCreditModels = false })
 			s.Reg.ReplaceProvider("workbuddy", "cn", nil)
 			if corrupt {
 				if err := os.WriteFile(s.growthExecutionPath(), []byte("invalid"), 0600); err != nil {

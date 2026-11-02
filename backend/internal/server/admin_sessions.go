@@ -3,7 +3,7 @@ package server
 import (
 	"bytes"
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"io"
 	"net"
@@ -43,7 +43,7 @@ func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	password := s.Store.Settings().AdminPassword
-	if !store.VerifyAdminPassword(password, body.Password) {
+	if !storage.VerifyAdminPassword(password, body.Password) {
 		s.adminFailures.failure(r.RemoteAddr)
 		s.audit(r, "anonymous", "login", 401)
 		writeErr(w, 401, "管理密码不正确", "authentication_error")
@@ -87,7 +87,7 @@ func (s *Server) handleAdminSession(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) audit(r *http.Request, actor, operation string, status int) {
 	peer, _, _ := net.SplitHostPort(r.RemoteAddr)
-	s.Store.Audit(store.AuditEvent{Actor: actor, Operation: operation, Path: r.URL.Path, Peer: peer, Status: status})
+	s.Store.Audit(storage.AuditEvent{Actor: actor, Operation: operation, Path: r.URL.Path, Peer: peer, Status: status})
 }
 
 type auditWriter struct {

@@ -1,6 +1,6 @@
 # 迁移计划与验收
 
-状态：**M1/M2/M3/M4 已完成，M5–M7 按阶段实施**。M3 已迁出既有请求编排和管理业务，最后完成搜索执行、统一请求型号解析及整体验收。见 [M3 完成验收](../acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md)。下方逐批记录保留各批完成时的范围，当前未完成阶段以上表和本节完成条件为准。
+状态：**M1/M2/M3/M4/M5 已完成，M6–M7 按阶段实施**。M3 已迁出既有请求编排和管理业务，最后完成搜索执行、统一请求型号解析及整体验收。见 [M3 完成验收](../acceptance/STRUCTURE-M3-COMPLETE-2026-11-02.md)。下方逐批记录保留各批完成时的范围，当前未完成阶段以上表和本节完成条件为准。
 
 ## 阶段和完成条件
 
@@ -15,13 +15,19 @@
 | M6：产品体验 | 映射预设、分组默认、独立可见/可调用开关、公共提示词继承 | 各功能单独配置迁移、界面说明、契约和真实验收 |
 | M7：规模扩展 | 按实际需求设计多用户或多实例、数据库和共享协调 | 权限/预算/租约/刷新/任务归属的跨实例测试先通过，再允许多副本 |
 
-M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收；不要同时改一条接口的语义与消费它的全部页面。M5 不与文件搬迁混在同一提交。M6 是新能力，不得包装成“重构所以自然生效”。M7 由真实需求触发，不预装数据库或 Redis。
+M3 与 M4 在接口稳定后可以分别推进，但每个交付均独立验收；不要同时改一条接口的语义与消费它的全部页面。M5 不与 M2 工程布局搬迁混在同一提交。M6 是新能力，不得包装成“重构所以自然生效”。M7 由真实需求触发，不预装数据库或 Redis。
 
 ## M4 完成项
 
 八个页面及相关弹窗、平台授权表单已组件化并切换到唯一前端工程；API 客户端、生成 DTO、受控取消、构建标识、Go 内嵌资源、开发代理和 CI/Docker 均已接通。原生表格/图表控制器按 feature 保留为 JS，Vue 静态子树与控制器的所有权见 [ADR 0008](../adr/0008-frontend-ownership.md)，并非全量响应式重写或所有遗留函数的严格类型化。
 
-实际验证与限制见 [M4 完整验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。后续剩 M5、M6、M7；不在 M4 引入存储格式、模型映射规则或公共提示词继承变更。
+实际验证与限制见 [M4 完整验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。后续剩 M6、M7；不在 M4 引入存储格式、模型映射规则或公共提示词继承变更。
+
+## M5 完成项
+
+`gateway.Admission` 统一准入协调；`scheduler` 持有纯选择算法；`usage` 持有用量 DTO、费用与报表规则；`access` 持有预算/密码纯规则。`storage` 实现业务窄接口，继续独占状态锁、权限/选号/占位事务、凭据 CAS 和结算账本；旧 `store` 为单向兼容门面。共享账号旧凭据方法约束已退出，schema 6、原生代际和平台独立凭据不变。
+
+快照发布已按原事务语义验收，没有新增编译缓存或无锁版本机制；严格管理落盘仍可能持有原状态锁，历史设置保存失败只记日志的语义保留。原因与边界见 [ADR 0009](../adr/0009-runtime-storage-ownership.md)，实测见 [M5 完整验收](../acceptance/STRUCTURE-M5-COMPLETE-2026-11-02.md)。M5 没有剩余实现项；M6 产品规则和 M7 规模扩展另行实施。
 
 ## M1 基线
 
@@ -116,12 +122,12 @@ M3 没有剩余实现项。HTTP 仍保留协议参数、身份/Context 投影、
 
 | 范围 | 必须覆盖的行为 | 现有起点 |
 | --- | --- | --- |
-| 公开/实际型号 | 同名跨平台、三协议×流式/非流式、隐藏原型直调、非法来源、映射删除 | [映射服务测试](../../backend/internal/server/group_model_mapping_test.go)、[调度测试](../../backend/internal/store/model_mapping_test.go) |
-| 准入并发 | 原始/统一名共享租约、并发上限、黏性、冷却、删除/停用与放行交错 | [账号池测试](../../backend/internal/store/pool_test.go)、[并发测试](../../backend/internal/server/account_concurrency_test.go) |
+| 公开/实际型号 | 同名跨平台、三协议×流式/非流式、隐藏原型直调、非法来源、映射删除 | [映射服务测试](../../backend/internal/server/group_model_mapping_test.go)、[调度测试](../../backend/internal/storage/model_mapping_test.go) |
+| 准入并发 | 原始/统一名共享租约、并发上限、黏性、冷却、删除/停用与放行交错 | [账号池测试](../../backend/internal/storage/pool_test.go)、[并发测试](../../backend/internal/server/account_concurrency_test.go) |
 | 取消与重试 | 首包前/后取消、超时、释放、取消不冷却、已输出不重放、总预算 | [取消测试](../../backend/internal/server/cancel_timeout_test.go)、[重试测试](../../backend/internal/server/retry_test.go) |
 | 数据保真 | 工具闭环、大整数、未知字段、合法空文本/拒绝/推理内容、损坏 JSON 和截断 | [保真测试](../../backend/internal/server/fidelity_test.go)、[协议精度](../../backend/internal/protocol/anthropic_precision_test.go) |
-| 凭据 | 刷新竞争、重新登录/删除后旧结果、保存失败不恢复旧 token、平台/地区隔离 | [凭据事务](../../backend/internal/store/account_transaction_test.go)、[Manager 代际](../../backend/internal/codearts/manager_generation_test.go) |
-| 用量与预算 | 账本回放不重复、历史价格不变、重置边界、未知用量、并发结算与落盘失败 | [账本测试](../../backend/internal/store/usage_journal_test.go)、[预算测试](../../backend/internal/server/budget_test.go) |
+| 凭据 | 刷新竞争、重新登录/删除后旧结果、保存失败不恢复旧 token、平台/地区隔离 | [凭据事务](../../backend/internal/storage/account_transaction_test.go)、[Manager 代际](../../backend/internal/codearts/manager_generation_test.go) |
+| 用量与预算 | 账本回放不重复、历史价格不变、重置边界、未知用量、并发结算与落盘失败 | [账本测试](../../backend/internal/storage/usage_journal_test.go)、[预算测试](../../backend/internal/server/budget_test.go) |
 | 管理页面 | 登录失效、账号表单、分组映射编辑、默认值、任务反馈、移动端/明暗主题 | [分组浏览器脚本](../../scripts/groups-smoke.cjs)、[账号表单](../../scripts/account-create-smoke.cjs) |
 | 后台任务 | 同账号串行、多账号限制、未知操作恢复、真实对话走租约/计量 | [成长任务测试](../../backend/internal/server/growth_test.go)、[多账号脚本](../../scripts/growth-multi-smoke.cjs) |
 | 部署 | 二进制/容器中的实际页面与 API、旧数据启动、路径及可回退性 | M2/M4 对新产物增加隔离冒烟 |

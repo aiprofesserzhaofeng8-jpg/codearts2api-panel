@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestNonStreamingInvalidEnvelopeAcrossProtocols(t *testing.T) {
@@ -26,7 +26,7 @@ func TestNonStreamingInvalidEnvelopeAcrossProtocols(t *testing.T) {
 					calls++
 					return nonJSONResponse(r, body), nil
 				})
-				s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 1 })
+				s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 1 })
 				w := responseRequest(s, key, path, nonJSONRequest)
 				if w.Code != 502 || calls != 1 || strings.Contains(w.Body.String(), "PRIVATE_UPSTREAM_DETAIL") {
 					t.Fatalf("status=%d calls=%d body=%s", w.Code, calls, w.Body.String())
@@ -62,8 +62,8 @@ func TestNonStreamingInvalidEnvelopeUsesExistingFailover(t *testing.T) {
 		}
 		return nonJSONResponse(r, nonJSONRecovery), nil
 	})
-	s.Store.UpdateSettings(func(st *store.Settings) { st.Pool.RateCooldownSec = 60 })
-	s.Store.UpsertAccount(&codearts.Account{ID: "b", Name: "second", Enabled: true, Status: "ok", Session: &codearts.Session{AccessKey: "ak-b", SecretKey: "sk-b", SecurityToken: "st-b", ExpiresAt: time.Now().Add(time.Hour)}})
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.Pool.RateCooldownSec = 60 })
+	s.Store.UpsertAccount(&codearts.Account{ID: "b", Name: "second", Enabled: true, Status: "ok", NativeCredential: &codearts.Session{AccessKey: "ak-b", SecretKey: "sk-b", SecurityToken: "st-b", ExpiresAt: time.Now().Add(time.Hour)}})
 	r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(nonJSONRequest))
 	r.Header.Set("Authorization", "Bearer "+key)
 	s.Handler().ServeHTTP(w, r)

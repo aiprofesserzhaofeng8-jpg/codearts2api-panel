@@ -16,7 +16,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type lifecycleTransport func(*http.Request) (*http.Response, error)
@@ -26,15 +26,15 @@ func (f lifecycleTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 // Exercise the actual app listener and gateway while Close is draining HTTP.
 // No request leaves this process; the transport is a controlled SSE producer.
 func TestRuntimeDrainsStreamAndPersistsFinalUsage(t *testing.T) {
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	st.UpdateSettings(func(s *store.Settings) {
+	st.UpdateSettings(func(s *storage.Settings) {
 		s.AutoClaim, s.AutoRefresh, s.WriteBackToIDE = false, false, false
 		s.RateLimitEnabled, s.AdminPassword = false, "fixture-password"
 	})
-	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, Session: &codearts.Session{
+	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, NativeCredential: &codearts.Session{
 		AccessKey: "fixture-ak", SecretKey: "fixture-sk", ExpiresAt: time.Now().Add(time.Hour),
 	}})
 	key := st.AddKey("fixture").Key
@@ -156,7 +156,7 @@ func TestRuntimeDrainsStreamAndPersistsFinalUsage(t *testing.T) {
 	if st.PoolSnapshot()["fixture"].InFlight != 0 {
 		t.Fatal("lease leaked at shutdown")
 	}
-	restored, err := store.Open(st.Path())
+	restored, err := storage.Open(st.Path())
 	if err != nil {
 		t.Fatal(err)
 	}

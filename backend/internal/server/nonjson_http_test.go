@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // Both hops use real localhost HTTP connections. Only the upstream address is
@@ -58,7 +58,7 @@ func TestNonJSONOverHTTP(t *testing.T) {
 			})
 			// Disable cooldown only in this single-account fixture so the same
 			// synthetic credential can retry; keep real backoff and attempt limits.
-			s.Store.UpdateSettings(func(st *store.Settings) {
+			s.Store.UpdateSettings(func(st *storage.Settings) {
 				st.MaxRetries = tc.attempts
 				st.Pool.RateCooldownSec = 0
 			})

@@ -17,7 +17,7 @@ func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.Handl
 			return
 		}
 		key := extractKey(r)
-		release, err := s.Store.BeginKeyBudget(key)
+		release, err := s.Admission.Reserve(key)
 		if err != nil {
 			mapped := apierr.From(err)
 			if style == errAnthropic {
@@ -36,7 +36,7 @@ func (s *Server) checkRequestBudget(ctx context.Context, model string) error {
 		return err
 	}
 	key, _ := ctx.Value(budgetKeyContext{}).(string)
-	return s.Store.CheckKeyBudgetProgress(key, model, requestAttemptDetails(ctx))
+	return s.Admission.CheckProgress(key, model, requestAttemptDetails(ctx))
 }
 func (s *Server) handleKeyBudget(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {

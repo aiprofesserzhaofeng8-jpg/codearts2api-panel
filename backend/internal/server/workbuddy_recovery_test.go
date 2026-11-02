@@ -15,7 +15,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/workbuddy"
 )
 
@@ -60,7 +60,7 @@ func TestWorkBuddyRecoveryAcrossProtocols(t *testing.T) {
 						}
 					})
 					addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-					s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3 })
+					s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3 })
 					gateway := httptest.NewServer(s.Handler())
 					defer gateway.Close()
 					req, _ := http.NewRequest("POST", gateway.URL+path, strings.NewReader(recoveryBody(path, stream)))
@@ -132,7 +132,7 @@ func TestWorkBuddyPersistent5xxUsesShortModelCooldown(t *testing.T) {
 					io.WriteString(w, `{"code":10000}`)
 				})
 				addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-				s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = maxAttempts; st.Pool.RateCooldownSec = 60 })
+				s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = maxAttempts; st.Pool.RateCooldownSec = 60 })
 				w := responseRequest(s, key, "/v1/chat/completions", recoveryBody("/v1/chat/completions", false))
 				if w.Code != 502 || calls != min(maxAttempts, 2) {
 					t.Fatalf("persistent failure status=%d calls=%d", w.Code, calls)
@@ -174,7 +174,7 @@ func TestWorkBuddyRecoverySharesTotalAttemptLimitWithFailover(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = limit })
+			s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = limit })
 			w := responseRequest(s, key, "/v1/chat/completions", recoveryBody("/v1/chat/completions", false))
 			if len(auth) != limit || auth[0] != auth[1] || limit == 3 && (auth[1] == auth[2] || w.Code != 200 || !strings.Contains(w.Body.String(), "BACKUP_OK")) || limit == 2 && w.Code != 502 {
 				t.Fatalf("retry/failover exceeded or lost slots: limit=%d calls=%d status=%d", limit, len(auth), w.Code)
@@ -207,7 +207,7 @@ func TestWorkBuddyRecoveryNeverReplaysObservedFrames(t *testing.T) {
 						fmt.Fprintf(w, "data: %s\n\ndata: {\"code\":6021}\n\n", frame)
 					})
 					addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-					s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3 })
+					s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3 })
 					w := responseRequest(s, key, path, recoveryBody(path, stream))
 					if calls != 1 || s.Store.Logs(1)[0].Status != 502 {
 						t.Fatalf("partial upstream reply replayed/hidden: calls=%d status=%d body=%s", calls, w.Code, w.Body.String())
@@ -227,7 +227,7 @@ func TestWorkBuddyRecoveryCancellationAndBudget(t *testing.T) {
 			calls := 0
 			s, key, _ := nativeWBServer(t, func(w http.ResponseWriter, r *http.Request) { calls++; w.WriteHeader(500) })
 			addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-			s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3 })
+			s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3 })
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			old := waitRetry
@@ -240,7 +240,7 @@ func TestWorkBuddyRecoveryCancellationAndBudget(t *testing.T) {
 				return nil
 			}
 			if cause == "token_budget" {
-				if err := s.Store.SetKeyBudgetAndSave(key, store.KeyBudget{MaxTokens: 64}, false); err != nil {
+				if err := s.Store.SetKeyBudgetAndSave(key, storage.KeyBudget{MaxTokens: 64}, false); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -354,7 +354,7 @@ func TestWorkBuddyRecoveryRetainsLeaseDuringWait(t *testing.T) {
 		io.WriteString(w, summaryFixture("LEASE_OK", "stop", 10, 4))
 	})
 	addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-	s.Store.UpdateSettings(func(st *store.Settings) { st.MaxRetries = 3; st.Pool.MaxInFlight = 1 })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 3; st.Pool.MaxInFlight = 1 })
 	old := waitRetry
 	t.Cleanup(func() { waitRetry = old })
 	waitRetry = func(context.Context, time.Duration) error {
@@ -389,7 +389,7 @@ func TestWorkBuddyRecoveryLeavesOtherErrorCooldownsUnchanged(t *testing.T) {
 		t.Run(fmt.Sprintf("%s/%d", tc.provider, tc.status), func(t *testing.T) {
 			s, _, _ := nativeWBServer(t, func(http.ResponseWriter, *http.Request) { t.Error("unexpected HTTP request") })
 			addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-			s.Store.UpdateSettings(func(st *store.Settings) { st.Pool.RateCooldownSec = 60; st.Pool.BreakerCooldownSec = 300 })
+			s.Store.UpdateSettings(func(st *storage.Settings) { st.Pool.RateCooldownSec = 60; st.Pool.BreakerCooldownSec = 300 })
 			a := s.Store.Account("wb-cn")
 			a.Provider = tc.provider
 			s.providerAccountError(context.Background(), a, "model", &provider.Error{Status: tc.status, AccountFault: tc.status == 401})

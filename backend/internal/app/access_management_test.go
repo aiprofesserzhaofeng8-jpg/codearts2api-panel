@@ -9,13 +9,13 @@ import (
 	"codearts2api/internal/access"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestAccessManagementUsesCurrentCatalogAndPreservesMappingOmission(t *testing.T) {
 	srv, st, _ := managementFixture(t)
 	srv.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "one"}, {ID: "two"}})
-	st.UpdateSettings(func(s *store.Settings) { s.ModelAliases["configured-alias"] = "workbuddy/cn/one" })
+	st.UpdateSettings(func(s *storage.Settings) { s.ModelAliases["configured-alias"] = "workbuddy/cn/one" })
 	g, err := srv.AccessManagement.SaveGroup(access.AccountGroup{Name: "mapped", AccountIDs: []string{"workbuddy"}, AllowlistEnabled: true,
 		ModelIDs: []string{" configured-alias ", "unlisted-future-model"}, ModelMappings: []access.ModelMapping{{Name: "shared-4.1", Sources: []string{"workbuddy/cn/one"}}}})
 	if err != nil || g.ModelIDs[0] != "workbuddy/cn/one" || g.ModelIDs[1] != "unlisted-future-model" {
@@ -29,7 +29,7 @@ func TestAccessManagementUsesCurrentCatalogAndPreservesMappingOmission(t *testin
 	if g, err = srv.AccessManagement.SaveGroup(g); err != nil || len(g.ModelMappings) != 0 {
 		t.Fatal("explicit empty mappings were retained", g, err)
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.ModelAliases["configured-alias"] = "workbuddy/cn/two" })
+	st.UpdateSettings(func(s *storage.Settings) { s.ModelAliases["configured-alias"] = "workbuddy/cn/two" })
 	g.ModelIDs = []string{"configured-alias"}
 	if g, err = srv.AccessManagement.SaveGroup(g); err != nil || g.ModelIDs[0] != "workbuddy/cn/two" {
 		t.Fatal("group manager cached old aliases", g, err)
@@ -77,7 +77,7 @@ func TestAccessManagementStrictTransactionsRetainPublishedAccessOnFailure(t *tes
 		}
 	}
 	restore()
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || !reflect.DeepEqual(groups, reopened.Groups()) || !reflect.DeepEqual(keys, reopened.Keys()) {
 		t.Fatal("failed access operation changed durable state", err)
 	}
@@ -117,14 +117,14 @@ func TestAccessManagementLegacyKeyChangesKeepSaveFailureSemantics(t *testing.T) 
 		t.Fatal("administrator cannot retrieve a disabled key")
 	}
 	restore()
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || len(reopened.Keys()) != 2 || !reopened.Keys()[1].Enabled {
 		t.Fatal("failed legacy save unexpectedly modified disk", err)
 	}
 	if err = st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err = store.Open(st.Path())
+	reopened, err = storage.Open(st.Path())
 	if err != nil || len(reopened.Keys()) != 1 || reopened.Keys()[0].Enabled {
 		t.Fatal("legacy memory changes could not be saved after recovery", err)
 	}

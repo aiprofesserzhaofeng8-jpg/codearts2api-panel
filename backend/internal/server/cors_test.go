@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 // TestCORSDefaultIsSameOriginOnly 回归：默认不再放行任意 localhost 来源。
@@ -47,7 +47,7 @@ func TestCORSDefaultIsSameOriginOnly(t *testing.T) {
 // TestCORSExplicitAllowList 配置了 cors_origin 后按白名单放行，且拒绝通配符。
 func TestCORSExplicitAllowList(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	s.Store.UpdateSettings(func(st *store.Settings) {
+	s.Store.UpdateSettings(func(st *storage.Settings) {
 		st.CORSOrigin = "http://192.168.1.10:8080, https://app.example.com"
 	})
 
@@ -69,7 +69,7 @@ func TestCORSExplicitAllowList(t *testing.T) {
 	}
 
 	// 通配符永不生效
-	s.Store.UpdateSettings(func(st *store.Settings) { st.CORSOrigin = "*" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.CORSOrigin = "*" })
 	r = httptest.NewRequest(http.MethodGet, "/admin/api/state", nil)
 	r.Host = "127.0.0.1:10087"
 	r.Header.Set("Origin", "https://evil.example.com")

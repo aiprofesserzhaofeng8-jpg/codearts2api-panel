@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestLocalPanelUnlockAndRemoteIsolation(t *testing.T) {
 	s := poolServer(t, 0)
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "admin-secret" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin-secret" })
 	h := s.Handler()
 	request := func(method, path, remote, host, token, origin, site string, proxy bool) *httptest.ResponseRecorder {
 		r := httptest.NewRequest(method, path, strings.NewReader(`{}`))

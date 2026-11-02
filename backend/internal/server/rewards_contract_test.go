@@ -1,7 +1,7 @@
 package server
 
 import (
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -119,7 +119,7 @@ func TestAcceptanceRewardsContract(t *testing.T) {
 		io.WriteString(w, `{"code":0,"data":{},"Response":{"Data":{"Accounts":[{"CapacityRemain":70,"CapacityUsed":30,"CapacitySize":100}]}}}`)
 	})
 	wb.AllowLocalAdmin = true
-	wb.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "" })
+	wb.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addWB(t, wb, "cn", time.Now().Add(time.Hour).Unix())
 	for _, m := range []string{"success", "failure", "invalid", "success"} {
 		mode = m
@@ -151,7 +151,7 @@ func TestAcceptanceRewardsContract(t *testing.T) {
 		}
 	})
 	tr.AllowLocalAdmin = true
-	tr.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "" })
+	tr.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addTrae(t, tr)
 	record("trae/status", tr, adminProbeRequest(t, tr, "GET", "/admin/api/welfare?id=trae-acct", ""))
 	record("trae/credit", tr, adminProbeRequest(t, tr, "GET", "/admin/api/credits", ""))
@@ -174,11 +174,11 @@ func TestAcceptanceRewardsContract(t *testing.T) {
 }
 
 func BenchmarkCreditsWarmHTTP(b *testing.B) {
-	st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 	if err != nil {
 		b.Fatal(err)
 	}
-	st.UpsertAccount(&codearts.Account{ID: "a", Enabled: true, Session: &codearts.Session{AccessKey: "fixture", SecretKey: "fixture", CredentialKind: "aksk"}})
+	st.UpsertAccount(&codearts.Account{ID: "a", Enabled: true, NativeCredential: &codearts.Session{AccessKey: "fixture", SecretKey: "fixture", CredentialKind: "aksk"}})
 	s := newConfiguredServer(st)
 	s.Up.HTTP = &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) { return probeFakeResponse(r, 200, creditBody), nil })}
 	s.handleAdminCredits(httptest.NewRecorder(), httptest.NewRequest("GET", "/admin/api/credits?id=a", nil))

@@ -148,7 +148,7 @@ func TestChatOnceFallsBackToStreamAggregation(t *testing.T) {
 		SecurityToken: "st",
 		ExpiresAt:     time.Now().Add(time.Hour),
 	})
-	if sess := s.Store.Account("a").Session; sess == nil || !sess.Valid(time.Minute) {
+	if sess := codearts.StoredSession(s.Store.Account("a")); sess == nil || !sess.Valid(time.Minute) {
 		t.Fatal("测试前置失败：账号凭据不可用，chatOnce 会走续期分支")
 	}
 

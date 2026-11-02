@@ -12,12 +12,12 @@ import (
 	"codearts2api/internal/app"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/server"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
-func managementFixture(t *testing.T) (*server.Server, *store.Store, *codearts.Session) {
+func managementFixture(t *testing.T) (*server.Server, *storage.Store, *codearts.Session) {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "data", "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "data", "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func managementFixture(t *testing.T) (*server.Server, *store.Store, *codearts.Se
 	return srv, st, codearts.StoredSession(a)
 }
 
-func blockManagementWrites(t *testing.T, st *store.Store) func() {
+func blockManagementWrites(t *testing.T, st *storage.Store) func() {
 	t.Helper()
 	dir := filepath.Dir(st.Path())
 	if err := os.Rename(dir, dir+"-saved"); err != nil {
@@ -84,7 +84,7 @@ func TestAccountManagementStrictFailureRetainsAccountAndCredentialCache(t *testi
 	if err := srv.AccountManagement.Remove("native"); err != nil || st.Account("native") != nil || srv.Cred.Cached("native", time.Hour) != nil {
 		t.Fatal("successful delete did not invalidate", err)
 	}
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || reopened.Account("native") != nil || len(reopened.Accounts()) != 2 {
 		t.Fatal("deletion was not durable or affected another platform", err)
 	}
@@ -100,7 +100,7 @@ func TestAccountManagementLegacyFailureAndDuplicateImportSemantics(t *testing.T)
 		t.Fatal("legacy pause save behavior changed", err)
 	}
 	srv.Cred.Remember("native", session)
-	newAccount := &accounts.Account{ID: "new-id", Enabled: true, Session: session}
+	newAccount := &accounts.Account{ID: "new-id", Enabled: true, NativeCredential: session}
 	other := &accounts.Account{ID: "other", Provider: "workbuddy", ExternalID: "other-user", Enabled: true}
 	created := srv.AccountManagement.Import([]*accounts.Account{newAccount, other})
 	if len(created) != 2 || created[0] || !created[1] || newAccount.ID != "native" || srv.Cred.Cached("native", time.Hour) != nil {
@@ -111,14 +111,14 @@ func TestAccountManagementLegacyFailureAndDuplicateImportSemantics(t *testing.T)
 		t.Fatal("duplicate import reset scheduling controls")
 	}
 	restore()
-	reopened, err := store.Open(st.Path())
+	reopened, err := storage.Open(st.Path())
 	if err != nil || !reopened.Account("native").Enabled || reopened.Account("native").Paused || reopened.Account("other") != nil {
 		t.Fatal("failed best-effort write unexpectedly changed disk", err)
 	}
 	if err := st.Save(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err = store.Open(st.Path())
+	reopened, err = storage.Open(st.Path())
 	if err != nil || reopened.Account("native").Enabled || !reopened.Account("native").Paused || reopened.Account("other") == nil {
 		t.Fatal("legacy in-memory mutation was not recoverable", err)
 	}
@@ -152,11 +152,11 @@ func TestAccountManagementExportPreservesOpaquePlatformBytes(t *testing.T) {
 
 func TestAccountManagementNativeExportUsesCurrentSettingsAndReimportPolicy(t *testing.T) {
 	srv, st, _, calls := credentialFixture(t, nil)
-	st.UpdateSettings(func(s *store.Settings) { s.AutoRefresh = false })
+	st.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = false })
 	if _, err := srv.AccountManagement.Export(t.Context(), "fixture"); err == nil || calls.Load() != 0 {
 		t.Fatal("export ignored disabled renewal", err)
 	}
-	st.UpdateSettings(func(s *store.Settings) { s.AutoRefresh = true })
+	st.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = true })
 	result, err := srv.AccountManagement.Export(t.Context(), "fixture")
 	if err != nil || !result.Native || !result.HasRefresh || calls.Load() != 1 {
 		t.Fatal("export did not follow current settings", err)
@@ -166,7 +166,7 @@ func TestAccountManagementNativeExportUsesCurrentSettingsAndReimportPolicy(t *te
 		t.Fatal("export did not publish and encode the same generation", err)
 	}
 	srv2, st2, _, calls2 := credentialFixture(t, nil)
-	st2.UpdateSettings(func(s *store.Settings) { s.AutoRefresh = false })
+	st2.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = false })
 	if err := srv2.AccountManagement.Reimport(t.Context(), "fixture"); err != nil || calls2.Load() != 1 {
 		t.Fatal("explicit reimport lost its existing refresh policy", err)
 	}

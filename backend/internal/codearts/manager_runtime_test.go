@@ -12,7 +12,7 @@ func TestManagerRuntimeZeroValueAndLegacyPersistence(t *testing.T) {
 	var m Manager
 	original := &Session{AccessKey: "fixture-old", SecretKey: "fixture", ExpiresAt: time.Now().Add(-time.Hour)}
 	updated := &Session{AccessKey: "fixture-new", SecretKey: "fixture", ExpiresAt: time.Now().Add(time.Hour)}
-	acct := &Account{ID: "fixture", Session: original}
+	acct := &Account{ID: "fixture", NativeCredential: original}
 	saves, logs := 0, 0
 	m.Persist = func(*Account) error { saves++; return errors.New("fixture persistence failure") }
 	m.Logf = func(string, ...any) { logs++ }
@@ -44,7 +44,7 @@ func TestManagerRuntimeInvalidationSharesRefreshLock(t *testing.T) {
 	t.Cleanup(unblock)
 	endpoint := startFakeTokenServer(t, func(string) { close(entered); <-release })
 	m := managerForTest(endpoint)
-	acct := &Account{ID: "refreshing", Session: refreshableSession(t, "fixture")}
+	acct := &Account{ID: "refreshing", NativeCredential: refreshableSession(t, "fixture")}
 	refreshed := make(chan error, 1)
 	go func() { _, err := m.Session(t.Context(), acct, ResolveOptions{AllowRefresh: true}); refreshed <- err }()
 	select {

@@ -12,7 +12,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type rewardAdapter struct {
@@ -29,7 +29,7 @@ func (a rewardAdapter) DailyStatus(ctx context.Context, _ json.RawMessage) (prov
 }
 
 type failingRewardStore struct {
-	*store.Store
+	*storage.Store
 	fail bool
 }
 
@@ -47,7 +47,7 @@ func (s *failingRewardStore) Save() error {
 }
 func rewardFixture(t *testing.T) (*failingRewardStore, *Rewards, *accounts.Credits) {
 	t.Helper()
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -90,7 +90,7 @@ func TestManagerSessionReturnsCredentialsError(t *testing.T) {
 	acct := &Account{
 		ID: "a1", Name: "测试账号",
 		// 没有 UserData → 不会去读 state.vscdb（测试环境无 DPAPI）
-		Session: &Session{
+		NativeCredential: &Session{
 			AccessKey: "ak", SecretKey: "sk",
 			ExpiresAt: time.Now().Add(-time.Hour),
 		},
@@ -112,7 +112,7 @@ func TestManagerSessionReturnsCredentialsError(t *testing.T) {
 func TestManagerSessionUsesValidCachedSession(t *testing.T) {
 	m := NewManager(NewClient())
 	sess := &Session{AccessKey: "ak", SecretKey: "sk", ExpiresAt: time.Now().Add(time.Hour)}
-	acct := &Account{ID: "a1", Name: "测试账号", Session: sess}
+	acct := &Account{ID: "a1", Name: "测试账号", NativeCredential: sess}
 
 	got, err := m.Session(context.Background(), acct, ResolveOptions{AllowRefresh: false})
 	if err != nil {

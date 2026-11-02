@@ -27,7 +27,7 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/usage"
 	"codearts2api/internal/websearch"
@@ -35,6 +35,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	Admission           *gateway.Admission
 	Credits             *accounts.Credits
 	Welfare             *jobs.Welfare
 	Rewards             *jobs.Rewards
@@ -57,7 +58,7 @@ type Server struct {
 	adminFailures       adminAttempts
 	responsesReasoning  responsesReasoningCache
 	localPanelToken     string
-	Store               *store.Store
+	Store               *storage.Store
 	CodeArts            *codeartsup.Adapter
 	Completions         *gateway.Completions
 	Up                  *codearts.Client
@@ -70,6 +71,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	Admission           *gateway.Admission
 	AdminSessions       *access.AdminSessions
 	Pricing             *usage.Management
 	Growth              *jobs.Growth
@@ -97,8 +99,8 @@ type Dependencies struct {
 }
 
 // New constructs HTTP runtime state using the supplied application services.
-func New(st *store.Store, deps Dependencies) *Server {
-	s := &Server{AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+func New(st *storage.Store, deps Dependencies) *Server {
+	s := &Server{Admission: deps.Admission, AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()
@@ -357,7 +359,7 @@ func writeAPIErr(w http.ResponseWriter, style errStyle, err error) {
 }
 
 // rateLimitConfig 把设置转换为限流参数。
-func rateLimitConfig(st store.Settings) ratelimit.Config {
+func rateLimitConfig(st storage.Settings) ratelimit.Config {
 	return ratelimit.Config{
 		Enabled:     st.RateLimitEnabled,
 		QPS:         st.RateLimitQPS,
@@ -394,7 +396,7 @@ func (s *Server) withAdminAuth(next http.HandlerFunc) http.HandlerFunc {
 				writeErr(w, 429, "认证失败次数过多，请稍后重试", "rate_limit_error")
 				return
 			}
-			if !store.VerifyAdminPassword(password, adminPasswordFrom(r)) {
+			if !storage.VerifyAdminPassword(password, adminPasswordFrom(r)) {
 				s.adminFailures.failure(r.RemoteAddr)
 				writeErr(w, 401, "请登录管理员账号", "authentication_error")
 				return
@@ -535,7 +537,7 @@ func (s *Server) resolveOptions() codearts.ResolveOptions {
 }
 
 // sanitizedSettings 返回可下发给前端的设置（管理密码不外泄）。
-func sanitizedSettings(st store.Settings) map[string]any {
+func sanitizedSettings(st storage.Settings) map[string]any {
 	return map[string]any{
 		"pool":                   st.Pool,
 		"workbuddy":              st.WorkBuddy,

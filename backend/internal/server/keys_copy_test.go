@@ -6,17 +6,17 @@ import (
 	"strings"
 	"testing"
 
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestAdminCanRetrieveExistingKeysForCopy(t *testing.T) {
 	s := poolServer(t, 0)
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "admin" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin" })
 	key := s.Store.AddKey("copy-test").Key
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
 	}
-	loaded, err := store.Open(s.Store.Path())
+	loaded, err := storage.Open(s.Store.Path())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestAdminCanRetrieveExistingKeysForCopy(t *testing.T) {
 
 func TestExplicitRevealRequiresAdminAndPOST(t *testing.T) {
 	s := poolServer(t, 0)
-	s.Store.UpdateSettings(func(c *store.Settings) { c.AdminPassword = "admin" })
+	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin" })
 	key := s.Store.AddKey("test").Key
 	for _, tc := range []struct {
 		method, pw string

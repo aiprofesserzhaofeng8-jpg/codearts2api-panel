@@ -2,7 +2,7 @@ package server
 
 import (
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"codearts2api/internal/workbuddy"
 	"encoding/json"
 	"fmt"
@@ -117,7 +117,7 @@ func TestAcceptanceGrowthContract(t *testing.T) {
 }
 
 func benchmarkGrowthHTTP(b *testing.B, claimed bool) {
-	st, err := store.Open(filepath.Join(b.TempDir(), "state.json"))
+	st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
 	if err != nil {
 		b.Fatal(err)
 	}

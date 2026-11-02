@@ -8,10 +8,10 @@ import (
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/requestpolicy"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
-func (s *Server) summaryPolicy(ctx context.Context, body []byte, model string) (store.ModelPolicy, bool) {
+func (s *Server) summaryPolicy(ctx context.Context, body []byte, model string) (storage.ModelPolicy, bool) {
 	explicit, _ := ctx.Value(summaryIntentKey{}).(bool)
 	p, ok := s.Store.ModelPolicy(model)
 	return p, ok && p.SummaryEnabled && requestpolicy.IsSummaryRequest(body, explicit)
@@ -19,7 +19,7 @@ func (s *Server) summaryPolicy(ctx context.Context, body []byte, model string) (
 
 // The gateway owns preparation, private buffering and bounded retries. HTTP
 // context projection, attempt accounting and cooldown writes stay here.
-func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, p store.ModelPolicy) ([][]byte, error) {
+func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, model registry.Model, body []byte, p storage.ModelPolicy) ([][]byte, error) {
 	return gateway.RunSummary(ctx, s.CodeArts.Bind(sess), p.SummaryRetry, gateway.SummaryHooks{
 		Prepare: func(retry bool) (gateway.SummaryAttempt, error) {
 			return s.prepareSummaryAttempt(ctx, model, body, p, retry)
@@ -49,7 +49,7 @@ func (s *Server) summaryChunks(ctx context.Context, sess *codearts.Session, mode
 	})
 }
 
-func (s *Server) prepareSummaryAttempt(ctx context.Context, model registry.Model, body []byte, p store.ModelPolicy, retry bool) (gateway.SummaryAttempt, error) {
+func (s *Server) prepareSummaryAttempt(ctx context.Context, model registry.Model, body []byte, p storage.ModelPolicy, retry bool) (gateway.SummaryAttempt, error) {
 	return gateway.PrepareSummaryAttempt(ctx, summaryTarget(model), body, summaryOptions(p), p.SummaryFallbackModel, retry, summaryTargetSource{s, ctx})
 }
 
@@ -61,7 +61,7 @@ type summaryTargetSource struct {
 func summaryTarget(model registry.Model) gateway.SummaryTarget {
 	return gateway.SummaryTarget{ID: model.ID, Provider: modelProvider(model), Scope: model.Scope}
 }
-func summaryOptions(p store.ModelPolicy) requestpolicy.SummaryOptions {
+func summaryOptions(p storage.ModelPolicy) requestpolicy.SummaryOptions {
 	return requestpolicy.SummaryOptions{MaxTokens: p.SummaryMaxTokens, DisableThinking: p.DisableSummaryThinking}
 }
 func (source summaryTargetSource) ForcedModel() string { return source.s.Store.Settings().ForceModel }

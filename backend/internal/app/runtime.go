@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"codearts2api/internal/server"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type Options struct {
@@ -36,7 +36,7 @@ type Runtime struct {
 
 // Start applies configured identity before starting background work and HTTP.
 // Build itself remains free of upstream I/O and background tasks.
-func Start(st *store.Store, srv *server.Server, options Options) *Runtime {
+func Start(st *storage.Store, srv *server.Server, options Options) *Runtime {
 	srv.ApplyIdentity()
 	stop := startBackground(st.Save, srv.RefreshModels, srv.RunDailyClaim, log.Printf)
 	addr := net.JoinHostPort(options.Host, fmt.Sprintf("%d", options.Port))

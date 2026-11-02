@@ -12,7 +12,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 type checkinAdapter struct {
@@ -65,7 +65,7 @@ func TestAccountCheckinWireContract(t *testing.T) {
 			case "untrimmed":
 				body = `{"id":" native "}`
 			case "missing-model":
-				s.Store.UpdateSettings(func(st *store.Settings) { st.DefaultModel = "absent-probe-model" })
+				s.Store.UpdateSettings(func(st *storage.Settings) { st.DefaultModel = "absent-probe-model" })
 			case "no-session":
 				if _, err := s.Store.RemoveAccountAndSave("native"); err != nil {
 					t.Fatal(err)
@@ -130,7 +130,7 @@ func TestAccountCheckinWireContract(t *testing.T) {
 				t.Fatal("native call count changed", calls)
 			}
 			// Compare the persisted publication after final Save, excluding timestamps.
-			reopened, err := store.Open(s.Store.Path())
+			reopened, err := storage.Open(s.Store.Path())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -168,7 +168,7 @@ func TestModelRecommendationWireContract(t *testing.T) {
 
 func TestMappedRecommendationWireContract(t *testing.T) {
 	s, key, _ := mappedFixture(t, nil)
-	p := store.DefaultModelPolicies()["deepseek-v4.1-flash"]
+	p := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 	if err := s.Store.SetModelPolicyAndSave("test-model", p); err != nil {
 		t.Fatal(err)
 	}

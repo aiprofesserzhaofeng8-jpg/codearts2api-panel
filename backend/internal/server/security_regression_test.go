@@ -1,7 +1,7 @@
 package server
 
 import (
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 	"net/http/httptest"
 	"testing"
 )
@@ -26,7 +26,7 @@ func TestNoPasswordRejectsDNSRebinding(t *testing.T) {
 
 func TestAdminPasswordAttemptsAreLimited(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	s.Store.UpdateSettings(func(st *store.Settings) { st.AdminPassword = "correct" })
+	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "correct" })
 	for i := 0; i < 21; i++ {
 		r := adminRequest("203.0.113.1:1234", map[string]string{"X-Admin-Password": "incorrect"})
 		w := httptest.NewRecorder()

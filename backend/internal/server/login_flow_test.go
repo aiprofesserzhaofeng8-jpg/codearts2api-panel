@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/store"
+	"codearts2api/internal/storage"
 )
 
 func TestBrowserTicketLoginPersistsAccountThroughAdminAPI(t *testing.T) {
@@ -76,12 +76,12 @@ func TestBrowserTicketLoginPersistsAccountThroughAdminAPI(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		call("/admin/api/login/complete", map[string]any{"session_id": id, "preview_id": previewID})
 	}
-	reloaded, err := store.Open(s.Store.Path())
+	reloaded, err := storage.Open(s.Store.Path())
 	if err != nil {
 		t.Fatal(err)
 	}
 	accounts := reloaded.Accounts()
-	if len(accounts) != 1 || codearts.StoredSession(accounts[0]).AccessKey != "fixture-ak" || accounts[0].Session.HasRefresh() {
+	if len(accounts) != 1 || codearts.StoredSession(accounts[0]).AccessKey != "fixture-ak" || codearts.StoredSession(accounts[0]).HasRefresh() {
 		t.Fatal("login account missing or duplicated")
 	}
 	accountID := accounts[0].ID
@@ -89,7 +89,7 @@ func TestBrowserTicketLoginPersistsAccountThroughAdminAPI(t *testing.T) {
 	if len(s.Store.Accounts()) != 0 {
 		t.Fatal("delete left account in memory")
 	}
-	reopened, err := store.Open(s.Store.Path())
+	reopened, err := storage.Open(s.Store.Path())
 	if err != nil || len(reopened.Accounts()) != 0 {
 		t.Fatal("deleted account returned from disk")
 	}
