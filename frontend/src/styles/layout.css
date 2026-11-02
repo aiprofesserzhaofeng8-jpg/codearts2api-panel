@@ -1,0 +1,72 @@
+/* Shared admin/user shell. Feature cards and native DOM ownership stay local. */
+.console-layout{--sidebar-w:240px}
+.console-layout .sidebar{z-index:30;gap:0;padding:0 12px 12px;min-height:0}
+.sidebar-scroll{flex:1;min-height:0;overflow-y:auto;padding:16px 0}
+.sidebar-section-label{font-size:11px;letter-spacing:.06em;color:var(--text-3);margin:0 10px 10px}
+.console-layout nav.tabs{margin:0;gap:4px}
+.console-layout nav.tabs button{min-height:40px}
+.console-layout .sidebar-foot{flex-shrink:0;margin-top:0;padding:12px 0 0;gap:10px}
+.console-spaces{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.console-spaces a{display:flex;flex:1;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:32px;text-decoration:none;font-size:12px;color:var(--text-2);border-radius:7px}
+.console-spaces a[aria-current=page]{background:var(--surface);color:var(--accent-text);box-shadow:0 1px 3px #0000000d}
+.console-spaces .ico{width:15px;height:15px;flex:none}
+.console-collapse{width:100%;justify-content:flex-start;gap:10px}
+.console-role{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.console-menu-toggle,.console-mobile-close{display:none}
+.console-layout .console-content{width:100%;min-width:0}
+.user-workspace .user-main{max-width:none;padding:0;margin:0}
+.user-workspace .user-main>.card{padding:24px}
+.user-workspace .user-summary{padding-top:20px}
+.sidebar-collapsed{--sidebar-w:76px}
+.sidebar-collapsed .brand{padding:0;justify-content:center}
+.sidebar-collapsed .brand-text,.sidebar-collapsed .sidebar-section-label,.sidebar-collapsed .sidebar-scroll button>span,.sidebar-collapsed .console-spaces span,.sidebar-collapsed .console-collapse>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sidebar-collapsed .sidebar-scroll button{justify-content:center;padding:10px}
+.sidebar-collapsed .console-spaces{flex-direction:column}
+.sidebar-collapsed .sidebar-foot>.badge{display:none}
+.sidebar-collapsed .console-collapse{justify-content:center;padding:0}
+.auth-page{min-height:100vh;display:grid;place-items:center;padding:60px 16px;background:radial-gradient(ellipse at 50% 0,var(--accent-soft),transparent 70%)}
+.auth-theme{position:absolute;right:20px;top:20px}
+.auth-card{width:100%;max-width:440px;padding:28px;background:var(--surface);border-radius:16px}
+.auth-page .auth-card{border:1px solid var(--line);box-shadow:0 12px 48px #00000008}
+.auth-card .brand{height:auto;padding:0;border:0;margin-bottom:28px}
+.auth-card .brand-name{font-size:16px}
+.auth-heading{margin-bottom:24px}
+.auth-heading h1{font-size:24px;letter-spacing:-.02em;margin:14px 0 8px}
+.auth-heading .hint{line-height:1.7}
+.auth-card .field{margin-bottom:18px}
+.auth-card form>.btn,.auth-card #savePw{width:100%;justify-content:center}
+.auth-switch{margin:24px 0 0;padding-top:20px;border-top:1px solid var(--line);font-size:13px;text-align:center}
+.auth-switch a{text-decoration:none}
+.auth-help{font-size:12px;color:var(--text-3);margin-top:20px;line-height:1.7}
+.auth-help summary{cursor:pointer}
+#adminLoginDialog{padding:0;max-width:440px}
+@media(min-width:921px){
+  .console-layout .sidebar{height:100dvh}
+}
+@media(max-width:920px){
+  body.console-menu-open{overflow:hidden}
+  .console-layout{grid-template-columns:minmax(0,1fr)}
+  .console-layout .sidebar{position:fixed;top:0;bottom:0;left:0;width:260px;max-width:calc(100vw - 48px);height:100dvh;align-items:stretch;flex-direction:column;flex-wrap:nowrap;padding:0 12px 12px;border-right:1px solid var(--line);border-bottom:0;transform:translateX(-100%);visibility:hidden;transition:transform .18s ease,visibility .18s}
+  .console-layout.sidebar-open .sidebar{transform:none;visibility:visible;z-index:60}
+  .console-layout .sidebar .brand{height:64px;min-height:64px;justify-content:flex-start;padding:0 9px;border-bottom:1px solid var(--line)}
+  .console-layout .sidebar-scroll{width:100%}
+  .console-layout nav.tabs{width:100%;flex-direction:column;overflow:visible;padding:0}
+  .console-layout nav.tabs button{width:100%;padding:9px 10px;justify-content:flex-start;gap:10px}
+  .console-layout nav.tabs button .ico{width:16px;height:16px}
+  .console-layout .sidebar-foot{margin:0;border-top:1px solid var(--line);align-items:stretch}
+  .console-layout .console-spaces{flex-direction:row}
+  .console-layout .console-collapse{display:none}
+  .console-layout .sidebar-foot>.badge{display:inline-flex}
+  .console-layout .brand-text,.console-layout .sidebar-section-label,.console-layout .sidebar-scroll button>span,.console-layout .console-spaces span{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal}
+  .console-layout .console-mobile-close{display:inline-flex;position:absolute;top:18px;right:12px;font-size:11px;height:26px;padding:0 8px}
+  .console-layout .console-menu-toggle{display:inline-flex;padding:0 8px;flex:none}
+  .console-backdrop{position:fixed;inset:0;z-index:50;border:0;background:#0007;cursor:pointer}
+  .console-layout .topbar{gap:10px;min-height:64px;position:sticky;top:0}
+  .console-role{display:none}
+  .user-workspace .user-main>.card{padding:16px}
+}
+@media(max-width:520px){
+  .console-layout .topbar{padding:10px 12px;gap:8px}
+  .console-layout .page-head h1{font-size:15px}
+  .auth-card{padding:24px}
+}

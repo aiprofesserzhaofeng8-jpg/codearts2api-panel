@@ -13,7 +13,7 @@ import { loadPricing } from '../features/models/pricing';
 import { loadModelPolicies } from '../features/models/policies';
 import { loadCredits } from '../features/accounts/credits';
 import { listen } from '../shared/lifecycle';
-import { loadHealth, updateThemeLabel } from './shell';
+import { loadHealth } from './shell';
 import { api } from '../api/client';
 import { resumeLogin } from '../features/accounts/providers/codearts';
 import { refresh } from '../shared/refresh';
@@ -41,7 +41,7 @@ export function activateTab(name, updateHash, warm) {
         return;
     if (name !== "keys" && serverState.data)
         renderKeys(serverState.data);
-    document.querySelectorAll("nav button").forEach(function (x) {
+    document.querySelectorAll('nav[aria-label="控制台分区"] button[data-tab]').forEach(function (x) {
         var sel = x.dataset.tab === name;
         x.classList.toggle("on", sel);
         x.setAttribute("aria-selected", sel ? "true" : "false");
@@ -83,7 +83,7 @@ export function activateTab(name, updateHash, warm) {
 routesState.initialTab = location.hash.slice(1);
 
 export function mountRoutes() {
-document.querySelectorAll("nav button").forEach(function (b) {
+document.querySelectorAll('nav[aria-label="控制台分区"] button[data-tab]').forEach(function (b) {
     listen(b, "click", function () { activateTab(b.dataset.tab, true); });
     // WAI-ARIA tabs：左右方向键切换
     listen(b, "keydown", function (e) {
@@ -99,14 +99,13 @@ document.querySelectorAll("nav button").forEach(function (b) {
             return;
         e.preventDefault();
         activateTab(keys[i], true);
-        document.querySelector('nav button[data-tab="' + keys[i] + '"]').focus();
+        document.querySelector('nav[aria-label="控制台分区"] button[data-tab="' + keys[i] + '"]').focus();
     });
 });
 listen(window, "hashchange", function () {
     activateTab(location.hash.slice(1), false);
 });
 routesState.initialTab = routesState.TAB_IDS[routesState.initialTab] ? routesState.initialTab : "accounts";
-updateThemeLabel();
 activateTab(routesState.initialTab, false, true);
 api("/admin/auth/session").then(function (session) {
     sessionState.adminAuthenticated = !!session.authenticated || !!sessionState.localPanelSession;

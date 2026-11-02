@@ -1,0 +1,122 @@
+{
+  "date": "2026-11-02",
+  "scope": "shared admin and user frontend layout",
+  "version": "0.3.0-unified-console",
+  "frontend_build": "5de9731627b0616ee05f",
+  "binary_sha256": "b1f106f6617f767540c33729aa2fa4ac5d45764e29d6445673db7294e7c857ee",
+  "checks": {
+    "make_check": true,
+    "frontend_unit_tests": 16,
+    "browser_suites": [
+      {
+        "case": "providers-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-device-smoke",
+        "passed": true
+      },
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-tasks-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-actions-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-buddy-smoke",
+        "passed": true
+      },
+      {
+        "case": "frontend-smoke",
+        "passed": true
+      },
+      {
+        "case": "product-settings-smoke",
+        "passed": true
+      },
+      {
+        "case": "users-smoke",
+        "passed": true
+      },
+      {
+        "case": "consumer-entitlements-smoke",
+        "passed": true
+      },
+      {
+        "case": "unified-console-smoke",
+        "passed": true
+      }
+    ],
+    "live_login_browser": {
+      "user_login": true,
+      "admin_login": true,
+      "mobile_overflow": false,
+      "page_errors": []
+    },
+    "git_diff_check": true
+  },
+  "deployment": {
+    "new_pid": 4070269,
+    "schema": 10,
+    "counts": {
+      "accounts": 4,
+      "groups": 3,
+      "keys": 5,
+      "users": 1
+    },
+    "credentials_preserved": true,
+    "usage_sequence_before": 32,
+    "usage_sequence_after": 32
+  },
+  "inference_changes": false,
+  "real_upstream_calls_this_change": 0,
+  "new_dependencies": 0,
+  "shared_authentication": false,
+  "asset_sizes": {
+    "before": {
+      "build": "57669ddb3a1d528b1e23",
+      "assets": [
+        {
+          "path": "/assets/index-DNXLmbBV.js",
+          "bytes": 308768,
+          "gzip_bytes": 91969
+        },
+        {
+          "path": "/assets/index-BU63g25W.css",
+          "bytes": 58992,
+          "gzip_bytes": 11946
+        }
+      ]
+    },
+    "after": [
+      {
+        "path": "/assets/index-D78azyvb.js",
+        "bytes": 316277,
+        "gzip_bytes": 94747
+      },
+      {
+        "path": "/assets/index-DOHhlllq.css",
+        "bytes": 64129,
+        "gzip_bytes": 12958
+      }
+    ]
+  }
+}

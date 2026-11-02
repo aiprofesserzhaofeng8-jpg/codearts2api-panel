@@ -18,7 +18,7 @@ python3 tools/check_api_types.py
 - `src/features`：八个页面、弹窗、功能状态及控制器；账号内的 `providers` 保存平台专属授权表单与流程，WorkBuddy 成长交互归 `jobs`。
 - `src/shared/read-model.ts`：服务端公开快照；不和表单草稿混用。
 - `src/components/controls.ts`：严格类型的安全文本、表格和按钮助手，包含重复提交保护。
-- `src/layouts`、`src/styles`：原有导航和浅黄色明暗主题。
+- `src/layouts`：管理员与用户共用 ConsoleLayout、Topbar、品牌、主题开关及 AuthCard；浅黄色明暗主题在 `src/styles`，共用骨架样式独立在 `layout.css`。
 
 这次保留成熟的原生 DOM 渲染算法，将其按功能拆成 ES 模块；这些控制器仍为 JavaScript，`checkJs: false`，不能将本次类型检查理解为所有遗留函数已经严格类型化。新增 API 客户端、公共控件、装配、SFC 脚本及契约使用 TypeScript。相关限制见 [M4 验收](../docs/acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。
 
@@ -38,3 +38,7 @@ CODEARTS_TEST_BROWSER=chromium make e2e
 测试只使用临时数据和模拟接口，不会真实登录、领取奖励或消耗积分。Linux 上已实测开发代理和退出；Windows CI 构建和运行后端测试，Windows 可分别在两个终端启动 Vite 与 Go。
 
 M7 的 UsersPage 和 `/user` UserConsole 为独立响应式 Vue 树，API 使用生成类型；不能接管遗留 `v-once` 页面的节点。用户会话只在 Cookie，显式显示的密钥仅留内存，切页/刷新/退出清除。开发代理覆盖 `/user/auth`、`/user/api`；普通页面路由为 `/user`。
+
+两端共用侧栏、顶栏和内容区域骨架，通过插槽提供各自导航与操作。管理员导航 Sidebar 及顶栏的标题/退出控件仍由原生控制器独占；`v-once` 只放在它们自己的子树，不放在包含用户响应式分支的条件链上。管理员导航事件只绑定 `控制台分区` 内的 `button[data-tab]`，不能匹配整个页面的导航按钮。
+
+用户导航配置归 `features/users/navigation.ts`，使用 `/user#keys` 等片段支持刷新和浏览器前进/后退；切页清除已显示密钥和密码草稿。主题与桌面侧栏折叠偏好共用本机存储，手机导航为抽屉并支持 Escape 和焦点返回。空间链接只切入口，不复制 Cookie、合并身份或请求另一端的数据。

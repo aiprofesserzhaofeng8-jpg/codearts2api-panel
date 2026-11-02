@@ -4,6 +4,7 @@ import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import App from '../App.vue';
 const fixture={accounts:[],keys:[],models:[],groups:[],providers:[],settings:{pool:{}},stats:{}};
 beforeEach(()=>{
+  vi.stubGlobal('matchMedia',vi.fn(()=>({matches:false,addEventListener:vi.fn(),removeEventListener:vi.fn()})));
   HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};
   HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new Event('close'));};
   location.hash='accounts';

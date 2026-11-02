@@ -1,0 +1,56 @@
+<script setup lang="ts">
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import ConsoleBrand from './ConsoleBrand.vue';
+import Sidebar from './Sidebar.vue';
+import Topbar from './Topbar.vue';
+withDefaults(defineProps<{role?: 'admin' | 'user'; name?: string}>(), {role: 'admin', name: ''});
+const media = window.matchMedia('(max-width: 920px)');
+const mobile = ref(media.matches), open = ref(false), collapsed = ref(false);
+try { collapsed.value = localStorage.getItem('codearts2api_sidebar_collapsed') === 'true'; } catch { /* Storage is optional. */ }
+function resize() { mobile.value = media.matches; open.value = false; }
+function closeMenu() {
+  if (!open.value) return;
+  open.value = false;
+  void nextTick(() => document.querySelector<HTMLButtonElement>('#consoleMenuToggle')?.focus());
+}
+function navigate(event: MouseEvent) {
+  if ((event.target as Element).closest('nav button, a')) closeMenu();
+}
+function collapse() {
+  collapsed.value = !collapsed.value;
+  try { localStorage.setItem('codearts2api_sidebar_collapsed', String(collapsed.value)); } catch { /* Storage is optional. */ }
+}
+watch(open, value => document.body.classList.toggle('console-menu-open', value), {flush: 'sync'});
+watch(open, value => { if (value) void nextTick(() => document.querySelector<HTMLButtonElement>('.console-mobile-close')?.focus()); });
+onMounted(() => media.addEventListener('change', resize));
+onUnmounted(() => { media.removeEventListener('change', resize); document.body.classList.remove('console-menu-open'); });
+</script>
+<template>
+  <div class="app console-layout" :class="{'sidebar-collapsed': collapsed, 'sidebar-open': open}" :data-console-role="role" @keydown.esc="closeMenu">
+    <a class="skip" href="#main">跳到主要内容</a>
+    <aside id="consoleSidebar" class="sidebar" :inert="mobile && !open" aria-label="侧栏导航" @click="navigate">
+      <ConsoleBrand />
+      <button class="btn ghost console-mobile-close" aria-label="关闭导航" @click="closeMenu">关闭</button>
+      <div class="sidebar-scroll">
+        <p class="sidebar-section-label">{{role === 'admin' ? '管理空间' : '个人空间'}}</p>
+        <slot name="navigation"><Sidebar /></slot>
+      </div>
+      <div class="sidebar-foot">
+        <nav class="console-spaces" aria-label="切换空间">
+          <a href="/" :aria-current="role === 'admin' ? 'page' : undefined" title="管理空间"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.2 3.3 7.4 8 9 4.7-1.6 8-4.8 8-9V6l-8-3Z"/></svg><span>管理空间</span></a>
+          <a href="/user" :aria-current="role === 'user' ? 'page' : undefined" title="个人空间"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>个人空间</span></a>
+        </nav>
+        <slot name="status"><span v-once id="health" class="badge"><i class="dot"></i><span>检测中…</span></span></slot>
+        <button class="btn ghost console-collapse" :aria-label="collapsed ? '展开侧栏' : '收起侧栏'" :aria-expanded="!collapsed" aria-controls="consoleSidebar" @click="collapse"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path :d="collapsed ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'"/></svg><span>{{collapsed ? '展开侧栏' : '收起侧栏'}}</span></button>
+      </div>
+    </aside>
+    <button v-if="open" class="console-backdrop" aria-label="关闭侧栏" tabindex="-1" @click="closeMenu"></button>
+    <div class="main" :inert="mobile && open">
+      <Topbar :role="role" :name="name" :open="open" @menu="open = !open">
+        <template #heading><slot name="heading"></slot></template>
+        <template #actions><slot name="actions"></slot></template>
+      </Topbar>
+      <main id="main" class="console-content"><slot /></main>
+    </div>
+  </div>
+</template>

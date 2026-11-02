@@ -1,16 +1,20 @@
+<script setup lang="ts">
+import ThemeToggle from './ThemeToggle.vue';
+import AdminHeading from './AdminHeading.vue';
+import AdminSessionActions from './AdminSessionActions.vue';
+defineProps<{role: 'admin' | 'user'; name: string; open: boolean}>();
+defineEmits<{menu: []}>();
+</script>
 <template>
-<header v-once class="topbar">
-      <div v-once class="page-head">
-        <h1 id="pageTitle">概览</h1>
-        <p class="page-hint" id="pageHint">运行状态与用量</p>
-      </div>
-      <div v-once class="topbar-actions">
-        <button class="btn ghost" id="themeToggle" aria-label="切换明暗主题" title="切换明暗主题">
-          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg>
-          <span id="themeLabel">浅色</span>
-        </button>
-        <span id="localPanelStatus" class="badge ok hidden">本机已解锁</span>
-        <button class="btn ghost hidden" id="forgetPw">退出登录</button>
-      </div>
-    </header>
+  <header class="topbar">
+    <button id="consoleMenuToggle" class="btn ghost console-menu-toggle" aria-label="打开导航" :aria-expanded="open" aria-controls="consoleSidebar" @click="$emit('menu')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <AdminHeading v-if="role === 'admin'" />
+    <div v-else class="page-head"><slot name="heading" /></div>
+    <div class="topbar-actions">
+      <ThemeToggle />
+      <span class="console-role badge" :title="name || '管理员'">{{role === 'admin' ? '管理员' : name}}</span>
+      <AdminSessionActions v-if="role === 'admin'" />
+      <slot v-else name="actions" />
+    </div>
+  </header>
 </template>

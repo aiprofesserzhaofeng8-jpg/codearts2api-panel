@@ -1,15 +1,5 @@
 <template>
-<aside v-once class="sidebar">
-    <div v-once class="brand">
-      <span class="brand-mark">
-        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 20 7.7v8.6L12 20.8 4 16.3V7.7z"/><path d="M4 7.7 12 12.2l8-4.5"/><path d="M12 12.2v8.6"/></svg>
-      </span>
-      <span class="brand-text">
-        <span class="brand-name">CodeArts2API</span>
-      </span>
-    </div>
-
-    <nav class="tabs" role="tablist" aria-label="控制台分区">
+    <nav v-once class="tabs" role="tablist" aria-label="控制台分区">
       <button role="tab" id="nav-accounts" data-tab="accounts" aria-selected="false" aria-controls="tab-accounts">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.6 5.5-5.6s5.5 2.4 5.5 5.6"/><path d="M16 5.4a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.6c2 .6 3.5 2.5 3.5 4.9"/></svg>
         <span>账号池</span><span class="nav-count" id="navAccountCount">0</span>
@@ -46,10 +36,4 @@
         <span>配置</span>
       </button>
     </nav>
-
-    <div v-once class="sidebar-foot">
-      <span id="health" class="badge"><i class="dot"></i><span>检测中…</span></span>
-      <span class="sidebar-note">CodeArts2API Panel <span class="mono">v0.3-dev</span></span>
-    </div>
-  </aside>
 </template>

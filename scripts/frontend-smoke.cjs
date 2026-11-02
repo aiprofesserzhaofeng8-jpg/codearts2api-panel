@@ -23,7 +23,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   await page.locator('#usagePageSize').selectOption('50');await page.waitForFunction(()=>document.querySelector('#usageLogs').getAttribute('aria-busy')==='false');assert.ok(requests.some(url=>url.includes('/usage?')&&url.includes('page_size=50')));
   await page.locator('#nav-audit').click();await page.locator('#auditNext').click();await page.waitForFunction(()=>document.querySelector('#auditPage').textContent.includes('2'));assert.ok(requests.some(url=>url.includes('/audit?page=2')));
   await page.locator('#themeToggle').click();assert.ok(['dark','light'].includes(await page.locator('html').getAttribute('data-theme')));
-  await page.setViewportSize({width:390,height:844});for(const name of ['accounts','groups','overview','models','keys','logs','audit','settings']){await page.locator('#nav-'+name).click();await page.locator('#tab-'+name+'.on').waitFor();}
+  await page.setViewportSize({width:390,height:844});for(const name of ['accounts','groups','overview','models','keys','logs','audit','settings']){await page.locator('#consoleMenuToggle').click();await page.locator('#nav-'+name).click();await page.locator('#tab-'+name+'.on').waitFor();}
   assert.deepEqual(errors,[]);console.log('PASS: production Vue pages, expired login, draft retention, key budget, usage/date controls, audit pagination, XSS, strict CSP, theme and mobile.');await context.close();
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exit(1);});

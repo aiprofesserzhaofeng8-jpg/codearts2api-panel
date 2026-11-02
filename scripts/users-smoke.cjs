@@ -28,7 +28,7 @@ const fs=require('node:fs');
   assert.equal((await b.request.delete(base+'/user/api/keys?ref='+key.ref+'&action=delete')).status(),404);
   assert.equal((await a.request.get(base+'/admin/api/state')).status(),401);
   assert.equal((await a.request.post(base+'/user/api/keys',{data:{name:'escape',user_id:'other'}})).status(),400);
-  await page.reload();await page.locator('#userDashboard').waitFor();await page.getByRole('button',{name:'我的密钥',exact:true}).click();await page.locator('#userKeys').waitFor();assert.equal(await page.locator('#userKeys input[readonly]').getAttribute('type'),'password');
+  await page.reload();await page.locator('#userKeys').waitFor();assert.equal(await page.locator('#userKeys input[readonly]').getAttribute('type'),'password');
   await page.getByRole('button',{name:'我的用量',exact:true}).click();await page.locator('#userUsage').waitFor();assert((await page.locator('#userUsage').innerText()).includes('0 次请求'));
   await page.getByRole('button',{name:'可用模型',exact:true}).click();await page.locator('#userModels').getByText('暂无显示的模型，请联系管理员检查分组').waitFor();
   await page.getByRole('button',{name:'仪表盘',exact:true}).click();await page.locator('#userDashboard').getByText('当前范围暂无请求记录').waitFor();
@@ -48,7 +48,7 @@ const fs=require('node:fs');
   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.screenshot({path:out+'/user-'+theme+'.png',fullPage:true,animations:'disabled'});}
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:out+'/user-mobile.png',fullPage:true,animations:'disabled'});
   await ap.locator('#users').getByRole('button',{name:'编辑',exact:true}).first().click();await ap.screenshot({path:out+'/users-admin-desktop.png',animations:'disabled'});await ap.setViewportSize({width:390,height:844});assert.equal(await ap.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await ap.screenshot({path:out+'/users-admin-mobile.png',animations:'disabled'});await ap.locator('#userDialog').getByRole('button',{name:'取消',exact:true}).click();
-  await page.getByRole('button',{name:'修改密码',exact:true}).first().click();await page.locator('#userOldPassword').fill('browser-alice-strong-password');await page.locator('#userNewPassword').fill('browser-alice-new-password');await page.locator('form').getByRole('button',{name:'修改并重新登录'}).click();await page.locator('#userLoginForm').waitFor();
+  await page.locator('#consoleMenuToggle').click();await page.getByRole('button',{name:'修改密码',exact:true}).first().click();await page.locator('#userOldPassword').fill('browser-alice-strong-password');await page.locator('#userNewPassword').fill('browser-alice-new-password');await page.locator('form').getByRole('button',{name:'修改并重新登录'}).click();await page.locator('#userLoginForm').waitFor();
   assert.equal((await a.request.get(base+'/user/api/keys')).status(),401);
   response=await a.request.post(base+'/user/auth/login',{data:{username:'browser-alice',password:'browser-alice-new-password'}});assert.equal(response.status(),200);
   response=await admin.request.post(base+'/admin/api/users',{data:{id:alice.id,username:alice.username,group_id:group.id,enabled:false}});assert.equal(response.status(),200);

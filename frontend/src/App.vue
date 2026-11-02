@@ -12,61 +12,24 @@ import SettingsPage from './features/settings/SettingsPage.vue';
 import UsersPage from './features/users/UsersPage.vue';
 import GrowthDialog from './features/jobs/GrowthDialog.vue';
 import SessionDialog from './app/SessionDialog.vue';
-import Sidebar from './layouts/Sidebar.vue';
-import Topbar from './layouts/Topbar.vue';
+import ConsoleLayout from './layouts/ConsoleLayout.vue';
 let dispose: (() => void) | undefined;
 onMounted(() => { dispose = startConsole(); });
 onUnmounted(() => dispose?.());
 </script>
 <template>
-<a class="skip" href="#main">跳到主要内容</a>
-
-<SessionDialog />
-
-
-
-
-
-
-<GrowthDialog />
-
-
-
-<div class="app">
-  <Sidebar />
-
-  <div class="main">
-    <Topbar />
-
-
-
-
-
-    <main id="main">
-      <UsagePage />
-
-      <ModelsPage />
-
-      <AccountsPage />
-
-      <GroupsPage />
-
-      <UsersPage />
-
-      <KeysPage />
-
-      <LogsPage />
-
-      <AuditPage />
-      <SettingsPage />
-    </main>
-  </div>
-</div>
-
-
-
-
-<div class="toast" id="toast" role="status" aria-live="polite" title="点击关闭"></div>
-
-
+  <SessionDialog />
+  <GrowthDialog />
+  <ConsoleLayout>
+    <UsagePage />
+    <ModelsPage />
+    <AccountsPage />
+    <GroupsPage />
+    <UsersPage />
+    <KeysPage />
+    <LogsPage />
+    <AuditPage />
+    <SettingsPage />
+  </ConsoleLayout>
+  <div class="toast" id="toast" role="status" aria-live="polite" title="点击关闭"></div>
 </template>

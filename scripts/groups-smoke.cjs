@@ -151,14 +151,14 @@ const assert=require('node:assert/strict');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'artifacts/groups-mobile.png'});
   await page.locator('#groupModels').selectOption([]);await page.locator('#groupSave').click();await page.locator('#groupDialog').waitFor({state:'hidden'});
-  await page.locator('#nav-models').click();assert.equal(await page.locator('#models').textContent(),'没有符合条件的模型');
+  await page.locator('#consoleMenuToggle').click();await page.locator('#nav-models').click();assert.equal(await page.locator('#models').textContent(),'没有符合条件的模型');
   await page.reload();await page.locator('#modelsGroupFilter option[value="group-fixture"]').waitFor({state:'attached'});await page.locator('#modelsGroupFilter').selectOption('group-fixture');
   assert.equal(await page.locator('#models').textContent(),'没有符合条件的模型');
-  await page.locator('#nav-keys').click();await keyRow().getByRole('button',{name:'分组',exact:true}).click();
+  await page.locator('#consoleMenuToggle').click();await page.locator('#nav-keys').click();await keyRow().getByRole('button',{name:'分组',exact:true}).click();
   await page.locator('#keyGroupSelect').selectOption('');await page.locator('#keyGroupSave').click();await page.locator('#keyGroupDialog').waitFor({state:'hidden'});
   assert.equal(data.keys[0].group_id,'');
   // Remove the synthetic second binding before checking group deletion.
-  data.keys[1].group_id='';await page.locator('#nav-groups').click();await page.reload();await page.locator('#groups tr').filter({hasText:'WB only'}).waitFor();
+  data.keys[1].group_id='';await page.locator('#consoleMenuToggle').click();await page.locator('#nav-groups').click();await page.reload();await page.locator('#groups tr').filter({hasText:'WB only'}).waitFor();
   page.once('dialog',d=>d.accept());await page.locator('#groups tr').getByRole('button',{name:'删除',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#groups').textContent.includes('尚未创建分组'));
   assert.equal(data.groups.length,0);
