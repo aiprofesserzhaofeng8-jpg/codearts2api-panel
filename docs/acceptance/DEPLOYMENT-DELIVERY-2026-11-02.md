@@ -41,3 +41,5 @@
 云端检查补充：v0.3.1 Release 应用和部署检查通过，但并行普通 CI 在既有 internal/catalog/presets.go 的 gofmt 检查失败。修正纯格式后使用 v0.3.2 新标签，不改写 v0.3.1 标签。
 
 跨架构构建补充：v0.3.1 云端镜像构建在 QEMU ARM 前端测试中超时。Dockerfile 调整为构建机原生执行前端检查与构建，Go 使用 TARGETOS/TARGETARCH 交叉编译；最终运行镜像仍为目标架构，未放宽测试时限或移除测试。修正使用新标签 v0.3.3 验证，不移动已有标签。
+
+CI 环境补充：普通 CI 的 ubuntu-latest 已升级为 Ubuntu 26.04，当前锁定 Playwright 无对应浏览器安装支持。浏览器验收 runner 固定为 Ubuntu 24.04；未改应用代码或降低浏览器测试要求。v0.3.3 Release 工作流已完整通过，最终普通 CI 使用相同应用源码加 runner 修正重新验证。
