@@ -66,6 +66,19 @@ M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算�
 
 ## 部署
 
+### 固定版本安装（Linux 服务器）
+
+不需要 Go 或 Node.js，需 Python 3.10+ 和可用的用户级 systemd。从 [正式发布页](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest) 下载并查看 `install.sh` 后执行：
+
+```bash
+sh install.sh check
+sh install.sh install --version v0.3.3 --root "$HOME/codearts2api-managed" --port 10087
+# 后续升级：先阅读新版本说明，再执行
+sh install.sh upgrade --root "$HOME/codearts2api-managed"
+```
+
+安装工具会下载并校验对应架构的程序和运维工具；首次安装通过向导设置 `admin` 密码。默认绑定 loopback，远程访问使用 SSH 隧道或 HTTPS 反代。已有源码实例先按 [迁移说明](deploy/README.md#已有源码服务迁入受管目录) 接入受管目录。
+
 ### 方式一：从源码运行
 
 源码构建需要 Git、Go 1.27.3 或更新版本，以及 Node.js 24.11.x 和 npm。构建脚本自动使用固定版本的 pnpm；运行已编译的生产二进制不需要 Node.js。

@@ -1,6 +1,6 @@
 # 安装、更新发现与交付收尾
 
-状态：功能、隔离验收和本机迁移已完成；正式发布待工作流结果。承接 D1～D3，见 [交付验收](../acceptance/DEPLOYMENT-DELIVERY-2026-11-02.md)。
+状态：已完成。功能、隔离验收、正式发布、公开下载与本机迁移/升级全部完成；交付版本为 [v0.3.3](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.3.3)。承接 D1～D3，见 [交付验收](../acceptance/DEPLOYMENT-DELIVERY-2026-11-02.md)。
 
 ## 目标
 

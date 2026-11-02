@@ -53,9 +53,22 @@ Task availability and rewards come from the upstream account. A real-account che
 
 ## Deployment
 
+### Versioned installation on Linux servers
+
+Requires Python 3.10+ and a working user systemd session. Go and Node.js are not required. Download and review `install.sh` from the [stable release](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest), then run:
+
+```bash
+sh install.sh check
+sh install.sh install --version v0.3.3 --root "$HOME/codearts2api-managed" --port 10087
+# Read the new release notes before upgrading:
+sh install.sh upgrade --root "$HOME/codearts2api-managed"
+```
+
+The installer verifies the release archive and operations tool before execution. Set the `admin` password through the first-install wizard. The service binds to loopback; use an SSH tunnel or HTTPS reverse proxy for remote access. Existing source installations need an explicit migration. See the [deployment guide](deploy/README.md) for migration, Docker, HTTPS, backups, and recovery.
+
 ### Option 1: Build from source
 
-Requires Git and Go 1.27.3 or later. The commands below use a POSIX shell.
+Requires Git, Go 1.27.3 or later, Node.js 24.11.x, and npm. The build script uses a pinned pnpm version. The commands below use a POSIX shell.
 
 ```bash
 git clone --branch main https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel.git
