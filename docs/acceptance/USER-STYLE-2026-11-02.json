@@ -1,0 +1,175 @@
+{
+  "date": "2026-11-02",
+  "version": "codearts2api 0.3.0-user-style",
+  "frontend_build": "62296b7f87d2ebb9829d",
+  "reference": {
+    "repository": "https://github.com/Wei-Shaw/sub2api",
+    "commit": "4a4a83ee5ec86b19d3a2dd9b6471de5128963bec",
+    "scope": "layout proportions and user view card hierarchy; independently implemented; existing yellow accent"
+  },
+  "make_check": {
+    "passed": true,
+    "frontend_unit_tests": 17,
+    "go_test_all": true,
+    "go_vet_all": true,
+    "resource_and_csp": true,
+    "architecture": true
+  },
+  "browser_cases": [
+    {
+      "case": "providers-smoke",
+      "passed": true
+    },
+    {
+      "case": "trae-smoke",
+      "passed": true
+    },
+    {
+      "case": "trae-device-smoke",
+      "passed": true
+    },
+    {
+      "case": "groups-smoke",
+      "passed": true
+    },
+    {
+      "case": "account-create-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-multi-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-tasks-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-actions-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-buddy-smoke",
+      "passed": true
+    },
+    {
+      "case": "frontend-smoke",
+      "passed": true
+    },
+    {
+      "case": "product-settings-smoke",
+      "passed": true
+    },
+    {
+      "case": "users-smoke",
+      "passed": true
+    },
+    {
+      "case": "consumer-entitlements-smoke",
+      "passed": true
+    },
+    {
+      "case": "unified-console-smoke",
+      "passed": true
+    },
+    {
+      "case": "user-style-smoke",
+      "passed": true
+    }
+  ],
+  "visual": {
+    "passed": true,
+    "states": 32,
+    "pages": 8,
+    "widths": [
+      1440,
+      390
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "extra_320px_pages": 8,
+    "long_names": true,
+    "admin_requests": 0,
+    "page_and_csp_errors": 0,
+    "data_source": "isolated real authentication with populated read fixtures"
+  },
+  "live_http": {
+    "anonymous_admin": 401,
+    "retired_endpoints": {
+      "/admin/auth/login": 404,
+      "/admin/auth/session": 404,
+      "/user/auth/login": 404,
+      "/user/auth/session": 404
+    },
+    "forged_role": 401,
+    "old_password_header": 401,
+    "unified_login": 200,
+    "server_role": "admin",
+    "session_cookie": [
+      {
+        "name": "codearts_session",
+        "path": "/",
+        "http_only": true,
+        "secure": false
+      }
+    ],
+    "admin_settings": 200,
+    "admin_cannot_be_consumer": 403,
+    "logout": 200,
+    "after_logout": 401
+  },
+  "deployment": {
+    "backup": "/home/white/codearts2api-panel/data/backups/user-style-final-20261102T175914",
+    "old_pid": 4169844,
+    "new_pid": 34367,
+    "version": "codearts2api 0.3.0-user-style",
+    "frontend_build": "62296b7f87d2ebb9829d",
+    "binary_sha256": "330a1ce9cb15211145bf26382da9be088004a3c642996237a4541cc6b6feb26c",
+    "schema": 10,
+    "counts": {
+      "accounts": 4,
+      "groups": 3,
+      "keys": 5,
+      "users": 1
+    },
+    "all_persisted_accounts_groups_keys_users_settings_consumer_and_access_preserved": true,
+    "usage_sequence_before": 32,
+    "usage_sequence_after": 32,
+    "health": {
+      "accounts": 4,
+      "models": 8,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    }
+  },
+  "live_assets": {
+    "frontend_build": "62296b7f87d2ebb9829d",
+    "assets": [
+      {
+        "path": "/assets/index-C4H-SvEl.js",
+        "bytes": 332208,
+        "sha256": "a8167641fb5e85950fa95c4cc9f3eca931bff8ecebc9b646f2eb5cbefe28a1a3",
+        "matches_built_asset": true
+      },
+      {
+        "path": "/assets/index-CNSO7WrQ.css",
+        "bytes": 89419,
+        "sha256": "e46f717759365fe1c6ad35214a1ae78b0a633ba5844f545e727dbd8d58a3820b",
+        "matches_built_asset": true
+      }
+    ]
+  },
+  "limits": {
+    "real_upstream_calls": 0,
+    "real_external_identity_calls": 0,
+    "real_payment_calls": 0,
+    "model_latency_benchmark": false,
+    "cloud_deployment": false,
+    "github_push": false,
+    "backend_changes": false,
+    "new_runtime_dependencies": false
+  }
+}

@@ -20,7 +20,7 @@ it('shows usage coverage, model distribution and daily counts from the whole sel
   expect(wrapper.text()).toContain('$0.120000');
   expect(wrapper.text()).toContain('public-4.1');
   expect(wrapper.text()).toContain('已报告用量 23 次');
-  expect(wrapper.get('meter').attributes('value')).toBe('24');
+  expect(wrapper.get('svg[role="img"] desc').text()).toContain('24 次请求');
 });
 
 it('keeps absent history distinct from a measured zero rate', () => {

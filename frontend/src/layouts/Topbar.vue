@@ -12,7 +12,8 @@ defineEmits<{menu: []}>();
     <div v-else class="page-head"><slot name="heading" /></div>
     <div class="topbar-actions">
       <ThemeToggle />
-      <span class="console-role badge" :title="name || '管理员'">{{role === 'admin' ? '管理员' : name}}</span>
+      <span v-if="role === 'admin'" class="console-role badge">管理员</span>
+      <slot v-else name="identity"><span class="console-role badge" :title="name">{{name}}</span></slot>
       <AdminSessionActions v-if="role === 'admin'" />
       <slot v-else name="actions" />
     </div>

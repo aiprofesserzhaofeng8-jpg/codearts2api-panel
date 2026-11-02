@@ -44,6 +44,7 @@ onUnmounted(() => { media.removeEventListener('change', resize); document.body.c
     <div class="main" :inert="mobile && open">
       <Topbar :role="role" :name="name" :open="open" @menu="open = !open">
         <template #heading><slot name="heading"></slot></template>
+        <template #identity><slot name="identity"></slot></template>
         <template #actions><slot name="actions"></slot></template>
       </Topbar>
       <main id="main" class="console-content"><slot /></main>

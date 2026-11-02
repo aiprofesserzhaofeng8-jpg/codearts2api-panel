@@ -29,8 +29,8 @@ const fs=require('node:fs');
   assert.equal((await a.request.get(base+'/admin/api/state')).status(),403);
   assert.equal((await a.request.post(base+'/user/api/keys',{data:{name:'escape',user_id:'other'}})).status(),400);
   await page.reload();await page.locator('#userKeys').waitFor();assert.equal(await page.locator('#userKeys input[readonly]').getAttribute('type'),'password');
-  await page.getByRole('button',{name:'我的用量',exact:true}).click();await page.locator('#userUsage').waitFor();assert((await page.locator('#userUsage').innerText()).includes('0 次请求'));
-  await page.getByRole('button',{name:'可用模型',exact:true}).click();await page.locator('#userModels').getByText('暂无显示的模型，请联系管理员检查分组').waitFor();
+  await page.getByRole('button',{name:'我的用量',exact:true}).click();await page.locator('#userUsage').waitFor();await page.locator('#userUsage').getByText('暂无请求记录',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'可用模型',exact:true}).click();await page.locator('#userModels').getByText('暂无显示的模型',{exact:true}).waitFor();
   await page.getByRole('button',{name:'仪表盘',exact:true}).click();await page.locator('#userDashboard').getByText('当前范围暂无请求记录').waitFor();
   await page.locator('#userUsageRange').selectOption('30');await page.locator('#userRefresh').waitFor({state:'visible'});await page.waitForFunction(()=>!document.querySelector('#userRefresh').disabled);
   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.screenshot({path:out+'/user-dashboard-'+theme+'.png',fullPage:true,animations:'disabled'});}
@@ -42,7 +42,7 @@ const fs=require('node:fs');
   response=await a.request.get(base+'/user/api/profile');let profile=(await response.json()).user;assert.equal(profile.display_name,'浏览器测试用户');assert.equal(profile.username,'browser-alice');assert.equal(profile.max_concurrency,2);assert(profile.avatar.startsWith('data:image/jpeg;base64,'));assert(Buffer.from(profile.avatar.split(',')[1],'base64').length<=20*1024);
   assert.equal(await page.locator('#userProfile img').evaluate(image=>image.complete&&image.naturalWidth>0),true);
   response=await b.request.get(base+'/user/api/profile');assert.equal((await response.json()).user.display_name,'');
-  await page.reload();await page.locator('.user-identity h1').getByText('浏览器测试用户',{exact:true}).waitFor();
+  await page.reload();await page.locator('.portal-account h2').getByText('浏览器测试用户',{exact:true}).waitFor();
   await page.getByRole('button',{name:'个人资料',exact:true}).click();await page.locator('#userProfile img').waitFor();
   assert.equal(await page.locator('.user-tabs .primary').count(),1);
   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.screenshot({path:out+'/user-'+theme+'.png',fullPage:true,animations:'disabled'});}
