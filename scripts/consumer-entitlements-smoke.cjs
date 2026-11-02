@@ -6,8 +6,10 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  const admin=await browser.newContext({viewport:{width:1440,height:1000}}),user=await browser.newContext({viewport:{width:1440,height:1000}});
  assert.equal((await admin.request.post(base+'/auth/login',{data:{username:'admin',password}})).status(),200);
  let r=await admin.request.post(base+'/admin/api/groups',{data:{name:'Consumer acceptance',account_ids:[],model_ids:[]}});assert.equal(r.status(),200);const group=(await r.json()).group;
- r=await admin.request.post(base+'/admin/api/users',{data:{username:'entitlement-user',password:'entitlement-test-password',group_id:group.id,max_concurrency:3}});assert.equal(r.status(),200);const u=(await r.json()).user;
+ r=await admin.request.post(base+'/admin/api/users',{data:{username:'entitlement-user',password:'entitlement-test-password',group_id:group.id,max_concurrency:3,budget:{max_usd:100}}});assert.equal(r.status(),200);const u=(await r.json()).user;
  const ap=await admin.newPage();ap.on('pageerror',e=>errors.push(e.message));await ap.goto(base+'/#users');await ap.locator('#creditUser').selectOption(u.id);await ap.locator('#creditDelta').fill('2');await ap.locator('#creditNote').fill('browser grant');await ap.getByRole('button',{name:'保存额度',exact:true}).click();await ap.getByText('额度已保存',{exact:true}).waitFor();
+ await ap.getByText(/当前余额：2 USD/).waitFor();
+ await ap.getByText('累计费用：0.000000 / 100 USD。累计费用上限与余额同时生效，补充余额不会重置累计费用。',{exact:true}).waitFor();
  await ap.getByRole('button',{name:'套餐与订阅',exact:true}).click();await ap.getByLabel('套餐名称',{exact:true}).fill('Acceptance monthly');await ap.getByLabel('分组',{exact:true}).selectOption(group.id);await ap.getByRole('button',{name:'保存套餐',exact:true}).click();await ap.getByText('Acceptance monthly',{exact:true}).first().waitFor();
  r=await admin.request.get(base+'/admin/api/consumer/plans');const plan=(await r.json()).plans.find(p=>p.name==='Acceptance monthly');assert(plan);
  await ap.getByLabel('订阅用户',{exact:true}).selectOption(u.id);await ap.getByLabel('分配套餐',{exact:true}).selectOption(plan.id);await ap.getByRole('button',{name:'分配 / 续期',exact:true}).click();await ap.getByText('已保存',{exact:true}).waitFor();

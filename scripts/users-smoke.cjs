@@ -15,6 +15,18 @@ const fs=require('node:fs');
   let response=await admin.request.post(base+'/admin/api/groups',{data:{name:'M7 consumer group',account_ids:[],model_ids:[]}});
   assert.equal(response.status(),200);const group=(await response.json()).group;
   const ap=await admin.newPage();ap.on('pageerror',e=>errors.push(e.message));await ap.goto(base+'/#users');
+  await ap.locator('#addUser').waitFor();
+  assert.equal(await ap.getByRole('link',{name:'用户登录入口',exact:true}).count(),0);
+  assert.equal(await ap.locator('#tab-users a[href="/user"]').count(),0);
+  assert.equal(await ap.getByRole('columnheader',{name:'累计费用 / 上限（USD）',exact:true}).count(),1);
+  for(const width of [1440,390]){
+   await ap.setViewportSize({width,height:1000});
+   const head=await ap.locator('#tab-users .card-head').filter({has:ap.locator('#addUser')}).boundingBox(),button=await ap.locator('#addUser').boundingBox();
+   assert(button.x>head.x+head.width/2,'create user must be on the right');
+   assert(head.x+head.width-button.x-button.width<25,'create user must align to the right edge');
+   assert.equal(await ap.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
+  await ap.setViewportSize({width:1440,height:1000});
   await ap.locator('#addUser').click();await ap.locator('#uUsername').fill('browser-alice');await ap.locator('#uPassword').fill('browser-alice-strong-password');await ap.locator('#uGroup').selectOption(group.id);await ap.locator('#uRequests').fill('5');await ap.locator('#uConcurrency').fill('2');await ap.locator('#userSave').click();await ap.locator('#userDialog').waitFor({state:'hidden'});await ap.locator('#users').getByText('browser-alice',{exact:true}).waitFor();
   response=await admin.request.get(base+'/admin/api/users');const alice=(await response.json()).users.find(u=>u.username==='browser-alice');assert.equal(alice.budget.max_requests,5);assert.equal(alice.max_concurrency,2);assert.equal('password_hash' in alice,false);
   response=await admin.request.post(base+'/admin/api/users',{data:{username:'browser-bob',password:'browser-bob-strong-password',group_id:group.id}});assert.equal(response.status(),200);

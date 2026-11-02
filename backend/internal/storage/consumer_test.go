@@ -24,6 +24,63 @@ func enableTestWallet(t *testing.T, s *Store, u access.UserView, amount string) 
 		t.Fatal(err)
 	}
 }
+
+func TestConsumerWalletAndUSDBudgetApplyIndependently(t *testing.T) {
+	s, u, key := userFixture(t, KeyBudget{MaxUSD: 1})
+	enableTestWallet(t, s, u, "10")
+	release, _, err := s.BeginRequestBudget(key.Key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.ReserveConsumerQuote(key.Key, "wallet-and-budget", "journal-model", 0, nil); err != nil {
+		t.Fatal(err)
+	}
+	// The fixture prices output at 2 USD per million tokens: this costs 1 USD.
+	entry := LogEntry{RequestID: "wallet-and-budget", UserID: u.ID, Time: time.Now().Unix(), Attempts: 1, Status: 200, Model: "journal-model", Usage: TokenUsage{Known: true, OutputTokens: 500000}}
+	if err = s.Record(entry, 1, key.Key); err != nil {
+		t.Fatal(err)
+	}
+	release()
+	got, _ := s.User(u.ID)
+	if got.BudgetUsage.USD != 1 || got.Wallet.Balance != 9*access.CreditScale {
+		t.Fatal("cost must accumulate once and debit wallet once", got.BudgetUsage, got.Wallet)
+	}
+	if _, _, err = s.BeginRequestBudget(key.Key); err == nil || !strings.Contains(err.Error(), "用户共享预算") {
+		t.Fatal("USD limit must block while wallet still has balance", err)
+	}
+	if err = s.AdjustWallet(u.ID, got.Wallet.Revision, 5*access.CreditScale, true, false, "top up balance only"); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = s.User(u.ID)
+	if got.BudgetUsage.USD != 1 || got.Wallet.Balance != 14*access.CreditScale {
+		t.Fatal("top up changed cumulative usage", got.BudgetUsage, got.Wallet)
+	}
+	if _, _, err = s.BeginRequestBudget(key.Key); err == nil {
+		t.Fatal("top up bypassed cumulative USD limit")
+	}
+	// Removing the cumulative limit permits use of the remaining wallet without
+	// resetting historical spending or granting another balance adjustment.
+	budget := KeyBudget{}
+	if _, err = s.SaveUser(access.UserUpdate{ID: u.ID, Username: u.Username, GroupID: u.GroupID, Budget: &budget}, ""); err != nil {
+		t.Fatal(err)
+	}
+	release, _, err = s.BeginRequestBudget(key.Key)
+	if err != nil {
+		t.Fatal("zero USD budget should remove only that limit", err)
+	}
+	release()
+	got, _ = s.User(u.ID)
+	if got.BudgetUsage.USD != 1 || got.Wallet.Balance != 14*access.CreditScale {
+		t.Fatal("changing limit reset usage or balance")
+	}
+	if err = s.AdjustWallet(u.ID, got.Wallet.Revision, -14*access.CreditScale, true, false, "empty the test wallet"); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = s.BeginRequestBudget(key.Key); err == nil {
+		t.Fatal("unlimited USD budget bypassed an empty enabled wallet")
+	}
+}
+
 func TestConsumerRedemptionConcurrentAtomicAndRestart(t *testing.T) {
 	s, u, _ := userFixture(t, KeyBudget{})
 	codes, err := s.GenerateRedemptions(access.Redemption{Kind: "balance", Amount: 123456789, ExpiresAt: time.Now().Add(time.Hour).Unix()}, 1)
