@@ -1,0 +1,34 @@
+# Host-installed Caddy; set PANEL_DOMAIN (e.g. panel.example.com).
+# For local acceptance only, PANEL_DOMAIN=http://127.0.0.1:18080 is supported.
+# Assumes direct client -> Caddy. CDN deployments need an explicit trusted-proxy policy.
+{
+	admin off
+}
+{$PANEL_DOMAIN} {
+	# The backend sees HTTP before public_origin is configured on a fresh install.
+	# Secure authentication cookies at the HTTPS edge, including the first login.
+	@https_auth {
+		protocol https
+		path /auth/*
+	}
+	header @https_auth >Set-Cookie (.+) "$1; Secure"
+	reverse_proxy {$PANEL_UPSTREAM:127.0.0.1:10087} {
+		# Preserve public Host for same-origin login/install checks.
+		header_up Host {hostport}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {hostport}
+		header_up -Forwarded
+		header_up -CF-Connecting-IP
+		transport http {
+			compression off
+		}
+		# Caddy flushes text/event-stream immediately by default.
+		# Do NOT set flush_interval -1: it can keep upstream work alive after client cancellation.
+		# No proxy retry, response buffer, stream timeout, or health gating of the setup wizard.
+	}
+	# Compress static assets only; never API responses or SSE.
+	@static path /assets/* /theme.js /favicon.svg
+	encode @static zstd gzip
+}

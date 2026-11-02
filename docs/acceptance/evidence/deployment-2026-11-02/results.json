@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "64f4191",
+  "unit_tests": 20,
+  "make_check": "passed",
+  "actionlint": "passed",
+  "real_provider_requests": 0,
+  "acceptance": {
+    "binary_proxy": {
+      "passed": true,
+      "checks": [
+        "real_binary_install_health_and_admin_login",
+        "running_process_blocks_offline_backup",
+        "backup_restore_restart_preserves_authentication_and_keys",
+        "real_caddy_same_origin_admin_login",
+        "real_caddy_sse_first_frame_before_completion_without_compression",
+        "real_caddy_client_disconnect_cancels_upstream",
+        "real_caddy_host_preservation_and_spoofed_header_removal"
+      ],
+      "real_provider_requests": 0
+    },
+    "systemd": {
+      "passed": true,
+      "checks": [
+        "real_systemd_install",
+        "real_systemd_upgrade_and_executable_verification",
+        "private_backup_validated",
+        "login_survives_upgrade",
+        "managed_backup_restarts_service"
+      ],
+      "existing_services_changed": false
+    },
+    "docker": {
+      "passed": true,
+      "checks": [
+        "production_compose_loopback_nonroot",
+        "container_setup_and_readiness",
+        "container_running_health",
+        "stopped_volume_copy_backup_restore",
+        "login_survives_restart"
+      ],
+      "existing_containers_changed": false
+    }
+  },
+  "not_run": [
+    "GitHub Actions publish",
+    "public ACME certificate",
+    "ARM hardware runtime"
+  ]
+}

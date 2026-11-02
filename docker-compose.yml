@@ -8,6 +8,7 @@ services:
     image: codearts2api-panel:local
     container_name: codearts2api-panel
     restart: unless-stopped
+    stop_grace_period: 30s
     ports:
       - "127.0.0.1:10087:10087"
     volumes:

@@ -27,9 +27,12 @@ RUN apk add --no-cache ca-certificates tzdata && \
     adduser -D -H -u 10001 codearts && \
     mkdir -p /data && chown 10001:10001 /data
 COPY --from=build /out/codearts2api /usr/local/bin/codearts2api
+COPY deploy/healthcheck.sh /usr/local/bin/codearts-healthcheck
+COPY LICENSE LICENSE.workbuddy /usr/share/licenses/codearts2api/
 USER 10001:10001
 WORKDIR /data
 VOLUME ["/data"]
 EXPOSE 10087
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 CMD sh /usr/local/bin/codearts-healthcheck
 ENTRYPOINT ["codearts2api"]
 CMD ["-host", "0.0.0.0", "-port", "10087", "-data", "/data/codearts2api-data.json"]

@@ -26,6 +26,7 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/ratelimit"
 	"codearts2api/internal/registry"
+	"codearts2api/internal/releaseinfo"
 	"codearts2api/internal/storage"
 	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/usage"
@@ -34,6 +35,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	ReleaseInfo         *releaseinfo.Checker
 	Admission           *gateway.Admission
 	Credits             *accounts.Credits
 	Welfare             *jobs.Welfare
@@ -170,6 +172,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/usage", s.withAdminAuth(s.handleAdminUsage))
 	mux.HandleFunc("/admin/api/pricing", s.withAdminAuth(s.handleAdminPricing))
 	mux.HandleFunc("/admin/api/stats", s.withAdminAuth(s.handleAdminStats))
+	mux.HandleFunc("/admin/api/version", s.withAdminAuth(s.handleVersion))
 	mux.HandleFunc("/admin/api/settings", s.withAdminAuth(s.handleAdminSettings))
 	mux.HandleFunc("/admin/api/checkin", s.withAdminAuth(s.handleAdminCheckin))
 	mux.HandleFunc("/admin/api/credits", s.withAdminAuth(s.handleAdminCredits))

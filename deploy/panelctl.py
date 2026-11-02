@@ -1,0 +1,695 @@
+#!/usr/bin/env python3
+"""Offline single-writer deployment operations. Python >=3.10, Linux, stdlib only.
+
+Never imported by the gateway. Archives are private, checksummed, not encrypted.
+"""
+import argparse
+from contextlib import contextmanager, ExitStack
+import ctypes
+import errno
+import fcntl
+import hashlib
+import io
+import json
+import os
+from pathlib import Path, PurePosixPath
+import platform
+import re
+import shutil
+import socket
+import stat
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+import urllib.request
+
+MAX_BYTES = 8 * 1024**3
+MAX_FILES = 100000
+SIDECARS = ('.usage.jsonl', '.growth.json', '.installed', '.access.json',
+            '.admin-recovery.json', '.setup.json')
+
+
+class OpsError(Exception):
+    pass
+
+
+def require(condition, message):
+    if not condition:
+        raise OpsError(message)
+
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with open(path, 'rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def state_schema(path):
+    value = json.loads(Path(path).read_text())
+    require(isinstance(value, dict), '主状态必须是 JSON 对象')
+    schema = value.get('version', 0)
+    require(type(schema) is int and schema >= 0, '主状态版本无效')
+    return schema
+
+
+def private_json(path, value):
+    with open(path, 'x', encoding='utf-8') as stream:
+        os.chmod(path, 0o600)
+        json.dump(value, stream, indent=2)
+        stream.write('\n')
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def sync_dir(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def publish_directory(source, target):
+    """Linux atomic no-replace rename, including an existing empty directory."""
+    try:
+        rename = ctypes.CDLL(None, use_errno=True).renameat2
+    except AttributeError:
+        raise OpsError('系统缺少 renameat2，无法保证恢复不覆盖；请使用受支持的 Linux 主机') from None
+    rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    rename.restype = ctypes.c_int
+    # AT_FDCWD=-100, RENAME_NOREPLACE=1; no unsafe check-then-rename fallback.
+    if rename(-100, os.fsencode(source), -100, os.fsencode(target), 1) != 0:
+        code = ctypes.get_errno()
+        if code == errno.EEXIST:
+            raise OpsError('恢复目标已经存在，未覆盖任何文件')
+        if code in (errno.ENOSYS, errno.EINVAL):
+            raise OpsError('内核或文件系统不支持原子无覆盖恢复')
+        raise OSError(code, os.strerror(code))
+
+
+def run(command, *, check=True):
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, timeout=90)
+    if check:
+        require(result.returncode == 0, f'命令失败：{command[0]}（退出 {result.returncode}）；请检查服务日志')
+    return result
+
+
+def safe_name(name):
+    path = PurePosixPath(name)
+    return (bool(name) and not path.is_absolute() and '\\' not in name
+            and all(x not in ('', '.', '..') for x in name.split('/')))
+
+
+def inventory(directory, *, digest=True):
+    directory = Path(directory)
+    require(directory.is_dir() and not directory.is_symlink(), '需要真实的专用数据目录')
+    files = {}
+    total = 0
+    def failed(error):
+        raise error
+    for base, dirs, names in os.walk(directory, followlinks=False, onerror=failed):
+        for name in dirs:
+            require(not (Path(base) / name).is_symlink(), '目录包含符号链接，拒绝归档')
+        for name in names:
+            path = Path(base) / name
+            require(stat.S_ISREG(path.lstat().st_mode), '目录包含链接或特殊文件，拒绝归档')
+            rel = path.relative_to(directory).as_posix()
+            require(safe_name(rel), '文件名不安全')
+            size = path.stat().st_size
+            total += size
+            require(total <= MAX_BYTES and len(files) < MAX_FILES, '超出归档大小或文件数量限制')
+            files[rel] = {'size': size, 'sha256': sha256(path) if digest else None}
+    return files
+
+
+def snapshot_schema(directory, files, state_name):
+    require(isinstance(state_name, str) and safe_name(state_name), '状态文件名无效')
+    if state_name in files:
+        return state_schema(Path(directory) / state_name)
+    require(state_name + '.setup.json' in files, '未找到状态或首次安装凭证；请指定正确 --state-name')
+    require(not any(state_name + suffix in files for suffix in SIDECARS if suffix != '.setup.json'),
+            '主状态缺失但仍有安装、恢复或账本文件；请恢复完整状态')
+    return None
+
+
+@contextmanager
+def operation_lock(directory):
+    """Serialize this tool's operations; application writers still must be stopped."""
+    path = Path(directory).resolve()
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd = os.open(path.parent / ('.' + path.name + '.panelops.lock'),
+                 os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise OpsError('该目录已有运维操作，请等待完成后重试') from None
+        yield
+    finally:
+        os.close(fd)
+
+
+def no_writer(directory):
+    """Best-effort local detection; cannot replace stopping a supervisor or remote writer."""
+    directory = Path(directory).resolve()
+    require(Path('/proc').is_dir(), '仅支持 Linux；必须能检查本机进程')
+    for proc in Path('/proc').iterdir():
+        if not proc.name.isdigit() or int(proc.name) == os.getpid():
+            continue
+        try:
+            args = (proc / 'cmdline').read_bytes().split(b'\0')
+            text_args = [x.decode(errors='replace') for x in args if x]
+            for i, arg in enumerate(text_args):
+                candidate = None
+                if arg in ('-data', '--data') and i + 1 < len(text_args):
+                    candidate = text_args[i + 1]
+                elif arg.startswith(('-data=', '--data=')):
+                    candidate = arg.split('=', 1)[1]
+                if candidate:
+                    path = Path(candidate)
+                    if not path.is_absolute():
+                        path = (proc / 'cwd').resolve() / path
+                    if path.resolve().is_relative_to(directory):
+                        raise OpsError('数据目录仍有进程使用；请先停止实际写者及其自动重启管理器')
+            for fd in (proc / 'fd').iterdir():
+                try:
+                    target = fd.resolve(strict=True)
+                    if target.is_relative_to(directory) and not target.is_dir():
+                        # Shells/file browsers may hold directory descriptors. They cannot
+                        # write file contents through those descriptors; retain regular-file
+                        # and explicit application state-path checks above.
+                        raise OpsError('数据目录仍被进程打开，拒绝离线操作')
+                except (FileNotFoundError, PermissionError):
+                    pass
+        except (FileNotFoundError, PermissionError, ProcessLookupError):
+            continue
+
+
+class Service:
+    def __init__(self, unit=None, compose=None, name='codearts2api'):
+        require(bool(unit) != bool(compose), '必须指定 systemd unit 或 Compose 文件')
+        self.unit, self.compose, self.name = unit, compose, name
+        if unit:
+            require(re.fullmatch(r'[a-zA-Z0-9_.@-]+\.service', unit) is not None, 'unit 名称无效')
+        else:
+            require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_.-]*', name) is not None, 'Compose 服务名称无效')
+        self.prefix = ['systemctl', '--user'] if unit else ['docker', 'compose', '-f', str(Path(compose).resolve())]
+
+    def running(self):
+        if self.unit:
+            result = run(self.prefix + ['show', self.unit, '-p', 'ActiveState', '--value'])
+            state = result.stdout.strip()
+            require(state in ('active', 'inactive', 'failed'), '服务状态正在变化或未知，请稍后重试')
+            return state == 'active'
+        raw = run(self.prefix + ['ps', '--all', '--format', 'json', self.name]).stdout.strip()
+        # Compose versions emit either a JSON array or one object per line.
+        containers = json.loads(raw) if raw.startswith('[') else [json.loads(line) for line in raw.splitlines()]
+        require(isinstance(containers, list) and containers, '未找到指定 Compose 实例，请核对项目和服务名')
+        require(all(isinstance(c, dict) and c.get('State') in ('running', 'exited', 'created') for c in containers),
+                'Compose 实例重启中、暂停或状态未知；拒绝备份，请先排查')
+        return any(c['State'] == 'running' for c in containers)
+
+    def stop(self):
+        run(self.prefix + (['stop', self.unit] if self.unit else ['stop', '-t', '30', self.name]))
+        require(not self.running(), '服务未停止，拒绝读取状态')
+
+    def start(self):
+        run(self.prefix + (['start', self.unit] if self.unit else ['start', self.name]))
+
+
+@contextmanager
+def stopped(directory, service=None, offline=False):
+    require(service is not None or offline, '请指定服务，或在停止所有写者后显式使用 --offline')
+    was_running = service.running() if service else False
+    try:
+        if service:
+            service.stop()
+        no_writer(directory)
+        yield
+    finally:
+        if was_running:
+            service.start()
+
+
+def backup(directory, archive, state_name='state.json'):
+    require(not Path(directory).is_symlink(), '数据目录不能是符号链接')
+    directory, archive = Path(directory).resolve(), Path(archive).absolute()
+    require(not archive.resolve().is_relative_to(directory), '备份必须位于数据目录之外')
+    require(not archive.exists() and not archive.is_symlink(), '备份目标已存在')
+    files = inventory(directory)
+    schema = snapshot_schema(directory, files, state_name)
+    manifest = {'format': 1, 'kind': 'backup', 'schema': schema,
+                'state_name': state_name, 'created_at': int(time.time()), 'files': files}
+    archive.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd, temp = tempfile.mkstemp(prefix='.backup-', dir=archive.parent)
+    try:
+        with os.fdopen(fd, 'wb') as output:
+            with tarfile.open(fileobj=output, mode='w:gz') as tar:
+                data = json.dumps(manifest).encode()
+                info = tarfile.TarInfo('manifest.json')
+                info.size, info.mode = len(data), 0o600
+                tar.addfile(info, io.BytesIO(data))
+                for name in sorted(files):
+                    tar.add(directory / name, arcname='data/' + name, recursive=False)
+            output.flush()
+            os.fsync(output.fileno())
+        require(inventory(directory) == files, '备份期间数据发生变化，拒绝生成不一致归档')
+        # Validate the archived bytes too, not just before/after file fingerprints.
+        with tempfile.TemporaryDirectory(dir=archive.parent) as check:
+            unpack(temp, Path(check) / 'verified', expected_kind='backup')
+        os.link(temp, archive)  # atomic no-overwrite publication
+        sync_dir(archive.parent)
+    finally:
+        Path(temp).unlink(missing_ok=True)
+    return manifest
+
+
+def unpack(archive, target, expected_kind, expected_sha=None):
+    """Validate completely into a sibling staging directory; never extractall or overwrite."""
+    archive, target = Path(archive), Path(target).absolute()
+    require(not target.exists() and not target.is_symlink(), '目标必须是不存在的新目录；禁止覆盖现有状态或凭据')
+    if expected_sha is not None:
+        require(re.fullmatch(r'[0-9a-fA-F]{64}', expected_sha) is not None, 'SHA-256 格式无效')
+        require(sha256(archive) == expected_sha.lower(), '发布包 SHA-256 不匹配')
+    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    staging = Path(tempfile.mkdtemp(prefix='.restore-', dir=target.parent))
+    try:
+        with tarfile.open(archive, 'r:gz') as tar:
+            members, total = {}, 0
+            for member in tar:
+                require(member.isfile() and safe_name(member.name), '归档含非普通文件或不安全路径')
+                require(member.name not in members, '归档有重复路径')
+                total += member.size
+                require(total <= MAX_BYTES and len(members) < MAX_FILES + 1, '归档超出大小或数量限制')
+                members[member.name] = member
+            require('manifest.json' in members and members['manifest.json'].size <= 16 * 1024**2, '缺少有效清单')
+            manifest = json.load(tar.extractfile(members['manifest.json']))
+            require(isinstance(manifest, dict), '清单必须是对象')
+            require(manifest.get('format') == 1 and manifest.get('kind') == expected_kind, '归档类型或格式不兼容')
+            files = manifest.get('files')
+            require(isinstance(files, dict) and files, '清单为空或无效')
+            require(set(members) == {'manifest.json'} | {'data/' + x for x in files}, '清单与归档文件集合不一致')
+            for name, entry in files.items():
+                require(safe_name(name), '清单路径不安全')
+                require(isinstance(entry, dict), '清单条目必须是对象')
+                member = members['data/' + name]
+                require(entry['size'] == member.size, '文件大小不匹配')
+                path = staging / name
+                path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                with path.open('xb') as output, tar.extractfile(member) as source:
+                    os.chmod(path, 0o600)
+                    shutil.copyfileobj(source, output, 1024 * 1024)
+                    output.flush()
+                    os.fsync(output.fileno())
+                require(sha256(path) == entry['sha256'], '文件摘要不匹配')
+        # Preserve the checked metadata for a release, but not inside restored data.
+        if expected_kind == 'release':
+            private_json(staging / 'manifest.json', manifest)
+            os.chmod(staging / 'codearts2api-panel', 0o700)
+        else:
+            schema = snapshot_schema(staging, files, manifest.get('state_name'))
+            declared = manifest.get('schema')
+            require(declared is None or type(declared) is int, '归档状态版本无效')
+            require(schema == declared, '归档清单与主状态版本不一致')
+        for base, _, _ in os.walk(staging, topdown=False):
+            sync_dir(base)
+        publish_directory(staging, target)
+        sync_dir(target.parent)
+        return manifest
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+
+
+def json_get(url):
+    # Never use ambient proxy credentials for a local health request; never follow redirects.
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    with opener.open(url, timeout=3) as response:
+        value = json.loads(response.read(65536))
+        return value if isinstance(value, dict) else {}
+
+
+def health(base):
+    try:
+        value = json_get(base.rstrip('/') + '/health')
+        if value.get('service') == 'codearts2api-panel' and value.get('status') == 'ok':
+            return 'running'
+    except (OSError, ValueError):
+        pass
+    try:
+        value = json_get(base.rstrip('/') + '/setup/status')
+        if value.get('needs_setup') is True and value.get('ready') is False and value.get('admin_username') == 'admin':
+            return 'setup_required'
+    except (OSError, ValueError):
+        pass
+    return 'unhealthy'
+
+
+def doctor(args):
+    directory = Path(args.data_dir).absolute()
+    findings = []
+    schema = None
+    if directory.is_dir():
+        if directory.stat().st_mode & 0o077:
+            findings.append('数据目录应仅允许服务用户访问（0700）')
+        try:
+            files = inventory(directory, digest=False)
+            try:
+                schema = snapshot_schema(directory, files, args.state_name)
+            except OpsError as error:
+                findings.append(str(error))
+            for base, _, _ in os.walk(directory):
+                if Path(base) != directory and Path(base).stat().st_mode & 0o077:
+                    findings.append('存在其他用户可访问的子目录；检查权限')
+                    break
+            for name in files:
+                if (directory / name).stat().st_mode & 0o077:
+                    findings.append('存在其他用户可读取的文件；检查权限')
+                    break
+        except (OpsError, OSError, ValueError):
+            findings.append('数据文件不可读取、格式错误或含特殊文件')
+    else:
+        findings.append('数据目录不存在')
+    status = health(args.url)
+    print(json.dumps({'status': status, 'schema': schema, 'findings': findings}, ensure_ascii=False))
+    return 1 if findings or status == 'unhealthy' else 0
+
+
+def release_version(value):
+    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)', str(value))
+    require(match is not None, '首批部署工具只接受明确的稳定版本号 vX.Y.Z')
+    return tuple(map(int, match.groups()))
+
+
+def check_release(path):
+    meta = json.loads((path / 'manifest.json').read_text())
+    release_version(meta.get('version'))
+    arch = {'x86_64': 'amd64', 'aarch64': 'arm64'}.get(platform.machine())
+    require(meta.get('os') == 'linux' and meta.get('arch') == arch, '发布包与当前操作系统/架构不匹配')
+    require(type(meta.get('schema')) is int and meta['schema'] >= 0, '发布包未声明有效状态版本')
+    result = run([str(path / 'codearts2api-panel'), '-version'])
+    require(result.stdout.strip() == 'codearts2api ' + meta['version'], '二进制版本与包清单不一致')
+    return meta
+
+
+def unit_text(root, port, no_refresh=False):
+    # Restrict generated paths to avoid systemd specifier/quoting ambiguity.
+    require(re.fullmatch(r'/[a-zA-Z0-9_./-]+', str(root)) is not None, '安装路径只支持 ASCII 字母、数字、点、横线、下划线和斜线')
+    return f'''[Unit]
+Description=CodeArts2API managed installation
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+WorkingDirectory={root}
+ExecStart={root}/current/codearts2api-panel -host 127.0.0.1 -port {port} -data {root}/data/state.json -no-import{ " -no-refresh" if no_refresh else "" }
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+UMask=0077
+[Install]
+WantedBy=default.target
+'''
+
+
+def wait_health(url, allow_setup=False):
+    for _ in range(30):
+        status = health(url)
+        if status == 'running' or (allow_setup and status == 'setup_required'):
+            return status
+        time.sleep(1)
+    raise OpsError('启动检查失败；保留当前数据与版本，请检查 journalctl，不自动恢复旧数据')
+
+
+def verify_process(unit, binary):
+    pid = run(['systemctl', '--user', 'show', unit, '-p', 'MainPID', '--value']).stdout.strip()
+    require(pid.isdigit() and int(pid) > 0 and (Path('/proc') / pid / 'exe').resolve() == binary,
+            '健康接口正常但实际进程不是目标版本')
+
+
+def install(args):
+    root = Path(args.root).absolute()
+    require(not root.exists(), '安装目录已存在；请使用 upgrade 或另选目录')
+    require(re.fullmatch(r'[a-zA-Z0-9_-]+', args.name) is not None, '实例名无效')
+    require(1 <= args.port <= 65535, '端口无效')
+    unit = 'codearts2api-' + args.name + '.service'
+    unit_dir = Path(os.environ.get('XDG_CONFIG_HOME', str(Path.home() / '.config'))) / 'systemd/user'
+    unit_path = unit_dir / unit
+    require(not unit_path.exists(), '同名服务已存在，拒绝覆盖')
+    text = unit_text(root, args.port, getattr(args, "no_refresh", False))
+    if not args.no_start:
+        with socket.socket() as probe:
+            try:
+                probe.bind(('127.0.0.1', args.port))
+            except OSError:
+                raise OpsError('安装端口已被占用，尚未创建服务；请选择其他端口') from None
+    root.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    # Fully validate before publishing a service or creating an installation.
+    with tempfile.TemporaryDirectory(dir=root.parent) as temp:
+        candidate = Path(temp) / 'candidate'
+        unpack(args.archive, candidate, 'release', args.sha256)
+        meta = check_release(candidate)
+        root.mkdir(mode=0o700)
+        (root / 'releases').mkdir(mode=0o700)
+        (root / 'data').mkdir(mode=0o700)
+        (root / 'backups').mkdir(mode=0o700)
+        dest = root / 'releases' / meta['version']
+        shutil.move(candidate, dest)
+    (root / 'current').symlink_to(dest.relative_to(root))
+    private_json(root / 'installation.json', {'unit': unit, 'port': args.port})
+    unit_dir.mkdir(parents=True, exist_ok=True)
+    with unit_path.open('x') as output:
+        output.write(text)
+    if not args.no_start:
+        run(['systemctl', '--user', 'daemon-reload'])
+        run(['systemctl', '--user', 'enable', unit])
+        service = Service(unit=unit)
+        try:
+            service.start()
+            wait_health(f'http://127.0.0.1:{args.port}', allow_setup=True)
+            verify_process(unit, dest / 'codearts2api-panel')
+        except Exception:
+            service.stop()
+            raise
+    print('版本与服务配置已准备。' if args.no_start else '安装完成；首次安装凭证位于 data/state.json.setup.json。管理员用户名 admin。')
+
+
+def upgrade(args):
+    root = Path(args.root).resolve()
+    config = json.loads((root / 'installation.json').read_text())
+    service = Service(unit=config['unit'])
+    require(service.running(), '升级要求受管服务当前正在运行；请先排查停止或失败原因')
+    old = (root / 'current').resolve()
+    previous = check_release(old)
+    with tempfile.TemporaryDirectory(dir=root / 'releases') as temp:
+        candidate = Path(temp) / 'candidate'
+        unpack(args.archive, candidate, 'release', args.sha256)
+        meta = check_release(candidate)
+        require(release_version(meta['version']) > release_version(previous['version']), '只允许升级到更高版本；不自动降级')
+        require(meta['schema'] == previous['schema'], '跨 schema 升级需单独迁移验收；本工具拒绝自动切换')
+        dest = root / 'releases' / meta['version']
+        require(not dest.exists() and not dest.is_symlink(), '候选版本目录已存在，请先排查上次升级结果')
+        link = root / 'current.next'
+        require(not link.exists() and not link.is_symlink(), '存在未处理的版本切换文件')
+        verify_process(config['unit'], old / 'codearts2api-panel')
+        # Preflight before outage; recheck the actual state after stopping.
+        switched = False
+        try:
+            service.stop()
+            no_writer(root / 'data')
+            require(state_schema(root / 'data/state.json') == meta['schema'], '实际状态 schema 不兼容，拒绝升级')
+            archive = root / 'backups' / f'before-{meta["version"]}-{time.time_ns()}.tar.gz'
+            backup(root / 'data', archive)
+            publish_directory(candidate, dest)
+            sync_dir(dest.parent)
+            require(not link.exists() and not link.is_symlink(), '存在未处理的版本切换文件')
+            link.symlink_to(dest.relative_to(root))
+            os.replace(link, root / 'current')
+            switched = True
+            sync_dir(root)
+            service.start()
+            wait_health(f'http://127.0.0.1:{config["port"]}')
+            verify_process(config['unit'], dest / 'codearts2api-panel')
+        except Exception:
+            if switched:
+                service.stop()  # preserve newest credentials/ledger; never restore backup automatically
+            else:
+                service.start()
+            raise
+    print('升级完成；保留旧程序和升级前备份，未覆盖旧凭据或账本。')
+
+
+def source_process(args):
+    require(re.fullmatch(r'[A-Za-z0-9_.@-]+\.service', args.source_unit), '旧服务名无效')
+    service = Service(unit=args.source_unit)
+    require(service.running(), '旧服务必须处于运行状态')
+    binary = Path(args.source_binary).resolve()
+    verify_process(args.source_unit, binary)
+    pid = run(['systemctl', '--user', 'show', args.source_unit, '-p', 'MainPID', '--value']).stdout.strip()
+    proc = Path('/proc') / pid
+    argv = (proc / 'cmdline').read_bytes().decode().rstrip('\0').split('\0')[1:]
+    values, flags = {}, set()
+    i = 0
+    while i < len(argv):
+        item = argv[i]
+        if item in ('-no-import', '-no-refresh'):
+            flags.add(item)
+        elif item in ('-host', '-port', '-data') and i + 1 < len(argv):
+            require(item not in values, '旧启动参数重复')
+            i += 1
+            values[item] = argv[i]
+        else:
+            raise OpsError('旧启动参数无法自动迁移；请按部署文档手工迁移')
+        i += 1
+    require(values.get('-host', '127.0.0.1') == '127.0.0.1', '仅支持 loopback 源码实例迁移')
+    require(values.get('-port') == str(args.port), '新旧端口不一致')
+    source = Path(args.data_dir).resolve()
+    actual = Path(values.get('-data', ''))
+    require(values.get('-data'), '旧服务未显式指定状态路径，拒绝猜测')
+    if not actual.is_absolute():
+        actual = (proc / 'cwd').resolve() / actual
+    require(actual.resolve() == source / 'state.json', '旧进程的数据路径不匹配')
+    require(args.no_refresh == ('-no-refresh' in flags), '需要显式保持旧服务的 --no-refresh 选择')
+    # CLI/environment overrides outside the explicit migration contract are rejected.
+    env = (proc / 'environ').read_bytes().split(b'\0')
+    require(not any(x.startswith(b'CODEARTS_') for x in env), '旧服务含环境配置，请先改为明确受支持的启动参数')
+    return service, pid
+
+
+def migrate(args):
+    root = Path(args.root).absolute()
+    source = Path(args.data_dir).resolve()
+    require(root != source and source not in root.parents and root not in source.parents, '源数据与目标目录必须独立')
+    old, pid = source_process(args)
+    # install(no_start) validates the whole candidate before touching the running instance.
+    args.no_start = True
+    install(args)
+    cfg = json.loads((root / 'installation.json').read_text())
+    new = Service(unit=cfg['unit'])
+    run(['systemctl', '--user', 'daemon-reload'])
+    launched = False
+    disabled = False
+    was_enabled = run(['systemctl', '--user', 'is-enabled', args.source_unit], check=False).stdout.strip() == 'enabled'
+    try:
+        require(source_process(args)[1] == pid, '旧进程已变化，拒绝迁移')
+        old.stop()
+        no_writer(source)
+        meta = check_release((root / 'current').resolve())
+        require(state_schema(source / 'state.json') == meta['schema'], '迁移仅支持相同状态版本')
+        archive = root / 'backups' / f'before-migration-{time.time_ns()}.tar.gz'
+        backup(source, archive)
+        (root / 'data').rmdir()  # Only the empty directory created by this operation.
+        unpack(archive, root / 'data', 'backup')
+        run(['systemctl', '--user', 'disable', args.source_unit])
+        disabled = True
+        launched = True
+        new.start()
+        wait_health(f'http://127.0.0.1:{args.port}')
+        verify_process(cfg['unit'], (root / 'current').resolve() / 'codearts2api-panel')
+        run(['systemctl', '--user', 'enable', cfg['unit']])
+    except Exception:
+        if launched:
+            new.stop()  # Candidate may have persisted rotated credentials: never restart old data.
+        else:
+            if disabled and was_enabled:
+                run(['systemctl', '--user', 'enable', args.source_unit])
+            old.start()
+        raise
+    print('迁移完成；旧服务已禁用。后续仅使用新目录；旧目录和备份保留，不可并行启动。')
+
+
+def parser():
+    p = argparse.ArgumentParser(description=__doc__)
+    sub = p.add_subparsers(dest='command', required=True)
+    b = sub.add_parser('backup')
+    b.add_argument('--data-dir', required=True)
+    b.add_argument('--state-name', default='state.json')
+    b.add_argument('--archive', required=True)
+    mode = b.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--unit')
+    mode.add_argument('--compose')
+    mode.add_argument('--offline', action='store_true')
+    b.add_argument('--service', default='codearts2api')
+    r = sub.add_parser('restore')
+    r.add_argument('--archive', required=True)
+    r.add_argument('--target', required=True)
+    d = sub.add_parser('doctor')
+    d.add_argument('--data-dir', required=True)
+    d.add_argument('--state-name', default='state.json')
+    d.add_argument('--url', default='http://127.0.0.1:10087')
+    h = sub.add_parser('health')
+    h.add_argument('--url', default='http://127.0.0.1:10087')
+    h.add_argument('--ready', action='store_true', help='初始化等待也返回非零，供流量就绪检查')
+    for name in ('install', 'upgrade', 'migrate'):
+        cmd = sub.add_parser(name)
+        cmd.add_argument('--archive', required=True)
+        cmd.add_argument('--sha256', required=True)
+        cmd.add_argument('--root', required=True)
+        if name in ('install', 'migrate'):
+            cmd.add_argument('--name', default='managed')
+            cmd.add_argument('--port', type=int, default=10087)
+            cmd.add_argument('--no-start', action='store_true')
+            cmd.add_argument('--no-refresh', action='store_true')
+        if name == 'migrate':
+            cmd.add_argument('--source-unit', required=True)
+            cmd.add_argument('--source-binary', required=True)
+            cmd.add_argument('--data-dir', required=True)
+    return p
+
+
+def main():
+    os.umask(0o077)
+    args = parser().parse_args()
+    try:
+        with ExitStack() as locks:
+            if args.command == 'backup':
+                locks.enter_context(operation_lock(args.data_dir))
+            elif args.command == 'restore':
+                locks.enter_context(operation_lock(args.target))
+            elif args.command in ('install', 'upgrade', 'migrate'):
+                locks.enter_context(operation_lock(args.root))
+                if args.command == 'migrate':
+                    locks.enter_context(operation_lock(args.data_dir))
+                if args.command == 'upgrade':
+                    locks.enter_context(operation_lock(Path(args.root) / 'data'))
+            return dispatch(args)
+    except (OpsError, OSError, ValueError, KeyError, TypeError, tarfile.TarError, subprocess.TimeoutExpired) as error:
+        # Arbitrary file/HTTP content must never reach stdout/stderr.
+        print(str(error) if isinstance(error, OpsError) else '操作失败：文件、配置或外部命令无效；未自动回滚数据', file=sys.stderr)
+        return 1
+
+
+def dispatch(args):
+    if args.command == 'backup':
+        service = Service(args.unit, args.compose, args.service) if args.unit or args.compose else None
+        with stopped(args.data_dir, service, args.offline):
+            manifest = backup(args.data_dir, args.archive, args.state_name)
+        print(json.dumps({'files': len(manifest['files']), 'schema': manifest['schema'], 'sha256': sha256(args.archive)}))
+    elif args.command == 'restore':
+        unpack(args.archive, args.target, 'backup')
+        print('校验并恢复到新目录；尚未启动服务。切换前确认没有更新的在线凭据/账本。')
+    elif args.command == 'doctor':
+        return doctor(args)
+    elif args.command == 'health':
+        status = health(args.url)
+        print(status)
+        return int(status == 'unhealthy' or (args.ready and status != 'running'))
+    elif args.command == 'install':
+        install(args)
+    elif args.command == 'upgrade':
+        upgrade(args)
+    elif args.command == 'migrate':
+        migrate(args)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

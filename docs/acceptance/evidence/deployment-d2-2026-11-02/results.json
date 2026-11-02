@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-02",
+  "baseline_commit": "64f4191dc95af2f2849fc00489439e5f8aa06621",
+  "scope": "D2 workspace configuration and acceptance; no public deployment",
+  "environment": {
+    "platform": "linux-amd64",
+    "python": "3.12.7",
+    "caddy": "2.10.2",
+    "docker": "29.0.2",
+    "compose": "v5.0.2"
+  },
+  "confirmed_defect_before_fix": "initial HTTPS login cookie missing Secure before public_origin configuration",
+  "tls_proxy": {
+    "passed": true,
+    "checks": [
+      "verified_tls_first_install_through_proxy",
+      "initial_admin_https_login_sets_secure_session_cookie",
+      "http_redirects_to_https",
+      "https_spa_and_admin_session",
+      "https_user_login_retains_role_boundary",
+      "proxy_preserves_same_origin_rejection",
+      "https_host_and_spoofed_forwarding_headers",
+      "upstream_errors_and_retry_after_preserved_without_proxy_retries",
+      "four_https_sse_paths_flush_without_compression_or_byte_changes",
+      "https_disconnect_cancels_upstream",
+      "static_assets_compress_while_sse_does_not"
+    ],
+    "timings": [
+      {
+        "path": "/v1/chat/completions",
+        "first_frame_seconds": 0.0437
+      },
+      {
+        "path": "/v1/responses",
+        "first_frame_seconds": 0.0052
+      },
+      {
+        "path": "/v1/messages",
+        "first_frame_seconds": 0.0065
+      },
+      {
+        "path": "/v1/search/messages",
+        "first_frame_seconds": 0.0053
+      }
+    ],
+    "real_provider_requests": 0,
+    "global_trust_store_changed": false
+  },
+  "production_container": {
+    "passed": true,
+    "checks": [
+      "production_compose_loopback_nonroot",
+      "container_setup_and_readiness",
+      "container_running_health",
+      "container_unreachable_health_fails",
+      "stopped_volume_copy_backup_restore",
+      "login_survives_restart"
+    ],
+    "existing_containers_changed": false
+  },
+  "http_compatibility": {
+    "passed": true,
+    "checks": [
+      "real_binary_install_health_and_admin_login",
+      "running_process_blocks_offline_backup",
+      "backup_restore_restart_preserves_authentication_and_keys",
+      "nonempty_journal_replayed_exactly_once_after_restore",
+      "real_caddy_same_origin_admin_login",
+      "real_caddy_sse_first_frame_before_completion_without_compression",
+      "real_caddy_client_disconnect_cancels_upstream",
+      "real_caddy_host_preservation_and_spoofed_header_removal"
+    ],
+    "real_provider_requests": 0
+  },
+  "make_check": {
+    "passed": true,
+    "exit_code": 0,
+    "deployment_unit_tests": 32
+  },
+  "static_checks": {
+    "caddy_production_domain_valid": true,
+    "compose_config_valid": true,
+    "compose_missing_image_refused": true,
+    "actionlint": true,
+    "shell_syntax": true,
+    "python_compile": true
+  },
+  "source_sha256": {
+    "deploy/Caddyfile": "ffd2efbe0453147cd0b1ecebeefa82ed6a48ff1bd97ddf3fd072d7e981c9ad1a",
+    "deploy/compose.production.yml": "5df2724e8d23b384ef6da25ec2dce10297e6ccb5f90468c0e4102af9e53a5575",
+    "deploy/.env.example": "2b85c90603eb8f2fd4fde752269c4ed5e63eb92cc29c80d09ced7b8db428266e",
+    "deploy/healthcheck.sh": "3762d97924d07f1bb4693b28b96979eea495ae12b6878f612b369f358c6306ed",
+    "deploy/tests/d2_proxy_acceptance.py": "4ac3414fb1c99f037e1fb83d6bb204d2c9b340b6b07aa8df704a712a545e087e",
+    "deploy/tests/docker_acceptance.py": "3d459e28143d623ec5ce194f9408e7f67e339d7b9afef1bc94a64e983c76d6a5",
+    "deploy/tests/live_acceptance.py": "738a2e0340b9c73ebe56a79a5e31d069bb2b57e82b3f13076f8013450e1fba0b",
+    ".github/workflows/release.yml": "ad031cc9eb819029af7951a42fabc293c4266913bd2ec887ca073f583b1452a3",
+    "deploy/README.md": "9b019b22586e2fafa9c92e2f422d0d9b503b5f62d36897aabb7435f92e7208e9"
+  },
+  "existing_service": {
+    "active": true,
+    "main_pid": 108144,
+    "restarted": false
+  },
+  "temporary_services_cleaned": true,
+  "real_provider_requests": 0,
+  "global_trust_store_changed": false,
+  "limits": [
+    "local CA TLS tested; public ACME and cloud firewall not tested",
+    "old private package and image provide application binary only; current templates from workspace",
+    "no real upstream model performance claims",
+    "no GitHub publishing or remote deployment"
+  ]
+}

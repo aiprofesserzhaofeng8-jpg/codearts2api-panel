@@ -6,6 +6,10 @@
 /backend/probe
 /data/
 /.env
+/deploy/.env
+/backups/
+*.panelops.lock
+*.tar.gz
 *.access.json
 *.admin-recovery.json
 *.setup.json

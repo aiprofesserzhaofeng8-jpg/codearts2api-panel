@@ -70,6 +70,9 @@ jobs:
       - name: 客户端启动器测试
         run: python3 -m unittest discover -s scripts -p test_connect_client.py
 
+      - name: 部署工具与数据恢复测试
+        run: python3 -m unittest discover -s deploy/tests -v
+
       - name: Pi 摘要恢复测试（模拟上游）
         run: node scripts/pi/codearts-compaction.test.mjs
 

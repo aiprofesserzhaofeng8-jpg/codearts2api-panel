@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-02",
+  "baseline_commit": "64f4191dc95af2f2849fc00489439e5f8aa06621",
+  "scope": "D3 packaging and single-instance installation/upgrade; no remote deployment or publication",
+  "unit_tests": {
+    "passed": true,
+    "count": 40,
+    "new_d3_tests": 8,
+    "failed_before_fix": 7
+  },
+  "make_check": {
+    "passed": true,
+    "exit_code": 0
+  },
+  "packages": {
+    "passed": true,
+    "version": "v0.3.96",
+    "packages": [
+      {
+        "arch": "amd64",
+        "sha256": "a447538643785e2656c8f4baa0a7b3b589b2807ceb34bceae2e6a5d60fa08abd",
+        "bytes": 4351812,
+        "elf_machine": 62,
+        "schema": 10,
+        "current_templates_and_licenses": true,
+        "binary_executed": true
+      },
+      {
+        "arch": "arm64",
+        "sha256": "d57d6cf2b8ef7c169115f16bed2804c23ba348d5f00d153f4bf5a81f0f97026e",
+        "bytes": 3916820,
+        "elf_machine": 183,
+        "schema": 10,
+        "current_templates_and_licenses": true,
+        "binary_executed": false
+      }
+    ],
+    "standalone_controller_matches_package": true,
+    "release_checksum_entries": 3,
+    "release_published": false
+  },
+  "real_systemd_cli": {
+    "passed": true,
+    "checks": [
+      "real_systemd_install",
+      "real_systemd_upgrade_and_executable_verification",
+      "private_backup_validated",
+      "login_survives_upgrade",
+      "managed_backup_restarts_service",
+      "real_live_writer_refused_by_offline_cli",
+      "real_backup_failure_restarts_service",
+      "real_downgrade_and_bad_digest_refused_without_restart",
+      "real_unhealthy_upgrade_stops_candidate_and_preserves_newest_data_and_journal"
+    ],
+    "existing_services_changed": false
+  },
+  "real_binary_http": {
+    "passed": true,
+    "checks": [
+      "real_binary_install_health_and_admin_login",
+      "running_process_blocks_offline_backup",
+      "backup_restore_restart_preserves_authentication_and_keys",
+      "nonempty_journal_replayed_exactly_once_after_restore",
+      "real_caddy_same_origin_admin_login",
+      "real_caddy_sse_first_frame_before_completion_without_compression",
+      "real_caddy_client_disconnect_cancels_upstream",
+      "real_caddy_host_preservation_and_spoofed_header_removal"
+    ],
+    "real_provider_requests": 0
+  },
+  "real_binary_tls": {
+    "passed": true,
+    "checks": [
+      "verified_tls_first_install_through_proxy",
+      "initial_admin_https_login_sets_secure_session_cookie",
+      "http_redirects_to_https",
+      "https_spa_and_admin_session",
+      "https_user_login_retains_role_boundary",
+      "proxy_preserves_same_origin_rejection",
+      "https_host_and_spoofed_forwarding_headers",
+      "upstream_errors_and_retry_after_preserved_without_proxy_retries",
+      "four_https_sse_paths_flush_without_compression_or_byte_changes",
+      "https_disconnect_cancels_upstream",
+      "static_assets_compress_while_sse_does_not"
+    ],
+    "timings": [
+      {
+        "path": "/v1/chat/completions",
+        "first_frame_seconds": 0.043
+      },
+      {
+        "path": "/v1/responses",
+        "first_frame_seconds": 0.0056
+      },
+      {
+        "path": "/v1/messages",
+        "first_frame_seconds": 0.0056
+      },
+      {
+        "path": "/v1/search/messages",
+        "first_frame_seconds": 0.0067
+      }
+    ],
+    "real_provider_requests": 0,
+    "global_trust_store_changed": false
+  },
+  "static_checks": {
+    "actionlint": true,
+    "python_compile": true,
+    "git_diff_check": true
+  },
+  "source_sha256": {
+    "deploy/panelctl.py": "e40a7a0cff8c8f10c6e942aaaf497a8fb298b7a60ab2b618c7146ff57cae8866",
+    "deploy/package_release.py": "4e2da49622b2f77bb2836c3dc6d676dd160f833129d5e20abe63f3240ad49374",
+    "deploy/tests/test_d3.py": "9fa1864cc2b6a7b895ea1fbee0b18c12e9023e50fed2014be81361012381f505",
+    "deploy/tests/test_panelctl.py": "071acc3d3becd1dc1194c71f54898e985cf63e680b93cbd33bdb7e4100935bfe",
+    "deploy/tests/managed_acceptance.py": "5dbe3c3f974592d6eb5a0ae16089e3e7d1f76f6048a332a79ae0132a109a28df",
+    ".github/workflows/release.yml": "1de8f67e82e8ac0f2c71ec7e0ecec6746db4da7be5ab407e7b131cc2aaa06912",
+    "deploy/README.md": "50b08439bc880188014c91e434e1c5ceedadd676ad5f8582f693a85b81563b1e"
+  },
+  "existing_service": {
+    "active": true,
+    "main_pid": 108144,
+    "restarted": false
+  },
+  "temporary_services_cleaned": true,
+  "real_provider_requests": 0,
+  "published": false,
+  "limits": [
+    "linux-amd64 runtime only; arm64 cross-compiled and ELF checked",
+    "GitHub workflow and dual-platform image publishing not executed",
+    "synthetic startup failure does not emulate provider OAuth rotation",
+    "no cross-schema migration or automatic data rollback"
+  ]
+}

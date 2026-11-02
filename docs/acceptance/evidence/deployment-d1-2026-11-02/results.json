@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-02",
+  "baseline_commit": "64f4191dc95af2f2849fc00489439e5f8aa06621",
+  "scope": "D1 workspace source; no deployment or publishing",
+  "environment": {
+    "platform": "linux-amd64",
+    "python": "3.12.7",
+    "docker": "29.0.2",
+    "compose": "v5.0.2"
+  },
+  "unit_tests": {
+    "passed": true,
+    "count": 32,
+    "new_d1_tests": 12
+  },
+  "make_check": {
+    "passed": true,
+    "exit_code": 0
+  },
+  "real_binary": {
+    "passed": true,
+    "checks": [
+      "real_binary_install_health_and_admin_login",
+      "running_process_blocks_offline_backup",
+      "backup_restore_restart_preserves_authentication_and_keys",
+      "nonempty_journal_replayed_exactly_once_after_restore"
+    ],
+    "real_provider_requests": 0
+  },
+  "real_systemd": {
+    "passed": true,
+    "checks": [
+      "real_systemd_install",
+      "real_systemd_upgrade_and_executable_verification",
+      "private_backup_validated",
+      "login_survives_upgrade",
+      "managed_backup_restarts_service",
+      "real_live_writer_refused_by_offline_cli",
+      "real_backup_failure_restarts_service"
+    ],
+    "existing_services_changed": false
+  },
+  "real_compose": {
+    "passed": true,
+    "checks": [
+      "real_paused_compose_refused",
+      "real_compose_failure_restarts_original_service",
+      "real_compose_backup_stops_and_restarts_writer",
+      "originally_stopped_compose_stays_stopped",
+      "restored_bind_mount_starts_with_original_login"
+    ],
+    "real_provider_requests": 0
+  },
+  "journal_fixture": {
+    "requests": 1,
+    "tokens": 16,
+    "historical_usd": 0.125,
+    "replayed_once": true,
+    "unchanged_after_second_restart": true
+  },
+  "static_checks": {
+    "python_compile": true,
+    "shell_syntax": true,
+    "actionlint": true
+  },
+  "source_sha256": {
+    "deploy/panelctl.py": "0c5c76f1006849db3d7d4a750fedae03664a2b63a2fd8b4acdf25c852439332b",
+    "deploy/tests/test_d1.py": "244268845ba19e7e71a0b585e21f120380aa1578acf3dae0b21c90e9f5072741",
+    "deploy/tests/test_panelctl.py": "caaf00c46519955041c487cb8044981b43670daea35f78c6443d099af23ff11d",
+    "deploy/tests/live_acceptance.py": "ea8efde1ad350f618c82652e89215ef85ac06fb1d9cfcd381b1ca5d93e9abd3b",
+    "deploy/tests/managed_acceptance.py": "5ad8aa2999347c03959f4d9c6e44269f3143975f246ff3dafd1f98ed5b0a1c57",
+    "deploy/tests/d1_compose_acceptance.py": "63dfcffa894aa7b3f42f81e9201c4f9a558bff216ac91a5a3ac52a01244b4012",
+    "deploy/healthcheck.sh": "3762d97924d07f1bb4693b28b96979eea495ae12b6878f612b369f358c6306ed",
+    ".github/workflows/release.yml": "994108b7e4733d33f513f360419249f2085674dea9028196a28a58ae9bdc13d9"
+  },
+  "existing_service": {
+    "active": true,
+    "main_pid": 108144,
+    "restarted": false
+  },
+  "temporary_managed_services_cleaned": true,
+  "real_provider_requests": 0,
+  "limits": [
+    "linux-amd64 runtime only",
+    "old private packages supply application binaries only",
+    "no remote or GitHub changes",
+    "no real account billing"
+  ]
+}

@@ -1,0 +1,30 @@
+# Run from this directory with --env-file .env; release image must be explicitly pinned.
+name: codearts2api
+services:
+  codearts2api:
+    image: ${CODEARTS_IMAGE:?Set CODEARTS_IMAGE to a release tag or sha256 digest}
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:${CODEARTS_PORT:-10087}:10087"
+    volumes:
+      - codearts_data:/data
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    command: ["-host", "0.0.0.0", "-port", "10087", "-data", "/data/codearts2api-data.json", "-no-import"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "sh", "/usr/local/bin/codearts-healthcheck"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  codearts_data:

@@ -1,0 +1,98 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.mod
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24.11.0'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Validate stable release tag
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          python -c 'import os,re; assert re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", os.environ["RELEASE_VERSION"])'
+      - name: Application and deployment checks
+        run: |
+          make check
+          python3 -m unittest discover -s deploy/tests -v
+      - name: Build Linux releases from this commit
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          python3 deploy/package_release.py --version "$RELEASE_VERSION" --arch amd64
+          python3 deploy/package_release.py --version "$RELEASE_VERSION" --arch arm64
+          cp deploy/panelctl.py artifacts/releases/panelctl.py
+          cp deploy/install.sh artifacts/releases/install.sh
+          sha256sum artifacts/releases/install.sh | sed 's|artifacts/releases/||' > artifacts/releases/install.sh.sha256
+          sha256sum artifacts/releases/panelctl.py | sed 's|artifacts/releases/||' > artifacts/releases/panelctl.py.sha256
+          cat artifacts/releases/*.sha256 > artifacts/releases/SHA256SUMS
+      - name: Isolated deployment acceptance
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          docker create --name deployment-caddy caddy:2.10.2-alpine
+          docker cp deployment-caddy:/usr/bin/caddy /tmp/deployment-caddy
+          docker rm deployment-caddy
+          python3 deploy/tests/live_acceptance.py --archive "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz" --caddy /tmp/deployment-caddy
+          python3 deploy/tests/d2_proxy_acceptance.py --archive "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz" --caddy /tmp/deployment-caddy
+          docker build --build-arg VERSION="$RELEASE_VERSION" -t codearts2api:release-check .
+          python3 deploy/tests/docker_acceptance.py --image codearts2api:release-check
+          python3 deploy/tests/d1_compose_acceptance.py --image codearts2api:release-check
+      - name: Managed migration and upgrade acceptance
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          sudo loginctl enable-linger "$USER"
+          sudo systemctl start "user@$(id -u).service"
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          python3 deploy/package_release.py --version v0.0.0 --arch amd64 --output /tmp/codearts-baseline
+          python3 deploy/tests/managed_acceptance.py --first /tmp/codearts-baseline/codearts2api-panel-v0.0.0-linux-amd64.tar.gz --second "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz" --failure-cases
+          python3 deploy/tests/migration_acceptance.py --archive "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz"
+          python3 deploy/tests/installer_acceptance.py --archive "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz"
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image name
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.ref_name }}
+          build-args: VERSION=${{ github.ref_name }}
+          labels: |
+            org.opencontainers.image.version=${{ github.ref_name }}
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Create reviewable release draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_VERSION" artifacts/releases/*.tar.gz artifacts/releases/panelctl.py artifacts/releases/install.sh artifacts/releases/SHA256SUMS --verify-tag --draft --generate-notes --title "$RELEASE_VERSION"

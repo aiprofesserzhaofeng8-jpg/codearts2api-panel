@@ -18,8 +18,12 @@ import (
 )
 
 func growthRequest(s *Server, method, path, body string) *httptest.ResponseRecorder {
+	return growthRequestWithCookie(s, adminTestCookie(s, "admin-fixture"), method, path, body)
+}
+
+func growthRequestWithCookie(s *Server, cookie *http.Cookie, method, path, body string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(method, path, strings.NewReader(body))
-	r.AddCookie(adminTestCookie(s, "admin-fixture"))
+	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
 	return w
@@ -55,12 +59,15 @@ func TestGrowthClaimConcurrentIsolationAndConfirmation(t *testing.T) {
 	if w.Code != 200 || claims.Load() != 0 || balances.Load() != 0 {
 		t.Fatal("task listing has side effects", w.Code, w.Body.String())
 	}
+	// Exercise concurrent reward claims using an already authenticated session.
+	// Concurrent password verification has a separate admission limit.
+	cookie := adminTestCookie(s, "admin-fixture")
 	var wg sync.WaitGroup
 	for i := 0; i < 6; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			w := growthRequest(s, "POST", "/admin/api/workbuddy/tasks/claim", `{"id":" wb-cn ","task_code":"chat_5"}`)
+			w := growthRequestWithCookie(s, cookie, "POST", "/admin/api/workbuddy/tasks/claim", `{"id":" wb-cn ","task_code":"chat_5"}`)
 			if w.Code != 200 || !strings.Contains(w.Body.String(), "claimed") {
 				t.Error(w.Code, w.Body.String())
 			}

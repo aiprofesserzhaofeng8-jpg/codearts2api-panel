@@ -1,5 +1,9 @@
 <template>
 <section v-once id="tab-settings" role="tabpanel" aria-labelledby="nav-settings">
+        <div v-once class="card">
+          <div class="card-head"><div><h2>版本与更新</h2><p class="card-sub">当前运行版本 <strong id="runningVersion">读取中</strong></p></div><button class="btn" id="checkVersion">检查更新</button></div>
+          <div class="card-body"><p id="versionMessage" role="status" aria-live="polite"></p><a id="releaseLink" href="https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases" target="_blank" rel="noopener noreferrer">查看发布说明</a><p class="hint">更新检查缓存一分钟。升级请使用服务器上的安装工具；现有账号和配置由部署工具备份保留。</p></div>
+        </div>
         <div v-once class="card"><div class="card-head"><h2>公共提示词默认值</h2></div><div class="card-body">
 <div class="field"><label for="sCommonPromptMode">系统提示词</label><select id="sCommonPromptMode"><option value="passthrough">透传客户端提示词</option><option value="custom">自定义（替换 system / developer）</option></select></div>
 <div class="field"><label for="sCommonPromptText">自定义提示词</label><textarea id="sCommonPromptText" maxlength="65536" rows="4"></textarea></div>

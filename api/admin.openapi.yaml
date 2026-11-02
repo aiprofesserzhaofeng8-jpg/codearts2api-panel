@@ -3657,6 +3657,75 @@
           }
         }
       }
+    },
+    "/admin/api/version": {
+      "get": {
+        "operationId": "get__admin_api_version",
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "check",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Runtime version and optional stable update status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "current",
+                    "state",
+                    "url",
+                    "message"
+                  ],
+                  "properties": {
+                    "current": {
+                      "type": "string"
+                    },
+                    "latest": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "checked_at": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Administrator required"
+          }
+        }
+      }
     }
   },
   "components": {
