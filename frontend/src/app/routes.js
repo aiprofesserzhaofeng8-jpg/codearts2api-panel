@@ -18,13 +18,14 @@ import { api } from '../api/client';
 import { resumeLogin } from '../features/accounts/providers/codearts';
 import { refresh } from '../shared/refresh';
 export const routesState = {};
-routesState.TAB_IDS = { accounts: 1, groups: 1, overview: 1, models: 1, keys: 1, logs: 1, audit: 1, settings: 1 };
+routesState.TAB_IDS = { accounts: 1, groups: 1, users: 1, overview: 1, models: 1, keys: 1, logs: 1, audit: 1, settings: 1 };
 
 routesState.TAB_META = {
     overview: { title: "用量", hint: "请求、Token 与耗时统计", doc: "用量" },
     models: { title: "模型", hint: "模型目录、积分倍率与可用性", doc: "模型" },
     accounts: { title: "账号池", hint: "账号状态、额度与调度", doc: "账号池" },
     groups: { title: "账号分组", hint: "账号与模型访问范围", doc: "账号分组" },
+    users: { title: "用户管理", hint: "用户、分组权限与共享预算", doc: "用户管理" },
     keys: { title: "API 密钥", hint: "客户端接入与密钥管理", doc: "API 密钥" },
     logs: { title: "运行日志", hint: "请求记录与错误排查", doc: "运行日志" },
     audit: { title: "管理审计", hint: "管理操作、登录与敏感信息访问记录", doc: "管理审计" },
@@ -65,6 +66,8 @@ export function activateTab(name, updateHash, warm) {
         return;
     if (name === "audit")
         loadAudit();
+    if (name === "users")
+        window.dispatchEvent(new Event("users-refresh"));
     if (name === "logs")
         refreshLogs();
     if (name === "overview")

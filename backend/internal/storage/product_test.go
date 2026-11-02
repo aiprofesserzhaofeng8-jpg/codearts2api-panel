@@ -120,7 +120,7 @@ func TestProductSchemaSixMigrationPreservesLegacyPrompts(t *testing.T) {
 	if st.WorkBuddy.PromptOverrides != nil || st.WorkBuddy.PromptText != "WB" || st.ProviderPolicy("workbuddy").Sanitize || st.ProviderPolicy("trae").PromptFallback {
 		t.Fatal("migration changed policy", st.WorkBuddy)
 	}
-	if s.st.Version != 7 || s.Groups()[0].DefaultModel != "" || len(s.Groups()[0].ModelRules) != 0 {
+	if s.st.Version != StateVersion || s.Groups()[0].DefaultModel != "" || len(s.Groups()[0].ModelRules) != 0 {
 		t.Fatal("migration added routing behavior")
 	}
 	off := false

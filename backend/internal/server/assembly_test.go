@@ -40,6 +40,7 @@ func newConfiguredServer(st *storage.Store) *Server {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	s := New(st, Dependencies{
+		Users:     access.NewUsers(st),
 		Admission: gateway.NewAdmission(st),
 		CodeArts:  codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: logins,

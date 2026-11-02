@@ -36,3 +36,5 @@ CODEARTS_TEST_BROWSER=chromium make e2e
 ```
 
 测试只使用临时数据和模拟接口，不会真实登录、领取奖励或消耗积分。Linux 上已实测开发代理和退出；Windows CI 构建和运行后端测试，Windows 可分别在两个终端启动 Vite 与 Go。
+
+M7 的 UsersPage 和 `/user` UserConsole 为独立响应式 Vue 树，API 使用生成类型；不能接管遗留 `v-once` 页面的节点。用户会话只在 Cookie，显式显示的密钥仅留内存，切页/刷新/退出清除。开发代理覆盖 `/user/auth`、`/user/api`；普通页面路由为 `/user`。

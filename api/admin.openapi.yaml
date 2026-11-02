@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "CodeArts2API existing management API",
+    "title": "CodeArts2API administrator and consumer API",
     "version": "0.3.0",
     "description": "Same-origin management contract; inference bodies are not filtered by this schema. Variant operations are intentionally extensible. Query parameters and opaque provider payloads retain their existing handler validation."
   },
@@ -2095,6 +2095,614 @@
           }
         ]
       }
+    },
+    "/admin/api/users": {
+      "get": {
+        "operationId": "get__admin_api_users",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  },
+                  "required": [
+                    "users"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__admin_api_users",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/login": {
+      "post": {
+        "operationId": "post__user_auth_login",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "expires_at": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "user",
+                    "expires_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/logout": {
+      "post": {
+        "operationId": "post__user_auth_logout",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/session": {
+      "get": {
+        "operationId": "get__user_auth_session",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authenticated": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "authenticated"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/profile": {
+      "get": {
+        "operationId": "get__user_api_profile",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "group_name": {
+                      "type": "string"
+                    },
+                    "key_limit": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "group_name",
+                    "key_limit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/password": {
+      "post": {
+        "operationId": "post__user_api_password",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "login_required": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "login_required"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "old_password": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "old_password",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/keys": {
+      "get": {
+        "operationId": "get__user_api_keys",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserKey"
+                      }
+                    }
+                  },
+                  "required": [
+                    "keys"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__user_api_keys",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "key"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete__user_api_keys",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "toggle",
+                "delete"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/user/api/keys/reveal": {
+      "post": {
+        "operationId": "post__user_api_keys_reveal",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/models": {
+      "get": {
+        "operationId": "get__user_api_models",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "default_model": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "models",
+                    "default_model"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/usage": {
+      "get": {
+        "operationId": "get__user_api_usage",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserUsagePage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2436,6 +3044,9 @@
           },
           "budget_usage": {
             "$ref": "#/components/schemas/KeyUsage"
+          },
+          "user_id": {
+            "type": "string"
           }
         },
         "required": [
@@ -2778,6 +3389,207 @@
           "version",
           "mappings"
         ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "group_id": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "integer"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/KeyBudget"
+          },
+          "budget_usage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "group_id",
+          "enabled",
+          "created_at",
+          "budget",
+          "budget_usage"
+        ],
+        "additionalProperties": false
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 256
+          },
+          "group_id": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/KeyBudget"
+          },
+          "reset_budget": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "username",
+          "group_id"
+        ],
+        "additionalProperties": false
+      },
+      "UserKey": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "integer"
+          },
+          "last_used": {
+            "type": "integer"
+          },
+          "requests": {
+            "type": "integer"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/KeyBudget"
+          },
+          "budget_usage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          }
+        },
+        "required": [
+          "ref",
+          "key",
+          "name",
+          "enabled",
+          "created_at",
+          "last_used",
+          "requests",
+          "budget",
+          "budget_usage"
+        ],
+        "additionalProperties": false
+      },
+      "UserUsageLog": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "stream": {
+            "type": "boolean"
+          },
+          "latency_ms": {
+            "type": "integer"
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "estimated_cost": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "err": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "model",
+          "status",
+          "usage"
+        ],
+        "additionalProperties": true
+      },
+      "UserUsagePage": {
+        "type": "object",
+        "properties": {
+          "logs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserUsageLog"
+            }
+          },
+          "stats": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "retained": {
+            "type": "integer"
+          },
+          "oldest": {
+            "type": "integer"
+          },
+          "retention_limit": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "logs",
+          "stats",
+          "page",
+          "pages",
+          "total"
+        ],
+        "additionalProperties": true
       }
     },
     "securitySchemes": {

@@ -29,6 +29,8 @@ type RequestAttempt struct {
 }
 
 type LogEntry struct {
+	UserID          string           `json:"user_id,omitempty"`
+	PublicModel     string           `json:"public_model,omitempty"`
 	RequestedModel  string           `json:"requested_model,omitempty"`
 	FirstTokenMS    *int64           `json:"first_token_ms,omitempty"`
 	ErrorKind       string           `json:"error_kind,omitempty"`

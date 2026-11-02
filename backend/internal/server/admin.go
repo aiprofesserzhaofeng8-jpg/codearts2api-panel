@@ -71,7 +71,7 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 	for _, k := range keys {
 		safeKeys = append(safeKeys, map[string]any{
 			"ref": keyReference(k.Key), "key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
-			"group_id":   k.GroupID,
+			"group_id": k.GroupID, "user_id": k.UserID,
 			"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests, "budget": k.Budget, "budget_usage": k.BudgetUsage,
 		})
 	}
@@ -248,7 +248,7 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 		for _, k := range keys {
 			safe = append(safe, map[string]any{
 				"ref": keyReference(k.Key), "key": codearts.Mask(k.Key), "name": k.Name, "enabled": k.Enabled,
-				"group_id":   k.GroupID,
+				"group_id": k.GroupID, "user_id": k.UserID,
 				"created_at": k.CreatedAt, "last_used": k.LastUsed, "requests": k.Requests, "budget": k.Budget, "budget_usage": k.BudgetUsage,
 			})
 		}

@@ -60,6 +60,7 @@ architecture: frontend
 
 check: frontend-check vet vet-linux test console architecture
 	$(PYTHON) -m unittest discover -s tools -p test_convert_state_v7_to_v6.py
+	$(PYTHON) -m unittest discover -s tools -p test_convert_state_v8_to_v7.py
 
 clean:
 	rm -f $(BIN) $(BIN).exe

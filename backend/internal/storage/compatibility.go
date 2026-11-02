@@ -104,6 +104,8 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 7:
+			s.st.Version = 8 // Existing keys remain administrator-owned.
 		case 6:
 			s.st.Version = 7
 		case 5:

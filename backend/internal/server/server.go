@@ -54,6 +54,8 @@ type Server struct {
 	ProviderLogins      *accounts.ProviderLogins
 	AllowLocalAdmin     bool
 	AdminSessions       *access.AdminSessions
+	Users               *access.Users
+	userFailures        adminAttempts
 	Pricing             *usage.Management
 	adminFailures       adminAttempts
 	responsesReasoning  responsesReasoningCache
@@ -71,6 +73,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	Users               *access.Users
 	Admission           *gateway.Admission
 	AdminSessions       *access.AdminSessions
 	Pricing             *usage.Management
@@ -101,6 +104,7 @@ type Dependencies struct {
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *storage.Store, deps Dependencies) *Server {
 	s := &Server{Admission: deps.Admission, AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+		Users:    deps.Users,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()
@@ -114,6 +118,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/auth/login", s.handleAdminLogin)
 	mux.HandleFunc("/admin/auth/logout", s.handleAdminLogout)
 	mux.HandleFunc("/admin/auth/session", s.handleAdminSession)
+	mux.HandleFunc("/admin/api/users", s.withAdminAuth(s.handleAdminUsers))
+	mux.HandleFunc("/user/auth/login", s.handleUserLogin)
+	mux.HandleFunc("/user/auth/logout", s.handleUserLogout)
+	mux.HandleFunc("/user/auth/session", s.handleUserSession)
+	mux.HandleFunc("/user/api/profile", s.withUserAuth(s.handleUserProfile))
+	mux.HandleFunc("/user/api/password", s.withUserAuth(s.handleUserPassword))
+	mux.HandleFunc("/user/api/keys", s.withUserAuth(s.handleUserKeys))
+	mux.HandleFunc("/user/api/keys/reveal", s.withUserAuth(s.handleUserKeyReveal))
+	mux.HandleFunc("/user/api/usage", s.withUserAuth(s.handleUserUsage))
+	mux.HandleFunc("/user/api/models", s.withUserAuth(s.handleUserModels))
+	mux.HandleFunc("/user", serveConsole)
 	mux.HandleFunc("/admin/api/providers", s.withAdminAuth(s.handleProviders))
 	mux.HandleFunc("/admin/api/provider-login", s.withAdminAuth(s.handleProviderLogin))
 	mux.HandleFunc("/admin/api/provider-import", s.withAdminAuth(s.handleProviderImport))
@@ -280,7 +295,7 @@ func (s *Server) withAuthStyle(style errStyle, next http.HandlerFunc) http.Handl
 				writeErr(w, 401, message, "invalid_request_error")
 			}
 		}
-		if !s.Store.HasKeys() {
+		if !s.Store.RequiresAPIKey() {
 			if s.Store.Settings().AllowAnonymous || s.localDirect(r) {
 				next(w, r)
 				return
@@ -293,11 +308,16 @@ func (s *Server) withAuthStyle(style errStyle, next http.HandlerFunc) http.Handl
 			reject("缺少 API 密钥")
 			return
 		}
-		if !s.Store.ValidKey(key) {
+		userID, valid := s.Store.AuthenticateKey(key)
+		if !valid {
 			reject("API 密钥无效或已停用")
 			return
 		}
-		next(w, r.WithContext(context.WithValue(r.Context(), groupKeyContext{}, key)))
+		ctx := context.WithValue(r.Context(), groupKeyContext{}, key)
+		if userID != "" {
+			ctx = context.WithValue(ctx, inferenceUserKey{}, userID)
+		}
+		next(w, r.WithContext(ctx))
 	}
 }
 

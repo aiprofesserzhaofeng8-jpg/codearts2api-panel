@@ -34,6 +34,9 @@ type History interface{ UsageSnapshot() []LogEntry }
 
 func Query(source History, q UsageQuery) UsagePage { return query(source.UsageSnapshot(), q) }
 
+// QueryRecords takes a caller-owned, permission-filtered snapshot.
+func QueryRecords(records []LogEntry, q UsageQuery) UsagePage { return query(records, q) }
+
 func query(records []LogEntry, q UsageQuery) UsagePage {
 	result := UsagePage{Logs: []LogEntry{}, Page: q.Page, PageSize: q.PageSize, Retained: len(records), Limit: MaxUsageRecords}
 	if result.PageSize < 1 || result.PageSize > 100 {

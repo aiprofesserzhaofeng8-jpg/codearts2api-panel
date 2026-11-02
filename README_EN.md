@@ -21,7 +21,7 @@ Access CodeArts, WorkBuddy, and Trae CN/SOLO accounts through Chat Completions, 
 
 CodeArts2API Panel provides account management, model request forwarding, protocol translation, and usage tracking for personal use. The service uses the Go standard library, embeds its web interface in the binary, and stores state in a local JSON file.
 
-Run it locally, on a server, or in Docker. The listening address and port are configurable, and an HTTPS reverse proxy can provide public access. The current architecture supports one process and one administrator. Multiple instances must not share the same state file.
+Run it locally, on a server, or in Docker. The listening address and port are configurable, and an HTTPS reverse proxy can provide public access. The architecture supports one process, one administrator, and multiple consumer users. Users receive a group and a shared budget and manage their own keys and usage at `/user`; see the [user guide](docs/USERS.md). Multiple instances must not share the same state file.
 
 ## Features
 
@@ -107,7 +107,7 @@ docker compose down
 
 A public deployment can use `Client → HTTPS domain → Nginx/Caddy → Gateway`. With a reverse proxy on the same host, the gateway can keep listening on `127.0.0.1:10087`. Preserve the original Host header, disable response buffering, and allow sufficient read timeouts for streaming responses.
 
-The service does not provide HTTPS itself. Keep administrator authentication and API key checks enabled, and leave local automatic unlock and anonymous access disabled. When TLS terminates at the proxy, configure the trusted proxy to add the Secure attribute to administrator session cookies. See [Security](SECURITY.md) and [Management](docs/MANAGEMENT.md) for deployment boundaries.
+The service does not provide HTTPS itself. Keep administrator authentication and API key checks enabled, and leave local automatic unlock and anonymous access disabled. When TLS terminates at the proxy, configure the trusted proxy to add the Secure attribute to administrator and user session cookies. See [Security](SECURITY.md) and [Management](docs/MANAGEMENT.md) for deployment boundaries.
 
 ### Updates and backups
 

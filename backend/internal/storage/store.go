@@ -32,10 +32,11 @@ type Stats = usage.Stats
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 7
+const StateVersion = 8
 
 // State 是全部持久化状态。
 type State struct {
+	Users []access.User `json:"users,omitempty"`
 	// UsageSequence is the journal checkpoint included in this snapshot.
 	UsageSequence           uint64                            `json:"usage_sequence,omitempty"`
 	Groups                  []AccountGroup                    `json:"groups,omitempty"`
@@ -297,16 +298,26 @@ func (s *Store) ToggleKey(key string) bool {
 
 // ValidKey 校验密钥并计数。
 func (s *Store) ValidKey(key string) bool {
+	_, ok := s.AuthenticateKey(key)
+	return ok
+}
+
+// AuthenticateKey returns immutable ownership with the original key counter
+// update. Administrator-owned keys do not traverse a user registry.
+func (s *Store) AuthenticateKey(key string) (string, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, k := range s.st.Keys {
 		if k.Key == key && k.Enabled {
+			if s.keyOwnerLocked(k) != nil {
+				return "", false
+			}
 			k.LastUsed = time.Now().Unix()
 			k.Requests++
-			return true
+			return k.UserID, true
 		}
 	}
-	return false
+	return "", false
 }
 
 // HasKeys 报告是否已签发任何密钥。
@@ -314,6 +325,14 @@ func (s *Store) HasKeys() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.st.Keys) > 0
+}
+
+// Once consumers exist, deleting their last key must not reopen local or
+// explicitly anonymous access and thereby bypass user authorization/budgets.
+func (s *Store) RequiresAPIKey() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.st.Keys) > 0 || len(s.st.Users) > 0
 }
 
 // --- 设置 / 统计 / 日志 ---
@@ -352,6 +371,13 @@ func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 				}
 				break
 			}
+		}
+	}
+	// Ownership is captured at authentication, persisted in the journal, and
+	// survives key deletion during an in-flight request and subsequent replay.
+	if e.UserID != "" && e.Attempts > 0 {
+		if u := s.userLocked(e.UserID); u != nil {
+			addBudgetUsage(&u.BudgetUsage, e)
 		}
 	}
 	if e.RequestKind == "summary" {

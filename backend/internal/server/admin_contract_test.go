@@ -125,13 +125,29 @@ func TestManagementContractMatchesHandlers(t *testing.T) {
 		}
 		validate(value, schemas[name].(map[string]any), name)
 	}
+	u := createTestUser(t, s, "contract-user", group.ID)
+	k, err := s.Store.AddUserKeyAndSave(u.ID, "contract-key")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, dto := range map[string]any{"User": u, "UserKey": safeUserKey(&k), "UserUsagePage": s.Store.QueryUserUsage(u.ID, storage.UsageQuery{})} {
+		encoded, err := json.Marshal(dto)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var value any
+		if err = json.Unmarshal(encoded, &value); err != nil {
+			t.Fatal(err)
+		}
+		validate(value, schemas[name].(map[string]any), name)
+	}
 	// The route inventory must not silently drift from the maintained contract.
 	source, err := os.ReadFile("server.go")
 	if err != nil {
 		t.Fatal(err)
 	}
 	paths := spec["paths"].(map[string]any)
-	for _, match := range regexp.MustCompile(`mux.HandleFunc\("(/admin/[^\"]+)"`).FindAllStringSubmatch(string(source), -1) {
+	for _, match := range regexp.MustCompile(`mux.HandleFunc\("(/(?:admin|user)/[^\"]+)"`).FindAllStringSubmatch(string(source), -1) {
 		if paths[match[1]] == nil {
 			t.Error("undocumented management route", match[1])
 		}

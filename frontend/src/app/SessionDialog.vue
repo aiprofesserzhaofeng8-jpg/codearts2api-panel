@@ -6,6 +6,7 @@
     <div v-once class="field"><label for="pw">管理密码</label><input id="pw" type="password" autocomplete="current-password" placeholder="输入管理密码"></div>
     <p class="hint" id="adminLoginError" role="alert"></p>
     <button class="btn primary" id="savePw">登录</button>
+    <p class="hint"><a href="/user">普通用户登录</a></p>
     <p class="hint">首次启动的密码见服务器 data 目录中的 .access.json；旧部署未设密码时会生成 state.json.admin-recovery.json。也可用 CODEARTS_ADMIN_PASSWORD 重设。</p>
   </div></div>
 </dialog>

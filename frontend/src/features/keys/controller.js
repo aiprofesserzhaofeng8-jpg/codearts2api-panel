@@ -46,7 +46,7 @@ export function renderKeys(d) {
         });
         ops.appendChild(reveal);
         ops.appendChild(btn("预算", "xs", function () { openKeyBudget(k); }));
-        ops.appendChild(btn("分组", "xs", function () { openKeyGroup(k); }));
+        if (!k.user_id) ops.appendChild(btn("分组", "xs", function () { openKeyGroup(k); }));
         ops.appendChild(btn(k.enabled ? "停用" : "启用", "xs", function () { keyOp("toggle", k.ref || k.key); }));
         ops.appendChild(btn("删除", "xs danger", function () {
             if (confirm("确定删除该密钥？"))

@@ -12,9 +12,9 @@ beforeEach(()=>{
   )))));
 });
 afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();document.body.textContent='';});
-it('mounts eight independent pages, preserves unsaved settings on refresh, and disposes polling',async()=>{
+it('mounts nine independent pages, preserves unsaved settings on refresh, and disposes polling',async()=>{
  const wrapper=mount(App,{attachTo:document.body});await flushPromises();
- expect(document.querySelectorAll('section[role="tabpanel"]')).toHaveLength(8);
+ expect(document.querySelectorAll('section[role="tabpanel"]')).toHaveLength(9);
  const input=document.querySelector<HTMLInputElement>('#sForceModel')!;expect(input).toBeTruthy();
  input.value='draft-do-not-overwrite';input.dispatchEvent(new Event('input',{bubbles:true}));
  const { refresh }=await import('./snapshot');await refresh();expect(input.value).toBe('draft-do-not-overwrite');

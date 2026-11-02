@@ -5,12 +5,13 @@ import json
 import os
 from pathlib import Path
 import socket
+import secrets
 import subprocess
 import tempfile
 import time
 import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("providers-smoke", "trae-smoke", "trae-device-smoke", "groups-smoke", "account-create-smoke", "growth-multi-smoke", "growth-tasks-smoke", "growth-actions-smoke", "growth-buddy-smoke", "frontend-smoke", "product-settings-smoke")
+CASES = ("providers-smoke", "trae-smoke", "trae-device-smoke", "groups-smoke", "account-create-smoke", "growth-multi-smoke", "growth-tasks-smoke", "growth-actions-smoke", "growth-buddy-smoke", "frontend-smoke", "product-settings-smoke", "users-smoke")
 def run(binary, output):
     output.mkdir(parents=True, exist_ok=True)
     results=[]
@@ -18,7 +19,8 @@ def run(binary, output):
         temp=Path(folder)
         with socket.socket() as sock: sock.bind(("127.0.0.1",0)); port=sock.getsockname()[1]
         with (temp/"server.log").open("w") as log:
-            process=subprocess.Popen([str(binary),"-host","127.0.0.1","-port",str(port),"-data",str(temp/"state.json"),"-no-import","-no-refresh"],cwd=temp,stdout=log,stderr=log)
+            password=secrets.token_urlsafe(24)
+            process=subprocess.Popen([str(binary),"-host","127.0.0.1","-port",str(port),"-data",str(temp/"state.json"),"-no-import","-no-refresh"],cwd=temp,env={**os.environ,"CODEARTS_ADMIN_PASSWORD":password},stdout=log,stderr=log)
             try:
                 base=f"http://127.0.0.1:{port}"
                 for _ in range(100):
@@ -27,7 +29,7 @@ def run(binary, output):
                         if process.poll() is not None: raise RuntimeError((temp/"server.log").read_text())
                         time.sleep(.1)
                 else: raise RuntimeError("test binary not ready")
-                env={**os.environ,"CODEARTS_TEST_BASE":base,"NODE_PATH":str(ROOT/"frontend/node_modules")+os.pathsep+os.environ.get("NODE_PATH", "")}
+                env={**os.environ,"CODEARTS_TEST_BASE":base,"CODEARTS_TEST_ADMIN_PASSWORD":password,"NODE_PATH":str(ROOT/"frontend/node_modules")+os.pathsep+os.environ.get("NODE_PATH", "")}
                 for name in CASES:
                     result=subprocess.run(["node",str(ROOT/"scripts"/(name+".cjs"))],cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=120)
                     (output/(name+".log")).write_text(result.stdout)

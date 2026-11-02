@@ -1,8 +1,8 @@
 # 项目结构设计 v1
 
-日期：2026-11-02。状态：**M1/M2/M3/M4/M5/M6 已完成，M7 按实际需求启动**。
+日期：2026-11-02。状态：**M1–M7 已完成，M7 范围为单实例多用户**。
 
-本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。独立前端和准入/存储边界已完成；M6 已增加公共提示词继承和分组产品规则；多实例运行属于后续阶段。当前功能说明继续以仓库 README 和使用文档为准。
+本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。独立前端和准入/存储边界已完成；M6 已增加公共提示词继承和分组产品规则；M7 已增加单实例普通用户、分组授权和共享预算，多实例运行需要另行设计。当前功能说明继续以仓库 README 和使用文档为准。
 
 已建立 `AGENTS.md` 和 `deploy/` 补充示例；独立 `frontend/` 与 `backend/internal/webui` 已接通，见 [M4 验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
 

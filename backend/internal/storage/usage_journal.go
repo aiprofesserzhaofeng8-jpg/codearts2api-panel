@@ -61,6 +61,14 @@ func (s *Store) Record(e LogEntry, outChars int, keys ...string) error {
 	if persistErr == nil {
 		persistErr = s.journalErr
 	}
+	if e.UserID == "" && len(keys) > 0 {
+		for _, k := range s.st.Keys {
+			if k.Key == keys[0] {
+				e.UserID = k.UserID
+				break
+			}
+		}
+	}
 	if e.Usage.Known {
 		// Own the attempt slice before attaching historical price snapshots.
 		e.AttemptDetails = append([]RequestAttempt(nil), e.AttemptDetails...)

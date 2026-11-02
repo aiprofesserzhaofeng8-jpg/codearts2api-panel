@@ -47,6 +47,9 @@ func (s *Store) accessScopeLocked(key string) (AccessScope, error) {
 		if !k.Enabled {
 			return AccessScope{}, fmt.Errorf("API 密钥已停用")
 		}
+		if err := s.keyOwnerLocked(k); err != nil {
+			return AccessScope{}, err
+		}
 		if k.GroupID == "" {
 			return AccessScope{}, nil
 		}
@@ -54,13 +57,7 @@ func (s *Store) accessScopeLocked(key string) (AccessScope, error) {
 			if g.ID != k.GroupID {
 				continue
 			}
-			p := AccessScope{DefaultModel: g.DefaultModel, ClientDefaultModel: g.ClientDefaultModel, ModelRules: access.CloneModelRules(g.ModelRules), ModelMappings: cloneMappings(g.ModelMappings), Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
-			for _, id := range g.AccountIDs {
-				p.AccountIDs[id] = true
-			}
-			for _, id := range g.ModelIDs {
-				p.ModelIDs[id] = true
-			}
+			p := groupScopeLocked(g)
 			return p, nil
 		}
 		return AccessScope{}, fmt.Errorf("密钥绑定的分组不存在，请联系管理员")
@@ -198,6 +195,11 @@ func (s *Store) DeleteGroup(id string) error {
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for _, u := range s.st.Users {
+		if u.GroupID == id {
+			return fmt.Errorf("仍有用户绑定此分组，请先修改用户分组")
+		}
+	}
 	for _, k := range s.st.Keys {
 		if k.GroupID == id {
 			return fmt.Errorf("仍有 API Key 绑定此分组，请先修改密钥分组")
@@ -237,6 +239,9 @@ func (s *Store) SetKeyGroupAndSave(key, group string) error {
 	}
 	for _, k := range s.st.Keys {
 		if k.Key == key {
+			if k.UserID != "" {
+				return fmt.Errorf("用户密钥的分组由用户权限统一管理，请修改用户分组")
+			}
 			before := k.GroupID
 			k.GroupID = group
 			if err := s.saveGroupStateLocked(); err != nil {
@@ -264,4 +269,16 @@ func (s *Store) AddKeyInGroupAndSave(name, group string) (*APIKey, error) {
 	}
 	copy := *k
 	return &copy, nil
+}
+
+// groupScopeLocked projects the same current group for keys and user consoles.
+func groupScopeLocked(g AccountGroup) AccessScope {
+	p := AccessScope{DefaultModel: g.DefaultModel, ClientDefaultModel: g.ClientDefaultModel, ModelRules: access.CloneModelRules(g.ModelRules), ModelMappings: cloneMappings(g.ModelMappings), Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
+	for _, id := range g.AccountIDs {
+		p.AccountIDs[id] = true
+	}
+	for _, id := range g.ModelIDs {
+		p.ModelIDs[id] = true
+	}
+	return p
 }

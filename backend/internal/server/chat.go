@@ -316,6 +316,7 @@ func rewriteModel(body []byte, model string, stream bool) ([]byte, error) {
 // record 记录一次请求结果。
 func (s *Server) record(ctx context.Context, key string, acct *accounts.Account, model string, stream bool, status int, start time.Time, inLen, outLen int, err error) error {
 	e := storage.LogEntry{
+		UserID:          inferenceUser(ctx),
 		AttemptDetails:  requestAttemptDetails(ctx),
 		UsageIncomplete: requestUsageIncomplete(ctx),
 		RequestID:       requestID(ctx),
@@ -350,6 +351,9 @@ func (s *Server) record(ctx context.Context, key string, acct *accounts.Account,
 	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
 		e.FirstTokenMS = c.firstTokenMS
 		e.RequestedModel = c.requestedModel
+		if e.UserID != "" {
+			e.PublicModel = model
+		}
 		if c.selectedModel != "" {
 			e.Model = c.selectedModel
 		}

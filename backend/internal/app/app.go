@@ -46,6 +46,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 	models := registry.New()
 	credits := &accounts.Credits{}
 	return server.New(st, server.Dependencies{
+		Users:         access.NewUsers(st),
 		Admission:     gateway.NewAdmission(st),
 		AdminSessions: &access.AdminSessions{}, Pricing: usage.NewManagement(st),
 		Welfare: jobs.NewWelfare(st),

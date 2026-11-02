@@ -149,6 +149,12 @@ func (s *Routing) VisibleModels(key string) ([]provider.Model, error) {
 	if err != nil {
 		return nil, GroupDenied()
 	}
+	return s.ModelsForScope(scope), nil
+}
+
+// ModelsForScope renders an already-authorized scope without acquiring a lease
+// or minting an internal key. It is also used by the authenticated user console.
+func (s *Routing) ModelsForScope(scope access.AccessScope) []provider.Model {
 	settings := s.store.Settings()
 	list := s.store.Accounts()
 	out := []provider.Model{}
@@ -176,7 +182,7 @@ func (s *Routing) VisibleModels(key string) ([]provider.Model, error) {
 			out = append(out, m)
 		}
 	}
-	return out, nil
+	return out
 }
 func (s *Routing) Resolve(key string, settings config.Settings, requested string) (provider.Model, *ModelPlan, error) {
 	scope, err := s.store.AccessScope(key)

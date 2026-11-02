@@ -1,5 +1,17 @@
 package access
 
+import (
+	"fmt"
+	"math"
+)
+
+func ValidateBudget(b KeyBudget) error {
+	if b.MaxRequests < 0 || b.MaxTokens < 0 || b.MaxUSD < 0 || math.IsNaN(b.MaxUSD) || math.IsInf(b.MaxUSD, 0) {
+		return fmt.Errorf("预算须为非负数，0 表示不限")
+	}
+	return nil
+}
+
 type BudgetError struct{ Message string }
 
 func (e *BudgetError) Error() string             { return e.Message }

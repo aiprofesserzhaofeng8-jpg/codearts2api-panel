@@ -9,6 +9,7 @@ import ModelsPage from './features/models/ModelsPage.vue';
 import LogsPage from './features/logs/LogsPage.vue';
 import AuditPage from './features/logs/AuditPage.vue';
 import SettingsPage from './features/settings/SettingsPage.vue';
+import UsersPage from './features/users/UsersPage.vue';
 import GrowthDialog from './features/jobs/GrowthDialog.vue';
 import SessionDialog from './app/SessionDialog.vue';
 import Sidebar from './layouts/Sidebar.vue';
@@ -49,6 +50,8 @@ onUnmounted(() => dispose?.());
       <AccountsPage />
 
       <GroupsPage />
+
+      <UsersPage />
 
       <KeysPage />
 

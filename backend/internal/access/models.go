@@ -3,6 +3,7 @@
 package access
 
 type APIKey struct {
+	UserID      string      `json:"user_id,omitempty"`
 	GroupID     string      `json:"group_id,omitempty"`
 	Budget      KeyBudget   `json:"budget"`
 	BudgetUsage BudgetUsage `json:"budget_usage"`

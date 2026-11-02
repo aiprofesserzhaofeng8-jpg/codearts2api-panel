@@ -21,6 +21,7 @@ import { sessionState, showAdminLogin } from './session';
 export function refresh() {
     return api("/admin/api/state").then(function (d) {
         serverState.data = d;
+        if (domState.$("#tab-users").classList.contains("on")) window.dispatchEvent(new Event("users-refresh"));
         renderGroups(d);
         renderOverview(d);
         if (domState.$("#tab-models").classList.contains("on")) {

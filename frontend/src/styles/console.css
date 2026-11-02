@@ -321,8 +321,8 @@ main{
 }
 
 /* 页签面板：切换时轻微上浮，尊重 reduced-motion */
-section{display:none}
-section.on{
+section[role="tabpanel"]{display:none}
+section[role="tabpanel"].on{
   display:block;
   animation:panelIn .24s cubic-bezier(.2,.7,.3,1) both;
 }
@@ -1323,3 +1323,20 @@ body.admin-locked .app { visibility: hidden; }
 .group-mapping-row .field{margin-bottom:0}
 @media(max-width:600px){.group-account-options{grid-template-columns:1fr}}
 @media(max-width:600px){.account-create-body{padding:18px}.account-create-steps{gap:10px;font-size:11px;margin-bottom:24px}.account-create-steps i{width:20px}.account-platform{flex-direction:column;font-size:12px;padding:13px 4px;gap:7px}.account-methods{grid-template-columns:1fr}.account-create-modal #manualAccountPanel .field-grid{grid-template-columns:1fr}.account-create-modal{max-height:94vh}}
+
+/* M7 consumer console: Vue exclusively owns this separate component tree. */
+.user-fields{border:0;padding:0;margin:0;min-width:0}
+.user-console{min-height:100vh}
+.user-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 24px;border-bottom:1px solid var(--line);background:var(--surface)}
+.user-main{max-width:1280px;margin:0 auto;padding:24px;min-width:0}
+.user-main>.card{padding:20px;margin-bottom:20px}
+.user-main h1{font-size:22px;margin:0 0 8px}
+.user-login{max-width:440px;margin:8vh auto 0}
+.user-password{max-width:560px}
+.user-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.user-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:12px 0}
+.user-summary strong{display:block;font-size:20px;overflow-wrap:anywhere}
+.user-console .field{margin-bottom:14px}
+.user-console .actions{flex-wrap:wrap}
+.user-console code{overflow-wrap:anywhere}
+@media(max-width:640px){.user-main{padding:12px}.user-header{padding:12px;flex-wrap:wrap}.user-summary{grid-template-columns:1fr;gap:12px}.user-main>.card{padding:14px}.user-console table{min-width:620px}}
