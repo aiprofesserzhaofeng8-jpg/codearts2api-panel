@@ -66,6 +66,25 @@ M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算�
 
 ## 部署
 
+### 一键安装系统级服务（Linux）
+
+需要 Python 3.10+、systemd 和 sudo。自动下载最新稳定版并校验，创建专用服务用户、注册开机启动：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
+```
+
+默认安装到 `/opt/codearts2api`，服务名 `codearts2api.service`，监听 `127.0.0.1:10087`。通过 SSH 隧道或 HTTPS 反代访问；需要直接监听所有网卡时，在命令末尾改用 `sudo bash -s -- install --host 0.0.0.0`。服务以不可登录的专用用户运行，程序和升级配置由 root 管理。
+
+```bash
+sudo systemctl status codearts2api
+sudo cat /opt/codearts2api/data/state.json.setup.json  # 在服务器读取初始化凭证
+# 后续升级（先阅读版本说明）：
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
+```
+
+重复安装会拒绝覆盖。已有用户级或源码实例继续使用原管理方式，需显式迁移时参考 [部署指南](deploy/README.md)。
+
 ### 固定版本安装（Linux 服务器）
 
 不需要 Go 或 Node.js，需 Python 3.10+ 和可用的用户级 systemd。从 [正式发布页](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest) 下载并查看 `install.sh` 后执行：

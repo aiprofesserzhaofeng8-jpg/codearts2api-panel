@@ -1,5 +1,5 @@
 #!/bin/sh
-# Trusted bootstrap. Download this script from the project before executing it.
+# Stable release bootstrap; no arguments install a system service as root.
 set -eu
 command -v python3 >/dev/null 2>&1 || { echo '需要 Python 3.10 或更新版本' >&2; exit 1; }
 exec python3 - "$@" <<'PY'
@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -90,13 +91,23 @@ def digest(path):
 def main():
     require(sys.version_info >= (3, 10), '需要 Python 3.10 或更新版本')
     p = argparse.ArgumentParser(description='CodeArts2API 稳定版本安装入口；升级前请阅读发布说明。离线使用 panelctl.py。')
-    p.add_argument('command', choices=['check', 'download', 'install', 'upgrade'])
+    p.add_argument('command', nargs='?', choices=['check', 'download', 'install', 'upgrade'])
     p.add_argument('--version', default='latest')
     p.add_argument('--root', type=Path)
     p.add_argument('--output', type=Path)
     p.add_argument('--name', default='managed')
     p.add_argument('--port', type=int, default=10087)
+    p.add_argument('--system', action='store_true', help='安装系统级服务；无参数时默认启用')
+    p.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], default='127.0.0.1')
     args = p.parse_args()
+    args.system = args.system or args.command is None or (args.command in ('install', 'upgrade') and args.root is None and os.geteuid() == 0)
+    args.command = args.command or 'install'
+    if args.system and args.command in ('install', 'upgrade'):
+        require(os.geteuid() == 0, '系统级安装/升级需要 root，请使用 curl … | sudo bash')
+        args.root = args.root or Path('/opt/codearts2api')
+        require(Path('/run/systemd/system').is_dir() and shutil.which('systemctl'), '需要正在运行的 systemd 系统服务管理器')
+        if args.command == 'install':
+            require(not args.root.exists() and not args.root.is_symlink(), '安装目录已存在；请使用 upgrade，未覆盖已有数据')
     require(platform.system() == 'Linux', '此安装入口仅支持 Linux')
     arch = {'x86_64': 'amd64', 'aarch64': 'arm64'}.get(platform.machine())
     require(arch, '此安装入口仅支持 amd64/arm64')
@@ -128,6 +139,12 @@ def main():
         command = [sys.executable, str(work / 'panelctl.py'), args.command, '--root', str(args.root), '--archive', str(work / name), '--sha256', expected[name]]
         if args.command == 'install':
             command += ['--name', args.name, '--port', str(args.port)]
+            if args.system:
+                capability = subprocess.run([sys.executable, str(work / 'panelctl.py'), 'install', '--help'], capture_output=True, text=True, check=True)
+                require('--system' in capability.stdout, '该正式版本尚不支持系统级安装，请等待包含新安装工具的版本发布')
+                command += ['--system', '--host', args.host]
+            else:
+                require(args.host == '127.0.0.1', '自定义监听地址请使用 --system')
         subprocess.run(command, check=True)
 
 if __name__ == '__main__':

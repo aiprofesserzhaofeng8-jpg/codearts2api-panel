@@ -14,6 +14,8 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import platform
+import pwd
+import grp
 import re
 import shutil
 import socket
@@ -191,14 +193,14 @@ def no_writer(directory):
 
 
 class Service:
-    def __init__(self, unit=None, compose=None, name='codearts2api'):
+    def __init__(self, unit=None, compose=None, name='codearts2api', system=False):
         require(bool(unit) != bool(compose), '必须指定 systemd unit 或 Compose 文件')
         self.unit, self.compose, self.name = unit, compose, name
         if unit:
             require(re.fullmatch(r'[a-zA-Z0-9_.@-]+\.service', unit) is not None, 'unit 名称无效')
         else:
             require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_.-]*', name) is not None, 'Compose 服务名称无效')
-        self.prefix = ['systemctl', '--user'] if unit else ['docker', 'compose', '-f', str(Path(compose).resolve())]
+        self.prefix = (['systemctl'] if system else ['systemctl', '--user']) if unit else ['docker', 'compose', '-f', str(Path(compose).resolve())]
 
     def running(self):
         if self.unit:
@@ -400,23 +402,39 @@ def check_release(path):
     return meta
 
 
-def unit_text(root, port, no_refresh=False):
+def unit_text(root, port, no_refresh=False, system_user=None, host='127.0.0.1'):
     # Restrict generated paths to avoid systemd specifier/quoting ambiguity.
     require(re.fullmatch(r'/[a-zA-Z0-9_./-]+', str(root)) is not None, '安装路径只支持 ASCII 字母、数字、点、横线、下划线和斜线')
+    require(host in ('127.0.0.1', '0.0.0.0'), '监听地址仅支持 127.0.0.1 或 0.0.0.0')
+    identity = ''
+    if system_user:
+        require(re.fullmatch(r'[a-z_][a-z0-9_-]{0,30}', system_user) is not None, '系统服务用户无效')
+        identity = f'''User={system_user}
+Group={system_user}
+Environment=HOME={root}/data
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={root}/data
+CapabilityBoundingSet=
+RestrictSUIDSGID=true
+'''
     return f'''[Unit]
 Description=CodeArts2API managed installation
 After=network-online.target
 Wants=network-online.target
 [Service]
 Type=simple
+{identity}\
 WorkingDirectory={root}
-ExecStart={root}/current/codearts2api-panel -host 127.0.0.1 -port {port} -data {root}/data/state.json -no-import{ " -no-refresh" if no_refresh else "" }
+ExecStart={root}/current/codearts2api-panel -host {host} -port {port} -data {root}/data/state.json -no-import{ " -no-refresh" if no_refresh else "" }
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=30
 UMask=0077
 [Install]
-WantedBy=default.target
+WantedBy={"multi-user.target" if system_user else "default.target"}
 '''
 
 
@@ -429,22 +447,72 @@ def wait_health(url, allow_setup=False):
     raise OpsError('启动检查失败；保留当前数据与版本，请检查 journalctl，不自动恢复旧数据')
 
 
-def verify_process(unit, binary):
-    pid = run(['systemctl', '--user', 'show', unit, '-p', 'MainPID', '--value']).stdout.strip()
+def verify_process(unit, binary, system=False):
+    prefix = ['systemctl'] if system else ['systemctl', '--user']
+    pid = run(prefix + ['show', unit, '-p', 'MainPID', '--value']).stdout.strip()
     require(pid.isdigit() and int(pid) > 0 and (Path('/proc') / pid / 'exe').resolve() == binary,
             '健康接口正常但实际进程不是目标版本')
 
 
+def system_root(root):
+    require(os.geteuid() == 0, '系统级安装/升级需要 root，请使用 sudo')
+    require(root.is_absolute() and root == root.resolve(), '系统安装路径不能含符号链接或相对路径')
+    require(root != Path('/'), '不能安装到文件系统根目录')
+    require(root.parent.is_dir(), '系统安装路径的父目录必须预先存在')
+    if root.exists():
+        info = root.stat()
+        require(info.st_uid == 0 and not info.st_mode & 0o022, '系统安装目录必须由 root 持有且其他用户不可写')
+    for parent in root.parents:
+        if parent.exists():
+            info = parent.stat()
+            require(info.st_uid == 0 and not info.st_mode & 0o022,
+                    '系统安装路径的父目录必须由 root 持有且其他用户不可写')
+
+
+def service_account(name, root):
+    shell = next((p for p in ('/usr/sbin/nologin', '/sbin/nologin') if Path(p).is_file()), None)
+    require(shell is not None and shutil.which('useradd'), '系统安装需要 useradd 和 nologin')
+    try:
+        account = pwd.getpwnam(name)
+    except KeyError:
+        run(['useradd', '--system', '--user-group', '--no-create-home', '--home-dir', str(root / 'data'), '--shell', shell, name])
+        account = pwd.getpwnam(name)
+    require(account.pw_uid != 0 and account.pw_dir == str(root / 'data') and account.pw_shell == shell,
+            '同名用户不是此安装的专用服务用户，拒绝复用')
+    require(grp.getgrnam(name).gr_gid == account.pw_gid, '服务用户组不匹配')
+    return account
+
+
+def system_release(path, gid):
+    # Program and deployment metadata stay root-owned; the daemon cannot replace them.
+    for base, dirs, names in os.walk(path):
+        os.chown(base, 0, gid)
+        os.chmod(base, 0o750)
+        for name in names:
+            item = Path(base) / name
+            require(item.is_file() and not item.is_symlink(), '程序目录含特殊文件')
+            os.chown(item, 0, gid)
+            os.chmod(item, 0o750 if name == 'codearts2api-panel' else 0o640)
+
+
 def install(args):
     root = Path(args.root).absolute()
-    require(not root.exists(), '安装目录已存在；请使用 upgrade 或另选目录')
+    system = getattr(args, 'system', False)
+    if system:
+        system_root(root)
+        require(Path('/run/systemd/system').is_dir(), '需要正在运行的 systemd 系统服务管理器')
+    require(not root.exists() and not root.is_symlink(), '安装目录已存在；请使用 upgrade 或另选目录')
     require(re.fullmatch(r'[a-zA-Z0-9_-]+', args.name) is not None, '实例名无效')
     require(1 <= args.port <= 65535, '端口无效')
-    unit = 'codearts2api-' + args.name + '.service'
-    unit_dir = Path(os.environ.get('XDG_CONFIG_HOME', str(Path.home() / '.config'))) / 'systemd/user'
+    unit = 'codearts2api.service' if system and args.name == 'managed' else 'codearts2api-' + args.name + '.service'
+    user = unit.removesuffix('.service') if system else None
+    unit_dir = Path('/etc/systemd/system') if system else Path(os.environ.get('XDG_CONFIG_HOME', str(Path.home() / '.config'))) / 'systemd/user'
     unit_path = unit_dir / unit
-    require(not unit_path.exists(), '同名服务已存在，拒绝覆盖')
-    text = unit_text(root, args.port, getattr(args, "no_refresh", False))
+    require(not unit_path.exists() and not unit_path.is_symlink(), '同名服务已存在，拒绝覆盖')
+    if system:
+        require(run(['systemctl', 'show', unit, '-p', 'LoadState', '--value']).stdout.strip() == 'not-found', '同名系统服务已存在，拒绝覆盖')
+    host = getattr(args, 'host', '127.0.0.1')
+    text = unit_text(root, args.port, getattr(args, "no_refresh", False), user, host)
     if not args.no_start:
         with socket.socket() as probe:
             try:
@@ -457,35 +525,50 @@ def install(args):
         candidate = Path(temp) / 'candidate'
         unpack(args.archive, candidate, 'release', args.sha256)
         meta = check_release(candidate)
+        account = service_account(user, root) if system else None
         root.mkdir(mode=0o700)
         (root / 'releases').mkdir(mode=0o700)
         (root / 'data').mkdir(mode=0o700)
         (root / 'backups').mkdir(mode=0o700)
         dest = root / 'releases' / meta['version']
         shutil.move(candidate, dest)
+    if system:
+        for directory in (root, root / 'releases'):
+            os.chown(directory, 0, account.pw_gid)
+            os.chmod(directory, 0o750)
+        system_release(dest, account.pw_gid)
+        os.chown(root / 'data', account.pw_uid, account.pw_gid)
     (root / 'current').symlink_to(dest.relative_to(root))
-    private_json(root / 'installation.json', {'unit': unit, 'port': args.port})
+    private_json(root / 'installation.json', {'unit': unit, 'port': args.port, 'scope': 'system' if system else 'user', 'host': host})
     unit_dir.mkdir(parents=True, exist_ok=True)
     with unit_path.open('x') as output:
         output.write(text)
+    os.chmod(unit_path, 0o644)
     if not args.no_start:
-        run(['systemctl', '--user', 'daemon-reload'])
-        run(['systemctl', '--user', 'enable', unit])
-        service = Service(unit=unit)
+        service = Service(unit=unit, system=system)
+        run(service.prefix + ['daemon-reload'])
+        run(service.prefix + ['enable', unit])
         try:
             service.start()
             wait_health(f'http://127.0.0.1:{args.port}', allow_setup=True)
-            verify_process(unit, dest / 'codearts2api-panel')
+            verify_process(unit, dest / 'codearts2api-panel', system=system)
         except Exception:
             service.stop()
             raise
     print('版本与服务配置已准备。' if args.no_start else '安装完成；首次安装凭证位于 data/state.json.setup.json。管理员用户名 admin。')
+    print(f'访问地址：http://127.0.0.1:{args.port}（服务器本机）')
+    print(f'读取安装凭证：{"sudo " if system else ""}cat {root}/data/state.json.setup.json')
+    print(f'服务状态：{"sudo systemctl" if system else "systemctl --user"} status {unit}')
 
 
 def upgrade(args):
-    root = Path(args.root).resolve()
+    root = Path(args.root).absolute()
     config = json.loads((root / 'installation.json').read_text())
-    service = Service(unit=config['unit'])
+    require(config.get('scope', 'user') in ('user', 'system'), '安装记录的服务 scope 无效')
+    system = config.get('scope', 'user') == 'system'
+    if system:
+        system_root(root)
+    service = Service(unit=config['unit'], system=system)
     require(service.running(), '升级要求受管服务当前正在运行；请先排查停止或失败原因')
     old = (root / 'current').resolve()
     previous = check_release(old)
@@ -493,13 +576,16 @@ def upgrade(args):
         candidate = Path(temp) / 'candidate'
         unpack(args.archive, candidate, 'release', args.sha256)
         meta = check_release(candidate)
+        if system:
+            account = service_account(config['unit'].removesuffix('.service'), root)
+            system_release(candidate, account.pw_gid)
         require(release_version(meta['version']) > release_version(previous['version']), '只允许升级到更高版本；不自动降级')
         require(meta['schema'] == previous['schema'], '跨 schema 升级需单独迁移验收；本工具拒绝自动切换')
         dest = root / 'releases' / meta['version']
         require(not dest.exists() and not dest.is_symlink(), '候选版本目录已存在，请先排查上次升级结果')
         link = root / 'current.next'
         require(not link.exists() and not link.is_symlink(), '存在未处理的版本切换文件')
-        verify_process(config['unit'], old / 'codearts2api-panel')
+        verify_process(config['unit'], old / 'codearts2api-panel', system=system)
         # Preflight before outage; recheck the actual state after stopping.
         switched = False
         try:
@@ -517,7 +603,7 @@ def upgrade(args):
             sync_dir(root)
             service.start()
             wait_health(f'http://127.0.0.1:{config["port"]}')
-            verify_process(config['unit'], dest / 'codearts2api-panel')
+            verify_process(config['unit'], dest / 'codearts2api-panel', system=system)
         except Exception:
             if switched:
                 service.stop()  # preserve newest credentials/ledger; never restore backup automatically
@@ -618,6 +704,7 @@ def parser():
     mode.add_argument('--compose')
     mode.add_argument('--offline', action='store_true')
     b.add_argument('--service', default='codearts2api')
+    b.add_argument('--system', action='store_true', help='使用系统级 systemd unit（需要 root）')
     r = sub.add_parser('restore')
     r.add_argument('--archive', required=True)
     r.add_argument('--target', required=True)
@@ -638,6 +725,9 @@ def parser():
             cmd.add_argument('--port', type=int, default=10087)
             cmd.add_argument('--no-start', action='store_true')
             cmd.add_argument('--no-refresh', action='store_true')
+        if name == 'install':
+            cmd.add_argument('--system', action='store_true', help='安装系统级服务，需要 root')
+            cmd.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], default='127.0.0.1')
         if name == 'migrate':
             cmd.add_argument('--source-unit', required=True)
             cmd.add_argument('--source-binary', required=True)
@@ -649,6 +739,8 @@ def main():
     os.umask(0o077)
     args = parser().parse_args()
     try:
+        if args.command == 'install' and args.system:
+            system_root(Path(args.root).absolute())
         with ExitStack() as locks:
             if args.command == 'backup':
                 locks.enter_context(operation_lock(args.data_dir))
@@ -669,7 +761,8 @@ def main():
 
 def dispatch(args):
     if args.command == 'backup':
-        service = Service(args.unit, args.compose, args.service) if args.unit or args.compose else None
+        require(not args.system or (args.unit and os.geteuid() == 0), '--system 备份需要 root 和 --unit')
+        service = Service(args.unit, args.compose, args.service, system=args.system) if args.unit or args.compose else None
         with stopped(args.data_dir, service, args.offline):
             manifest = backup(args.data_dir, args.archive, args.state_name)
         print(json.dumps({'files': len(manifest['files']), 'schema': manifest['schema'], 'sha256': sha256(args.archive)}))

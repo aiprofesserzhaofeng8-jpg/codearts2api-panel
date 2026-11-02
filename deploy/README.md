@@ -9,11 +9,50 @@
 | 场景 | 入口 |
 |---|---|
 | 开发、修改源码 | 根目录 `./build.sh`、`./start.sh` 或 `docker compose up -d --build` |
+| Linux 系统级服务 | `curl …/main/deploy/install.sh \| sudo bash`，专用非 root 用户运行 |
 | Linux 单机，不安装编译环境 | 固定版本包 + `panelctl.py install`，用户级 systemd |
 | Linux Docker 生产部署 | `compose.production.yml` + 明确版本镜像 |
 | 公网访问 | 宿主机 Caddy → loopback 后端，使用本目录 `Caddyfile` |
 
 不提供多副本、自动跨 schema 降级、无停机升级或公开注册。
+
+## 一键安装系统级服务
+
+从 v0.3.4 起提供系统级安装。需要 Linux amd64/arm64、Python 3.10+、正在运行的 systemd、useradd/nologin 和 sudo/root。脚本缺依赖时给出提示，不自动升级系统 Python。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
+```
+
+无参数表示全新系统级安装：`/opt/codearts2api`、`codearts2api.service`、专用系统用户 `codearts2api`、端口 10087、loopback。程序和 installation.json 由 root 管理；data 仅服务用户可写，backups 仅 root 可访问。注册 multi-user.target，退出 SSH 后继续运行，不依赖用户级 linger。
+
+已有同名服务/目录、端口占用、非 root 执行或校验错误均拒绝覆盖。无参数重复执行不会隐式升级。原用户级服务不自动改为系统服务，也不自动复制其凭据。
+
+需要明确版本、路径、端口或所有网卡时：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- install --system --version v0.3.4 --root /opt/codearts2api --port 10087 --host 0.0.0.0
+```
+
+`0.0.0.0` 需要另外设置云安全组、防火墙及适当的 HTTPS 入口；脚本不修改这些配置。默认 loopback 可以通过 SSH 隧道或本指南中的 Caddy 模板访问。
+
+```bash
+sudo systemctl status codearts2api
+sudo journalctl -u codearts2api -n 50 --no-pager
+sudo cat /opt/codearts2api/data/state.json.setup.json
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
+```
+
+在向导中设置 admin 密码。凭证内容不自动打印到安装日志，安装后凭证文件删除。升级自动读取 installation.json 的 scope，继续使用同一系统服务和完整备份策略。用户级实例仍由原用户运行原命令。
+
+系统级备份必须显式选择 scope：
+
+```bash
+sudo python3 /opt/codearts2api/current/panelctl.py backup --system --unit codearts2api.service --data-dir /opt/codearts2api/data --archive /root/private-backups/panel-日期.tar.gz
+sudo python3 /opt/codearts2api/current/panelctl.py doctor --data-dir /opt/codearts2api/data --url http://127.0.0.1:10087
+```
+
+恢复后的文件默认归操作用户所有；系统服务恢复到新目录后，在启动前将 data 设为服务用户所有、目录 0700/文件 0600，并保持程序和父目录由 root 管理。恢复不会自动改写 unit 或覆盖现有 data。跨 schema 降级仍不支持。
 
 ## 固定版本包与首次安装
 

@@ -53,6 +53,25 @@ Task availability and rewards come from the upstream account. A real-account che
 
 ## Deployment
 
+### One-command system service installation on Linux
+
+Requires Python 3.10+, systemd, and sudo. Downloads and verifies the latest stable release, creates a dedicated service user, and enables startup at boot:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
+```
+
+Defaults: `/opt/codearts2api`, `codearts2api.service`, and `127.0.0.1:10087`. Access through an SSH tunnel or HTTPS proxy. To bind all interfaces explicitly, use `sudo bash -s -- install --host 0.0.0.0` at the end of the pipeline. The daemon runs as a dedicated user; root owns its program and deployment configuration.
+
+```bash
+sudo systemctl status codearts2api
+sudo cat /opt/codearts2api/data/state.json.setup.json
+# Read release notes before upgrading:
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
+```
+
+Repeated installation refuses to overwrite existing data. Existing user services retain their original management commands. See the [deployment guide](deploy/README.md).
+
 ### Versioned installation on Linux servers
 
 Requires Python 3.10+ and a working user systemd session. Go and Node.js are not required. Download and review `install.sh` from the [stable release](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest), then run:
