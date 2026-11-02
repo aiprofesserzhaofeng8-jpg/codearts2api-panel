@@ -30,7 +30,7 @@ func (m *Management) Settings() Settings { return m.store.Settings() }
 
 // UpdateSettings retains validation-before-mutation and legacy logged Save failure.
 // HTTP applies the existing identity and limiter effects after this returns.
-func (m *Management) UpdateSettings(body SettingsUpdate, allowClearPassword bool) error {
+func (m *Management) UpdateSettings(body SettingsUpdate) error {
 	if body.ForceModel != nil && *body.ForceModel != "" {
 		for _, g := range m.store.Groups() {
 			if len(g.ModelMappings) > 0 {
@@ -92,7 +92,7 @@ func (m *Management) UpdateSettings(body SettingsUpdate, allowClearPassword bool
 			return err
 		}
 	}
-	if body.ClearPassword != nil && *body.ClearPassword && !allowClearPassword {
+	if body.ClearPassword != nil && *body.ClearPassword {
 		return errors.New("默认登录模式不允许清空密码；可设置新密码，或由启动参数重设")
 	}
 	if body.AdminPassword != nil && len(*body.AdminPassword) > 4096 {
@@ -142,11 +142,8 @@ func (m *Management) UpdateSettings(body SettingsUpdate, allowClearPassword bool
 		setIf(&st.IDEName, body.IDEName)
 		setIf(&st.IDEVersion, body.IDEVersion)
 		setIf(&st.Language, body.Language)
-		// 只有显式带 clear_admin_password 才清除：空字符串一律视为「不修改」。
-		// 否则误发一个空字段就会把管理密码抹掉，让管理接口退回「本机直连」兜底。
-		if body.ClearPassword != nil && *body.ClearPassword {
-			st.AdminPassword = ""
-		} else if body.AdminPassword != nil {
+		// Empty fields leave the existing administrator credential unchanged.
+		if body.AdminPassword != nil {
 			if v := strings.TrimSpace(*body.AdminPassword); v != "" {
 				st.AdminPassword = v
 			}

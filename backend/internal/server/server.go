@@ -3,7 +3,6 @@ package server
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
@@ -52,16 +51,12 @@ type Server struct {
 	Providers           *provider.Registry
 	ProviderCredentials *accounts.ProviderCredentials
 	ProviderLogins      *accounts.ProviderLogins
-	AllowLocalAdmin     bool
-	AdminSessions       *access.AdminSessions
 	Identity            *access.Identity
 	consumerFailures    adminAttempts
 	Users               *access.Users
-	userFailures        adminAttempts
+	loginFailures       adminAttempts
 	Pricing             *usage.Management
-	adminFailures       adminAttempts
 	responsesReasoning  responsesReasoningCache
-	localPanelToken     string
 	Store               *storage.Store
 	CodeArts            *codeartsup.Adapter
 	Completions         *gateway.Completions
@@ -78,7 +73,6 @@ type Dependencies struct {
 	Identity            *access.Identity
 	Users               *access.Users
 	Admission           *gateway.Admission
-	AdminSessions       *access.AdminSessions
 	Pricing             *usage.Management
 	Growth              *jobs.Growth
 	Credits             *accounts.Credits
@@ -106,11 +100,10 @@ type Dependencies struct {
 
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *storage.Store, deps Dependencies) *Server {
-	s := &Server{Admission: deps.Admission, AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
+	s := &Server{Admission: deps.Admission, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
 		Users: deps.Users, Identity: deps.Identity,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
-	s.localPanelToken = rand.Text()
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
 	return s
 }
@@ -118,14 +111,11 @@ func New(st *storage.Store, deps Dependencies) *Server {
 // Handler 返回完整路由。
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/admin/auth/login", s.handleAdminLogin)
-	mux.HandleFunc("/admin/auth/logout", s.handleAdminLogout)
-	mux.HandleFunc("/admin/auth/session", s.handleAdminSession)
 	mux.HandleFunc("/admin/api/users", s.withAdminAuth(s.handleAdminUsers))
 	s.registerConsumerRoutes(mux)
-	mux.HandleFunc("/user/auth/login", s.handleUserLogin)
-	mux.HandleFunc("/user/auth/logout", s.handleUserLogout)
-	mux.HandleFunc("/user/auth/session", s.handleUserSession)
+	mux.HandleFunc("/auth/login", s.handleLogin)
+	mux.HandleFunc("/auth/logout", s.handleLogout)
+	mux.HandleFunc("/auth/session", s.handleSession)
 	mux.HandleFunc("/user/api/profile", s.withUserAuth(s.handleUserProfile))
 	mux.HandleFunc("/user/api/password", s.withUserAuth(s.handleUserPassword))
 	mux.HandleFunc("/user/api/keys", s.withUserAuth(s.handleUserKeys))
@@ -133,6 +123,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/user/api/usage", s.withUserAuth(s.handleUserUsage))
 	mux.HandleFunc("/user/api/models", s.withUserAuth(s.handleUserModels))
 	mux.HandleFunc("/user", serveConsole)
+	mux.HandleFunc("/login", serveConsole)
 	mux.HandleFunc("/admin/api/providers", s.withAdminAuth(s.handleProviders))
 	mux.HandleFunc("/admin/api/provider-login", s.withAdminAuth(s.handleProviderLogin))
 	mux.HandleFunc("/admin/api/provider-import", s.withAdminAuth(s.handleProviderImport))
@@ -232,7 +223,7 @@ func writeCORSHeaders(w http.ResponseWriter, allowed string) {
 	h := w.Header()
 	h.Set("Access-Control-Allow-Origin", allowed)
 	h.Set("Vary", "Origin")
-	h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type, x-api-key, anthropic-version, x-admin-password, x-session-id, X-CodeArts-Request-Kind")
+	h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type, x-api-key, anthropic-version, x-session-id, X-CodeArts-Request-Kind")
 	h.Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 }
 
@@ -400,61 +391,26 @@ func (s *Server) ApplyRateLimit() {
 	}
 }
 
-// withAdminAuth 保护控制台接口。
-//
-// 鉴权策略：
-//   - 默认使用 HttpOnly 会话；兼容脚本可发送 X-Admin-Password / Bearer。
-//   - 未配置密码时拒绝访问；只有显式 AllowLocalAdmin 才启用本机兼容方式。
-//
-// 另外对写操作做同源校验，阻断跨站请求伪造。
+// withAdminAuth authorizes only server-issued administrator sessions. Neither
+// passwords in headers, inference API keys nor loopback addresses grant a role.
 func (s *Server) withAdminAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
-		actor := "admin_password"
-		if s.validAdminSession(r) {
-			actor = "admin_session"
-		} else if s.AllowLocalAdmin && s.validLocalPanelSession(r) {
-			actor = "local_compatibility"
-		} else if password := s.Store.Settings().AdminPassword; password != "" {
-			if s.adminFailures.blocked(r.RemoteAddr) {
-				w.Header().Set("Retry-After", "60")
-				writeErr(w, 429, "认证失败次数过多，请稍后重试", "rate_limit_error")
-				return
-			}
-			if !storage.VerifyAdminPassword(password, adminPasswordFrom(r)) {
-				s.adminFailures.failure(r.RemoteAddr)
-				writeErr(w, 401, "请登录管理员账号", "authentication_error")
-				return
-			}
-			s.adminFailures.success(r.RemoteAddr)
-		} else if !(s.AllowLocalAdmin && s.localDirect(r)) {
-			writeErr(w, 403, "尚未配置管理员密码，请使用启动参数重设", "authentication_error")
+		u, ok := s.authenticatedPrincipal(r)
+		if !ok {
+			writeErr(w, 401, "请先登录", "authentication_error")
 			return
 		}
-		if r.Header.Get("Sec-Fetch-Site") == "cross-site" {
-			writeErr(w, 403, "跨站管理请求被拒绝", "invalid_request_error")
+		if u.Role != access.RoleAdmin {
+			writeErr(w, 403, "需要管理员权限", "permission_error")
 			return
 		}
-		if r.Method != "GET" && r.Method != "HEAD" && r.Method != "OPTIONS" && !s.adminSameOrigin(r) {
-			writeErr(w, 403, "跨站管理请求被拒绝", "invalid_request_error")
+		if !sessionSameOrigin(r) {
+			writeErr(w, 403, "跨站管理请求被拒绝", "permission_error")
 			return
 		}
-		s.serveAudited(w, r, actor, next)
+		s.serveAudited(w, r, "admin:"+u.ID, next)
 	}
-}
-
-// adminPasswordFrom 从请求头提取管理密码。
-func adminPasswordFrom(r *http.Request) string {
-	if v := r.Header.Get("X-Admin-Password"); v != "" {
-		return v
-	}
-	if h := r.Header.Get("Authorization"); h != "" {
-		if v, ok := strings.CutPrefix(h, "Bearer "); ok {
-			return strings.TrimSpace(v)
-		}
-		return strings.TrimSpace(h)
-	}
-	return ""
 }
 
 // secureEqual 以恒定时间比较两个字符串（先哈希，避免长度泄露）。
@@ -513,7 +469,7 @@ func viaProxy(r *http.Request) bool {
 
 // localDirect 报告请求是否来自「本机直连」。
 //
-// 管理接口在未设密码时、/v1 在未签发密钥时都靠它做兜底鉴权。
+// 仅供 /v1 在未签发密钥时使用；管理接口始终需要角色会话。
 // 只看 RemoteAddr 是不够的：同机反向代理（nginx `proxy_pass 127.0.0.1:10087`）
 // 会把**所有**公网请求的 RemoteAddr 变成 127.0.0.1，从而把管理接口
 // （含导出完整登录态）暴露给公网。
@@ -637,7 +593,7 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusNotFound, "未找到该路径", "invalid_request_error")
 		return
 	}
-	s.servePanel(w, r)
+	serveConsole(w, r)
 }
 
 // --- 工具函数 ---

@@ -6,122 +6,6 @@
     "description": "Same-origin management contract; inference bodies are not filtered by this schema. Variant operations are intentionally extensible. Query parameters and opaque provider payloads retain their existing handler validation."
   },
   "paths": {
-    "/admin/auth/login": {
-      "post": {
-        "operationId": "post__admin_auth_login",
-        "responses": {
-          "200": {
-            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Existing HTTP/API error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "password": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "password"
-                ],
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/auth/logout": {
-      "post": {
-        "operationId": "post__admin_auth_logout",
-        "responses": {
-          "200": {
-            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Existing HTTP/API error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/auth/session": {
-      "get": {
-        "operationId": "get__admin_auth_session",
-        "responses": {
-          "200": {
-            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminSession"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Existing HTTP/API error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/admin/api/providers": {
       "get": {
         "operationId": "get__admin_api_providers",
@@ -2183,9 +2067,9 @@
         }
       }
     },
-    "/user/auth/login": {
+    "/auth/login": {
       "post": {
-        "operationId": "post__user_auth_login",
+        "operationId": "post__auth_login",
         "responses": {
           "200": {
             "description": "Successful response.",
@@ -2247,12 +2131,13 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
-    "/user/auth/logout": {
+    "/auth/logout": {
       "post": {
-        "operationId": "post__user_auth_logout",
+        "operationId": "post__auth_logout",
         "responses": {
           "200": {
             "description": "Successful response.",
@@ -2274,31 +2159,20 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
-    "/user/auth/session": {
+    "/auth/session": {
       "get": {
-        "operationId": "get__user_auth_session",
+        "operationId": "get__auth_session",
         "responses": {
           "200": {
             "description": "Successful response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "authenticated": {
-                      "type": "boolean"
-                    },
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    }
-                  },
-                  "required": [
-                    "authenticated"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/AuthSession"
                 }
               }
             }
@@ -2313,7 +2187,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/user/api/profile": {
@@ -3474,9 +3349,9 @@
         }
       }
     },
-    "/user/auth/options": {
+    "/auth/options": {
       "get": {
-        "operationId": "get__user_auth_options",
+        "operationId": "get__auth_options",
         "responses": {
           "200": {
             "description": "Successful response.",
@@ -3515,12 +3390,13 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
-    "/user/auth/recovery": {
+    "/auth/recovery": {
       "post": {
-        "operationId": "post__user_auth_recovery",
+        "operationId": "post__auth_recovery",
         "responses": {
           "200": {
             "description": "Successful response.",
@@ -3588,12 +3464,13 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
-    "/user/auth/oauth/start": {
+    "/auth/oauth/start": {
       "post": {
-        "operationId": "post__user_auth_oauth_start",
+        "operationId": "post__auth_oauth_start",
         "responses": {
           "200": {
             "description": "Successful response.",
@@ -3647,17 +3524,19 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
-    "/user/auth/oauth/callback": {
+    "/auth/oauth/callback": {
       "get": {
-        "operationId": "get_user_auth_oauth_callback",
+        "operationId": "get__auth_oauth_callback",
         "responses": {
           "303": {
             "description": "Redirect to user console; no tokens in URL."
           }
-        }
+        },
+        "security": []
       }
     }
   },
@@ -3685,22 +3564,6 @@
         },
         "required": [
           "error"
-        ],
-        "additionalProperties": true
-      },
-      "AdminSession": {
-        "type": "object",
-        "properties": {
-          "authenticated": {
-            "type": "boolean"
-          },
-          "local_compatibility": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "authenticated",
-          "local_compatibility"
         ],
         "additionalProperties": true
       },
@@ -4396,6 +4259,14 @@
           },
           "email_verified": {
             "type": "boolean"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "user"
+            ],
+            "description": "Server-assigned role. Not accepted in login, profile or consumer update requests."
           }
         },
         "required": [
@@ -4413,7 +4284,8 @@
           "wallet",
           "subscription",
           "email",
-          "email_verified"
+          "email_verified",
+          "role"
         ],
         "additionalProperties": false
       },
@@ -4988,20 +4860,34 @@
           "linuxdo"
         ],
         "additionalProperties": false
+      },
+      "AuthSession": {
+        "type": "object",
+        "properties": {
+          "authenticated": {
+            "type": "boolean"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "authenticated"
+        ],
+        "additionalProperties": false
       }
     },
     "securitySchemes": {
-      "adminCookie": {
+      "session": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "codearts_admin_session"
-      },
-      "localPanelSession": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-Local-Panel-Session",
-        "description": "Direct loopback only; never usable through dev proxy."
+        "name": "codearts_session"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "session": []
+    }
+  ]
 }

@@ -1070,7 +1070,6 @@ code{
   .topbar{gap:8px;flex-wrap:nowrap}
   .topbar-actions{width:auto;margin-left:auto;flex-wrap:nowrap;gap:6px}
   .topbar-actions .btn{padding:0 9px}
-  #localPanelStatus{font-size:10px;padding:2px 6px}
   #themeLabel{display:none}
   .card-head{margin:-15px -15px 14px;padding:13px 15px}
   .kpis{gap:0}

@@ -22,7 +22,7 @@ var userTestHash string
 func createTestUser(t *testing.T, s *Server, name, group string) access.UserView {
 	t.Helper()
 	if s.Users == nil {
-		s.Users = access.NewUsers(s.Store)
+		s.Users = access.NewUsers(s.Store, func() string { return s.Store.Settings().AdminPassword })
 	}
 	userTestHashOnce.Do(func() {
 		var err error
@@ -49,19 +49,18 @@ func userHTTP(s *Server, cookie *http.Cookie, method, path, body string) *httpte
 }
 func loginTestUser(t *testing.T, s *Server, name string) *http.Cookie {
 	t.Helper()
-	w := userHTTP(s, nil, "POST", "/user/auth/login", `{"username":"`+name+`","password":"`+userTestPassword+`"}`)
+	w := userHTTP(s, nil, "POST", "/auth/login", `{"username":"`+name+`","password":"`+userTestPassword+`"}`)
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	cookies := w.Result().Cookies()
-	if len(cookies) != 1 || cookies[0].Name != userCookie || !cookies[0].HttpOnly || cookies[0].SameSite != http.SameSiteStrictMode || cookies[0].Path != "/user" {
+	if len(cookies) != 1 || cookies[0].Name != sessionCookie || !cookies[0].HttpOnly || cookies[0].SameSite != http.SameSiteStrictMode || cookies[0].Path != "/" {
 		t.Fatal(cookies)
 	}
 	return cookies[0]
 }
 func TestUsersHTTPIsolationSessionsAndAudit(t *testing.T) {
 	s, adminKey, g := mappedFixture(t, nil)
-	s.AllowLocalAdmin = false
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin-fixture-password" })
 	alice := createTestUser(t, s, "alice", g.ID)
 	bob := createTestUser(t, s, "bob", g.ID)
@@ -69,7 +68,7 @@ func TestUsersHTTPIsolationSessionsAndAudit(t *testing.T) {
 	b := loginTestUser(t, s, "bob")
 	for _, path := range []string{"/admin/api/state", "/admin/api/keys", "/admin/api/users", "/admin/api/accounts", "/admin/api/audit", "/admin/api/settings", "/metrics"} {
 		w := userHTTP(s, a, "GET", path, "")
-		if w.Code != 401 {
+		if w.Code != 403 {
 			t.Fatal("user reached admin", path, w.Code)
 		}
 	}
@@ -109,7 +108,7 @@ func TestUsersHTTPIsolationSessionsAndAudit(t *testing.T) {
 	if w.Code != 403 {
 		t.Fatal("CSRF", w.Code)
 	}
-	for _, path := range []string{"/user/auth/session", "/user/api/usage"} {
+	for _, path := range []string{"/auth/session", "/user/api/usage"} {
 		r = httptest.NewRequest("GET", path, nil)
 		r.AddCookie(a)
 		r.Header.Set("Origin", "https://evil.invalid")
@@ -142,7 +141,7 @@ func TestUsersHTTPIsolationSessionsAndAudit(t *testing.T) {
 	if userHTTP(s, a, "GET", "/user/api/keys", "").Code != 401 || !s.Store.ValidKey(k.Key) {
 		t.Fatal("password revocation semantics")
 	}
-	w = userHTTP(s, b, "POST", "/user/auth/logout", "")
+	w = userHTTP(s, b, "POST", "/auth/logout", "")
 	if w.Code != 200 || userHTTP(s, b, "GET", "/user/api/profile", "").Code != 401 {
 		t.Fatal("logout not revoked")
 	}
@@ -214,7 +213,7 @@ func TestUsersDisableRevokesConsoleAndModelPermissions(t *testing.T) {
 	if _, ok := s.Users.Authenticate("additional-session"); ok {
 		t.Fatal("other session survived disable")
 	}
-	if _, ok := access.NewUsers(s.Store).Authenticate("additional-session"); ok {
+	if _, ok := access.NewUsers(s.Store, func() string { return s.Store.Settings().AdminPassword }).Authenticate("additional-session"); ok {
 		t.Fatal("new runtime inherited sessions")
 	}
 }

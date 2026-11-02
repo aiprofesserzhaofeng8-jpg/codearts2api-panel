@@ -60,6 +60,6 @@ references: [adr-0002]
 
 ## M3.20 边界现状
 
-平台和业务依赖由 app.Build 显式装配，server 继续作为 HTTP/嵌入页面兼容层。价格校验与管理协调归 usage.Management，会话摘要注册表归 access.AdminSessions；HTTP 保留 8KiB 解码、Cookie、同源、原认证优先级、失败限流及审计。Store 仍执行严格价格事务、密码哈希和历史结算保存。完整当前边界以 [架构文档](../../../docs/architecture/MODULES.md) 为准；上文早期职责描述不代表本阶段已迁出的业务仍应新增到 Server。
+平台和业务依赖由 app.Build 显式装配，server 继续作为 HTTP/嵌入页面层。价格校验与管理协调归 usage.Management；统一会话摘要注册表归 access.Users，原 AdminSessions 已删除。HTTP 保留有界严格解码、Cookie、同源、失败限流及审计；withAdminAuth 必须验证服务器会话的 admin 角色，withUserAuth 必须验证 user 角色。旧分角色登录路径和请求头/本机免密认证均不注册或放行，见 [统一认证决定](../../../docs/adr/0014-unified-role-authentication.md)。Store 仍执行严格价格事务、密码哈希和历史结算保存。完整当前边界以 [架构文档](../../../docs/architecture/MODULES.md) 为准；上文早期职责描述不代表本阶段已迁出的业务仍应新增到 Server。
 
 HTTP 监听实例与三条既有后台流程由 app.Start 启动，app.Runtime.Close 保留原排空/最终保存/取消顺序；server 继续提供 Handler、RunDailyClaim 与 RefreshModels 投影。StartClaimLoop 仅单向兼容 jobs.RunDailyLoop，普通请求不调用生命周期接口。

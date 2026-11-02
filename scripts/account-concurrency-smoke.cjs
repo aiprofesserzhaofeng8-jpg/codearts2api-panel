@@ -6,7 +6,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   const ctx=await browser.newContext({viewport:{width:1460,height:1000}}),page=await ctx.newPage();
   const accounts=['codearts','workbuddy','trae'].map(provider=>({id:provider,name:provider+' fixture',provider,scope:'cn',enabled:true,status:'ok',max_in_flight:0}));
   let saves=0,fail=false;const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));
+  await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
   await ctx.route('**/admin/api/**',route=>{
    const req=route.request(),u=new URL(req.url());let out={ok:true};
    if(u.pathname.endsWith('/state'))out={accounts:accounts.map(a=>({...a,pool:{state:'ready',in_flight:0,max_in_flight:a.max_in_flight||2}})),keys:[],models:[],settings:{pool:{max_in_flight:2}},stats:{}};

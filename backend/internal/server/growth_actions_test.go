@@ -342,7 +342,7 @@ func TestGrowthActionsMutationGuardsAndEnrollmentIdempotency(t *testing.T) {
 			t.Fatal("admin auth bypass")
 		}
 		r = httptest.NewRequest("POST", p, strings.NewReader(`{}`))
-		r.Header.Set("X-Admin-Password", "admin-fixture")
+		r.AddCookie(adminTestCookie(s, "admin-fixture"))
 		r.Header.Set("Origin", "https://evil.invalid")
 		w = httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, r)
@@ -379,7 +379,7 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	req, _ := http.NewRequestWithContext(ctx, "POST", server.URL+"/admin/api/workbuddy/tasks/run", strings.NewReader(`{"id":"wb-cn","task_code":"Model_chat_GLM5.2"}`))
-	req.Header.Set("X-Admin-Password", "admin-fixture")
+	req.AddCookie(adminTestCookie(s, "admin-fixture"))
 	done := make(chan struct{})
 	go func() {
 		defer close(done)

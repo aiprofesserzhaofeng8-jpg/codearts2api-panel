@@ -4,54 +4,6 @@
  */
 
 export interface paths {
-    "/admin/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["post__admin_auth_login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["post__admin_auth_logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/auth/session": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get__admin_auth_session"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/admin/api/providers": {
         parameters: {
             query?: never;
@@ -660,7 +612,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/auth/login": {
+    "/auth/login": {
         parameters: {
             query?: never;
             header?: never;
@@ -669,14 +621,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post__user_auth_login"];
+        post: operations["post__auth_login"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/user/auth/logout": {
+    "/auth/logout": {
         parameters: {
             query?: never;
             header?: never;
@@ -685,21 +637,21 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post__user_auth_logout"];
+        post: operations["post__auth_logout"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/user/auth/session": {
+    "/auth/session": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get__user_auth_session"];
+        get: operations["get__auth_session"];
         put?: never;
         post?: never;
         delete?: never;
@@ -933,14 +885,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/auth/options": {
+    "/auth/options": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get__user_auth_options"];
+        get: operations["get__auth_options"];
         put?: never;
         post?: never;
         delete?: never;
@@ -949,7 +901,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/auth/recovery": {
+    "/auth/recovery": {
         parameters: {
             query?: never;
             header?: never;
@@ -958,14 +910,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post__user_auth_recovery"];
+        post: operations["post__auth_recovery"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/user/auth/oauth/start": {
+    "/auth/oauth/start": {
         parameters: {
             query?: never;
             header?: never;
@@ -974,21 +926,21 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["post__user_auth_oauth_start"];
+        post: operations["post__auth_oauth_start"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/user/auth/oauth/callback": {
+    "/auth/oauth/callback": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_user_auth_oauth_callback"];
+        get: operations["get__auth_oauth_callback"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1008,12 +960,6 @@ export interface components {
             } & {
                 [key: string]: unknown;
             };
-        } & {
-            [key: string]: unknown;
-        };
-        AdminSession: {
-            authenticated: boolean;
-            local_compatibility: boolean;
         } & {
             [key: string]: unknown;
         };
@@ -1225,6 +1171,11 @@ export interface components {
             subscription: components["schemas"]["ConsumerSubscription"];
             email: string;
             email_verified: boolean;
+            /**
+             * @description Server-assigned role. Not accepted in login, profile or consumer update requests.
+             * @enum {string}
+             */
+            role: "admin" | "user";
         };
         UserUpdate: {
             id?: string;
@@ -1378,6 +1329,10 @@ export interface components {
             github: components["schemas"]["ConsumerOAuth"];
             linuxdo: components["schemas"]["ConsumerOAuth"];
         };
+        AuthSession: {
+            authenticated: boolean;
+            user?: components["schemas"]["User"];
+        };
     };
     responses: never;
     parameters: never;
@@ -1387,111 +1342,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    post__admin_auth_login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    password: string;
-                } & {
-                    [key: string]: unknown;
-                };
-            };
-        };
-        responses: {
-            /** @description Existing successful response. Business results may still be pending, unknown, or failed. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Existing HTTP/API error. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    post__admin_auth_logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
-            };
-        };
-        responses: {
-            /** @description Existing successful response. Business results may still be pending, unknown, or failed. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Existing HTTP/API error. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    get__admin_auth_session: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Existing successful response. Business results may still be pending, unknown, or failed. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminSession"];
-                };
-            };
-            /** @description Existing HTTP/API error. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
     get__admin_api_providers: {
         parameters: {
             query?: never;
@@ -3123,7 +2973,7 @@ export interface operations {
             };
         };
     };
-    post__user_auth_login: {
+    post__auth_login: {
         parameters: {
             query?: never;
             header?: never;
@@ -3163,7 +3013,7 @@ export interface operations {
             };
         };
     };
-    post__user_auth_logout: {
+    post__auth_logout: {
         parameters: {
             query?: never;
             header?: never;
@@ -3192,7 +3042,7 @@ export interface operations {
             };
         };
     };
-    get__user_auth_session: {
+    get__auth_session: {
         parameters: {
             query?: never;
             header?: never;
@@ -3207,10 +3057,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        authenticated: boolean;
-                        user?: components["schemas"]["User"];
-                    };
+                    "application/json": components["schemas"]["AuthSession"];
                 };
             };
             /** @description Authentication, authorization, validation or persistence error. */
@@ -4009,7 +3856,7 @@ export interface operations {
             };
         };
     };
-    get__user_auth_options: {
+    get__auth_options: {
         parameters: {
             query?: never;
             header?: never;
@@ -4042,7 +3889,7 @@ export interface operations {
             };
         };
     };
-    post__user_auth_recovery: {
+    post__auth_recovery: {
         parameters: {
             query?: never;
             header?: never;
@@ -4085,7 +3932,7 @@ export interface operations {
             };
         };
     };
-    post__user_auth_oauth_start: {
+    post__auth_oauth_start: {
         parameters: {
             query?: never;
             header?: never;
@@ -4123,7 +3970,7 @@ export interface operations {
             };
         };
     };
-    get_user_auth_oauth_callback: {
+    get__auth_oauth_callback: {
         parameters: {
             query?: never;
             header?: never;

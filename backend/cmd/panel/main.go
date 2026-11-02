@@ -39,7 +39,6 @@ func main() {
 		noRefresh  = flag.Bool("no-refresh", false, "禁止网关自行续期（只读 IDE 会话）")
 		adminPw    = flag.String("admin-password", envOr("CODEARTS_ADMIN_PASSWORD", ""), "管理密码（非空时覆盖状态文件中的设置）")
 		anon       = flag.Bool("allow-anonymous", envBool("CODEARTS_ALLOW_ANONYMOUS"), "未签发密钥时允许非本机来源匿名调用 /v1/*（默认仅本机直连）")
-		localAuto  = flag.Bool("local-auto-unlock", envBool("CODEARTS_LOCAL_AUTO_UNLOCK"), "兼容模式：信任本机进程并自动解锁管理面（默认关闭）")
 		showVer    = flag.Bool("version", false, "打印版本后退出")
 	)
 	flag.Parse()
@@ -103,7 +102,7 @@ func main() {
 		autoImport(st, *userData)
 	}
 
-	if st.Settings().AdminPassword == "" && !*localAuto {
+	if st.Settings().AdminPassword == "" {
 		password := codearts.RandomHex(24)
 		st.UpdateSettings(func(settings *storage.Settings) { settings.AdminPassword = password })
 		if err := st.Save(); err != nil {
@@ -122,7 +121,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("初始化服务失败: %v", err)
 	}
-	srv.AllowLocalAdmin = *localAuto
 	runtime := app.Start(st, srv, app.Options{Host: *host, Port: *port, Version: version})
 
 	stop := make(chan os.Signal, 1)

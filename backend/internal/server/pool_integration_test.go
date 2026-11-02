@@ -21,7 +21,6 @@ func poolServer(t *testing.T, n int) *Server {
 	s := newTestServer(t, n, 3)
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.Pool = storage.DefaultPoolSettings() })
 	s = newConfiguredServer(s.Store)
-	s.AllowLocalAdmin = true
 	s.Reg.Replace([]registry.Model{{ID: "test-model", StreamOnly: true}})
 	for _, a := range s.Store.Accounts() {
 		sess := *codearts.StoredSession(a)

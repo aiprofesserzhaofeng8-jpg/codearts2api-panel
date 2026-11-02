@@ -19,7 +19,7 @@ import (
 
 func growthRequest(s *Server, method, path, body string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(method, path, strings.NewReader(body))
-	r.Header.Set("X-Admin-Password", "admin-fixture")
+	r.AddCookie(adminTestCookie(s, "admin-fixture"))
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
 	return w
@@ -130,7 +130,7 @@ func TestGrowthRejectsInvalidActionsBeforeWrites(t *testing.T) {
 		t.Fatal("task listing bypassed admin authentication", w.Code)
 	}
 	r = httptest.NewRequest("POST", "/admin/api/workbuddy/tasks/claim", strings.NewReader(`{"id":"wb-cn","task_code":"x"}`))
-	r.Header.Set("X-Admin-Password", "admin-fixture")
+	r.AddCookie(adminTestCookie(s, "admin-fixture"))
 	r.Header.Set("Origin", "https://untrusted.invalid")
 	w = httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)

@@ -28,6 +28,7 @@ func TestBrowserTicketLoginPersistsAccountThroughAdminAPI(t *testing.T) {
 		raw, _ := json.Marshal(body)
 		r := httptest.NewRequest("POST", "http://localhost"+path, strings.NewReader(string(raw)))
 		r.RemoteAddr = "127.0.0.1:1234"
+		r.AddCookie(fixtureAdminCookie(s))
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, r)
 		if w.Code != 200 {
@@ -100,6 +101,7 @@ func TestBrowserTicketLoginPersistsAccountThroughAdminAPI(t *testing.T) {
 	raw, _ := json.Marshal(map[string]any{"session_id": id, "preview_id": previewID})
 	r := httptest.NewRequest("POST", "http://localhost/admin/api/login/complete", strings.NewReader(string(raw)))
 	r.RemoteAddr = "127.0.0.1:1234"
+	r.AddCookie(fixtureAdminCookie(s))
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
 	if w.Code != 410 || len(s.Store.Accounts()) != 0 {

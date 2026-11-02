@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');
  const browser=await chromium.launch({headless:true,channel:'chrome'});
  try {
   const ctx=await browser.newContext({viewport:{width:1440,height:1000}});
-  assert.ok((await ctx.request.post(base+'/admin/auth/login',{data:{password:access.admin_password}})).ok());
+  assert.ok((await ctx.request.post(base+'/auth/login',{data:{username:'admin',password:access.admin_password}})).ok());
   const original=await (await ctx.request.get(base+'/admin/api/settings')).json();
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/#settings');await page.locator('#sCAPromptMode').waitFor();

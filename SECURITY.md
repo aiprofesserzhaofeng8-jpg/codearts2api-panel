@@ -56,9 +56,9 @@
 | --- | --- | --- |
 | 默认暴露面 | 只监听 `127.0.0.1` | `main.go` |
 | 本机直连判定 | `RemoteAddr` 是环回 **且** 无任何代理头；带代理头一律按非本机 | `server.go: localDirect/viaProxy` |
-| 管理接口 | 默认必须登录；8 小时会话、改密/退出撤销、密码慢哈希；本机免登录仅显式兼容模式 | `server.go: withAdminAuth/secureEqual` |
+| 管理接口 | 默认必须登录；8 小时会话、改密/退出撤销、密码慢哈希；仅服务器签发的 admin 角色可访问；本机地址和密码请求头不授予权限 | `server.go: withAdminAuth`、`access/authentication.go` |
 | 推理接口 | 已签发密钥则必须携带；没有密钥且没有用户时才允许显式开启的本机匿名调用 | `server.go: withAuth` |
-| CSRF | 管理写操作和用户接口检查同源；会话 Cookie 使用 SameSite=Strict；兼容密码自定义头 | `server.go: adminSameOrigin` |
+| CSRF | 统一登录、管理接口和用户接口检查同源；会话 Cookie 使用 SameSite=Strict；拒绝旧密码请求头 | `server/authentication.go: sessionSameOrigin` |
 | CORS | 默认仅同源，不接受通配符 | `server.go: withCORS` |
 | XSS | 控制台全程 `textContent` 渲染；CSP `default-src 'none'` + `script-src 'self'` + `style-src 'self'`（无 `unsafe-inline`） | `web.go`、`web/console.js` |
 | 开放重定向 | 浏览器登录的授权 URL 走华为云域名白名单 | `web/console.js: isTrustedAuthURL` |

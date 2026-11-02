@@ -68,9 +68,10 @@ func TestAdminPasswordSetAndClear(t *testing.T) {
 		t.Errorf("clear_admin_password=false 却清除了密码: %q", got)
 	}
 
-	postSettings(t, s, `{"clear_admin_password":true}`)
-	if got := s.Store.Settings().AdminPassword; got != "" {
-		t.Errorf("显式清除失败: %q", got)
+	w := httptest.NewRecorder()
+	s.handleAdminSettings(w, httptest.NewRequest("POST", "/admin/api/settings", strings.NewReader(`{"clear_admin_password":true}`)))
+	if w.Code != 400 || !storage.VerifyAdminPassword(s.Store.Settings().AdminPassword, "s3cret") {
+		t.Fatal("clear disabled authentication", w.Code)
 	}
 }
 

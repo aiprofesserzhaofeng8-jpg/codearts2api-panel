@@ -107,8 +107,13 @@ class ProxyHandler(QuietHandler):
             UpstreamHandler(conn, self.client_address, self.server)
 
 
+SESSIONS = {}
+
+
 def api(port, path, data=None, key=None):
     headers = {"Content-Type": "application/json"}
+    if port in SESSIONS:
+        headers["Cookie"] = SESSIONS[port]
     if key:
         headers["Authorization"] = "Bearer " + key
     request = urllib.request.Request(
@@ -117,6 +122,8 @@ def api(port, path, data=None, key=None):
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     try:
         with opener.open(request, timeout=5) as response:
+            if path == "/auth/login":
+                SESSIONS[port] = response.headers["Set-Cookie"].split(";", 1)[0]
             return response.status, json.loads(response.read())
     except urllib.error.HTTPError as error:
         return error.code, json.loads(error.read())
@@ -154,7 +161,9 @@ def live_snapshot(port):
 
 class Gateway:
     def __init__(self, binary, directory, env):
-        self.binary, self.directory, self.env = binary, directory, env
+        self.binary, self.directory = binary, directory
+        self.password = secrets.token_urlsafe(24)
+        self.env = {**env, "CODEARTS_ADMIN_PASSWORD": self.password}
         self.state = directory / "state.json"
         self.process = None
         self.keys = {name: "sk-ca-" + secrets.token_hex(24) for name in LIMITS}
@@ -185,7 +194,7 @@ class Gateway:
         self.started = time.monotonic()
         self.process = subprocess.Popen([
             str(self.binary), "-host", "127.0.0.1", "-port", str(self.port),
-            "-data", str(self.state), "-no-import", "-no-refresh", "-local-auto-unlock"],
+            "-data", str(self.state), "-no-import", "-no-refresh"],
             env=self.env, stdout=self.log, stderr=subprocess.STDOUT)
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline:
@@ -193,6 +202,8 @@ class Gateway:
             try:
                 code, result = api(self.port, "/v1/models", key=self.keys["requests"])
                 if code == 200 and any(x["id"] == MODEL for x in result["data"]):
+                    status, _ = api(self.port, "/auth/login", {"username": "admin", "password": self.password})
+                    require(status == 200, "isolated administrator login failed")
                     return
             except OSError:
                 pass

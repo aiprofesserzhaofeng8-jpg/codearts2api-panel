@@ -16,7 +16,7 @@ const fs=require('node:fs');
   const task=(code,extra={})=>({task_code:code,title:code,description:'根据任务说明完成对应操作',credit:100,energy:5,current:1,target:1,claimable:true,claimed:false,locked:false,...extra});
   const tasks={'wb-a':[task('ready',{title:'完成对话'}),task('incomplete',{current:1,target:5,claimable:false}),task('locked',{locked:true,claimable:false}),task('claimed',{claimed:true,claimable:false}),task('text',{title:'<img src=x onerror=alert(1)>',description:'很长的操作说明'.repeat(15),claimable:false})], 'wb-b':[task('account-b',{title:'B 账号任务',claimable:false})]};
   let reads=0,claims=0,pending=false,failRead=false,held=null,holdA=false;
-  await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));
+  await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
   await ctx.route('**/admin/api/**',async route=>{
    const req=route.request(),u=new URL(req.url());let out={ok:true};
    if(u.pathname.endsWith('/state'))out={accounts,keys:[],groups:[],models:[],settings:{pool:{max_in_flight:2}},stats:{}};

@@ -46,15 +46,15 @@ func Build(st *storage.Store) (*server.Server, error) {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	credits := &accounts.Credits{}
-	users := access.NewUsers(st)
+	users := access.NewUsers(st, func() string { return st.Settings().AdminPassword })
 	return server.New(st, server.Dependencies{
-		Users:         users,
-		Identity:      access.NewIdentity(st, users, &identitytransport.Client{}),
-		Admission:     gateway.NewAdmission(st),
-		AdminSessions: &access.AdminSessions{}, Pricing: usage.NewManagement(st),
-		Welfare: jobs.NewWelfare(st),
-		Growth:  jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
-		Credits: credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
+		Users:     users,
+		Identity:  access.NewIdentity(st, users, &identitytransport.Client{}),
+		Admission: gateway.NewAdmission(st),
+		Pricing:   usage.NewManagement(st),
+		Welfare:   jobs.NewWelfare(st),
+		Growth:    jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
+		Credits:   credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
 		Catalog:       catalog.NewRuntime(st, models),
 		AccountProbes: accounts.NewProbes(st, models, log.Printf),
 		ModelPolicies: config.NewModelPolicies(st, models),

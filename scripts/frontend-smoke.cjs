@@ -11,8 +11,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    if(url.pathname.endsWith('/state')&&rejectState){await route.fulfill({status:401,json:{error:{message:'fixture session expired'}}});return true;}
    if(url.pathname.endsWith('/keys/budget')){const body=request.postDataJSON();assert.equal(body.ref,'fixture-ref');assert.equal(body.budget.max_requests,5);await route.fulfill({json:{ok:true}});return true;}
   }});
-  await page.goto(base+'/#accounts');await page.locator('#pw').fill('fixture-password');const rejected=page.waitForResponse(response=>response.url().endsWith('/admin/api/state')&&response.status()===401);await page.locator('#savePw').click();await rejected;await page.waitForFunction(()=>document.querySelector('#adminLoginDialog').open);
-  rejectState=false;await page.locator('#pw').fill('fixture-password');await page.locator('#savePw').click();await page.waitForFunction(()=>!document.querySelector('#adminLoginDialog').open&&document.querySelector('#accounts').children.length>0);
+  await page.goto(base+'/#accounts');await page.locator('#loginUsername').fill('admin');await page.locator('#loginPassword').fill('fixture-password');
+  const rejected=page.waitForResponse(response=>response.url().endsWith('/admin/api/state')&&response.status()===401);
+  await page.locator('#loginForm button').click();await rejected;await page.locator('#loginForm').waitFor();
+  rejectState=false;await page.locator('#loginUsername').fill('admin');await page.locator('#loginPassword').fill('fixture-password');await page.locator('#loginForm button').click();await page.waitForFunction(()=>document.querySelector('#accounts')?.children.length>0);
   assert.equal(await page.evaluate(()=>localStorage.getItem('codearts2api_pw')),null);
   for(const name of ['groups','overview','models','keys','logs','audit','settings','accounts']){await page.locator('#nav-'+name).click();await page.locator('#tab-'+name+'.on').waitFor();assert.ok((await page.title()).includes('CodeArts2API'));}
   assert.equal(await page.evaluate(()=>window.injected),undefined);assert.equal(await page.locator('#accounts img').count(),0);

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { api } from '../../api/client';
+import { api, isAbortError } from '../../api/client';
 const options=ref({email:false,github:false,linuxdo:false}),open=ref(false),busy=ref(false),error=ref(''),message=ref('');
 const email=ref(''),code=ref(''),token=ref(''),password=ref('');
-async function run(fn:()=>Promise<void>){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();}catch(e){error.value=(e as Error).message;}finally{busy.value=false;}}
-function send(){return run(async()=>{const d=await api('/user/auth/recovery',{method:'POST',body:{action:'send',email:email.value}});token.value=d.token??'';message.value=d.message??'';});}
-function reset(){return run(async()=>{await api('/user/auth/recovery',{method:'POST',body:{action:'reset',token:token.value,code:code.value,password:password.value}});password.value=code.value=token.value='';open.value=false;message.value='密码已重设，请重新登录';});}
-function oauth(provider:string){return run(async()=>{const d=await api('/user/auth/oauth/start',{method:'POST',body:{provider,bind:false}});location.assign(d.url);});}
-onMounted(async()=>{const q=new URLSearchParams(location.search);if(q.has('oauth_error')){error.value=q.get('oauth_error')??'';history.replaceState(null,'','/user');}try{options.value=await api('/user/auth/options');}catch(e){error.value=(e as Error).message;}});
+async function run(fn:()=>Promise<void>){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}finally{busy.value=false;}}
+function send(){return run(async()=>{const d=await api('/auth/recovery',{method:'POST',body:{action:'send',email:email.value}});token.value=d.token??'';message.value=d.message??'';});}
+function reset(){return run(async()=>{await api('/auth/recovery',{method:'POST',body:{action:'reset',token:token.value,code:code.value,password:password.value}});password.value=code.value=token.value='';open.value=false;message.value='密码已重设，请重新登录';});}
+function oauth(provider:string){return run(async()=>{const d=await api('/auth/oauth/start',{method:'POST',body:{provider,bind:false}});location.assign(d.url);});}
+onMounted(async()=>{const q=new URLSearchParams(location.search);if(q.has('oauth_error')){error.value=q.get('oauth_error')??'';history.replaceState(null,'','/login');}try{options.value=await api('/auth/options');}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}});
 </script>
 <template><div class="user-recovery"><div class="actions"><button v-if="options.email" class="btn ghost" @click="open=!open">忘记密码</button><button v-if="options.github" class="btn" :disabled="busy" @click="oauth('github')">GitHub 登录</button><button v-if="options.linuxdo" class="btn" :disabled="busy" @click="oauth('linuxdo')">LinuxDO 登录</button></div><template v-if="open"><form @submit.prevent="send"><div class="field"><label>已验证的邮箱<input v-model="email" type="email" autocomplete="email" required></label></div><button class="btn" :disabled="busy">发送找回验证码</button></form><form v-if="token" @submit.prevent="reset"><div class="field"><label>验证码<input v-model="code" required pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"></label></div><div class="field"><label>新密码<input v-model="password" type="password" minlength="12" maxlength="256" required autocomplete="new-password"></label></div><button class="btn primary" :disabled="busy">重设密码</button></form></template><p v-if="error" class="err-text" role="alert">{{error}}</p><p v-if="message" role="status">{{message}}</p></div></template>

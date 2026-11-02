@@ -16,7 +16,7 @@ const assert=require('node:assert/strict');
   ],keys:[{ref:'fixture-ref',key:'masked-fixture',name:'Existing key',enabled:true,created_at:1,requests:0}],groups:[],settings:{},stats:{}};
   let failSave=true,failBinding=true,failCreate=true,saves=0,keyCreates=0,releaseCreate,modelRefreshes=0;
   const modelProbes=[];
-  await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));
+  await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
   await ctx.route('**/admin/api/**',route=>{
    const req=route.request(),u=new URL(req.url());let out={ok:true};
    if(u.pathname.endsWith('/state'))out=data;

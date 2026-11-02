@@ -50,7 +50,7 @@ func TestProviderLoginHTTPErrorAndRequestBoundaries(t *testing.T) {
 		} {
 			r := httptest.NewRequest(test.method, route, strings.NewReader(test.body))
 			if test.auth != "" {
-				r.Header.Set("X-Admin-Password", test.auth)
+				r.AddCookie(adminTestCookie(s, test.auth))
 			}
 			w := httptest.NewRecorder()
 			s.Handler().ServeHTTP(w, r)

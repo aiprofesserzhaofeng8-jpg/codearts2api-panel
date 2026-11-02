@@ -25,8 +25,6 @@ export async function api(path: string, options: RequestOptions = {}): Promise<u
   const currentGeneration = generation;
   const method = options.method ?? 'GET';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = document.querySelector<HTMLMetaElement>('meta[name="local-panel-session"]')?.content;
-  if (token) headers['X-Local-Panel-Session'] = token;
   // Only replaceable page reads are cancelled; writes keep their existing semantics.
   const key = path.split('?')[0]!;
   let controller: AbortController | undefined;

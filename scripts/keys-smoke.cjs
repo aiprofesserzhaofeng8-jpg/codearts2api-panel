@@ -11,7 +11,7 @@ const assert=require('node:assert/strict');
   try {
     const context=await browser.newContext({permissions:['clipboard-read','clipboard-write']});
     const access=JSON.parse(fs.readFileSync('data/state.json.access.json','utf8'));
-    const login=await context.request.post(base+'/admin/auth/login',{data:{password:process.env.CODEARTS_ADMIN_PASSWORD||access.admin_password}});
+    const login=await context.request.post(base+'/auth/login',{data:{username:'admin',password:process.env.CODEARTS_ADMIN_PASSWORD||access.admin_password}});
     if(!login.ok())throw new Error('Administrator login failed; set CODEARTS_ADMIN_PASSWORD if it has changed');
     const page=await context.newPage();const errors=[];
     page.on('pageerror',e=>errors.push(e.message));

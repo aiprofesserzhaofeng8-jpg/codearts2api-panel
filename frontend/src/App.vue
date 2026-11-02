@@ -11,14 +11,12 @@ import AuditPage from './features/logs/AuditPage.vue';
 import SettingsPage from './features/settings/SettingsPage.vue';
 import UsersPage from './features/users/UsersPage.vue';
 import GrowthDialog from './features/jobs/GrowthDialog.vue';
-import SessionDialog from './app/SessionDialog.vue';
 import ConsoleLayout from './layouts/ConsoleLayout.vue';
 let dispose: (() => void) | undefined;
 onMounted(() => { dispose = startConsole(); });
 onUnmounted(() => dispose?.());
 </script>
 <template>
-  <SessionDialog />
   <GrowthDialog />
   <ConsoleLayout>
     <UsagePage />

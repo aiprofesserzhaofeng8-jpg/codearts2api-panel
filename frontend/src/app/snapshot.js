@@ -43,16 +43,10 @@ export function refresh() {
             loadCredits(false);
     }).catch(function (e) { if (isAbortError(e)) return;
         if (e.status === 401) {
-            if (sessionState.localPanelSession) {
-                toast("本机面板会话已失效，请刷新页面后继续。", "err");
-            }
-            else {
-                showAdminLogin();
-                domState.$("#pw").focus();
-            }
+            showAdminLogin();
         }
         else if (e.status === 403) {
-            toast("管理接口拒绝访问：未设置密码时仅允许本机直连\n" + e.message, "err");
+            toast("管理接口拒绝访问：" + e.message, "err");
         }
         else {
             toast("加载失败：" + e.message, "err");

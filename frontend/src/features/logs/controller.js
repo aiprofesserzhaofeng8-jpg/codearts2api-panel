@@ -43,7 +43,7 @@ logsState.auditPage = 1;
 logsState.auditTotal = 0;
 
 export function loadAudit() {
-    if (!sessionState.adminAuthenticated && !sessionState.localPanelSession)
+    if (!sessionState.adminAuthenticated)
         return Promise.resolve();
     return api("/admin/api/audit?page=" + logsState.auditPage + "&page_size=50").then(function (d) {
         logsState.auditTotal = d.total || 0;

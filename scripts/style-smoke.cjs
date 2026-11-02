@@ -15,7 +15,7 @@ const fs=require('node:fs');
   const settings={pool:{strategy:'least_inflight',max_in_flight:2,sticky_ttl_sec:1800,rate_cooldown_sec:60,breaker_threshold:3,breaker_cooldown_sec:300},default_model:'glm-5.3',allow_credit_models:true,request_timeout_sec:300,max_retries:3,log_keep:500,live_ttl_sec:10,rate_limit_enabled:true,rate_limit_qps:5,rate_limit_burst:10,rate_limit_concurrency:8,auto_refresh:true};
   const models=['GLM-5.3','DeepSeek-V4.1-Flash','OpenPangu-2.0-Pro'].map((name,i)=>({id:name.toLowerCase(),name,credit:['0.79x','0.18x','0.7x'][i],description:'通用编程与智能问答',source:'upstream'}));
   const snapshot={accounts,settings,keys:[{key:'sk-ca-…fixture',value:'sk-ca-visual-fixture-not-a-real-key',name:'本地开发',enabled:true,created_at:now,requests:128,last_used:now}],models,stats:{total_requests:1248,failed_requests:6,total_chars_out:186400,started_at:now-86400}};
-  await context.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
+  await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
 await context.route('**/admin/api/**',route=>{
    const path=new URL(route.request().url()).pathname;
    if(path.endsWith('/state'))return route.fulfill({json:snapshot});

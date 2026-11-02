@@ -109,12 +109,12 @@ func TestManagementContractMatchesHandlers(t *testing.T) {
 	}
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "contract-fixture" })
 	handler := s.Handler()
-	for path, name := range map[string]string{"/health": "Health", "/admin/auth/session": "AdminSession", "/admin/api/state": "State"} {
+	for path, name := range map[string]string{"/health": "Health", "/auth/session": "AuthSession", "/admin/api/state": "State"} {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", path, nil)
 		r.RemoteAddr = "127.0.0.1:40000"
 		r.Host = "127.0.0.1:10087"
-		r.Header.Set(localPanelHeader, s.localPanelToken)
+		r.AddCookie(adminTestCookie(s, "contract-fixture"))
 		handler.ServeHTTP(w, r)
 		if w.Code != 200 {
 			t.Fatal(path, w.Code, w.Body.String())

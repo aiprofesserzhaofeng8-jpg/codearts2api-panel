@@ -1,3 +1,5 @@
+> 此文档为上游历史参考。当前认证方式以 [管理说明](MANAGEMENT.md) 为准：统一 `/auth/login`，管理请求仅接受会话 Cookie；下文旧密码请求头和本机免登录说明不再适用。
+
 # CodeArts2API
 
 > 本文保留上游项目的历史说明与目录。当前工程的 Go 命令在 `backend/` 下执行，服务入口为 `./cmd/panel`；现行用法见 [项目 README](../README.md)。

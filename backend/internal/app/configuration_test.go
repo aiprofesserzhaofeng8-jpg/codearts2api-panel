@@ -21,11 +21,11 @@ func TestConfigurationValidationAndIndependentPartialUpdates(t *testing.T) {
 		{DefaultModel: &name, WorkBuddy: json.RawMessage(`null`)},
 		{DefaultModel: &name, ClearPassword: &clear},
 	} {
-		if err := srv.Configuration.UpdateSettings(patch, false); err == nil || !reflect.DeepEqual(before, st.Settings()) {
+		if err := srv.Configuration.UpdateSettings(patch); err == nil || !reflect.DeepEqual(before, st.Settings()) {
 			t.Fatal("invalid configuration partially changed settings", err)
 		}
 	}
-	if err := srv.Configuration.UpdateSettings(config.SettingsUpdate{WorkBuddy: json.RawMessage(`{"prompt_text":"only WorkBuddy","sanitize":false}`)}, false); err != nil {
+	if err := srv.Configuration.UpdateSettings(config.SettingsUpdate{WorkBuddy: json.RawMessage(`{"prompt_text":"only WorkBuddy","sanitize":false}`)}); err != nil {
 		t.Fatal(err)
 	}
 	got := st.Settings()
@@ -40,7 +40,7 @@ func TestConfigurationRetainsLegacySettingsAndStrictPolicySaveFailures(t *testin
 	logged, retries := 0, 7
 	manager := config.NewManagement(st, nil, func(string, ...any) { logged++ })
 	restore := blockManagementWrites(t, st)
-	if err := manager.UpdateSettings(config.SettingsUpdate{MaxRetries: &retries}, false); err != nil || logged != 1 || st.Settings().MaxRetries != retries {
+	if err := manager.UpdateSettings(config.SettingsUpdate{MaxRetries: &retries}); err != nil || logged != 1 || st.Settings().MaxRetries != retries {
 		t.Fatal("legacy configuration Save failure no longer retains memory changes", err)
 	}
 	policy := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]

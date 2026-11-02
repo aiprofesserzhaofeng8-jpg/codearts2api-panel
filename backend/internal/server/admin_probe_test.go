@@ -51,7 +51,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 		s.MaxRetries = 1
 	})
 	up := codearts.NewClient()
-	s := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: up, Reg: registry.New()})
+	s := attachChatExecution(&Server{Store: st, Up: up, Reg: registry.New()})
 	attachAccessManagement(s)
 	s.Cred = codearts.NewManager(up)
 	attachAccountManagement(s)
@@ -68,7 +68,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 	return s
 }
 
-// adminProbeRequest 走完整的路由 + 管理鉴权链（RemoteAddr 设为环回地址，模拟本机直连）。
+// adminProbeRequest 走完整的路由及统一管理员会话鉴权链。
 func adminProbeRequest(t *testing.T, s *Server, method, target, body string) *httptest.ResponseRecorder {
 	t.Helper()
 	var rdr io.Reader
@@ -78,6 +78,7 @@ func adminProbeRequest(t *testing.T, s *Server, method, target, body string) *ht
 	req := httptest.NewRequest(method, target, rdr)
 	req.Host = "127.0.0.1:10087"
 	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(fixtureAdminCookie(s))
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}

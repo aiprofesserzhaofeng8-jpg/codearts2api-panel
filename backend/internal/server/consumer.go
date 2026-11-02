@@ -14,10 +14,10 @@ func (s *Server) registerConsumerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/user/api/entitlements", s.withUserAuth(s.handleUserEntitlements))
 	mux.HandleFunc("/user/api/redeem", s.withUserAuth(s.handleUserRedeem))
 	mux.HandleFunc("/user/api/identity", s.withUserAuth(s.handleUserIdentity))
-	mux.HandleFunc("/user/auth/options", s.handleIdentityOptions)
-	mux.HandleFunc("/user/auth/recovery", s.handlePasswordRecovery)
-	mux.HandleFunc("/user/auth/oauth/start", s.handleOAuthStart)
-	mux.HandleFunc("/user/auth/oauth/callback", s.handleOAuthCallback)
+	mux.HandleFunc("/auth/options", s.handleIdentityOptions)
+	mux.HandleFunc("/auth/recovery", s.handlePasswordRecovery)
+	mux.HandleFunc("/auth/oauth/start", s.handleOAuthStart)
+	mux.HandleFunc("/auth/oauth/callback", s.handleOAuthCallback)
 }
 func consumerMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 	if r.Method != method {

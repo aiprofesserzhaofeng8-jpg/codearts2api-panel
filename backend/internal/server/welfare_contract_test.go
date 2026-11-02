@@ -115,7 +115,6 @@ func TestAcceptanceWelfareContract(t *testing.T) {
 		t.Error("status must not submit WorkBuddy claims")
 		w.WriteHeader(500)
 	})
-	wb.AllowLocalAdmin = true
 	wb.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addWB(t, wb, "cn", time.Now().Add(time.Hour).Unix())
 	native(wb)
@@ -150,7 +149,6 @@ func TestAcceptanceWelfareContract(t *testing.T) {
 			fmt.Fprintf(w, `{"enable":%v,"checked_in":%v}`, enabled, checked)
 		}
 	})
-	tr.AllowLocalAdmin = true
 	tr.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addTrae(t, tr)
 	request("trae/claimable", tr, "GET", "/admin/api/welfare?id=trae-acct", "")

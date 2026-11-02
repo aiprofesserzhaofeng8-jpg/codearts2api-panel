@@ -56,7 +56,7 @@ export function showAccountChoices() {
 }
 
 export function openAccountCreate() {
-    if (!sessionState.adminAuthenticated && !sessionState.localPanelSession) {
+    if (!sessionState.adminAuthenticated) {
         showAdminLogin();
         return;
     }
@@ -237,7 +237,7 @@ export function selectProvider(name) { domState.$("#providerTraeDevice").classLi
 } providersState.activeProvider = name; domState.$("#providerLoginTitle").textContent = "添加 " + providerLabel() + " 账号"; domState.$("#providerImportTitle").textContent = "导入 " + providerLabel() + " 凭据 JSON"; domState.$("#providerScope").querySelector("option[value=global]").disabled = name === "trae"; if (name === "trae")
     domState.$("#providerScope").value = "cn"; domState.$("#providerImportHint").textContent = name === "trae" ? "支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。" : "支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。"; domState.$("#providerLoginCallback").placeholder = name === "trae" ? "粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）" : "完成授权后可直接检查，也可粘贴带 state 的回调地址"; }
 
-export function openProvider(name) { if (!sessionState.adminAuthenticated && !sessionState.localPanelSession) {
+export function openProvider(name) { if (!sessionState.adminAuthenticated) {
     showAdminLogin();
     return;
 } if (providersState.providerSession && providersState.activeProvider !== name) {

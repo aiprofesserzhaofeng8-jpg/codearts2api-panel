@@ -5,11 +5,11 @@ import type { components } from '../../api/generated/admin';
 defineProps<{user:components['schemas']['User']}>();const emit=defineEmits<{changed:[]}>();
 const identities=ref<components['schemas']['ExternalIdentity'][]>([]),options=ref({email:false,github:false,linuxdo:false});
 const email=ref(''),code=ref(''),token=ref(''),busy=ref(false),error=ref(''),message=ref('');
-async function load(){const [i,o]=await Promise.all([api('/user/api/identity'),api('/user/auth/options')]);identities.value=i.identities;options.value=o;}
+async function load(){const [i,o]=await Promise.all([api('/user/api/identity'),api('/auth/options')]);identities.value=i.identities;options.value=o;}
 async function run(fn:()=>Promise<void>){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();}catch(e){error.value=(e as Error).message;}finally{busy.value=false;}}
 function send(){return run(async()=>{const d=await api('/user/api/identity',{method:'POST',body:{action:'send',email:email.value}});token.value=d.token??'';message.value='验证码已发送，10 分钟内有效';});}
 function verify(){return run(async()=>{await api('/user/api/identity',{method:'POST',body:{action:'verify',token:token.value,code:code.value}});token.value='';code.value='';emit('changed');message.value='邮箱已验证';});}
-function bind(provider:string){return run(async()=>{const d=await api('/user/auth/oauth/start',{method:'POST',body:{provider,bind:true}});location.assign(d.url);});}
+function bind(provider:string){return run(async()=>{const d=await api('/auth/oauth/start',{method:'POST',body:{provider,bind:true}});location.assign(d.url);});}
 function unbind(provider:string){return run(async()=>{await api('/user/api/identity',{method:'POST',body:{action:'unbind',provider}});location.reload();});}
 onMounted(()=>load().catch(e=>error.value=(e as Error).message));
 </script>

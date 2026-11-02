@@ -51,7 +51,7 @@ func TestUserProfileHTTPAndCSP(t *testing.T) {
 		w = httptest.NewRecorder()
 		serveConsole(w, httptest.NewRequest("GET", path, nil))
 		allowsInline := strings.Contains(w.Header().Get("Content-Security-Policy"), "img-src 'self' data:")
-		if allowsInline != (path == "/user") || strings.Contains(w.Header().Get("Content-Security-Policy"), "unsafe-") {
+		if !allowsInline || strings.Contains(w.Header().Get("Content-Security-Policy"), "unsafe-") {
 			t.Fatal("avatar CSP", path)
 		}
 	}

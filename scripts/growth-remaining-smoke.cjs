@@ -5,7 +5,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  page.on('pageerror',e=>errors.push(e.message));
  const account={id:'fixture',provider:'workbuddy',scope:'cn',enabled:true,name:'WorkBuddy',growth_tasks_supported:true,pool:{state:'ready'}};
  const tasks=[{task_code:'expert_5',target:5,auto_supported:true,action_description:'真实对话，会消耗积分'},{task_code:'template_5',target:5,auto_supported:true,activity_only:true},{task_code:'wb_wechat_oa_subscribe_task',target:1,manual_instruction:'需要本人关注公众号满 24 小时'},{task_code:'Library_read',target:1,auto_supported:true,activity_only:true}].map(t=>({...t,current:0,accept_status:'accepted',claimed:false,claimable:false,title:t.task_code}));
- await context.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));
+ await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
  await context.route('**/health',r=>r.fulfill({json:{accounts:1,ready:1}}));
  await context.route('**/admin/api/**',async route=>{
   const url=new URL(route.request().url());let result={ok:true};

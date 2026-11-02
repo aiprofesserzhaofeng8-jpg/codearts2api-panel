@@ -13,7 +13,7 @@ const assert = require('node:assert/strict');
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    const login=await context.request.post(base+'/admin/auth/login',{data:{password:access.admin_password}});
+    const login=await context.request.post(base+'/auth/login',{data:{username:'admin',password:access.admin_password}});
     assert.ok(login.ok(),'fixture administrator login');
     await page.goto(base);
     await page.locator('#forgetPw').waitFor({state:'visible'});
@@ -44,7 +44,8 @@ const assert = require('node:assert/strict');
 
     // Account-row rendering/actions use browser fixtures; no account is imported
     // and no upstream balance/model request is sent by this test.
-    const response = await context.request.get(base + '/admin/api/state', { headers: { 'X-Admin-Password': access.admin_password } });
+    await context.request.post(base + '/auth/login', {data: {username:'admin', password:access.admin_password}});
+    const response = await context.request.get(base + '/admin/api/state');
     const snapshot = await response.json();
     const account = { id: 'ui-fixture', name: '界面测试账号', source: 'browser', enabled: true, paused: false,
       status: 'ok', failures: 0, has_refresh: true, claimed_today: false,

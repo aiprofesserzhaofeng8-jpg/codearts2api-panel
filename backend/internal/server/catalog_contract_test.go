@@ -162,7 +162,6 @@ func TestAcceptanceCatalogContract(t *testing.T) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		io.WriteString(w, summaryFixture("OK", "stop", 10, 4))
 	})
-	wb.AllowLocalAdmin = true
 	wb.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addWB(t, wb, "cn", time.Now().Add(time.Hour).Unix())
 	addWB(t, wb, "global", time.Now().Add(time.Hour).Unix())

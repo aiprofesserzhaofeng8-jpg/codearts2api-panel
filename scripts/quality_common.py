@@ -29,7 +29,7 @@ class API:
   code,raw,_=self.request(path,data,method)
   if code>=400:raise RuntimeError('HTTP %d at %s: %s'%(code,path,scrub(raw,(self.key,self.password))[:350]))
   return json.loads(raw)
- def login(self):return self.json('/admin/auth/login',{'password':self.password})
+ def login(self):return self.json('/auth/login',{'username':'admin','password':self.password})
  def add_key(self,name,budget):
   k=self.json('/admin/api/keys',{'name':name})['key'];ref='key_'+hashlib.sha256(k.encode()).hexdigest()[:24]
   self.json('/admin/api/keys/budget',{'ref':ref,'budget':budget});return k,ref

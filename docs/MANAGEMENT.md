@@ -39,15 +39,15 @@ Chat Completions、Responses 和 Messages 均限制到组内账号；粘性会�
 
 ## 登录与恢复
 
-默认本机和远程都要求登录。首次密码在 `data/state.json.access.json` 的 `admin_password` 字段；该文件是初始值记录，之后不会跟随改密。旧部署原先没有密码时生成 `data/state.json.admin-recovery.json`。忘记密码可通过 `CODEARTS_ADMIN_PASSWORD='新密码' ./start.sh` 重设；运行服务需在其启动环境中配置后重启。
+本机和远程统一使用 `/login` 登录。管理员用户名为 `admin`，密码沿用现有配置；普通用户使用管理员创建的账号。首次密码在 `data/state.json.access.json` 的 `admin_password` 字段；该文件是初始值记录，之后不会跟随改密。旧部署原先没有密码时生成 `data/state.json.admin-recovery.json`。忘记密码可通过 `CODEARTS_ADMIN_PASSWORD='新密码' ./start.sh` 重设；运行服务需在其启动环境中配置后重启。
 
-状态文件当前为 schema v6，旧版本程序会拒绝读取，避免丢弃分组、映射、用量和预算等配置。回退必须处理状态兼容，并保留最新凭据，不能盲目覆盖已轮转的令牌。
+状态文件当前为 schema 10，旧版本程序会拒绝读取，避免丢弃分组、映射、用量和预算等配置。回退必须处理状态兼容，并保留最新凭据，不能盲目覆盖已轮转的令牌。
 
 状态文件中的管理密码自动迁移为 PBKDF2-SHA256、600000 次迭代、16 字节随机盐。浏览器清理旧版保存的密码，改用 HttpOnly、SameSite=Strict Cookie；直连 HTTPS 时 Cookie 另带 Secure。远程部署应在 HTTPS 入口终止 TLS，或使用 SSH 隧道。不要通过公网明文 HTTP 登录。反代终止 TLS 时应用不会无条件信任客户端的 X-Forwarded-Proto；应由可信反代统一设置 Secure Cookie。
 
-会话只存服务进程内，保存的是随机令牌摘要。所有当前会话在改密后失效；没有多用户角色、2FA 或跨实例会话。管理脚本仍兼容 `X-Admin-Password` / Bearer。默认模式不能在设置里清空密码，防止把自己锁在无密码状态。
+会话只存服务进程内，保存的是随机令牌摘要。所有当前会话在改密后失效；管理员和普通用户共享会话机制，角色由服务端分配；不提供 2FA 或跨实例会话。管理接口不接受 `X-Admin-Password` / Bearer 密码，也不能清空管理员密码。
 
-若明确需要旧行为，可显式设置 `CODEARTS_LOCAL_AUTO_UNLOCK=true`。这是兼容选项，会重新信任可直连本机服务的进程；默认关闭。
+旧的本机自动解锁选项与管理/普通用户独立登录接口已移除。管理业务 API 仍保留，每次请求都检查管理员角色。
 
 初始访问凭据文件、可复制 API key、上游 STS/refresh token 和历史备份仍可从文件读取，使用目录 0700 / 文件 0600 保护。密码哈希不等于全部凭据加密。
 
@@ -79,7 +79,7 @@ Chat Completions、Responses 和 Messages 均限制到组内账号；粘性会�
 
 ## 管理接口
 
-- `POST /admin/auth/login`，JSON `{ "password": "..." }`；`POST /admin/auth/logout`；`GET /admin/auth/session`。
+- `POST /auth/login`，JSON `{ "username": "admin", "password": "..." }`；`POST /auth/logout`；`GET /auth/session`。脚本先登录并保存 Cookie，再调用下列管理 API。
 - `GET /admin/api/audit?page=1&page_size=50`，单页最大 200。
 - `POST /admin/api/keys/budget`：`{ "ref": "key_...", "budget": { "max_requests": 100, "max_tokens": 1000000, "max_usd": 1 }, "reset": false }`。ref 来自鉴权后的密钥列表，不需在 URL 中传完整 key。
 - `POST /admin/api/model-policies` 的 policy 新增 `summary_fallback_model`，空字符串关闭。

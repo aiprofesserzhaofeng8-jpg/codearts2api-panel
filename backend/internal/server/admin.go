@@ -308,7 +308,7 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "请求体解析失败", "invalid_request_error")
 		return
 	}
-	if err := s.Configuration.UpdateSettings(body, s.AllowLocalAdmin); err != nil {
+	if err := s.Configuration.UpdateSettings(body); err != nil {
 		writeErr(w, 400, err.Error(), "invalid_request_error")
 		return
 	}

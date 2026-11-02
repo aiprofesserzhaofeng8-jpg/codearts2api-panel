@@ -5,11 +5,12 @@ const response = (body: unknown, status = 200) => new Response(JSON.stringify(bo
 beforeEach(() => { document.head.innerHTML = '<meta name="local-panel-session" content="fixture">'; configureClient(vi.fn()); });
 afterEach(() => { disposeClient(); vi.unstubAllGlobals(); });
 describe('same-origin management client', () => {
-  it('keeps cookie/local session and preserves absent/null/[] in command bodies', async () => {
+  it('uses only cookie authentication and preserves absent/null/[] in command bodies', async () => {
     const fetch = vi.fn().mockImplementation(()=>Promise.resolve(response({ok:true}))); vi.stubGlobal('fetch',fetch);
     for (const body of [{id:'x'}, {id:'x',model_mappings:null}, {id:'x',model_mappings:[]}]) await api('/admin/api/groups',{method:'POST',body});
     expect(fetch.mock.calls.map(call=>JSON.parse(call[1].body))).toEqual([{id:'x'},{id:'x',model_mappings:null},{id:'x',model_mappings:[]}]);
-    expect(fetch.mock.calls[0]![1]).toMatchObject({credentials:'same-origin',headers:{'X-Local-Panel-Session':'fixture'}});
+    expect(fetch.mock.calls[0]![1]).toMatchObject({credentials:'same-origin',headers:{'Content-Type':'application/json'}});
+    expect(fetch.mock.calls[0]![1].headers).not.toHaveProperty('X-Local-Panel-Session');
   });
   it('rejects cross-origin URLs without sending credentials', async () => {
     const fetch=vi.fn();vi.stubGlobal('fetch',fetch);

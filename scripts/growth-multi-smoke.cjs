@@ -15,7 +15,7 @@ async function until(check){const end=Date.now()+5000;while(!check()){assert.ok(
   function resetTasks(){for(const id of ['a','b','c','disabled'])tasks[id]=['first','second'].map(code=>({task_code:code,title:'任务 '+code,description:'完成对应操作后领取奖励',credit:100,energy:5,current:1,target:1,claimable:true,claimed:false,locked:false}));}
   resetTasks();
   let readCount=0,activeReads=0,peakReads=0,activeClaims=0,peakClaims=0,claimCalls=[],perAccount={},listDelay=70,claimDelay=70,failRead='',pendingAccount='';
-  await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));
+  await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
   await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length-1}}));
   await ctx.route('**/admin/api/**',async route=>{
    const req=route.request(),u=new URL(req.url());let out={ok:true};

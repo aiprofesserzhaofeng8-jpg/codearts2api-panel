@@ -5,7 +5,7 @@ const context=await browser.newContext({viewport:{width:1460,height:1000}});cons
 const prices={'deepseek-v4.1-flash':{currency:'USD',input:.3,output:1.2,cached:.006,source:'DeepSeek 官方高峰参考价',updated_at:'2026-10-25'}};
 const stats={total_requests:10,usage_requests:10,priced_requests:8,priced_usd_requests:8,estimated_usd:.25};
 let saves=0;
-await context.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
+await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
 await context.route('**/admin/api/**',async route=>{const path=new URL(route.request().url()).pathname;
 if(path.endsWith('/state'))return route.fulfill({json:{accounts:[],keys:[],stats,settings:{pool:{}},models:[{id:'deepseek-v4.1-flash',source:'upstream'},{id:'glm-5.3',source:'upstream'},{id:'gpt-4o',source:'alias'}]}});
 if(path.endsWith('/pricing')){if(route.request().method()==='POST'){saves++;const b=route.request().postDataJSON();prices[b.model]={...b.price,updated_at:'now'};}return route.fulfill({json:{prices,ok:true}});}

@@ -20,6 +20,7 @@ import (
 func browserAdmin(s *Server, route, body string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest("POST", "http://localhost/admin/api/login/"+route, strings.NewReader(body))
 	r.RemoteAddr = "127.0.0.1:1234"
+	r.AddCookie(fixtureAdminCookie(s))
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
 	return w
@@ -137,12 +138,13 @@ func TestBrowserLoginHTTPBoundaries(t *testing.T) {
 		r := httptest.NewRequest("GET", "http://localhost/admin/api/login/"+route, nil)
 		r.RemoteAddr = "127.0.0.1:1234"
 		w := httptest.NewRecorder()
+		r.AddCookie(fixtureAdminCookie(s))
 		s.Handler().ServeHTTP(w, r)
 		if w.Code != 405 {
 			t.Fatalf("%s method=%d", route, w.Code)
 		}
 		s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "fixture-password" })
-		if w := browserAdmin(s, route, `{}`); w.Code != 401 {
+		if w := userHTTP(s, nil, "POST", "/admin/api/login/"+route, `{}`); w.Code != 401 {
 			t.Fatalf("%s auth=%d", route, w.Code)
 		}
 		s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "" })

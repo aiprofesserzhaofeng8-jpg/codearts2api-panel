@@ -42,7 +42,7 @@ func newTestServer(t *testing.T, accounts int, retries int) *Server {
 			NativeCredential: &codearts.Session{AccessKey: "ak-" + id, SecretKey: "sk-" + id},
 		})
 	}
-	srv := attachChatExecution(&Server{AllowLocalAdmin: true, Store: st, Up: codearts.NewClient(), Reg: registry.New(),
+	srv := attachChatExecution(&Server{Store: st, Up: codearts.NewClient(), Reg: registry.New(),
 		Limits: ratelimit.New(rateLimitConfig(st.Settings()), nil)})
 	attachAccessManagement(srv)
 	return srv

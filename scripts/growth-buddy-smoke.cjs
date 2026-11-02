@@ -8,7 +8,7 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  let states={},posts=[],accepts=[],active=0,peak=0,pending='',perAccount={};
  function reset(agreed=false){for(const a of accounts)states[a.id]={buddy:{owned:false,agreed},tasks:['first_buddy','chat_5'].map(code=>({task_code:code,title:code,auto_supported:true,activity_only:true,accept_not_required:code==='first_buddy',action_description:'活动上报、核对协议与领养进度；不调用模型',accept_status:'not_accepted',target:0,current:0,claimed:false,claimable:false,locked:false}))};}
  reset();
- await context.route('**/admin/auth/session',route=>route.fulfill({json:{authenticated:true}}));await context.route('**/health',route=>route.fulfill({json:{accounts:2,ready:2}}));
+ await context.route('**/auth/session',route=>route.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));await context.route('**/health',route=>route.fulfill({json:{accounts:2,ready:2}}));
  await context.route('**/admin/api/**',async route=>{
   const request=route.request(),url=new URL(request.url());let out={ok:true};
   if(url.pathname.endsWith('/state'))out={accounts,models:[],keys:[],groups:[],settings:{},stats:{}};

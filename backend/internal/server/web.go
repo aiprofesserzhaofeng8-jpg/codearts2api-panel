@@ -19,7 +19,7 @@ var frontendBuildID = webui.BuildID()
 const consoleCSP = "default-src 'none'; " +
 	"script-src 'self'; " +
 	"style-src 'self'; " +
-	"img-src 'self'; " +
+	"img-src 'self' data:; " +
 	"connect-src 'self'; " +
 	"base-uri 'none'; " +
 	"form-action 'none'; " +
@@ -38,10 +38,9 @@ func consoleHeaders(h http.Header, contentType string) {
 // serveConsole 输出控制台单页。
 func serveConsole(w http.ResponseWriter, r *http.Request) {
 	consoleHeaders(w.Header(), "text/html; charset=utf-8")
-	if r.URL.Path == "/user" {
-		// Only the consumer page displays locally validated inline raster avatars.
-		w.Header().Set("Content-Security-Policy", strings.Replace(consoleCSP, "img-src 'self';", "img-src 'self' data:;", 1))
-	}
+	// One SPA serves both roles; validated consumer raster avatars also work
+	// after automatic role routing from /login or /.
+
 	_, _ = w.Write(consoleHTML)
 }
 

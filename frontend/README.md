@@ -37,8 +37,10 @@ CODEARTS_TEST_BROWSER=chromium make e2e
 
 测试只使用临时数据和模拟接口，不会真实登录、领取奖励或消耗积分。Linux 上已实测开发代理和退出；Windows CI 构建和运行后端测试，Windows 可分别在两个终端启动 Vite 与 Go。
 
-M7 的 UsersPage 和 `/user` UserConsole 为独立响应式 Vue 树，API 使用生成类型；不能接管遗留 `v-once` 页面的节点。用户会话只在 Cookie，显式显示的密钥仅留内存，切页/刷新/退出清除。开发代理覆盖 `/user/auth`、`/user/api`；普通页面路由为 `/user`。
+M7 的 UsersPage 和 `/user` UserConsole 为独立响应式 Vue 树，API 使用生成类型；不能接管遗留 `v-once` 页面的节点。用户会话只在 Cookie，显式显示的密钥仅留内存，切页/刷新/退出清除。`ConsoleApplication` 统一检查 `/auth/session`；`/login` 登录后按服务端角色进入 `/` 或 `/user`，不提供角色切换入口。原生管理控制器只在管理员身份确认后挂载。开发代理覆盖 `/auth`、`/user/api`。
 
 两端共用侧栏、顶栏和内容区域骨架，通过插槽提供各自导航与操作。管理员导航 Sidebar 及顶栏的标题/退出控件仍由原生控制器独占；`v-once` 只放在它们自己的子树，不放在包含用户响应式分支的条件链上。管理员导航事件只绑定 `控制台分区` 内的 `button[data-tab]`，不能匹配整个页面的导航按钮。
 
 用户导航配置归 `features/users/navigation.ts`，使用 `/user#keys` 等片段支持刷新和浏览器前进/后退；切页清除已显示密钥和密码草稿。主题与桌面侧栏折叠偏好共用本机存储，手机导航为抽屉并支持 Escape 和焦点返回。空间链接只切入口，不复制 Cookie、合并身份或请求另一端的数据。
+
+统一 API 生命周期由 `ConsoleApplication` 持有，在身份变化时取消旧查询后再挂载对应页面；子页面不能重复配置或销毁共享 API 客户端，避免取消子组件自己的初始请求。

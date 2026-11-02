@@ -61,20 +61,20 @@ func TestAdminAuthBlocksProxiedRequests(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	h(rec, adminRequest("127.0.0.1:5555", map[string]string{"X-Forwarded-For": "203.0.113.7"}))
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("代理转发请求的状态码 = %d，期望 403", rec.Code)
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("代理转发请求的状态码 = %d，期望 401", rec.Code)
 	}
 
 	rec = httptest.NewRecorder()
 	h(rec, adminRequest("203.0.113.7:5555", nil))
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("远端直连的状态码 = %d，期望 403", rec.Code)
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("远端直连的状态码 = %d，期望 401", rec.Code)
 	}
 
 	rec = httptest.NewRecorder()
 	h(rec, adminRequest("127.0.0.1:5555", nil))
-	if rec.Code != http.StatusOK {
-		t.Errorf("本机直连的状态码 = %d，期望 200", rec.Code)
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("本机直连的状态码 = %d，期望 401", rec.Code)
 	}
 }
 
@@ -91,8 +91,8 @@ func TestAdminAuthPasswordTakesPrecedence(t *testing.T) {
 	}{
 		{"无密码", nil, http.StatusUnauthorized},
 		{"错误密码", map[string]string{"X-Admin-Password": "nope"}, http.StatusUnauthorized},
-		{"正确密码", map[string]string{"X-Admin-Password": "s3cret"}, http.StatusOK},
-		{"Bearer 形式", map[string]string{"Authorization": "Bearer s3cret"}, http.StatusOK},
+		{"正确密码", map[string]string{"X-Admin-Password": "s3cret"}, http.StatusUnauthorized},
+		{"Bearer 形式", map[string]string{"Authorization": "Bearer s3cret"}, http.StatusUnauthorized},
 		{"本机直连也必须带密码", nil, http.StatusUnauthorized},
 	}
 	for _, c := range cases {

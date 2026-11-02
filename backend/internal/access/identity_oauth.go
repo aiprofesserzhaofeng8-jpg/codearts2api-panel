@@ -61,7 +61,7 @@ func (s *Identity) StartOAuth(provider, id, browser string) (string, error) {
 	s.states[proofDigest(state)] = pending
 	s.mu.Unlock()
 	hash := sha256.Sum256([]byte(verifier))
-	query := url.Values{"client_id": {c.ClientID}, "redirect_uri": {cfg.PublicOrigin + "/user/auth/oauth/callback"}, "response_type": {"code"}, "scope": {p.Scope}, "state": {state}, "code_challenge_method": {"S256"}, "code_challenge": {base64.RawURLEncoding.EncodeToString(hash[:])}}
+	query := url.Values{"client_id": {c.ClientID}, "redirect_uri": {cfg.PublicOrigin + "/auth/oauth/callback"}, "response_type": {"code"}, "scope": {p.Scope}, "state": {state}, "code_challenge_method": {"S256"}, "code_challenge": {base64.RawURLEncoding.EncodeToString(hash[:])}}
 	return p.Authorize + "?" + query.Encode(), nil
 }
 

@@ -62,7 +62,7 @@ export function activateTab(name, updateHash, warm) {
             location.hash = name;
         }
     }
-    if (warm === false || (!sessionState.adminAuthenticated && !sessionState.localPanelSession))
+    if (warm === false || (!sessionState.adminAuthenticated))
         return;
     if (name === "audit")
         loadAudit();
@@ -105,18 +105,10 @@ document.querySelectorAll('nav[aria-label="控制台分区"] button[data-tab]').
 listen(window, "hashchange", function () {
     activateTab(location.hash.slice(1), false);
 });
-routesState.initialTab = routesState.TAB_IDS[routesState.initialTab] ? routesState.initialTab : "accounts";
+routesState.initialTab = routesState.TAB_IDS[location.hash.slice(1)] ? location.hash.slice(1) : "accounts";
 activateTab(routesState.initialTab, false, true);
-api("/admin/auth/session").then(function (session) {
-    sessionState.adminAuthenticated = !!session.authenticated || !!sessionState.localPanelSession;
-    updateAuthControls();
-    domState.$("#clearPw").classList.toggle("hidden", !session.local_compatibility);
-    if (sessionState.adminAuthenticated) {
-        resumeLogin();
-        return refresh();
-    }
-    showAdminLogin();
-}).catch(function (e) { if (isAbortError(e)) return; showAdminLogin(); domState.$("#adminLoginError").textContent = e.message; });
-every(function () { if (sessionState.adminAuthenticated || sessionState.localPanelSession)
+resumeLogin();
+refresh();
+every(function () { if (sessionState.adminAuthenticated)
     loadHealth(); }, 20000);
 }

@@ -14,12 +14,11 @@ import (
 	"codearts2api/internal/storage"
 )
 
-// Identical HTTP fixture runs against both the frozen baseline and this tree.
+// HTTP fixture covers pricing and the current unified session contract.
 // All credentials and prices are synthetic; no upstream requests are made.
 func TestAcceptancePricingSessionContract(t *testing.T) {
 	records := []map[string]any{}
 	s := newAdminTestServer(t)
-	s.AllowLocalAdmin = false
 	// Legacy plaintext verification is retained; later cases exercise the hash.
 	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "contract-secret" })
 	var cookie *http.Cookie
@@ -33,7 +32,7 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 			r.AddCookie(cookie)
 		}
 		if password != "" {
-			r.Header.Set("X-Admin-Password", password)
+			r.AddCookie(adminTestCookie(s, password))
 		}
 		if origin != "" {
 			r.Header.Set("Origin", origin)
@@ -73,31 +72,31 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 		}
 		cookies := []map[string]any{}
 		for _, c := range w.Result().Cookies() {
-			cookies = append(cookies, map[string]any{"name": c.Name, "has_token": len(c.Value) == 64, "path": c.Path, "secure": c.Secure, "http_only": c.HttpOnly, "same_site": c.SameSite, "max_age": c.MaxAge})
+			cookies = append(cookies, map[string]any{"name": c.Name, "has_token": len(c.Value) >= 40, "path": c.Path, "secure": c.Secure, "http_only": c.HttpOnly, "same_site": c.SameSite, "max_age": c.MaxAge})
 		}
 		records = append(records, map[string]any{"case": label, "status": w.Code, "response": response, "cookies": cookies, "cache_control": w.Header().Get("Cache-Control"), "retry_after": w.Header().Get("Retry-After"), "prices": prices, "audit": audit})
 		return w
 	}
 	for _, tc := range []struct{ label, method, path, body, origin, site string }{
-		{"login/method", "GET", "/admin/auth/login", "", "", ""},
-		{"session/method", "POST", "/admin/auth/session", "", "", ""},
-		{"session/anonymous", "GET", "/admin/auth/session", "", "", ""},
-		{"login/cross-origin", "POST", "/admin/auth/login", `{"password":"contract-secret"}`, "https://evil.example", ""},
-		{"login/cross-site", "POST", "/admin/auth/login", `{"password":"contract-secret"}`, "", "cross-site"},
-		{"login/malformed", "POST", "/admin/auth/login", `{`, "", ""},
-		{"login/null", "POST", "/admin/auth/login", `null`, "", ""},
-		{"login/oversize", "POST", "/admin/auth/login", `{"password":"` + strings.Repeat("a", 9000) + `"}`, "", ""},
-		{"login/wrong", "POST", "/admin/auth/login", `{"password":"wrong"}`, "", ""},
+		{"login/method", "GET", "/auth/login", "", "", ""},
+		{"session/method", "POST", "/auth/session", "", "", ""},
+		{"session/anonymous", "GET", "/auth/session", "", "", ""},
+		{"login/cross-origin", "POST", "/auth/login", `{"username":"admin","password":"contract-secret"}`, "https://evil.example", ""},
+		{"login/cross-site", "POST", "/auth/login", `{"username":"admin","password":"contract-secret"}`, "", "cross-site"},
+		{"login/malformed", "POST", "/auth/login", `{`, "", ""},
+		{"login/null", "POST", "/auth/login", `null`, "", ""},
+		{"login/oversize", "POST", "/auth/login", `{"username":"admin","password":"` + strings.Repeat("a", 9000) + `"}`, "", ""},
+		{"login/wrong", "POST", "/auth/login", `{"username":"admin","password":"wrong"}`, "", ""},
 		{"pricing/anonymous", "GET", "/admin/api/pricing", "", "", ""},
 	} {
 		call(tc.label, tc.method, tc.path, tc.body, "", tc.origin, tc.site, false)
 	}
-	w := call("login/success", "POST", "/admin/auth/login", `{"password":"contract-secret","extra":1} {"trailing":1}`, "", "", "", true)
+	w := call("login/success", "POST", "/auth/login", `{"username":"admin","password":"contract-secret"}`, "", "", "", true)
 	if w.Code != 200 {
 		t.Fatal("login fixture failed")
 	}
 	cookie = w.Result().Cookies()[0]
-	call("session/authenticated", "GET", "/admin/auth/session", "", "", "", "", false)
+	call("session/authenticated", "GET", "/auth/session", "", "", "", "", false)
 	call("pricing/read", "GET", "/admin/api/pricing", "", "", "", "", false)
 	call("pricing/cross-origin", "POST", "/admin/api/pricing", `{}`, "", "https://evil.example", "", false)
 	for _, tc := range []struct{ label, body string }{
@@ -115,26 +114,26 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 		call("pricing/"+tc.label, "POST", "/admin/api/pricing", tc.body, "", "", "", false)
 	}
 	call("pricing/method", "DELETE", "/admin/api/pricing", "", "", "", "", false)
-	call("logout/cross-site", "POST", "/admin/auth/logout", "", "", "", "cross-site", false)
-	call("logout/success", "POST", "/admin/auth/logout", "", "", "", "", true)
-	call("session/revoked", "GET", "/admin/auth/session", "", "", "", "", false)
+	call("logout/cross-site", "POST", "/auth/logout", "", "", "", "cross-site", false)
+	call("logout/success", "POST", "/auth/logout", "", "", "", "", true)
+	call("session/revoked", "GET", "/auth/session", "", "", "", "", false)
 	call("pricing/revoked", "GET", "/admin/api/pricing", "", "", "", "", false)
 	cookie = nil
-	w = call("login/plain-before-hash", "POST", "/admin/auth/login", `{"password":"contract-secret"}`, "", "", "", false)
+	w = call("login/plain-before-hash", "POST", "/auth/login", `{"username":"admin","password":"contract-secret"}`, "", "", "", false)
 	cookie = w.Result().Cookies()[0]
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
 	}
-	call("session/hash-upgrade-invalidates", "GET", "/admin/auth/session", "", "", "", "", false)
+	call("session/hash-upgrade-invalidates", "GET", "/auth/session", "", "", "", "", false)
 	cookie = nil
-	w = call("login/hashed", "POST", "/admin/auth/login", `{"password":"contract-secret"}`, "", "", "", false)
+	w = call("login/hashed", "POST", "/auth/login", `{"username":"admin","password":"contract-secret"}`, "", "", "", false)
 	cookie = w.Result().Cookies()[0]
-	call("session/hashed", "GET", "/admin/auth/session", "", "", "", "", false)
+	call("session/hashed", "GET", "/auth/session", "", "", "", "", false)
 	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "new-secret" })
-	call("session/password-changed", "GET", "/admin/auth/session", "", "", "", "", false)
+	call("session/password-changed", "GET", "/auth/session", "", "", "", "", false)
 	call("pricing/password-changed", "GET", "/admin/api/pricing", "", "", "", "", false)
 	cookie = nil
-	call("pricing/compatibility-header", "GET", "/admin/api/pricing", "", "new-secret", "", "", false)
+	call("pricing/new-password-session", "GET", "/admin/api/pricing", "", "new-secret", "", "", false)
 	// Simulate a strict price save failure without touching the state file.
 	dir := s.Store.Path() + ".blocked"
 	if err := os.Mkdir(dir, 0700); err != nil {
@@ -149,9 +148,9 @@ func TestAcceptancePricingSessionContract(t *testing.T) {
 	call("pricing/save-failure-rollback", "POST", "/admin/api/pricing", `{"model":"custom-model","price":{"currency":"USD","input":9,"output":9,"cached":9}}`, "new-secret", "", "", false)
 	// Rate limiting keeps the original peer bucket and 20-failure threshold.
 	for i := 0; i < 20; i++ {
-		s.adminFailures.failure("198.51.100.1:80")
+		s.loginFailures.failure("198.51.100.1:80")
 	}
-	r := httptest.NewRequest("POST", "/admin/auth/login", strings.NewReader(`{"password":"new-secret"}`))
+	r := httptest.NewRequest("POST", "/auth/login", strings.NewReader(`{"username":"admin","password":"new-secret"}`))
 	r.RemoteAddr = "198.51.100.1:81"
 	w = httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
@@ -172,9 +171,9 @@ func BenchmarkAdminSessionPricingHTTP(b *testing.B) {
 	}
 	st.UpdateSettings(func(settings *storage.Settings) { settings.AdminPassword = "benchmark-fixture" })
 	s := newConfiguredServer(st)
-	request := httptest.NewRequest("POST", "http://panel.example/admin/auth/login", strings.NewReader(`{"password":"benchmark-fixture"}`))
+	request := httptest.NewRequest("POST", "http://panel.example/auth/login", strings.NewReader(`{"username":"admin","password":"benchmark-fixture"}`))
 	w := httptest.NewRecorder()
-	s.handleAdminLogin(w, request)
+	s.handleLogin(w, request)
 	if w.Code != 200 {
 		b.Fatal(w.Code)
 	}

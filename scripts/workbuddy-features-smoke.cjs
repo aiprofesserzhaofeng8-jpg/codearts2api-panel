@@ -6,7 +6,7 @@ const {chromium}=require('playwright');const fs=require('node:fs');const assert=
  const browser=await chromium.launch({headless:true,channel:'chrome'});
  try {
   const ctx=await browser.newContext({viewport:{width:1440,height:1000}});
-  const auth=await ctx.request.post(base+'/admin/auth/login',{data:{password:access.admin_password}});assert.ok(auth.ok());
+  const auth=await ctx.request.post(base+'/auth/login',{data:{username:'admin',password:access.admin_password}});assert.ok(auth.ok());
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/#settings');await page.locator('#sWBPromptMode').waitFor();
   assert.equal(await page.locator('#sWBPromptMode').inputValue(),'custom');

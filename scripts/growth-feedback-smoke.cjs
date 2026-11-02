@@ -12,7 +12,7 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   tasks.splice(13,0,task('first_buddy',{title:'领养第一只 Buddy',manual_instruction:'请在官方应用阅读并同意领养协议，再领养 Buddy'}));
   tasks.push(task('chat_5',{title:'完成五次对话',auto_supported:true,action_description:'真实对话会消耗积分'}));
   let reads=0,accepts=0,runs=0;
-  await context.route('**/admin/auth/session',route=>route.fulfill({json:{authenticated:true}}));
+  await context.route('**/auth/session',route=>route.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
   await context.route('**/health',route=>route.fulfill({json:{accounts:1,ready:1}}));
   await context.route('**/admin/api/**',async route=>{
    const request=route.request(),path=new URL(request.url()).pathname;

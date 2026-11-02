@@ -1,8 +1,7 @@
-import { configureClient, disposeClient } from '../api/client';
 import { beginLifetime, endLifetime } from '../shared/lifecycle';
 import { registerRefresh } from '../shared/refresh';
 import { mountDom, disposeToast } from '../shared/dom';
-import { mountSession, showAdminLogin } from './session';
+import { mountSession } from './session';
 import { refresh } from './snapshot';
 import { mountAccounts } from '../features/accounts/controller';
 import { mountProviders } from '../features/accounts/providers/controller';
@@ -19,8 +18,8 @@ import { mountSettings } from '../features/settings/controller';
 import { mountGroups } from '../features/groups/controller';
 import { mountRoutes } from './routes';
 export function startConsole(): () => void {
-  beginLifetime(); configureClient(showAdminLogin); registerRefresh(refresh);
+  beginLifetime(); registerRefresh(refresh);
   [mountDom, mountAccounts, mountProviders, mountCodearts, mountCredits, mountWelfare, mountUsage, mountModels, mountPricing,
     mountPolicies, mountKeys, mountLogs, mountSettings, mountGroups, mountSession, mountRoutes].forEach(mount => mount());
-  return () => { disposeClient(); registerRefresh(); endLifetime(); disposeToast(); };
+  return () => { registerRefresh(); endLifetime(); disposeToast(); };
 }

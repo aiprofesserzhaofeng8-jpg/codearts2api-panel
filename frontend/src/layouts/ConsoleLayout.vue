@@ -36,10 +36,6 @@ onUnmounted(() => { media.removeEventListener('change', resize); document.body.c
         <slot name="navigation"><Sidebar /></slot>
       </div>
       <div class="sidebar-foot">
-        <nav class="console-spaces" aria-label="切换空间">
-          <a href="/" :aria-current="role === 'admin' ? 'page' : undefined" title="管理空间"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.2 3.3 7.4 8 9 4.7-1.6 8-4.8 8-9V6l-8-3Z"/></svg><span>管理空间</span></a>
-          <a href="/user" :aria-current="role === 'user' ? 'page' : undefined" title="个人空间"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>个人空间</span></a>
-        </nav>
         <slot name="status"><span v-once id="health" class="badge"><i class="dot"></i><span>检测中…</span></span></slot>
         <button class="btn ghost console-collapse" :aria-label="collapsed ? '展开侧栏' : '收起侧栏'" :aria-expanded="!collapsed" aria-controls="consoleSidebar" @click="collapse"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path :d="collapsed ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'"/></svg><span>{{collapsed ? '展开侧栏' : '收起侧栏'}}</span></button>
       </div>

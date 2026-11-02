@@ -7,7 +7,7 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
  let tasks={},posts=[],active=0,peak=0,perAccount={},pending='',prerequisite='',requestDelay=50,aborted=0;
  function reset(accepted=false){for(const a of accounts)tasks[a.id]=['Model_chat_GLM5.2','chat_5','automation_1'].map(code=>({task_code:code,title:code,description:'任务说明',auto_supported:code!=='automation_1',action_description:code==='automation_1'?'':'真实对话会消耗积分，最多 5 次，每次最多 32 Token',manual_instruction:code==='automation_1'?'请在官方应用真实创建定时任务':'',accept_status:accepted?'accepted':'not_accepted',target:code==='chat_5'?5:1,current:0,claimed:false,claimable:false}));}
  reset();
- await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));await ctx.route('**/health',r=>r.fulfill({json:{accounts:4,ready:3}}));
+ await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));await ctx.route('**/health',r=>r.fulfill({json:{accounts:4,ready:3}}));
  page.on('requestfailed',r=>{if(new URL(r.url()).pathname.endsWith('/tasks/run'))aborted++;});
  await ctx.route('**/admin/api/**',async route=>{
   const req=route.request(),url=new URL(req.url());let out={ok:true};

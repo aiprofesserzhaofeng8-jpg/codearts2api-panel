@@ -48,7 +48,7 @@ func TestUsersPasswordBoundedSessionsExpiryAndRevision(t *testing.T) {
 	now := time.Now()
 	s.sessions = map[string]userSession{}
 	for i := 0; i < 16; i++ {
-		s.sessions[sessionDigest(fmt.Sprint(i))] = userSession{"u", 1, now.Add(time.Duration(i+1) * time.Minute)}
+		s.sessions[sessionDigest(fmt.Sprint(i))] = userSession{id: "u", revision: 1, expires: now.Add(time.Duration(i+1) * time.Minute), role: RoleUser}
 	}
 	if _, _, err = s.Login(ctx, "alice", password, "latest"); err != nil {
 		t.Fatal(err)

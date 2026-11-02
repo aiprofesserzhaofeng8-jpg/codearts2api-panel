@@ -21,7 +21,7 @@ async function chooseAccount(page, id, method='browser') {
     const first={client:'Trae CN',source:'/fixture/Trae CN/storage.json',machine_id:'machine-fixture',device_id:'1234567890123456'};
     const second={client:'TRAE SOLO CN',source:'/fixture/TRAE SOLO CN/storage.json',machine_id:'second-machine',device_id:'2222222222222222'};
     page.on('pageerror',e=>errors.push(e.message));
-    await ctx.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true}}));
+    await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
     await ctx.route('**/admin/api/**',route=>{
       const u=new URL(route.request().url());let out={ok:true};
       if(u.pathname.endsWith('/state'))out={accounts:[],keys:[],models:[],settings:{pool:{}},stats:{}};

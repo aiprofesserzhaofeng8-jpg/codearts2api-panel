@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 func (s *Server) handleAdminIdentitySettings(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +83,7 @@ func (s *Server) handlePasswordRecovery(w http.ResponseWriter, r *http.Request) 
 	if !consumerMethod(w, r, "POST") {
 		return
 	}
-	if !userSameOrigin(r) {
+	if !sessionSameOrigin(r) {
 		writeErr(w, 403, "跨站请求被拒绝", "permission_error")
 		return
 	}
@@ -130,7 +129,7 @@ func (s *Server) handleOAuthStart(w http.ResponseWriter, r *http.Request) {
 	if !consumerMethod(w, r, "POST") {
 		return
 	}
-	if !userSameOrigin(r) {
+	if !sessionSameOrigin(r) {
 		writeErr(w, 403, "跨站请求被拒绝", "permission_error")
 		return
 	}
@@ -166,7 +165,7 @@ func (s *Server) handleOAuthStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Lax cookie is intentionally limited to OAuth correlation; user sessions stay Strict.
-	http.SetCookie(w, &http.Cookie{Name: oauthCookie, Value: browser, Path: "/user/auth/oauth", HttpOnly: true, Secure: s.userCookieSecure(r), SameSite: http.SameSiteLaxMode, MaxAge: 600})
+	http.SetCookie(w, &http.Cookie{Name: oauthCookie, Value: browser, Path: "/auth/oauth", HttpOnly: true, Secure: s.sessionCookieSecure(r), SameSite: http.SameSiteLaxMode, MaxAge: 600})
 	writeJSON(w, 200, map[string]any{"url": target})
 }
 func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +186,7 @@ func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		fail("登录验证已过期，请重试")
 		return
 	}
-	http.SetCookie(w, &http.Cookie{Name: oauthCookie, Path: "/user/auth/oauth", HttpOnly: true, Secure: s.userCookieSecure(r), SameSite: http.SameSiteLaxMode, MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: oauthCookie, Path: "/auth/oauth", HttpOnly: true, Secure: s.sessionCookieSecure(r), SameSite: http.SameSiteLaxMode, MaxAge: -1})
 	u, bound, err := s.Identity.CompleteOAuth(r.Context(), r.URL.Query().Get("state"), r.URL.Query().Get("code"), cookie.Value)
 	if err != nil {
 		fail(err.Error())
@@ -199,12 +198,8 @@ func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 			fail("用户权限已变更，请重新登录")
 			return
 		}
-		http.SetCookie(w, &http.Cookie{Name: userCookie, Value: token, Path: "/user", HttpOnly: true, Secure: s.userCookieSecure(r), SameSite: http.SameSiteStrictMode, MaxAge: 8 * 3600})
+		http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: token, Path: "/", HttpOnly: true, Secure: s.sessionCookieSecure(r), SameSite: http.SameSiteStrictMode, MaxAge: 8 * 3600})
 	}
 	s.audit(r, "user:"+u.ID, "oauth_login_or_bind", 200)
 	http.Redirect(w, r, "/user?oauth_success=1", http.StatusSeeOther)
-}
-
-func (s *Server) userCookieSecure(r *http.Request) bool {
-	return r.TLS != nil || strings.HasPrefix(s.Store.IdentitySettings().PublicOrigin, "https://")
 }

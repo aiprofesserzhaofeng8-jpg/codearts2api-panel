@@ -14,7 +14,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  }
  const prices={'deepseek-v4.1-flash':{currency:'USD',input:.3,output:1.2,cached:.006,source:'官方参考价',updated_at:'2026-10-26'}};
  let saves=0,failSave=false,usageCalls=0,failUsage=false;
- await context.route('**/admin/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
+ await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
 await context.route('**/admin/api/**',async route=>{const u=new URL(route.request().url()),path=u.pathname;
   if(path.endsWith('/state'))return route.fulfill({json:{accounts:[],keys:[],stats:{total_requests:99999},settings:{pool:{}},models:[{id:'deepseek-v4.1-flash',source:'upstream'},{id:'glm-5.3',source:'upstream'}]}});
   if(path.endsWith('/usage')){

@@ -10,6 +10,8 @@
 
 旧原生槽现在是无平台方法约束的 NativeCredential 值，仍由 storage 兼容编码器一次解码并保留不可变指针；WorkBuddy/Trae 字节路径独立。下方 M3 逐批说明保留当时状态，当前事务保证和限制以 [ADR 0009](../adr/0009-runtime-storage-ownership.md) 为准。
 
+统一登录后，`access.Users` 取代独立的 AdminSessions，持有服务端角色与共用的有界会话表；HTTP 在 `/auth` 处理登录，管理业务和消费者业务各自验证角色。`ConsoleApplication` 统一控制前端登录、API 生命周期及按角色挂载页面。该变更不迁移 schema、不改推理准入，见 [ADR 0014](../adr/0014-unified-role-authentication.md)。
+
 ## 责任表
 
 表中入口为职责示意；HTTP 当前包仍叫 server，共享值分别归 accounts/access/config/usage，不为目标名称创建空 domain/httpapi 包。

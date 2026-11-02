@@ -159,17 +159,5 @@ on("#saveSettings", function () {
 ["input", "change"].forEach(function (evt) {
     listen(domState.$("#tab-settings"), evt, markSettingsDirty);
 });
-on("#clearPw", function () {
-    if (!confirm("确定清除管理密码？\n清除后管理接口仅允许本机直连访问，反向代理 / 容器场景将无法再打开控制台。"))
-        return;
-    return api("/admin/api/settings", { method: "POST", body: { clear_admin_password: true } }).then(function (r) {
-        domState.$("#sPw").value = "";
-        clearStoredPw();
-        domState.$("#pw").value = "";
-        toast("管理密码已清除", "ok");
-        clearSettingsDirty();
-        renderSettings(r.settings || {});
-        return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; toast("清除失败：" + e.message, "err"); });
-});
+
 }

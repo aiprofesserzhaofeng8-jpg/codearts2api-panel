@@ -1,24 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import ConsoleLayout from '../../layouts/ConsoleLayout.vue';
-import AuthCard from '../../layouts/AuthCard.vue';
-import ThemeToggle from '../../layouts/ThemeToggle.vue';
 import UserNavigation from './UserNavigation.vue';
 import { userPages, userPageFromHash, type UserPage } from './navigation';
-import { api, configureClient, disposeClient, isAbortError } from '../../api/client';
+import { api, isAbortError } from '../../api/client';
 import type { components, paths } from '../../api/generated/admin';
 import UserEntitlements from './UserEntitlements.vue';
 import UserIdentityPanel from './UserIdentityPanel.vue';
-import UserRecovery from './UserRecovery.vue';
 import UserDashboard from './UserDashboard.vue';
 import UserProfilePanel from './UserProfilePanel.vue';
+import { expireSession } from '../../app/authentication';
 type User = components['schemas']['User'];
 type Profile = paths['/user/api/profile']['get']['responses'][200]['content']['application/json'];
 type Usage = components['schemas']['UserUsagePage'];
-const user=ref<User>(), profile=ref<Profile>(), keys=ref<components['schemas']['UserKey'][]>([]);
+const props=defineProps<{initialUser:User}>();
+const user=ref<User|undefined>(props.initialUser), profile=ref<Profile>(), keys=ref<components['schemas']['UserKey'][]>([]);
 const models=ref<{id:string;name:string}[]>([]), usage=ref<Usage>();
-const username=ref(''),password=ref(''),oldPassword=ref(''),newPassword=ref(''),keyName=ref('');
-const error=ref(''),message=ref(''),busy=ref(false),ready=ref(false),revealed=ref<Record<string,string>>({});
+const oldPassword=ref(''),newPassword=ref(''),keyName=ref('');
+const error=ref(''),message=ref(''),busy=ref(false),revealed=ref<Record<string,string>>({});
 const tab=ref<UserPage>(userPageFromHash()), range=ref('7');let epoch=0;
 const currentPage=computed(()=>userPages.find(page=>page.id===tab.value)!);
 function readRoute(){tab.value=userPageFromHash();revealed.value={};oldPassword.value='';newPassword.value='';}
@@ -28,7 +27,7 @@ function navigate(page:UserPage){
 }
 watch([tab,user],()=>{document.title=(user.value?currentPage.value.name:'用户登录')+' · CodeArts2API';});
 const apiBase=location.origin+'/v1';
-function expired(){epoch++;user.value=undefined;profile.value=undefined;keys.value=[];models.value=[];usage.value=undefined;revealed.value={};password.value='';oldPassword.value='';newPassword.value='';tab.value='dashboard';}
+function expired(){epoch++;user.value=undefined;profile.value=undefined;keys.value=[];models.value=[];usage.value=undefined;revealed.value={};oldPassword.value='';newPassword.value='';tab.value='dashboard';}
 function usagePath(page:number){
   const query=new URLSearchParams({page:String(page),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'});
   if(range.value!=='0'){const start=new Date();start.setHours(0,0,0,0);start.setDate(start.getDate()-Number(range.value)+1);query.set('start',String(Math.floor(start.getTime()/1000)));}
@@ -40,30 +39,21 @@ async function refresh(page=1){
   if(current!==epoch)return;profile.value=p;user.value=p.user;keys.value=k.keys;models.value=m.models;usage.value=u;revealed.value={};
 }
 async function act(fn:()=>Promise<void>){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}finally{busy.value=false;}}
-function login(){return act(async()=>{const d=await api('/user/auth/login',{method:'POST',body:{username:username.value,password:password.value}});password.value='';epoch++;user.value=d.user;readRoute();await refresh();});}
-function logout(){return act(async()=>{await api('/user/auth/logout',{method:'POST'});expired();});}
+function logout(){return act(async()=>{await api('/auth/logout',{method:'POST'});expireSession();});}
 function createKey(){return act(async()=>{await api('/user/api/keys',{method:'POST',body:{name:keyName.value}});keyName.value='';await refresh();message.value='密钥已创建，可点击“显示 / 复制”接入客户端。';});}
 function reveal(ref:string){return act(async()=>{if(revealed.value[ref]){delete revealed.value[ref];return;}const d=await api('/user/api/keys/reveal',{method:'POST',body:{ref}});revealed.value[ref]=d.value;});}
 function copy(ref:string){return act(async()=>{const d=await api('/user/api/keys/reveal',{method:'POST',body:{ref}});try{await navigator.clipboard.writeText(d.value);message.value='密钥已复制';}catch{revealed.value[ref]=d.value;message.value='请选择显示的密钥手动复制';}});}
 function change(ref:string,action:string){if(action==='delete'&&!confirm('删除该密钥？使用它的客户端将无法继续调用。'))return;return act(async()=>{await api('/user/api/keys?ref='+encodeURIComponent(ref)+'&action='+action,{method:'DELETE'});await refresh();});}
-function changePassword(){return act(async()=>{await api('/user/api/password',{method:'POST',body:{old_password:oldPassword.value,password:newPassword.value}});expired();message.value='密码已修改，请重新登录。';});}
+function changePassword(){return act(async()=>{await api('/user/api/password',{method:'POST',body:{old_password:oldPassword.value,password:newPassword.value}});expireSession('密码已修改，请重新登录。');});}
 function saveProfile(update:components['schemas']['UserProfileUpdate']){return act(async()=>{const p=await api('/user/api/profile',{method:'POST',body:update});profile.value=p;user.value=p.user;message.value='个人资料已保存';});}
 const date=(time:number)=>time?new Date(time*1000).toLocaleString():'—';
 const usd=(value:unknown)=>Number(value??0).toFixed(6);
-onMounted(async()=>{window.addEventListener('hashchange',readRoute);document.title='用户登录 · CodeArts2API';configureClient(expired);try{const d=await api('/user/auth/session');if(d.authenticated){user.value=d.user;await refresh();}}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}finally{ready.value=true;}});
-onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);expired();disposeClient();});
+onMounted(async()=>{window.addEventListener('hashchange',readRoute);try{await refresh();}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}});
+onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);expired();});
 </script>
 <template>
 <div class="user-console">
-  <div v-if="!ready || !user" class="auth-page">
-    <div class="auth-theme"><ThemeToggle /></div>
-    <p v-if="!ready" role="status">加载中…</p>
-    <AuthCard v-else role="user" title="用户登录" description="登录个人空间，管理密钥、用量与账号资料。">
-      <form id="userLoginForm" @submit.prevent="login"><div class="field"><label for="userUsername">用户名</label><input id="userUsername" v-model="username" required autocomplete="username" maxlength="64"></div><div class="field"><label for="userPassword">密码</label><input id="userPassword" v-model="password" type="password" required autocomplete="current-password" maxlength="256"></div><button class="btn primary" :disabled="busy">{{busy?'登录中…':'登录'}}</button></form><UserRecovery />
-      <p v-if="error" class="err-text" role="alert">{{error}}</p><p v-if="message" role="status">{{message}}</p>
-    </AuthCard>
-  </div>
-  <ConsoleLayout v-else role="user" :name="user.display_name || user.username" class="user-workspace">
+  <ConsoleLayout v-if="user" role="user" :name="user.display_name || user.username" class="user-workspace">
     <template #navigation><UserNavigation :active="tab" @navigate="navigate" /></template>
     <template #heading><h1>{{currentPage.name}}</h1><p class="page-hint">{{currentPage.hint}}</p></template>
     <template #actions><button class="btn ghost" id="userLogout" :disabled="busy" @click="logout">退出登录</button></template>

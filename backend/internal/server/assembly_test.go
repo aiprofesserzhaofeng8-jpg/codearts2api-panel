@@ -40,7 +40,7 @@ func newConfiguredServer(st *storage.Store) *Server {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	s := New(st, Dependencies{
-		Users:     access.NewUsers(st),
+		Users:     access.NewUsers(st, func() string { return st.Settings().AdminPassword }),
 		Admission: gateway.NewAdmission(st),
 		CodeArts:  codeartsup.New(up), Completions: &gateway.Completions{MarkStreamOnly: models.MarkStreamOnly},
 		Up: up, Cred: credentials, Logins: logins,
@@ -114,8 +114,8 @@ func markModelsFresh(s *Server) {
 }
 
 func attachRewards(s *Server) {
-	if s.AdminSessions == nil {
-		s.AdminSessions = &access.AdminSessions{}
+	if s.Users == nil {
+		s.Users = access.NewUsers(s.Store, func() string { return s.Store.Settings().AdminPassword })
 	}
 	if s.Pricing == nil {
 		s.Pricing = usage.NewManagement(s.Store)

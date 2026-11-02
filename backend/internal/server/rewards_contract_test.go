@@ -118,7 +118,6 @@ func TestAcceptanceRewardsContract(t *testing.T) {
 		}
 		io.WriteString(w, `{"code":0,"data":{},"Response":{"Data":{"Accounts":[{"CapacityRemain":70,"CapacityUsed":30,"CapacitySize":100}]}}}`)
 	})
-	wb.AllowLocalAdmin = true
 	wb.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addWB(t, wb, "cn", time.Now().Add(time.Hour).Unix())
 	for _, m := range []string{"success", "failure", "invalid", "success"} {
@@ -150,7 +149,6 @@ func TestAcceptanceRewardsContract(t *testing.T) {
 			}
 		}
 	})
-	tr.AllowLocalAdmin = true
 	tr.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "" })
 	addTrae(t, tr)
 	record("trae/status", tr, adminProbeRequest(t, tr, "GET", "/admin/api/welfare?id=trae-acct", ""))

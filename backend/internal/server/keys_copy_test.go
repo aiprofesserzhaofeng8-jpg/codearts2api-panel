@@ -27,7 +27,11 @@ func TestAdminCanRetrieveExistingKeysForCopy(t *testing.T) {
 			allowed  bool
 		}{{"admin", true}, {key, false}, {"", false}} {
 			r := httptest.NewRequest("GET", path, nil)
-			r.Header.Set("X-Admin-Password", auth.password)
+			if auth.allowed {
+				r.AddCookie(adminTestCookie(s, auth.password))
+			} else {
+				r.Header.Set("X-Admin-Password", auth.password)
+			}
 			w := httptest.NewRecorder()
 			s.Handler().ServeHTTP(w, r)
 			if !auth.allowed {
@@ -59,7 +63,11 @@ func TestExplicitRevealRequiresAdminAndPOST(t *testing.T) {
 		want       int
 	}{{"POST", "admin", 200}, {"GET", "admin", 405}, {"POST", key, 401}, {"POST", "", 401}} {
 		r := httptest.NewRequest(tc.method, "/admin/api/keys/reveal", strings.NewReader(`{"key":"`+keyReference(key)+`"}`))
-		r.Header.Set("X-Admin-Password", tc.pw)
+		if tc.pw == "admin" {
+			r.AddCookie(adminTestCookie(s, tc.pw))
+		} else {
+			r.Header.Set("X-Admin-Password", tc.pw)
+		}
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, r)
 		if w.Code != tc.want {

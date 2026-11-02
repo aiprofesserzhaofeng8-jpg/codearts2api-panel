@@ -97,7 +97,7 @@ func TestWorkBuddyThreeProtocolsAndProviderUsage(t *testing.T) {
 }
 func providerAdmin(s *Server, body string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest("POST", "/admin/api/provider-login", strings.NewReader(body))
-	r.Header.Set("X-Admin-Password", "admin-fixture")
+	r.AddCookie(adminTestCookie(s, "admin-fixture"))
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
 	return w
@@ -243,7 +243,7 @@ func TestProviderImportVerifiedAndStateNeverReturnsCredentials(t *testing.T) {
 	importRequest := func(uid string) *httptest.ResponseRecorder {
 		credentials["uid"] = uid
 		req := httptest.NewRequest("POST", "/admin/api/provider-import", strings.NewReader(string(mustJSON(map[string]any{"provider": "workbuddy", "credentials": credentials}))))
-		req.Header.Set("X-Admin-Password", "admin-fixture")
+		req.AddCookie(adminTestCookie(s, "admin-fixture"))
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, req)
 		return w
@@ -261,7 +261,7 @@ func TestProviderImportVerifiedAndStateNeverReturnsCredentials(t *testing.T) {
 		t.Fatal("silent duplicate replacement")
 	}
 	req := httptest.NewRequest("GET", "/admin/api/state", nil)
-	req.Header.Set("X-Admin-Password", "admin-fixture")
+	req.AddCookie(adminTestCookie(s, "admin-fixture"))
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, req)
 	if w.Code != 200 || strings.Contains(w.Body.String(), "private-access-canary") || strings.Contains(w.Body.String(), "private-refresh-canary") || strings.Contains(w.Body.String(), "provider_credentials") {

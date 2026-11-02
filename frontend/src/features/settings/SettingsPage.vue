@@ -254,7 +254,6 @@
             <div v-once class="row">
               <input class="w-280" id="sPw" type="password" placeholder="不修改请留空" autocomplete="new-password"
                      aria-label="新的管理密码">
-              <button class="btn danger" id="clearPw">清除管理密码</button>
             </div>
             <p class="hint">
               清除后管理接口退回「仅本机直连」兜底；若网关监听 <code>0.0.0.0</code> 或被反向代理，

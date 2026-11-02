@@ -22,7 +22,7 @@ func (*Client) Exchange(ctx context.Context, cfg access.IdentitySettings, provid
 		c = cfg.LinuxDO
 	}
 	client := &http.Client{Timeout: 15 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-	body := url.Values{"client_id": {c.ClientID}, "client_secret": {c.ClientSecret}, "code": {code}, "grant_type": {"authorization_code"}, "redirect_uri": {origin + "/user/auth/oauth/callback"}, "code_verifier": {verifier}}
+	body := url.Values{"client_id": {c.ClientID}, "client_secret": {c.ClientSecret}, "code": {code}, "grant_type": {"authorization_code"}, "redirect_uri": {origin + "/auth/oauth/callback"}, "code_verifier": {verifier}}
 	req, err := http.NewRequestWithContext(ctx, "POST", p.Token, strings.NewReader(body.Encode()))
 	if err != nil {
 		return "", err

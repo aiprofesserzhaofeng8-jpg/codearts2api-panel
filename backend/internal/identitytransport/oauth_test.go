@@ -33,7 +33,7 @@ func TestOAuthTransportTokenExchangeAndStableUserinfo(t *testing.T) {
 					if err := r.ParseForm(); err != nil {
 						t.Fatal(err)
 					}
-					if r.Form.Get("client_secret") != "private" || r.Form.Get("code_verifier") != "verifier" || r.Form.Get("redirect_uri") != "https://panel.example/user/auth/oauth/callback" {
+					if r.Form.Get("client_secret") != "private" || r.Form.Get("code_verifier") != "verifier" || r.Form.Get("redirect_uri") != "https://panel.example/auth/oauth/callback" {
 						t.Error("bad exchange", r.Form)
 					}
 					w.Header().Set("Content-Type", "application/json")

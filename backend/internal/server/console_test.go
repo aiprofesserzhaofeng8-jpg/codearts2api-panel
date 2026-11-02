@@ -53,8 +53,8 @@ func TestConsoleHTMLHasNoInlineCode(t *testing.T) {
 			t.Fatal("unsafe production HTML", pattern)
 		}
 	}
-	if !strings.Contains(html, `name="local-panel-session" content=""`) || frontendBuildID == "" {
-		t.Fatal("missing local capability placeholder/build metadata")
+	if strings.Contains(html, `name="local-panel-session"`) || frontendBuildID == "" {
+		t.Fatal("unexpected local capability or missing build metadata")
 	}
 }
 func TestConsoleAssetIsolation(t *testing.T) {

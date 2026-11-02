@@ -31,6 +31,7 @@ type User struct {
 }
 
 type UserView struct {
+	Role           Role         `json:"role"`
 	Wallet         Wallet       `json:"wallet"`
 	Subscription   Subscription `json:"subscription"`
 	Email          string       `json:"email"`
@@ -50,7 +51,7 @@ type UserView struct {
 }
 
 func (u User) View() UserView {
-	return UserView{Wallet: u.Wallet, Subscription: u.Subscription, Email: u.Email, EmailVerified: u.EmailVerified, ID: u.ID, Revision: u.Revision, Username: u.Username, DisplayName: u.DisplayName, Avatar: u.Avatar, MaxConcurrency: u.MaxConcurrency, GroupID: u.GroupID, Enabled: u.Enabled,
+	return UserView{Role: RoleUser, Wallet: u.Wallet, Subscription: u.Subscription, Email: u.Email, EmailVerified: u.EmailVerified, ID: u.ID, Revision: u.Revision, Username: u.Username, DisplayName: u.DisplayName, Avatar: u.Avatar, MaxConcurrency: u.MaxConcurrency, GroupID: u.GroupID, Enabled: u.Enabled,
 		CreatedAt: u.CreatedAt, Budget: u.Budget, BudgetUsage: u.BudgetUsage}
 }
 
@@ -97,22 +98,30 @@ var ErrUserAuthentication = errors.New("用户名或密码不正确，或用户�
 var ErrUserLoginBusy = errors.New("登录请求过多，请稍后再试")
 
 type userSession struct {
-	id       string
-	revision uint64
-	expires  time.Time
+	id                string
+	revision          uint64
+	expires           time.Time
+	role              Role
+	credentialVersion string
 }
 
 // Users owns bounded, opaque, in-memory sessions. Every authenticated request
-// rereads the user's enabled/revision state. Sessions never authorize admin APIs.
+// rereads the principal's current credentials or enabled/revision state. Roles
+// are assigned by the server, never accepted from a login or profile request.
 type Users struct {
 	store         UserStore
 	mu            sync.Mutex
 	sessions      map[string]userSession
 	passwordSlots chan struct{}
+	adminPassword func() string
 }
 
-func NewUsers(store UserStore) *Users {
-	return &Users{store: store, sessions: map[string]userSession{}, passwordSlots: make(chan struct{}, 2)}
+func NewUsers(store UserStore, adminPassword ...func() string) *Users {
+	s := &Users{store: store, sessions: map[string]userSession{}, passwordSlots: make(chan struct{}, 2)}
+	if len(adminPassword) != 0 {
+		s.adminPassword = adminPassword[0]
+	}
+	return s
 }
 func (s *Users) passwordWork(ctx context.Context, fn func() error) error {
 	if err := ctx.Err(); err != nil {
@@ -146,6 +155,9 @@ func (s *Users) Save(ctx context.Context, update UserUpdate) (out UserView, err 
 	return s.store.SaveUser(update, hash)
 }
 func (s *Users) Login(ctx context.Context, name, password, token string) (out UserView, expires time.Time, err error) {
+	if strings.EqualFold(strings.TrimSpace(name), AdminUsername) {
+		return s.loginAdmin(ctx, password, token)
+	}
 	name, _ = NormalizeUsername(name)
 	u, found := s.store.UserByName(name)
 	// A valid dummy representation equalizes the expensive unknown-user path.
@@ -175,7 +187,10 @@ func (s *Users) OpenSession(id string, revision uint64, token string) (out UserV
 	if !ok || !current.Enabled || current.Revision != revision {
 		return out, expires, ErrUserAuthentication
 	}
-	u := current
+	return s.openSession(current.View(), token, "")
+}
+
+func (s *Users) openSession(u UserView, token, credentialVersion string) (out UserView, expires time.Time, err error) {
 	now := time.Now()
 	expires = now.Add(8 * time.Hour)
 	s.mu.Lock()
@@ -208,9 +223,9 @@ func (s *Users) OpenSession(id string, revision uint64, token string) (out UserV
 		}
 		delete(s.sessions, oldest)
 	}
-	s.sessions[sessionDigest(token)] = userSession{u.ID, u.Revision, expires}
+	s.sessions[sessionDigest(token)] = userSession{id: u.ID, revision: u.Revision, expires: expires, role: u.Role, credentialVersion: credentialVersion}
 	s.mu.Unlock()
-	out = current.View()
+	out = u
 	return
 }
 func (s *Users) Authenticate(token string) (UserView, bool) {
@@ -218,6 +233,16 @@ func (s *Users) Authenticate(token string) (UserView, bool) {
 	session, ok := s.sessions[sessionDigest(token)]
 	s.mu.Unlock()
 	if !ok || !time.Now().Before(session.expires) {
+		return UserView{}, false
+	}
+	if session.role == RoleAdmin {
+		password := s.currentAdminPassword()
+		if session.id != BuiltinAdminID || password == "" || !sessionEqual(session.credentialVersion, sessionDigest(password)) {
+			return UserView{}, false
+		}
+		return administratorView(), true
+	}
+	if session.role != RoleUser {
 		return UserView{}, false
 	}
 	u, ok := s.store.User(session.id)

@@ -9,12 +9,10 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 	s := poolServer(t, 0)
-	s.AllowLocalAdmin = false
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "session-test-secret" })
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
@@ -41,14 +39,14 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 	if w := call("GET", "/admin/api/state", "", nil, ""); w.Code != 401 {
 		t.Fatal("default loopback bypassed login")
 	}
-	if w := call("POST", "/admin/auth/login", `{"password":"session-test-secret"}`, nil, "https://evil.example"); w.Code != 403 {
+	if w := call("POST", "/auth/login", `{"username":"admin","password":"session-test-secret"}`, nil, "https://evil.example"); w.Code != 403 {
 		t.Fatal("cross-site login accepted")
 	}
-	if w := call("POST", "/admin/auth/login", `{"password":"wrong"}`, nil, ""); w.Code != 401 {
+	if w := call("POST", "/auth/login", `{"username":"admin","password":"wrong"}`, nil, ""); w.Code != 401 {
 		t.Fatal("wrong password accepted")
 	}
 	login := func() *http.Cookie {
-		w := call("POST", "/admin/auth/login", `{"password":"session-test-secret"}`, nil, "")
+		w := call("POST", "/auth/login", `{"username":"admin","password":"session-test-secret"}`, nil, "")
 		if w.Code != 200 {
 			t.Fatalf("login=%d", w.Code)
 		}
@@ -68,16 +66,11 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 	if w := call("POST", "/admin/api/keys", `{"name":"never-log-this-body"}`, cookie, ""); w.Code != 200 {
 		t.Fatal("session cannot mutate")
 	}
-	if w := call("POST", "/admin/auth/logout", "", cookie, ""); w.Code != 200 {
+	if w := call("POST", "/auth/logout", "", cookie, ""); w.Code != 200 {
 		t.Fatal("logout failed")
 	}
 	if w := call("GET", "/admin/api/state", "", cookie, ""); w.Code != 401 {
 		t.Fatal("logout did not revoke")
-	}
-	cookie = login()
-	s.AdminSessions.Issue(cookie.Value, s.Store.Settings().AdminPassword, time.Now().Add(-9*time.Hour))
-	if w := call("GET", "/admin/api/state", "", cookie, ""); w.Code != 401 {
-		t.Fatal("expired session accepted")
 	}
 	cookie = login()
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "new-password" })
@@ -107,7 +100,6 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 }
 func TestDefaultAdminCannotClearPassword(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	s.AllowLocalAdmin = false
 	w := httptest.NewRecorder()
 	s.handleAdminSettings(w, httptest.NewRequest("POST", "/admin/api/settings", strings.NewReader(`{"clear_admin_password":true}`)))
 	if w.Code != 400 {

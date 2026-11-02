@@ -39,7 +39,8 @@ func TestMetricsExposesStats(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	req.Host = "127.0.0.1:10087"
-	req.RemoteAddr = "127.0.0.1:12345" // 本机直连（未设管理密码时允许）
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(fixtureAdminCookie(s))
 	rec := httptest.NewRecorder()
 	s.withAdminAuth(s.handleMetrics)(rec, req)
 
@@ -184,15 +185,15 @@ func TestMetricsRequiresAdminAuth(t *testing.T) {
 	rec := httptest.NewRecorder()
 	s.withAdminAuth(s.handleMetrics)(rec, req)
 
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("非本机直连状态码 = %d，期望 403（body: %s）", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("非本机直连状态码 = %d，期望 401（body: %s）", rec.Code, rec.Body.String())
 	}
 
-	// 设了管理密码后，携带正确密码即可访问（Prometheus 用 Bearer）。
+	// 指标接口与管理 API 使用相同的角色会话。
 	s.Store.UpdateSettings(func(st *storage.Settings) { st.AdminPassword = "pw" })
 	req = httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	req.RemoteAddr = "203.0.113.9:12345"
-	req.Header.Set("Authorization", "Bearer pw")
+	req.AddCookie(adminTestCookie(s, "pw"))
 	rec = httptest.NewRecorder()
 	s.withAdminAuth(s.handleMetrics)(rec, req)
 	if rec.Code != http.StatusOK {
