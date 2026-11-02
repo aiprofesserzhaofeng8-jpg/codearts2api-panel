@@ -12,6 +12,9 @@ import (
 // bootstrapAccess is called only for a new state file. Secrets are never printed
 // into logs, embedded in the UI or committed as example configuration.
 func bootstrapAccess(st *storage.Store, password string) (string, error) {
+	if err := st.CheckFreshInstallation(); err != nil {
+		return "", err
+	}
 	if password == "" {
 		password = codearts.RandomHex(24)
 	}
@@ -40,6 +43,9 @@ func bootstrapAccess(st *storage.Store, password string) (string, error) {
 		return "", err
 	}
 	if err := st.Save(); err != nil {
+		return "", err
+	}
+	if err := st.SealInstallation(); err != nil {
 		return "", err
 	}
 	return path, nil

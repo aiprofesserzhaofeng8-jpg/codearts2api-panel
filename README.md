@@ -137,30 +137,36 @@ git pull --ff-only
 
 ## 首次使用
 
-1. 查看首次生成的管理员密码和 API Key。
-2. 打开 `/login`，用户名填写 `admin`，密码使用 `admin_password` 的值。
+1. 新部署打开面板，根据首次安装向导设置管理员密码；需提供服务器上生成的初始化凭证。
+2. 完成后打开 `/login`，使用 `admin` 和刚设置的密码登录。已有部署沿用原密码。
 3. 在「账号池」点击「添加账号」，选择平台和「浏览器授权」，点击下一步，再生成链接并复制到另一浏览器授权。
 4. 粘贴最终回调地址，提交授权信息，核对账号预览后确认保存。
 5. 刷新模型目录，使用实际可用的模型 ID；测活会消耗真实额度。
 6. 在「API 密钥」中创建客户端专用密钥，按需设置预算。
 
-### 管理员登录密码在哪里？
+### 首次安装与管理员密码
 
-首次启动会生成管理员密码。打开下面的初始凭据文件，用户名填写 `admin`，使用 **`admin_password` 字段的值**登录管理面板；`api_key` 是客户端调用接口的密钥，不用于管理员登录。
+新部署未指定管理密码时，打开面板会进入首次安装向导。先在服务器读取状态文件旁的初始化凭证，把 `setup_token` 填入向导，再设置至少 12 位的管理员密码。用户名固定为 `admin`，密码由你设置，不提供公共注册。
 
-**源码 / start.sh 部署**：在项目目录查看 `data/state.json.access.json`：
-
-```bash
-cat data/state.json.access.json
-```
-
-**Docker Compose 部署**：查看容器内 `/data/codearts2api-data.json.access.json`：
+**源码 / start.sh 部署**：在项目目录读取初始化凭证：
 
 ```bash
-docker compose exec codearts2api cat /data/codearts2api-data.json.access.json
+cat data/state.json.setup.json
 ```
 
-如果启动时已指定 `CODEARTS_ADMIN_PASSWORD`，请使用自己设置的密码。初始凭据文件不会随之后的改密同步更新；`state.json` 中保存的是密码哈希，不能用它作为登录密码。
+**Docker Compose 部署**：读取容器内初始化凭证：
+
+```bash
+docker compose exec codearts2api cat /data/codearts2api-data.json.setup.json
+```
+
+完成安装后，初始化凭证会删除，并创建独立的 `.installed` 标记；密码仅以哈希写入状态文件。等待安装时重启可继续使用同一初始化凭证。正式服务和后台任务只在完成安装后启动，默认调用密钥在登录后的「API 密钥」中查看或另行创建。
+
+普通用户由管理员在「用户管理」创建，并绑定分组；普通用户与管理员使用同一登录页，服务端根据身份显示对应界面。
+
+已有部署不会重新进入向导。旧版首次密码记录在 `*.access.json` 的 `admin_password` 字段；该文件不会跟随后续改密更新。旧部署原先没有密码时，恢复文件为 `*.admin-recovery.json`。`state.json` 中的密码哈希不能用于登录。
+
+自动部署可显式设置 `CODEARTS_ADMIN_PASSWORD` 跳过向导，保留原启动行为及私有 `*.access.json` 初始凭据文件；API Key 用于调用模型，与管理员登录密码不同。
 
 忘记密码时，在服务的启动环境中设置新的 `CODEARTS_ADMIN_PASSWORD` 并重启。使用 `start.sh` 时，先停止原服务，再执行：
 
@@ -168,7 +174,7 @@ docker compose exec codearts2api cat /data/codearts2api-data.json.access.json
 CODEARTS_ADMIN_PASSWORD='替换为你的新密码' ./start.sh
 ```
 
-Docker Compose 部署可在 `.env` 中设置 `CODEARTS_ADMIN_PASSWORD`，然后执行 `docker compose up -d` 让新环境变量生效。初始凭据文件包含真实密码和调用密钥，请妥善保管，不要公开上传。
+Docker Compose 部署可在 `.env` 中设置 `CODEARTS_ADMIN_PASSWORD`，然后执行 `docker compose up -d` 让新环境变量生效。不要通过删状态文件来重设密码；安装标记或账本还在时服务会拒绝重新初始化。初始化凭证、恢复文件及初始凭据文件需妥善保管，不要公开上传。
 
 详细登录流程、凭据续期和恢复说明见 [管理文档](docs/MANAGEMENT.md) 与 [面板文档](docs/PANEL.md)。
 

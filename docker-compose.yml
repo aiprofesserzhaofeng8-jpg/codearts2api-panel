@@ -13,8 +13,7 @@ services:
     volumes:
       - codearts_data:/data
     environment:
-      # 管理密码：容器内网关看到的来源是 docker 网桥地址（不是环回），
-      # 新实例会自动生成管理员密码；此变量可显式指定或覆盖。
+      # 留空时新实例进入首次安装向导；可显式指定密码用于自动部署或恢复。
       CODEARTS_ADMIN_PASSWORD: ${CODEARTS_ADMIN_PASSWORD:-}
       # 未签发密钥时是否允许非本机匿名调用 /v1/*（默认 false，仅本机直连）。
       # 容器里“本机”是网桥地址，所以想让宿主机客户端免密钥调用才需打开它。

@@ -111,6 +111,9 @@ func New(st *storage.Store, deps Dependencies) *Server {
 // Handler 返回完整路由。
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/setup/status", installedSetupStatus)
+	mux.HandleFunc("/setup/install", closedSetupInstall)
+	mux.HandleFunc("/setup", serveConsole)
 	mux.HandleFunc("/admin/api/users", s.withAdminAuth(s.handleAdminUsers))
 	s.registerConsumerRoutes(mux)
 	mux.HandleFunc("/auth/login", s.handleLogin)

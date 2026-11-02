@@ -52,6 +52,9 @@ func main() {
 		*dataPath = defaultDataPath()
 	}
 
+	if err := storage.CheckInstallationPath(*dataPath); err != nil {
+		log.Fatalf("安装状态不完整: %v", err)
+	}
 	st, err := storage.Open(*dataPath)
 	if err != nil {
 		log.Fatalf("打开状态文件失败: %v", err)
@@ -66,12 +69,25 @@ func main() {
 		runExportSession(*userData, *exportPath)
 		return
 	}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(stop)
 	if _, err := os.Stat(st.Path()); errors.Is(err, os.ErrNotExist) {
-		accessPath, err := bootstrapAccess(st, *adminPw)
-		if err != nil {
-			log.Fatalf("初始化访问密钥失败: %v", err)
+		if *adminPw == "" {
+			completed, err := app.RunInitialSetup(st, app.Options{Host: *host, Port: *port, Version: version}, stop)
+			if err != nil {
+				log.Fatalf("初始安装失败: %v", err)
+			}
+			if !completed {
+				return
+			}
+		} else {
+			accessPath, err := bootstrapAccess(st, *adminPw)
+			if err != nil {
+				log.Fatalf("初始化访问密钥失败: %v", err)
+			}
+			log.Printf("首次启动：管理员密码和 API 密钥已保存至 %s（仅文件所有者可读）", accessPath)
 		}
-		log.Printf("首次启动：管理员密码和 API 密钥已保存至 %s（仅文件所有者可读）", accessPath)
 	}
 
 	// 命令行 / 环境变量优先级高于状态文件；设置后立即落盘。
@@ -98,10 +114,6 @@ func main() {
 		log.Printf("⚠️  已允许匿名调用 /v1/*（未签发密钥时任何能访问本端口的人都可以消耗账号额度）")
 	}
 
-	if !*noImport {
-		autoImport(st, *userData)
-	}
-
 	if st.Settings().AdminPassword == "" {
 		password := codearts.RandomHex(24)
 		st.UpdateSettings(func(settings *storage.Settings) { settings.AdminPassword = password })
@@ -117,14 +129,18 @@ func main() {
 		}
 		log.Printf("已创建管理员密码，恢复文件: %s", recovery)
 	}
+	if err := st.SealInstallation(); err != nil {
+		log.Fatalf("锁定初始安装失败: %v", err)
+	}
+	if !*noImport {
+		autoImport(st, *userData)
+	}
 	srv, err := app.Build(st)
 	if err != nil {
 		log.Fatalf("初始化服务失败: %v", err)
 	}
 	runtime := app.Start(st, srv, app.Options{Host: *host, Port: *port, Version: version})
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-stop:
 	case err := <-runtime.Errors():

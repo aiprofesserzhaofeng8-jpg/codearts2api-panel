@@ -949,6 +949,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/setup/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get__setup_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/setup/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Available only in the temporary first-install runtime, before any accounts or normal services exist. Requires the private server installation token. Permanently rejected after installation. */
+        post: operations["post__setup_install"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3985,6 +4018,80 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get__setup_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Whether a fresh instance still requires administrator installation. No credentials are returned. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        needs_setup: boolean;
+                        admin_username: string;
+                        /** @description 正式服务已就绪；初始安装提交后交接期间仍为 false。 */
+                        ready: boolean;
+                    };
+                };
+            };
+            /** @description Authentication, authorization, validation or persistence error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post__setup_install: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    setup_token: string;
+                    password: string;
+                    confirm_password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Initial administrator committed. No login session is created. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ok: boolean;
+                        admin_username: string;
+                    };
+                };
+            };
+            /** @description Authentication, authorization, validation or persistence error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };

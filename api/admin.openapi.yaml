@@ -3538,6 +3538,125 @@
         },
         "security": []
       }
+    },
+    "/setup/status": {
+      "get": {
+        "operationId": "get__setup_status",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Whether a fresh instance still requires administrator installation. No credentials are returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "needs_setup": {
+                      "type": "boolean"
+                    },
+                    "admin_username": {
+                      "type": "string"
+                    },
+                    "ready": {
+                      "type": "boolean",
+                      "description": "正式服务已就绪；初始安装提交后交接期间仍为 false。"
+                    }
+                  },
+                  "required": [
+                    "needs_setup",
+                    "admin_username",
+                    "ready"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/setup/install": {
+      "post": {
+        "operationId": "post__setup_install",
+        "security": [],
+        "description": "Available only in the temporary first-install runtime, before any accounts or normal services exist. Requires the private server installation token. Permanently rejected after installation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "setup_token": {
+                    "type": "string",
+                    "minLength": 32,
+                    "maxLength": 256
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 256
+                  },
+                  "confirm_password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "setup_token",
+                  "password",
+                  "confirm_password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Initial administrator committed. No login session is created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "admin_username": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "admin_username"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

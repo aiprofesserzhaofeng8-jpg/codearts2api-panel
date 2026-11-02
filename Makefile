@@ -74,6 +74,7 @@ dev:
 
 e2e: build
 	$(PYTHON) scripts/frontend_e2e.py --binary "$(abspath $(BIN))"
+	$(PYTHON) scripts/setup_e2e.py --binary "$(abspath $(BIN))"
 
 bench: frontend
 	cd backend && $(GO) test ./internal/catalog ./internal/gateway ./internal/scheduler ./internal/storage ./internal/usage -run "^$$" -bench . -benchmem

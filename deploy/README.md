@@ -10,4 +10,6 @@
 
 示例只监听本机。公网 HTTPS 与 SSH 隧道继续按 [主 README](../README.md) 配置，具体地址、密码和私钥不写入模板。
 
-M7 单实例多用户入口为 `/user`，管理员在 `/` 创建用户并分配分组和共享预算。仍只启动一个写状态的进程；多个进程不能共写 JSON/账本。HTTPS 在反向代理终止时，需为管理员及 `codearts_user_session` Cookie 添加 Secure 属性。schema 8 升级和受限回退见 [用户指南](../docs/USERS.md)。
+新部署不指定管理密码时，首先进入管理员安装向导；从状态文件旁 `*.setup.json` 读取初始化凭证，并设置自己的密码。完成后自动启动正式服务，初始化入口关闭。已有部署保留原登录密码。显式 `CODEARTS_ADMIN_PASSWORD` 继续用于自动部署或密码恢复。
+
+单实例多用户入口为 `/user`，管理员在 `/` 创建用户并分配分组和共享预算，不提供公开注册。仍只启动一个写状态的进程；多个进程不能共写 JSON/账本。统一认证使用 `codearts_session` Cookie；公开 HTTPS origin 的配置见 [用户指南](../docs/USERS.md)。

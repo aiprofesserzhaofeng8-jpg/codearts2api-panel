@@ -26,7 +26,7 @@ python3 tools/check_api_types.py
 
 跨功能只调用显式导出的函数，不引用其他 feature 的状态对象。应用卸载清除事件和轮询、取消查询；切页只取消可替换的页面查询，已提交写操作不因此取消。成长任务原有关闭取消和未知结果规则不变。默认查询不重试，推理接口不经过此前端客户端。
 
-`make dev` 启动 Vite 5173 和临时后端 10089，使用临时数据，不读取运行账号。首次管理员凭据位于该临时目录的访问文件中；终端显示目录。按 Ctrl+C 停止两个进程组。代理转发 `/admin`、`/v1`、`/health`、`/metrics`，只转换合法开发 Origin，标记代理来源，不能借用本机自动解锁。生产 CSP 保持不变。
+`make dev` 启动 Vite 5173 和临时后端 10089，使用临时数据，不读取运行账号。打开 Vite 页面完成首次安装，初始化凭证位于终端显示的临时目录 `state.json.setup.json`，用户名固定 `admin`。若显式配置管理密码则跳过向导。按 Ctrl+C 停止两个进程组。代理转发 `/setup/status`、`/setup/install`、`/auth`、`/user/api`、`/admin`、`/v1`、`/health`、`/metrics`，只转换合法开发 Origin，标记代理来源，不能借用本机自动解锁。生产 CSP 保持不变。
 
 浏览器验收：先构建二进制；本机默认使用 Chrome，CI 使用锁定的 Playwright Chromium。
 
