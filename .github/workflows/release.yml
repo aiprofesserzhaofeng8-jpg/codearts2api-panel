@@ -68,6 +68,9 @@ jobs:
           python3 deploy/tests/managed_acceptance.py --first /tmp/codearts-baseline/codearts2api-panel-v0.0.0-linux-amd64.tar.gz --second "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz" --failure-cases
           python3 deploy/tests/migration_acceptance.py --archive "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz"
           python3 deploy/tests/installer_acceptance.py --archive "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz"
+          # Hosted runners allow writes to /opt; this isolated system-service test
+          # needs the same root-owned parent required on a production host.
+          sudo install -d -o root -g root -m 0755 /opt
           sudo python3 deploy/tests/system_service_acceptance.py --first /tmp/codearts-baseline/codearts2api-panel-v0.0.0-linux-amd64.tar.gz --second "artifacts/releases/codearts2api-panel-${RELEASE_VERSION}-linux-amd64.tar.gz"
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3

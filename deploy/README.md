@@ -18,7 +18,7 @@
 
 ## 一键安装系统级服务
 
-从 v0.3.4 起提供系统级安装。需要 Linux amd64/arm64、Python 3.10+、正在运行的 systemd、useradd/nologin 和 sudo/root。脚本缺依赖时给出提示，不自动升级系统 Python。
+从 v0.3.5 起提供系统级安装。需要 Linux amd64/arm64、Python 3.10+、正在运行的 systemd、useradd/nologin 和 sudo/root。脚本缺依赖时给出提示，不自动升级系统 Python。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
@@ -31,7 +31,7 @@ curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2a
 需要明确版本、路径、端口或所有网卡时：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- install --system --version v0.3.4 --root /opt/codearts2api --port 10087 --host 0.0.0.0
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- install --system --version v0.3.5 --root /opt/codearts2api --port 10087 --host 0.0.0.0
 ```
 
 `0.0.0.0` 需要另外设置云安全组、防火墙及适当的 HTTPS 入口；脚本不修改这些配置。默认 loopback 可以通过 SSH 隧道或本指南中的 Caddy 模板访问。
