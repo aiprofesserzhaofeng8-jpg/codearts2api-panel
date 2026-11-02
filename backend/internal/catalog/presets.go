@@ -14,12 +14,16 @@ var presetJSON []byte
 var presets = func() struct {
 	Version  int                   `json:"version"`
 	Mappings []access.ModelMapping `json:"mappings"`
-} { var p struct {
-	Version  int                   `json:"version"`
-	Mappings []access.ModelMapping `json:"mappings"`
-}; if err := json.Unmarshal(presetJSON, &p); err != nil {
-	panic(err)
-}; return p }()
+} {
+	var p struct {
+		Version  int                   `json:"version"`
+		Mappings []access.ModelMapping `json:"mappings"`
+	}
+	if err := json.Unmarshal(presetJSON, &p); err != nil {
+		panic(err)
+	}
+	return p
+}()
 
 type PresetSource struct {
 	ID        string `json:"id"`
