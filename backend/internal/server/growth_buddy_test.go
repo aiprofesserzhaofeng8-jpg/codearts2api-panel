@@ -90,10 +90,19 @@ func TestGrowthBuddyPreparesDependencyBeforeEnrollingAndExecuting(t *testing.T) 
 
 func TestGrowthBuddyConcurrentActionsAdoptOnlyOnce(t *testing.T) {
 	s, f := buddyFixture(t)
+	// Exercise concurrent actions after login; password verification has its own limit.
+	cookie := adminTestCookie(s, "admin-fixture")
 	var wg sync.WaitGroup
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
-		go func() { defer wg.Done(); runBuddyFixture(t, s, "first_buddy", true) }()
+		go func() {
+			defer wg.Done()
+			w := growthRequestWithCookie(s, cookie, "POST", "/admin/api/workbuddy/tasks/run", `{"id":"wb-cn","task_code":"first_buddy","agree_buddy":true}`)
+			var reply growthReply
+			if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &reply) != nil {
+				t.Error(w.Code, w.Body.String())
+			}
+		}()
 	}
 	wg.Wait()
 	if f.chats != 0 || f.reports != 1 || f.agreements != 1 || f.adoptions != 1 || f.claims != 1 {

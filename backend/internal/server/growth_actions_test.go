@@ -190,12 +190,14 @@ func TestGrowthActionsActualExecutionAccountingAndConcurrentDedup(t *testing.T) 
 	s := growthActionsServer(t, f)
 	keyBefore := s.Store.Keys()[0].BudgetUsage
 	accountBefore := s.Store.Account("wb-cn")
+	// Exercise concurrent actions after login; password verification has its own limit.
+	cookie := adminTestCookie(s, "admin-fixture")
 	var wg sync.WaitGroup
 	for i := 0; i < 4; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			w := runGrowthFixture(s, "Model_chat_GLM5.2")
+			w := growthRequestWithCookie(s, cookie, "POST", "/admin/api/workbuddy/tasks/run", `{"id":"wb-cn","task_code":"Model_chat_GLM5.2"}`)
 			if w.Code != 200 || !strings.Contains(w.Body.String(), "claimed") {
 				t.Error(w.Code, w.Body.String())
 			}
