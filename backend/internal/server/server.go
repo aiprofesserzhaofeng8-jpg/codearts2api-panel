@@ -54,6 +54,8 @@ type Server struct {
 	ProviderLogins      *accounts.ProviderLogins
 	AllowLocalAdmin     bool
 	AdminSessions       *access.AdminSessions
+	Identity            *access.Identity
+	consumerFailures    adminAttempts
 	Users               *access.Users
 	userFailures        adminAttempts
 	Pricing             *usage.Management
@@ -73,6 +75,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	Identity            *access.Identity
 	Users               *access.Users
 	Admission           *gateway.Admission
 	AdminSessions       *access.AdminSessions
@@ -104,7 +107,7 @@ type Dependencies struct {
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *storage.Store, deps Dependencies) *Server {
 	s := &Server{Admission: deps.Admission, AdminSessions: deps.AdminSessions, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
-		Users:    deps.Users,
+		Users: deps.Users, Identity: deps.Identity,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.localPanelToken = rand.Text()
@@ -119,6 +122,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/auth/logout", s.handleAdminLogout)
 	mux.HandleFunc("/admin/auth/session", s.handleAdminSession)
 	mux.HandleFunc("/admin/api/users", s.withAdminAuth(s.handleAdminUsers))
+	s.registerConsumerRoutes(mux)
 	mux.HandleFunc("/user/auth/login", s.handleUserLogin)
 	mux.HandleFunc("/user/auth/logout", s.handleUserLogout)
 	mux.HandleFunc("/user/auth/session", s.handleUserSession)

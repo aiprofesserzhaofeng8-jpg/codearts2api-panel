@@ -12,37 +12,45 @@ import (
 // User is the durable consumer identity. Upstream accounts and groups remain
 // administrator-owned; a group is an entitlement, never a tenant identity.
 type User struct {
-	ID             string      `json:"id"`
-	Username       string      `json:"username"`
-	DisplayName    string      `json:"display_name,omitempty"`
-	Avatar         string      `json:"avatar,omitempty"`
-	MaxConcurrency int         `json:"max_concurrency"`
-	PasswordHash   string      `json:"password_hash"`
-	GroupID        string      `json:"group_id"`
-	Enabled        bool        `json:"enabled"`
-	Revision       uint64      `json:"revision"`
-	CreatedAt      int64       `json:"created_at"`
-	Budget         KeyBudget   `json:"budget"`
-	BudgetUsage    BudgetUsage `json:"budget_usage"`
+	Wallet         Wallet       `json:"wallet"`
+	Subscription   Subscription `json:"subscription"`
+	Email          string       `json:"email,omitempty"`
+	EmailVerified  bool         `json:"email_verified,omitempty"`
+	ID             string       `json:"id"`
+	Username       string       `json:"username"`
+	DisplayName    string       `json:"display_name,omitempty"`
+	Avatar         string       `json:"avatar,omitempty"`
+	MaxConcurrency int          `json:"max_concurrency"`
+	PasswordHash   string       `json:"password_hash"`
+	GroupID        string       `json:"group_id"`
+	Enabled        bool         `json:"enabled"`
+	Revision       uint64       `json:"revision"`
+	CreatedAt      int64        `json:"created_at"`
+	Budget         KeyBudget    `json:"budget"`
+	BudgetUsage    BudgetUsage  `json:"budget_usage"`
 }
 
 type UserView struct {
-	Revision       uint64      `json:"-"`
-	ID             string      `json:"id"`
-	Username       string      `json:"username"`
-	DisplayName    string      `json:"display_name"`
-	Avatar         string      `json:"avatar"`
-	MaxConcurrency int         `json:"max_concurrency"`
-	InFlight       int         `json:"in_flight"`
-	GroupID        string      `json:"group_id"`
-	Enabled        bool        `json:"enabled"`
-	CreatedAt      int64       `json:"created_at"`
-	Budget         KeyBudget   `json:"budget"`
-	BudgetUsage    BudgetUsage `json:"budget_usage"`
+	Wallet         Wallet       `json:"wallet"`
+	Subscription   Subscription `json:"subscription"`
+	Email          string       `json:"email"`
+	EmailVerified  bool         `json:"email_verified"`
+	Revision       uint64       `json:"-"`
+	ID             string       `json:"id"`
+	Username       string       `json:"username"`
+	DisplayName    string       `json:"display_name"`
+	Avatar         string       `json:"avatar"`
+	MaxConcurrency int          `json:"max_concurrency"`
+	InFlight       int          `json:"in_flight"`
+	GroupID        string       `json:"group_id"`
+	Enabled        bool         `json:"enabled"`
+	CreatedAt      int64        `json:"created_at"`
+	Budget         KeyBudget    `json:"budget"`
+	BudgetUsage    BudgetUsage  `json:"budget_usage"`
 }
 
 func (u User) View() UserView {
-	return UserView{ID: u.ID, Revision: u.Revision, Username: u.Username, DisplayName: u.DisplayName, Avatar: u.Avatar, MaxConcurrency: u.MaxConcurrency, GroupID: u.GroupID, Enabled: u.Enabled,
+	return UserView{Wallet: u.Wallet, Subscription: u.Subscription, Email: u.Email, EmailVerified: u.EmailVerified, ID: u.ID, Revision: u.Revision, Username: u.Username, DisplayName: u.DisplayName, Avatar: u.Avatar, MaxConcurrency: u.MaxConcurrency, GroupID: u.GroupID, Enabled: u.Enabled,
 		CreatedAt: u.CreatedAt, Budget: u.Budget, BudgetUsage: u.BudgetUsage}
 }
 
@@ -159,6 +167,15 @@ func (s *Users) Login(ctx context.Context, name, password, token string) (out Us
 		err = ErrUserAuthentication
 		return
 	}
+	return s.OpenSession(u.ID, u.Revision, token)
+}
+
+func (s *Users) OpenSession(id string, revision uint64, token string) (out UserView, expires time.Time, err error) {
+	current, ok := s.store.User(id)
+	if !ok || !current.Enabled || current.Revision != revision {
+		return out, expires, ErrUserAuthentication
+	}
+	u := current
 	now := time.Now()
 	expires = now.Add(8 * time.Hour)
 	s.mu.Lock()

@@ -13,6 +13,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
+	"codearts2api/internal/identitytransport"
 	"codearts2api/internal/jobs"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
@@ -45,8 +46,10 @@ func Build(st *storage.Store) (*server.Server, error) {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	credits := &accounts.Credits{}
+	users := access.NewUsers(st)
 	return server.New(st, server.Dependencies{
-		Users:         access.NewUsers(st),
+		Users:         users,
+		Identity:      access.NewIdentity(st, users, &identitytransport.Client{}),
 		Admission:     gateway.NewAdmission(st),
 		AdminSessions: &access.AdminSessions{}, Pricing: usage.NewManagement(st),
 		Welfare: jobs.NewWelfare(st),

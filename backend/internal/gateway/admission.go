@@ -14,6 +14,9 @@ type AdmissionStore interface {
 	AcquireAccountForKey(session, model string, exclude map[string]bool, key string) (*accounts.Account, func(), error)
 	AcquireMappedAccount(session, public string, models []string, exclude map[string]bool, key string) (*accounts.Account, string, func(), error)
 	BeginKeyBudget(string) (func(), error)
+	BeginRequestBudget(string) (func(), bool, error)
+	ReserveConsumerQuote(string, string, string, int, []usage.RequestAttempt) error
+	ReleaseConsumerQuote(string)
 	CheckKeyBudgetProgress(string, string, []usage.RequestAttempt) error
 	CheckSearchBudget(string) error
 }
@@ -82,3 +85,11 @@ func (a *Admission) CheckProgress(key, model string, attempts []usage.RequestAtt
 	return a.store.CheckKeyBudgetProgress(key, model, attempts)
 }
 func (a *Admission) CheckSearch(key string) error { return a.store.CheckSearchBudget(key) }
+
+func (a *Admission) ReserveRequest(key string) (func(), bool, error) {
+	return a.store.BeginRequestBudget(key)
+}
+func (a *Admission) Quote(key, id, model string, n int, attempts []usage.RequestAttempt) error {
+	return a.store.ReserveConsumerQuote(key, id, model, n, attempts)
+}
+func (a *Admission) ReleaseQuote(id string) { a.store.ReleaseConsumerQuote(id) }

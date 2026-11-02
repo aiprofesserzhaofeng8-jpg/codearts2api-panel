@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import { api, isAbortError } from '../../api/client';
 import type { components } from '../../api/generated/admin';
+import ConsumerAdmin from './ConsumerAdmin.vue';
 type User = components['schemas']['User'];
 const users = ref<User[]>([]);
 const groups = ref<components['schemas']['Group'][]>([]);
@@ -41,6 +42,7 @@ onUnmounted(()=>{epoch++;window.removeEventListener('users-refresh',load);draft.
     <tbody id="users"><tr v-for="u in users" :key="u.id"><td>{{u.username}}<span v-if="u.display_name" class="hint"> · {{u.display_name}}</span></td><td>{{groups.find(g=>g.id===u.group_id)?.name??'分组不存在'}}</td><td><span :class="['badge',u.enabled?'ok':'']">{{u.enabled?'启用':'停用'}}</span></td><td>{{u.in_flight}} / {{u.max_concurrency||'不限'}}</td><td>{{u.budget_usage.requests}} / {{u.budget.max_requests||'不限'}}</td><td>{{u.budget_usage.tokens}} / {{u.budget.max_tokens||'不限'}}</td><td>${{u.budget_usage.usd.toFixed(6)}} / {{u.budget.max_usd||'不限'}}</td><td><button class="btn xs" @click="edit(u)">编辑</button></td></tr>
     <tr v-if="!users.length"><td colspan="8" class="empty">暂无用户，创建后将用户登录入口交给使用者</td></tr></tbody></table></div>
   </div>
+  <ConsumerAdmin :users="users" :groups="groups" @changed="load" />
   <dialog ref="dialog" id="userDialog" class="modal" aria-labelledby="userTitle" @cancel.prevent="close">
     <form @submit.prevent="save"><div class="modal-head"><h2 id="userTitle">{{draft.id?'编辑用户':'创建用户'}}</h2><button class="btn ghost" type="button" :disabled="busy" @click="close">关闭</button></div>
     <div class="modal-body"><fieldset :disabled="busy" class="user-fields">

@@ -2756,6 +2756,909 @@
           }
         }
       }
+    },
+    "/user/api/entitlements": {
+      "get": {
+        "operationId": "get__user_api_entitlements",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "wallet": {
+                      "$ref": "#/components/schemas/ConsumerWallet"
+                    },
+                    "subscription": {
+                      "$ref": "#/components/schemas/ConsumerSubscription"
+                    },
+                    "reserved": {
+                      "type": "integer"
+                    },
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerLedger"
+                      }
+                    },
+                    "retention_limit": {
+                      "type": "integer"
+                    },
+                    "redemptions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerCode"
+                      }
+                    }
+                  },
+                  "required": [
+                    "wallet",
+                    "subscription",
+                    "reserved",
+                    "entries",
+                    "retention_limit",
+                    "redemptions"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/redeem": {
+      "post": {
+        "operationId": "post__user_api_redeem",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/consumer/wallet": {
+      "get": {
+        "operationId": "get__admin_api_consumer_wallet",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerLedger"
+                      }
+                    }
+                  },
+                  "required": [
+                    "entries"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post__admin_api_consumer_wallet",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  },
+                  "expected_revision": {
+                    "type": "integer"
+                  },
+                  "amount": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "clear_review": {
+                    "type": "boolean"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "expected_revision",
+                  "amount",
+                  "enabled",
+                  "clear_review",
+                  "note"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/consumer/plans": {
+      "get": {
+        "operationId": "get__admin_api_consumer_plans",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plans": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerPlan"
+                      }
+                    }
+                  },
+                  "required": [
+                    "plans"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__admin_api_consumer_plans",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "plan": {
+                      "$ref": "#/components/schemas/ConsumerPlan"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "plan"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsumerPlan"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/consumer/subscription": {
+      "post": {
+        "operationId": "post__admin_api_consumer_subscription",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  },
+                  "plan_id": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "days": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "plan_id",
+                  "action",
+                  "days"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/consumer/codes": {
+      "get": {
+        "operationId": "get__admin_api_consumer_codes",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "codes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerCode"
+                      }
+                    }
+                  },
+                  "required": [
+                    "codes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__admin_api_consumer_codes",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "codes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer"
+                  },
+                  "template": {
+                    "$ref": "#/components/schemas/ConsumerCode"
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/consumer/identity": {
+      "get": {
+        "operationId": "get__admin_api_consumer_identity",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "$ref": "#/components/schemas/ConsumerIdentitySettings"
+                    },
+                    "smtp_password_set": {
+                      "type": "boolean"
+                    },
+                    "github_secret_set": {
+                      "type": "boolean"
+                    },
+                    "linuxdo_secret_set": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "settings",
+                    "smtp_password_set",
+                    "github_secret_set",
+                    "linuxdo_secret_set"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__admin_api_consumer_identity",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "$ref": "#/components/schemas/ConsumerIdentitySettings"
+                  },
+                  "clear_smtp": {
+                    "type": "boolean"
+                  },
+                  "clear_github": {
+                    "type": "boolean"
+                  },
+                  "clear_linuxdo": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/api/identity": {
+      "get": {
+        "operationId": "get__user_api_identity",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "identities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExternalIdentity"
+                      }
+                    }
+                  },
+                  "required": [
+                    "identities"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__user_api_identity",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/options": {
+      "get": {
+        "operationId": "get__user_auth_options",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "boolean"
+                    },
+                    "github": {
+                      "type": "boolean"
+                    },
+                    "linuxdo": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "github",
+                    "linuxdo"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/recovery": {
+      "post": {
+        "operationId": "post__user_auth_recovery",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/oauth/start": {
+      "post": {
+        "operationId": "post__user_auth_oauth_start",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string"
+                  },
+                  "bind": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "bind"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth/oauth/callback": {
+      "get": {
+        "operationId": "get_user_auth_oauth_callback",
+        "responses": {
+          "303": {
+            "description": "Redirect to user console; no tokens in URL."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3481,6 +4384,18 @@
           "in_flight": {
             "type": "integer",
             "minimum": 0
+          },
+          "wallet": {
+            "$ref": "#/components/schemas/ConsumerWallet"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/ConsumerSubscription"
+          },
+          "email": {
+            "type": "string"
+          },
+          "email_verified": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -3494,7 +4409,11 @@
           "display_name",
           "avatar",
           "max_concurrency",
-          "in_flight"
+          "in_flight",
+          "wallet",
+          "subscription",
+          "email",
+          "email_verified"
         ],
         "additionalProperties": false
       },
@@ -3794,6 +4713,281 @@
           "time_zone",
           "bucket_days"
         ]
+      },
+      "ConsumerWallet": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "balance": {
+            "type": "integer"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "review_required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled",
+          "balance",
+          "revision",
+          "review_required"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerLedger": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "time": {
+            "type": "integer"
+          },
+          "delta": {
+            "type": "integer"
+          },
+          "balance": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "time",
+          "delta",
+          "balance",
+          "kind",
+          "reference",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "group_id": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "days": {
+            "type": "integer"
+          },
+          "max_concurrency": {
+            "type": "integer"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/KeyBudget"
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "",
+              "lifetime",
+              "day",
+              "week",
+              "month"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "group_id",
+          "enabled",
+          "days",
+          "max_concurrency",
+          "budget",
+          "period"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerSubscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/ConsumerPlan"
+          },
+          "expires_at": {
+            "type": "integer"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "period_start": {
+            "type": "integer"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "expires_at",
+          "disabled",
+          "period_start",
+          "usage"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerCode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "concurrency": {
+            "type": "integer"
+          },
+          "plan_id": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "integer"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "used_by": {
+            "type": "string"
+          },
+          "used_at": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "digest",
+          "hint",
+          "kind",
+          "amount",
+          "concurrency",
+          "plan_id",
+          "expires_at",
+          "disabled",
+          "used_by",
+          "used_at"
+        ],
+        "additionalProperties": false
+      },
+      "ExternalIdentity": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "subject",
+          "user_id"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerOAuth": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "client_id",
+          "client_secret"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerIdentitySettings": {
+        "type": "object",
+        "properties": {
+          "public_origin": {
+            "type": "string"
+          },
+          "smtp_host": {
+            "type": "string"
+          },
+          "smtp_port": {
+            "type": "integer"
+          },
+          "smtp_user": {
+            "type": "string"
+          },
+          "smtp_password": {
+            "type": "string"
+          },
+          "smtp_from": {
+            "type": "string"
+          },
+          "github": {
+            "$ref": "#/components/schemas/ConsumerOAuth"
+          },
+          "linuxdo": {
+            "$ref": "#/components/schemas/ConsumerOAuth"
+          }
+        },
+        "required": [
+          "public_origin",
+          "smtp_host",
+          "smtp_port",
+          "smtp_user",
+          "smtp_password",
+          "smtp_from",
+          "github",
+          "linuxdo"
+        ],
+        "additionalProperties": false
       }
     },
     "securitySchemes": {

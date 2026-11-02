@@ -135,6 +135,10 @@ func addUsage(total *storage.TokenUsage, u storage.TokenUsage) {
 }
 func beginInference(w http.ResponseWriter, r *http.Request, protocol string) *http.Request {
 	ctx := withUsageCapture(r.Context(), protocol)
+	if quote, ok := ctx.Value(consumerRequestKey{}).(*consumerRequest); ok {
+		quote.id = requestID(ctx)
+		quote.inputBytes = int(max(0, r.ContentLength))
+	}
 	if r.Header.Get("X-CodeArts-Request-Kind") == "summary" {
 		ctx = context.WithValue(ctx, summaryIntentKey{}, true)
 	}
@@ -209,4 +213,10 @@ func requestUsageIncomplete(ctx context.Context) bool {
 		}
 	}
 	return false
+}
+
+func captureConsumerInput(ctx context.Context, n int) {
+	if quote, ok := ctx.Value(consumerRequestKey{}).(*consumerRequest); ok {
+		quote.inputBytes = n
+	}
 }

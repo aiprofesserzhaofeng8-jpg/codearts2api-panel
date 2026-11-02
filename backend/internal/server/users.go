@@ -112,7 +112,7 @@ func (s *Server) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.userFailures.success(r.RemoteAddr)
-	http.SetCookie(w, &http.Cookie{Name: userCookie, Value: token, Path: "/user", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, MaxAge: 8 * 3600})
+	http.SetCookie(w, &http.Cookie{Name: userCookie, Value: token, Path: "/user", HttpOnly: true, Secure: s.userCookieSecure(r), SameSite: http.SameSiteStrictMode, MaxAge: 8 * 3600})
 	s.audit(r, "user:"+u.ID, "login", 200)
 	writeJSON(w, 200, map[string]any{"ok": true, "user": u, "expires_at": expires.Unix()})
 }
@@ -130,7 +130,7 @@ func (s *Server) handleUserLogout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(userCookie); err == nil {
 		s.Users.Logout(c.Value)
 	}
-	http.SetCookie(w, &http.Cookie{Name: userCookie, Path: "/user", Value: "", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: userCookie, Path: "/user", Value: "", HttpOnly: true, Secure: s.userCookieSecure(r), SameSite: http.SameSiteStrictMode, MaxAge: -1})
 	if ok {
 		s.audit(r, "user:"+u.ID, "logout", 200)
 	}

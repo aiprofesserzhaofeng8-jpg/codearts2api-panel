@@ -74,6 +74,7 @@ func (s *Store) Record(e LogEntry, outChars int, keys ...string) error {
 		e.AttemptDetails = append([]RequestAttempt(nil), e.AttemptDetails...)
 		e.EstimatedCost = s.costForEntryLocked(&e)
 	}
+	s.prepareConsumerSettlementLocked(&e)
 	sequence := s.st.UsageSequence + 1
 	s.mu.Unlock()
 	key := ""

@@ -40,6 +40,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	}
 
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
+	captureConsumerInput(r.Context(), len(body))
 	if err != nil {
 		reject(http.StatusBadRequest, "invalid_request_error", "读取请求体失败: "+err.Error())
 		return

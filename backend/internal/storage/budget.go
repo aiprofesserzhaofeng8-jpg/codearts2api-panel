@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sync"
+	"time"
 
 	"codearts2api/internal/access"
 )
@@ -17,7 +18,13 @@ func budgetCheck(b KeyBudget, u BudgetUsage) error { return access.CheckBudget(b
 
 // One active inference for keys with metered limits bounds soft-budget overrun
 // to one request. Request reservations also prevent concurrent count overruns.
-func (s *Store) BeginKeyBudget(key string) (func(), error) {
+func (s *Store) BeginKeyBudget(key string) (func(), error) { return s.beginKeyBudget(key, nil) }
+func (s *Store) BeginRequestBudget(key string) (func(), bool, error) {
+	var metered bool
+	release, err := s.beginKeyBudget(key, &metered)
+	return release, metered, err
+}
+func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.journalErr != nil {
@@ -47,8 +54,14 @@ func (s *Store) BeginKeyBudget(key string) (func(), error) {
 			owner := ""
 			if k.UserID != "" {
 				u := s.userLocked(k.UserID)
+				if metered != nil {
+					*metered = u.Wallet.Enabled || u.Subscription.ID != ""
+				}
 				owner = userBudgetID(u.ID)
-				if u.MaxConcurrency > 0 && s.budgetActive[owner] >= u.MaxConcurrency {
+				if err := s.consumerPermissionLocked(u, time.Now().Unix()); err != nil {
+					return nil, err
+				}
+				if effectiveConcurrency(u) > 0 && s.budgetActive[owner] >= effectiveConcurrency(u) {
 					return nil, &access.UserConcurrencyError{}
 				}
 				if err := checkUserReservation(u.Budget, u.BudgetUsage, s.budgetActive[owner]); err != nil {
@@ -180,7 +193,7 @@ func (s *Store) CheckSearchBudget(key string) error {
 			metered := k.Budget.MaxTokens > 0 || k.Budget.MaxUSD > 0
 			if k.UserID != "" {
 				u := s.userLocked(k.UserID)
-				metered = metered || u.Budget.MaxTokens > 0 || u.Budget.MaxUSD > 0
+				metered = metered || u.Budget.MaxTokens > 0 || u.Budget.MaxUSD > 0 || u.Wallet.Enabled || u.Subscription.Plan.Budget.MaxTokens > 0 || u.Subscription.Plan.Budget.MaxUSD > 0
 			}
 			if metered {
 				return &BudgetError{Message: "搜索未提供 Token 或费用回执，用户及密钥只能设置请求次数预算"}

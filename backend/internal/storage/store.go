@@ -32,11 +32,12 @@ type Stats = usage.Stats
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 9
+const StateVersion = 10
 
 // State 是全部持久化状态。
 type State struct {
-	Users []access.User `json:"users,omitempty"`
+	Consumer access.ConsumerState `json:"consumer"`
+	Users    []access.User        `json:"users,omitempty"`
 	// UsageSequence is the journal checkpoint included in this snapshot.
 	UsageSequence           uint64                            `json:"usage_sequence,omitempty"`
 	Groups                  []AccountGroup                    `json:"groups,omitempty"`
@@ -68,15 +69,17 @@ type Store struct {
 	saveMu sync.Mutex
 	// journalMu serializes settlement and compaction, without holding it during
 	// full-snapshot disk I/O. Lock order: saveMu -> journalMu -> mu.
-	journalMu      sync.Mutex
-	journalSize    int64 // protected by journalMu
-	journalErr     error // protected by mu; blocks inference until a successful save
-	usageBaseReady bool  // protected by mu
-	path           string
-	st             *State
-	rotate         int
-	pool           poolRuntime
-	budgetActive   map[string]int
+	journalMu        sync.Mutex
+	journalSize      int64 // protected by journalMu
+	journalErr       error // protected by mu; blocks inference until a successful save
+	usageBaseReady   bool  // protected by mu
+	path             string
+	st               *State
+	rotate           int
+	pool             poolRuntime
+	budgetActive     map[string]int
+	consumerHolds    map[string]consumerHold
+	consumerReserved map[string]int64
 }
 
 // --- 账号 ---
@@ -378,6 +381,7 @@ func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 	if e.UserID != "" && e.Attempts > 0 {
 		if u := s.userLocked(e.UserID); u != nil {
 			addBudgetUsage(&u.BudgetUsage, e)
+			s.applyConsumerSettlementLocked(u, e)
 		}
 	}
 	if e.RequestKind == "summary" {

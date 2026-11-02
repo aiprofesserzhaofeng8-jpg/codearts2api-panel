@@ -169,7 +169,7 @@ func TestUserProductSchemaMigrationPreservesExistingUsers(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, ok := again.User(u.ID)
-	if !ok || again.st.Version != 9 || got.MaxConcurrency != 0 || got.PasswordHash == "" || got.Budget != u.Budget || got.GroupID != u.GroupID || !again.ValidKey(k.Key) {
+	if !ok || again.st.Version != StateVersion || got.MaxConcurrency != 0 || got.PasswordHash == "" || got.Budget != u.Budget || got.GroupID != u.GroupID || !again.ValidKey(k.Key) {
 		t.Fatal("schema 8 migration changed access", got)
 	}
 	// Do not interpret invalid persisted limits as unlimited.

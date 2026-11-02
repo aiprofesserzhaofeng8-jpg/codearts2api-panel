@@ -32,6 +32,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, status, message, kind)
 	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
+	captureConsumerInput(r.Context(), len(body))
 	if err != nil {
 		status := 400
 		var tooLarge *http.MaxBytesError

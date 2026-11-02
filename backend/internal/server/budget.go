@@ -9,6 +9,11 @@ import (
 )
 
 type budgetKeyContext struct{}
+type consumerRequestKey struct{}
+type consumerRequest struct {
+	id         string
+	inputBytes int
+}
 
 func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +22,7 @@ func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.Handl
 			return
 		}
 		key := extractKey(r)
-		release, err := s.Admission.Reserve(key)
+		release, metered, err := s.Admission.ReserveRequest(key)
 		if err != nil {
 			mapped := apierr.From(err)
 			if style == errAnthropic {
@@ -28,7 +33,15 @@ func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.Handl
 			return
 		}
 		defer release()
-		next(w, r.WithContext(context.WithValue(r.Context(), budgetKeyContext{}, key)))
+		if !metered {
+			next(w, r.WithContext(context.WithValue(r.Context(), budgetKeyContext{}, key)))
+			return
+		}
+		quote := &consumerRequest{}
+		defer func() { s.Admission.ReleaseQuote(quote.id) }()
+		ctx := context.WithValue(r.Context(), budgetKeyContext{}, key)
+		ctx = context.WithValue(ctx, consumerRequestKey{}, quote)
+		next(w, r.WithContext(ctx))
 	}
 }
 func (s *Server) checkRequestBudget(ctx context.Context, model string) error {
@@ -36,7 +49,13 @@ func (s *Server) checkRequestBudget(ctx context.Context, model string) error {
 		return err
 	}
 	key, _ := ctx.Value(budgetKeyContext{}).(string)
-	return s.Admission.CheckProgress(key, model, requestAttemptDetails(ctx))
+	if err := s.Admission.CheckProgress(key, model, requestAttemptDetails(ctx)); err != nil {
+		return err
+	}
+	if quote, ok := ctx.Value(consumerRequestKey{}).(*consumerRequest); ok {
+		return s.Admission.Quote(key, quote.id, model, quote.inputBytes, requestAttemptDetails(ctx))
+	}
+	return nil
 }
 func (s *Server) handleKeyBudget(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {

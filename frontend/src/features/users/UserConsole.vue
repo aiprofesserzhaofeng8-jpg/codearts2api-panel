@@ -2,6 +2,9 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { api, configureClient, disposeClient, isAbortError } from '../../api/client';
 import type { components, paths } from '../../api/generated/admin';
+import UserEntitlements from './UserEntitlements.vue';
+import UserIdentityPanel from './UserIdentityPanel.vue';
+import UserRecovery from './UserRecovery.vue';
 import UserDashboard from './UserDashboard.vue';
 import UserProfilePanel from './UserProfilePanel.vue';
 type User = components['schemas']['User'];
@@ -45,7 +48,7 @@ onUnmounted(()=>{expired();disposeClient();});
   <main class="user-main">
     <p v-if="!ready" role="status">加载中…</p>
     <div v-else-if="!user" class="card user-login"><h1>用户登录</h1><p class="hint">请使用管理员为你创建的账号。</p>
-      <form id="userLoginForm" @submit.prevent="login"><div class="field"><label for="userUsername">用户名</label><input id="userUsername" v-model="username" required autocomplete="username" maxlength="64"></div><div class="field"><label for="userPassword">密码</label><input id="userPassword" v-model="password" type="password" required autocomplete="current-password" maxlength="256"></div><button class="btn primary" :disabled="busy">{{busy?'登录中…':'登录'}}</button></form>
+      <form id="userLoginForm" @submit.prevent="login"><div class="field"><label for="userUsername">用户名</label><input id="userUsername" v-model="username" required autocomplete="username" maxlength="64"></div><div class="field"><label for="userPassword">密码</label><input id="userPassword" v-model="password" type="password" required autocomplete="current-password" maxlength="256"></div><button class="btn primary" :disabled="busy">{{busy?'登录中…':'登录'}}</button></form><UserRecovery />
     </div>
     <template v-else>
       <div class="card"><div class="card-head"><div class="user-identity"><img v-if="user.avatar" :src="user.avatar" class="user-avatar" alt="用户头像"><span v-else class="user-avatar" aria-label="默认头像">{{(user.display_name||user.username).slice(0,1).toUpperCase()}}</span><div><h1>{{user.display_name||user.username}}</h1><p class="hint">{{profile?.group_name}} · {{user.username}}</p></div></div><button class="btn" id="userRefresh" :disabled="busy" @click="act(()=>refresh())">刷新</button></div>
@@ -53,8 +56,10 @@ onUnmounted(()=>{expired();disposeClient();});
       <p v-if="user.budget_usage.incomplete || user.budget_usage.unpriced" class="hint">存在未报告用量或未配置价格的消耗；相应预算受限时，请联系管理员核查。</p>
       <p class="hint" id="userConcurrency">用户并发：{{user.in_flight}} / {{user.max_concurrency||'不限'}}<span v-if="user.budget.max_tokens||user.budget.max_usd"> · 当前计量预算最多允许一个在途请求</span></p>
       </div>
-      <nav class="user-tabs" aria-label="用户功能"><button v-for="t in [{id:'dashboard',name:'仪表盘'},{id:'keys',name:'我的密钥'},{id:'models',name:'可用模型'},{id:'usage',name:'我的用量'},{id:'profile',name:'个人资料'},{id:'password',name:'修改密码'}]" :key="t.id" :class="['btn',tab===t.id?'primary':'']" :aria-pressed="tab===t.id" @click="tab=t.id;revealed={}">{{t.name}}</button></nav>
+      <nav class="user-tabs" aria-label="用户功能"><button v-for="t in [{id:'dashboard',name:'仪表盘'},{id:'keys',name:'我的密钥'},{id:'models',name:'可用模型'},{id:'usage',name:'我的用量'},{id:'entitlements',name:'额度与兑换'},{id:'identity',name:'登录方式'},{id:'profile',name:'个人资料'},{id:'password',name:'修改密码'}]" :key="t.id" :class="['btn',tab===t.id?'primary':'']" :aria-pressed="tab===t.id" @click="tab=t.id;revealed={}">{{t.name}}</button></nav>
       <div v-if="tab==='dashboard'||tab==='usage'" class="actions user-usage-range"><label for="userUsageRange">统计范围</label><select id="userUsageRange" v-model="range" :disabled="busy" @change="act(()=>refresh())"><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="0">全部历史</option></select></div>
+      <UserEntitlements v-if="tab==='entitlements'" @changed="act(()=>refresh())" />
+      <UserIdentityPanel v-if="tab==='identity'" :user="user" @changed="act(()=>refresh())" />
       <UserDashboard v-if="tab==='dashboard'" :usage="usage" />
       <UserProfilePanel v-if="tab==='profile'" :user="user" :busy="busy" @save="saveProfile" />
       <section v-if="tab==='keys'" class="card" id="userKeys"><h2>我的 API 密钥</h2><p class="hint">API 地址：<code>{{apiBase}}</code>；所有密钥共享上方用户预算。</p>

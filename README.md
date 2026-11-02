@@ -31,7 +31,9 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 
 M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算，普通用户通过 `/user` 管理自己的密钥与用量。使用见 [用户指南](docs/USERS.md)，schema 8 和验证范围见 [M7 报告](docs/acceptance/STRUCTURE-M7-COMPLETE-2026-11-02.md)。
 
-用户中心第一批新增跨密钥用户并发上限、昵称/头像和用量仪表盘。当前 schema 为 9，旧用户保持原有并发行为；充值、订阅和第三方用户登录仍未接入。见 [用户指南](docs/USERS.md)、[设计决定](docs/adr/0012-consumer-profile-dashboard-concurrency.md) 与 [验收报告](docs/acceptance/USER-CENTER-1-2026-11-02.md)。
+用户中心第一批新增跨密钥用户并发上限、昵称/头像和用量仪表盘。本批当时使用 schema 9，旧用户保持原有并发行为。见 [用户指南](docs/USERS.md)、[设计决定](docs/adr/0012-consumer-profile-dashboard-concurrency.md) 与 [验收报告](docs/acceptance/USER-CENTER-1-2026-11-02.md)。
+
+用户中心第二批新增人工额度调整与结算、兑换码、套餐订阅、邮箱验证与密码找回、GitHub/LinuxDO 绑定登录。当前 schema 10，旧用户默认不启用余额和订阅限制。SMTP/OAuth 需管理员配置后启用；未接在线支付、订单、退款和返利。见 [设计决定](docs/adr/0013-consumer-entitlements-identity.md) 和 [验收报告](docs/acceptance/USER-CENTER-2-2026-11-02.md)。
 
 ## 功能特性
 

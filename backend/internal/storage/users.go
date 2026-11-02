@@ -56,7 +56,7 @@ func (s *Store) keyOwnerLocked(k *APIKey) error {
 	if u == nil || !u.Enabled || u.GroupID == "" || k.GroupID != u.GroupID || !s.groupExistsLocked(u.GroupID) {
 		return fmt.Errorf("密钥所属用户已停用或分组权限无效")
 	}
-	return nil
+	return consumerStatus(u, time.Now().Unix())
 }
 func userBudgetID(id string) string { return "user:" + id }
 
@@ -105,6 +105,10 @@ func (s *Store) SaveUser(update access.UserUpdate, hash string) (access.UserView
 	if u == nil {
 		s.st.Users = append(s.st.Users, access.User{ID: rand.Text(), Enabled: true, CreatedAt: time.Now().Unix()})
 		u = &s.st.Users[len(s.st.Users)-1]
+	}
+	if u.Subscription.ID != "" && update.GroupID != u.Subscription.Plan.GroupID {
+		s.st.Users = before
+		return access.UserView{}, fmt.Errorf("请先移除订阅，再修改用户分组")
 	}
 	u.Username = name
 	u.GroupID = update.GroupID
@@ -189,12 +193,18 @@ func (s *Store) UpdateUserProfile(id string, revision uint64, update access.Prof
 	return s.userViewLocked(*u), nil
 }
 func (s *Store) ChangeUserPassword(id string, revision uint64, hash string) error {
+	return s.changeUserPassword(id, revision, "", hash)
+}
+func (s *Store) ResetVerifiedUserPassword(id string, revision uint64, email, hash string) error {
+	return s.changeUserPassword(id, revision, email, hash)
+}
+func (s *Store) changeUserPassword(id string, revision uint64, email, hash string) error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	u := s.userLocked(id)
-	if u == nil || !u.Enabled || u.Revision != revision {
+	if u == nil || !u.Enabled || u.Revision != revision || email != "" && (!u.EmailVerified || u.Email != email) {
 		return access.ErrUserAuthentication
 	}
 	if !strings.HasPrefix(hash, access.PasswordHashPrefix) {

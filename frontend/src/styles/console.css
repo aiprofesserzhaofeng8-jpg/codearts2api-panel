@@ -1358,3 +1358,11 @@ body.admin-locked .app { visibility: hidden; }
 .user-model-usage .hint{grid-column:1/-1}
 @media(max-width:760px){.user-profile-grid,.user-dashboard-grid{grid-template-columns:1fr}.user-dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.user-identity{gap:10px}.user-identity h1{font-size:18px}}
 @media(max-width:640px){.user-main{padding:12px}.user-header{padding:12px;flex-wrap:wrap}.user-summary{grid-template-columns:1fr;gap:12px}.user-main>.card{padding:14px}.user-console table{min-width:620px}}
+
+/* Consumer entitlements own their Vue subtree, independent of provider forms. */
+.consumer-admin .user-tabs{padding:0 18px}.consumer-form{padding:18px;max-width:1080px}
+.consumer-form form,.consumer-form .actions,.user-recovery form{margin:14px 0}
+.consumer-form .field label{display:block}.consumer-form input:not([type=checkbox]),.consumer-form select,.consumer-form textarea{width:100%}
+.consumer-form .actions input,.consumer-form .actions select{width:auto;max-width:100%;flex:1;min-width:150px}
+.consumer-form h3{margin:20px 0 10px}.consumer-form .check{margin:12px 0}.user-recovery{margin-top:18px}
+.consumer-form .field-grid{gap:16px}.consumer-form textarea{resize:vertical}

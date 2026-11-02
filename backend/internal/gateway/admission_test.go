@@ -97,3 +97,12 @@ func TestAdmissionPreservesFailureAndCancellationBoundary(t *testing.T) {
 		t.Fatal(f.events)
 	}
 }
+
+func (f *admissionFixture) BeginRequestBudget(key string) (func(), bool, error) {
+	r, e := f.BeginKeyBudget(key)
+	return r, false, e
+}
+func (f *admissionFixture) ReserveConsumerQuote(string, string, string, int, []usage.RequestAttempt) error {
+	return nil
+}
+func (f *admissionFixture) ReleaseConsumerQuote(string) {}

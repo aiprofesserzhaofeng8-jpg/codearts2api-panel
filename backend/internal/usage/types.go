@@ -28,7 +28,13 @@ type RequestAttempt struct {
 	UpstreamStatus int `json:"upstream_status,omitempty"`
 }
 
+type ConsumerCharge struct {
+	Units  int64 `json:"units"`
+	Review bool  `json:"review"`
+}
+
 type LogEntry struct {
+	ConsumerCharge  *ConsumerCharge  `json:"consumer_charge,omitempty"`
 	UserID          string           `json:"user_id,omitempty"`
 	PublicModel     string           `json:"public_model,omitempty"`
 	RequestedModel  string           `json:"requested_model,omitempty"`

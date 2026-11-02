@@ -1,0 +1,218 @@
+{
+  "checked_at": "2026-11-02T07:00:51.530466+00:00",
+  "version": "0.3.0-user-center-2",
+  "baseline_commit": "136ccc8",
+  "schema": 10,
+  "binary_sha256": "826498fb06c71af45035bfab6336427b1c9f8a1da6222bb0800f12160fabe87c",
+  "deployment": {
+    "checked_at": "2026-11-02T06:55:20.141176+00:00",
+    "schema": 10,
+    "counts": {
+      "accounts": 4,
+      "groups": 3,
+      "keys": 5,
+      "users": 1
+    },
+    "accounts_identical_before_live": true,
+    "usage_checkpoint_preserved": true,
+    "legacy_wallets_disabled": true,
+    "identity_options": {
+      "email": false,
+      "github": false,
+      "linuxdo": false
+    }
+  },
+  "validation": {
+    "make_check": true,
+    "full_go_race": true,
+    "final_targeted_race": true,
+    "browser": [
+      {
+        "case": "providers-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-device-smoke",
+        "passed": true
+      },
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-tasks-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-actions-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-buddy-smoke",
+        "passed": true
+      },
+      {
+        "case": "frontend-smoke",
+        "passed": true
+      },
+      {
+        "case": "product-settings-smoke",
+        "passed": true
+      },
+      {
+        "case": "users-smoke",
+        "passed": true
+      },
+      {
+        "case": "consumer-entitlements-smoke",
+        "passed": true
+      }
+    ],
+    "final_new_flow_repeated": true,
+    "simulated_protocol_cases": 18,
+    "smtp_starttls_real_local_connection": true,
+    "oauth_token_userinfo_simulated_http": true
+  },
+  "legacy_admission_benchmark": {
+    "1": {
+      "baseline": {
+        "ns_median": 313.5,
+        "bytes": 112,
+        "allocs": 3,
+        "samples": 5
+      },
+      "current": {
+        "ns_median": 418.1,
+        "bytes": 112,
+        "allocs": 3,
+        "samples": 5
+      }
+    },
+    "100": {
+      "baseline": {
+        "ns_median": 942.0,
+        "bytes": 112,
+        "allocs": 3,
+        "samples": 5
+      },
+      "current": {
+        "ns_median": 1042.0,
+        "bytes": 112,
+        "allocs": 3,
+        "samples": 5
+      }
+    },
+    "1024": {
+      "baseline": {
+        "ns_median": 6244.0,
+        "bytes": 112,
+        "allocs": 3,
+        "samples": 5
+      },
+      "current": {
+        "ns_median": 6146.0,
+        "bytes": 112,
+        "allocs": 3,
+        "samples": 5
+      }
+    }
+  },
+  "live_regression": {
+    "checked_at": "2026-11-02T06:56:06.295369+00:00",
+    "checks": [
+      {
+        "provider": "codearts",
+        "model": "deepseek-v4.1-flash",
+        "status": 502,
+        "passed": false,
+        "seconds": 0.027,
+        "request_id": "6e99a414d0d27a2e088e73f3",
+        "usage": {},
+        "finish_reason": null
+      },
+      {
+        "provider": "workbuddy",
+        "model": "workbuddy/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.349,
+        "request_id": "35aee1aa670eaf33bc185aff",
+        "usage": {
+          "prompt_tokens": 501,
+          "completion_tokens": 1,
+          "total_tokens": 502,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0,
+            "cached_tokens": 256
+          },
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 245,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "prompt_cache_write_tokens": 0,
+          "completion_thinking_tokens": 0,
+          "credit": 0.01,
+          "cached_tokens": 0
+        },
+        "finish_reason": "stop"
+      },
+      {
+        "provider": "trae",
+        "model": "trae/cn/deepseek-v4.1-flash",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.177,
+        "request_id": "3c136d4e85d1555d72393810",
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_creation_input_tokens_total": 0,
+          "cache_read_input_tokens": 0,
+          "cache_read_input_tokens_total": 0,
+          "cluster": "normal_context",
+          "completion_tokens": 11,
+          "completion_tokens_details": {
+            "reasoning_tokens": 9
+          },
+          "completion_tokens_total": 0,
+          "name": "",
+          "prompt_tokens": 35,
+          "prompt_tokens_total": 0,
+          "reasoning_tokens": 9,
+          "reasoning_tokens_total": 0,
+          "total_tokens": 46,
+          "total_tokens_total": 0
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "temporary_key_removed": true
+  },
+  "limits": [
+    "Real SMTP service and OAuth applications are not configured; production delivery and authorization remain unverified.",
+    "CodeArts live inference blocked by an existing expired login; account credential snapshot was identical across migration.",
+    "Wallet reservations are estimates and may be exceeded by actual use.",
+    "Single process owns JSON state; no multiprocess shared-write support."
+  ]
+}
