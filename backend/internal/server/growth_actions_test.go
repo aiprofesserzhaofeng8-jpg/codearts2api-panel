@@ -376,8 +376,16 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 	hold := make(chan struct{})
 	f.hold = hold
 	s := growthActionsServer(t, f)
-	server := httptest.NewServer(s.Handler())
+	canceled := make(chan struct{})
+	handler := s.Handler()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		stop := context.AfterFunc(r.Context(), func() { close(canceled) })
+		defer stop()
+		handler.ServeHTTP(w, r)
+	}))
 	defer server.Close()
+	releaseUpstream := sync.OnceFunc(func() { close(hold) })
+	defer releaseUpstream()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	req, _ := http.NewRequestWithContext(ctx, "POST", server.URL+"/admin/api/workbuddy/tasks/run", strings.NewReader(`{"id":"wb-cn","task_code":"Model_chat_GLM5.2"}`))
@@ -396,7 +404,14 @@ func TestGrowthActionsCancellationStopsRemainingCalls(t *testing.T) {
 		t.Fatal("model never started")
 	}
 	cancel()
-	close(hold)
+	// Client cancellation reaches the server asynchronously. Do not release a
+	// successful upstream response until the handler has observed the disconnect.
+	select {
+	case <-canceled:
+	case <-time.After(2 * time.Second):
+		t.Fatal("server did not observe cancellation")
+	}
+	releaseUpstream()
 	<-done
 	// Synchronize with the task lock to wait for accounting/cleanup after disconnect.
 	release, err := s.Growth.Acquire(context.Background(), "wb-cn")
