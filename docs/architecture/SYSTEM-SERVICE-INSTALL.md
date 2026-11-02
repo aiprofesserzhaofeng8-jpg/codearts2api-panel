@@ -1,6 +1,6 @@
 # 系统级一键安装
 
-状态：实施中。承接现有安装与更新交付，不修改应用、平台协议或状态 schema。
+状态：已完成，随 [v0.3.5](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.3.5) 发布。承接现有安装与更新交付，不修改应用、平台协议或状态 schema。见 [验收记录](../acceptance/SYSTEM-SERVICE-INSTALL-2026-11-03.md)。
 
 ## 行为
 
