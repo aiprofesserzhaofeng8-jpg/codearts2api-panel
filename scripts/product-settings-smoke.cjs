@@ -27,7 +27,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   await page.locator('#sCommonPromptText').fill('COMMON NEW');assert.equal(await page.locator('#sTRPromptText').inputValue(),'COMMON NEW');assert.equal(await page.locator('#sCAPromptText').inputValue(),'CA');
   await page.locator('#saveSettings').click();await page.locator('#settingsDirty').waitFor({state:'hidden'});
   assert.deepEqual(savedSettings.trae.prompt_overrides,{});assert.deepEqual(savedSettings.workbuddy.prompt_overrides,{prompt_text:'',prompt_fallback:false,sanitize:false});assert.equal(savedSettings.codearts.prompt_overrides,null);
-  await page.reload();await page.waitForFunction(()=>document.querySelector('#sTRPromptText').value==='COMMON NEW');assert.equal(await page.locator('#sTRPromptTextInherit').isChecked(),true);
+  await page.reload();await page.waitForFunction(()=>document.querySelector('#sTRPromptText')?.value==='COMMON NEW');assert.equal(await page.locator('#sTRPromptTextInherit').isChecked(),true);
   const out=process.env.CODEARTS_PRODUCT_ARTIFACTS || 'artifacts/structure-m6-complete/browser';fs.mkdirSync(out,{recursive:true});
   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.screenshot({path:out+'/settings-'+theme+'.png',fullPage:true});}
   await page.locator('#nav-groups').click();await page.locator('#groups').getByRole('button',{name:'编辑',exact:true}).click();await page.screenshot({path:out+'/groups-desktop.png'});
