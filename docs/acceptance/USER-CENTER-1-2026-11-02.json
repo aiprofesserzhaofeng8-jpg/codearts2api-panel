@@ -1,0 +1,175 @@
+{
+  "date": "2026-11-02",
+  "version": "0.3.0-user-center-1",
+  "schema": 9,
+  "baseline": "52e6e15",
+  "verification": {
+    "make_check": true,
+    "go_race_all": true,
+    "browser_suites": [
+      {
+        "case": "providers-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-smoke",
+        "passed": true
+      },
+      {
+        "case": "trae-device-smoke",
+        "passed": true
+      },
+      {
+        "case": "groups-smoke",
+        "passed": true
+      },
+      {
+        "case": "account-create-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-tasks-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-actions-smoke",
+        "passed": true
+      },
+      {
+        "case": "growth-buddy-smoke",
+        "passed": true
+      },
+      {
+        "case": "frontend-smoke",
+        "passed": true
+      },
+      {
+        "case": "product-settings-smoke",
+        "passed": true
+      },
+      {
+        "case": "users-smoke",
+        "passed": true
+      }
+    ],
+    "user_browser_repeat": [
+      {
+        "case": "users-smoke",
+        "passed": true
+      }
+    ],
+    "real_upstream_run": false
+  },
+  "admission_benchmark": {
+    "cpu": 0,
+    "rounds": 7,
+    "ns_median": {
+      "baseline": {
+        "1": 300.8,
+        "100": 861.1,
+        "1024": 5741.0
+      },
+      "current": {
+        "1": 299.6,
+        "100": 907.0,
+        "1024": 6134.0
+      }
+    },
+    "percent": {
+      "1": -0.4,
+      "100": 5.33,
+      "1024": 6.85
+    },
+    "nanosecond_samples": {
+      "baseline": {
+        "1": [
+          303.5,
+          302.1,
+          305.3,
+          300.8,
+          300.7,
+          300.4,
+          300.2
+        ],
+        "100": [
+          908.7,
+          855.9,
+          862.5,
+          861.1,
+          858.2,
+          861.7,
+          860.0
+        ],
+        "1024": [
+          5800.0,
+          5741.0,
+          5747.0,
+          5739.0,
+          5744.0,
+          5692.0,
+          5703.0
+        ]
+      },
+      "current": {
+        "1": [
+          299.6,
+          299.0,
+          301.3,
+          299.5,
+          299.6,
+          300.4,
+          298.8
+        ],
+        "100": [
+          906.0,
+          906.5,
+          954.0,
+          909.3,
+          906.8,
+          909.0,
+          907.0
+        ],
+        "1024": [
+          6140.0,
+          6134.0,
+          6185.0,
+          6144.0,
+          6134.0,
+          6133.0,
+          6102.0
+        ]
+      }
+    },
+    "bytes_per_op": 112,
+    "allocations_per_op": 3,
+    "configuration": "existing BenchmarkUserAdmission; default unlimited user concurrency; same CPU affinity; interleaved 7 rounds; cpu=1; 300ms"
+  },
+  "local_deployment": {
+    "version": "codearts2api 0.3.0-user-center-1",
+    "schema": 9,
+    "pid": 3900220,
+    "binary_sha256": "54af752b1b9fd8ba3b18c18b60235ada3a10ceabed78aeef2cbb488633a66627",
+    "frontend_build": "b442bd82a560e9508520",
+    "accounts": 4,
+    "groups": 3,
+    "keys": 5,
+    "users": 1,
+    "health": {
+      "accounts": 4,
+      "models": 79,
+      "ready": 4,
+      "service": "codearts2api-panel",
+      "status": "ok"
+    },
+    "existing_fields_preserved": true,
+    "user_concurrency_default": 0,
+    "journal_preserved": true,
+    "local_admin_users_verified": false,
+    "user_authentication_required": true,
+    "backup_folder": "data/backups/user-center-1-20261102T132830"
+  }
+}

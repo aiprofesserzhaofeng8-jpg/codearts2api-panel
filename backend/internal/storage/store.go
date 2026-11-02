@@ -32,7 +32,7 @@ type Stats = usage.Stats
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 8
+const StateVersion = 9
 
 // State 是全部持久化状态。
 type State struct {

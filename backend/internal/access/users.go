@@ -12,40 +12,49 @@ import (
 // User is the durable consumer identity. Upstream accounts and groups remain
 // administrator-owned; a group is an entitlement, never a tenant identity.
 type User struct {
-	ID           string      `json:"id"`
-	Username     string      `json:"username"`
-	PasswordHash string      `json:"password_hash"`
-	GroupID      string      `json:"group_id"`
-	Enabled      bool        `json:"enabled"`
-	Revision     uint64      `json:"revision"`
-	CreatedAt    int64       `json:"created_at"`
-	Budget       KeyBudget   `json:"budget"`
-	BudgetUsage  BudgetUsage `json:"budget_usage"`
+	ID             string      `json:"id"`
+	Username       string      `json:"username"`
+	DisplayName    string      `json:"display_name,omitempty"`
+	Avatar         string      `json:"avatar,omitempty"`
+	MaxConcurrency int         `json:"max_concurrency"`
+	PasswordHash   string      `json:"password_hash"`
+	GroupID        string      `json:"group_id"`
+	Enabled        bool        `json:"enabled"`
+	Revision       uint64      `json:"revision"`
+	CreatedAt      int64       `json:"created_at"`
+	Budget         KeyBudget   `json:"budget"`
+	BudgetUsage    BudgetUsage `json:"budget_usage"`
 }
 
 type UserView struct {
-	ID          string      `json:"id"`
-	Username    string      `json:"username"`
-	GroupID     string      `json:"group_id"`
-	Enabled     bool        `json:"enabled"`
-	CreatedAt   int64       `json:"created_at"`
-	Budget      KeyBudget   `json:"budget"`
-	BudgetUsage BudgetUsage `json:"budget_usage"`
+	Revision       uint64      `json:"-"`
+	ID             string      `json:"id"`
+	Username       string      `json:"username"`
+	DisplayName    string      `json:"display_name"`
+	Avatar         string      `json:"avatar"`
+	MaxConcurrency int         `json:"max_concurrency"`
+	InFlight       int         `json:"in_flight"`
+	GroupID        string      `json:"group_id"`
+	Enabled        bool        `json:"enabled"`
+	CreatedAt      int64       `json:"created_at"`
+	Budget         KeyBudget   `json:"budget"`
+	BudgetUsage    BudgetUsage `json:"budget_usage"`
 }
 
 func (u User) View() UserView {
-	return UserView{ID: u.ID, Username: u.Username, GroupID: u.GroupID, Enabled: u.Enabled,
+	return UserView{ID: u.ID, Revision: u.Revision, Username: u.Username, DisplayName: u.DisplayName, Avatar: u.Avatar, MaxConcurrency: u.MaxConcurrency, GroupID: u.GroupID, Enabled: u.Enabled,
 		CreatedAt: u.CreatedAt, Budget: u.Budget, BudgetUsage: u.BudgetUsage}
 }
 
 type UserUpdate struct {
-	ID          string     `json:"id"`
-	Username    string     `json:"username"`
-	Password    string     `json:"password,omitempty"`
-	GroupID     string     `json:"group_id"`
-	Enabled     *bool      `json:"enabled,omitempty"`
-	Budget      *KeyBudget `json:"budget,omitempty"`
-	ResetBudget bool       `json:"reset_budget,omitempty"`
+	ID             string     `json:"id"`
+	Username       string     `json:"username"`
+	Password       string     `json:"password,omitempty"`
+	GroupID        string     `json:"group_id"`
+	Enabled        *bool      `json:"enabled,omitempty"`
+	MaxConcurrency *int       `json:"max_concurrency,omitempty"`
+	Budget         *KeyBudget `json:"budget,omitempty"`
+	ResetBudget    bool       `json:"reset_budget,omitempty"`
 }
 
 func NormalizeUsername(name string) (string, error) {

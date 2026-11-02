@@ -717,7 +717,8 @@ export interface paths {
         };
         get: operations["get__user_api_profile"];
         put?: never;
-        post?: never;
+        /** Update own display name or inline raster avatar */
+        post: operations["post__user_api_profile"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1024,6 +1025,10 @@ export interface components {
             created_at: number;
             budget: components["schemas"]["KeyBudget"];
             budget_usage: components["schemas"]["KeyUsage"];
+            display_name: string;
+            avatar: string;
+            max_concurrency: number;
+            in_flight: number;
         };
         UserUpdate: {
             id?: string;
@@ -1033,6 +1038,7 @@ export interface components {
             enabled?: boolean;
             budget?: components["schemas"]["KeyBudget"];
             reset_budget?: boolean;
+            max_concurrency?: number;
         };
         UserKey: {
             ref: string;
@@ -1065,17 +1071,48 @@ export interface components {
         };
         UserUsagePage: {
             logs: components["schemas"]["UserUsageLog"][];
-            stats: {
-                [key: string]: unknown;
-            };
+            stats: components["schemas"]["UserUsageStats"];
             page: number;
             pages: number;
             total: number;
             retained?: number;
             oldest?: number;
             retention_limit?: number;
+            analysis: components["schemas"]["UserUsageAnalysis"];
         } & {
             [key: string]: unknown;
+        };
+        UserProfileUpdate: {
+            display_name?: string;
+            avatar?: string;
+        };
+        UserUsageStats: {
+            total_requests: number;
+            failed_requests: number;
+            input_tokens: number;
+            output_tokens: number;
+            cached_tokens: number;
+            reasoning_tokens: number;
+            usage_requests: number;
+            priced_usd_requests: number;
+            total_latency_ms: number;
+            latency_samples: number;
+            partial_usage_requests: number;
+            estimated_usd: number;
+        } & {
+            [key: string]: unknown;
+        };
+        UserUsageAnalysis: {
+            models: {
+                name: string;
+                stats: components["schemas"]["UserUsageStats"];
+            }[];
+            trend: {
+                time: number;
+                stats: components["schemas"]["UserUsageStats"];
+            }[];
+            time_zone: string;
+            bucket_days: number;
         };
     };
     responses: never;
@@ -2931,6 +2968,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        user: components["schemas"]["User"];
+                        group_name: string;
+                        key_limit: number;
+                    };
+                };
+            };
+            /** @description Authentication, authorization, validation or persistence error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    post__user_api_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfileUpdate"];
+            };
+        };
         responses: {
             /** @description Successful response. */
             200: {

@@ -2358,6 +2358,59 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "post__user_api_profile",
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "group_name": {
+                      "type": "string"
+                    },
+                    "key_limit": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "group_name",
+                    "key_limit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, authorization, validation or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update own display name or inline raster avatar",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserProfileUpdate"
+              }
+            }
+          }
+        }
       }
     },
     "/user/api/password": {
@@ -3413,6 +3466,21 @@
           },
           "budget_usage": {
             "$ref": "#/components/schemas/KeyUsage"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          },
+          "max_concurrency": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1024
+          },
+          "in_flight": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
@@ -3422,7 +3490,11 @@
           "enabled",
           "created_at",
           "budget",
-          "budget_usage"
+          "budget_usage",
+          "display_name",
+          "avatar",
+          "max_concurrency",
+          "in_flight"
         ],
         "additionalProperties": false
       },
@@ -3451,6 +3523,11 @@
           },
           "reset_budget": {
             "type": "boolean"
+          },
+          "max_concurrency": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1024
           }
         },
         "required": [
@@ -3560,8 +3637,7 @@
             }
           },
           "stats": {
-            "type": "object",
-            "additionalProperties": true
+            "$ref": "#/components/schemas/UserUsageStats"
           },
           "page": {
             "type": "integer"
@@ -3580,6 +3656,9 @@
           },
           "retention_limit": {
             "type": "integer"
+          },
+          "analysis": {
+            "$ref": "#/components/schemas/UserUsageAnalysis"
           }
         },
         "required": [
@@ -3587,9 +3666,134 @@
           "stats",
           "page",
           "pages",
-          "total"
+          "total",
+          "analysis"
         ],
         "additionalProperties": true
+      },
+      "UserProfileUpdate": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "avatar": {
+            "type": "string",
+            "maxLength": 28000
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "UserUsageStats": {
+        "type": "object",
+        "properties": {
+          "total_requests": {
+            "type": "integer"
+          },
+          "failed_requests": {
+            "type": "integer"
+          },
+          "input_tokens": {
+            "type": "integer"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "cached_tokens": {
+            "type": "integer"
+          },
+          "reasoning_tokens": {
+            "type": "integer"
+          },
+          "usage_requests": {
+            "type": "integer"
+          },
+          "priced_usd_requests": {
+            "type": "integer"
+          },
+          "total_latency_ms": {
+            "type": "integer"
+          },
+          "latency_samples": {
+            "type": "integer"
+          },
+          "partial_usage_requests": {
+            "type": "integer"
+          },
+          "estimated_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total_requests",
+          "failed_requests",
+          "input_tokens",
+          "output_tokens",
+          "cached_tokens",
+          "reasoning_tokens",
+          "usage_requests",
+          "priced_usd_requests",
+          "total_latency_ms",
+          "latency_samples",
+          "partial_usage_requests",
+          "estimated_usd"
+        ],
+        "additionalProperties": true
+      },
+      "UserUsageAnalysis": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "stats": {
+                  "$ref": "#/components/schemas/UserUsageStats"
+                }
+              },
+              "required": [
+                "name",
+                "stats"
+              ]
+            }
+          },
+          "trend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "integer"
+                },
+                "stats": {
+                  "$ref": "#/components/schemas/UserUsageStats"
+                }
+              },
+              "required": [
+                "time",
+                "stats"
+              ]
+            }
+          },
+          "time_zone": {
+            "type": "string"
+          },
+          "bucket_days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "models",
+          "trend",
+          "time_zone",
+          "bucket_days"
+        ]
       }
     },
     "securitySchemes": {

@@ -29,7 +29,10 @@ func currentUser(r *http.Request) access.UserView {
 	return r.Context().Value(userContextKey{}).(access.UserView)
 }
 func decodeUserBody(w http.ResponseWriter, r *http.Request, out any) bool {
-	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16384))
+	return decodeUserBodyLimit(w, r, out, 16384)
+}
+func decodeUserBodyLimit(w http.ResponseWriter, r *http.Request, out any, limit int64) bool {
+	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	d.DisallowUnknownFields()
 	if err := d.Decode(out); err != nil {
 		writeErr(w, 400, "请求参数无效", "invalid_request_error")
@@ -170,17 +173,34 @@ func (s *Server) handleAdminUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (s *Server) handleUserProfile(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
+	if r.Method != "GET" && r.Method != "POST" {
+		writeErr(w, 405, "仅支持 GET、POST", "invalid_request_error")
 		return
 	}
 	u := currentUser(r)
-	_, name, err := s.Store.UserScope(u.ID)
+	if r.Method == "POST" {
+		var update access.ProfileUpdate
+		if !decodeUserBodyLimit(w, r, &update, 32*1024) {
+			return
+		}
+		_, err := s.Store.UpdateUserProfile(u.ID, u.Revision, update)
+		if err != nil {
+			if errors.Is(err, access.ErrUserAuthentication) {
+				writeErr(w, 401, "用户权限已变更，请重新登录", "authentication_error")
+			} else if errors.Is(err, access.ErrInvalidProfile) {
+				writeErr(w, 400, err.Error(), "invalid_request_error")
+			} else {
+				writeErr(w, 500, "个人资料保存失败，请稍后重试", "server_error")
+			}
+			return
+		}
+	}
+	view, name, err := s.Store.UserProfile(u.ID)
 	if err != nil {
 		writeErr(w, 403, "用户分组权限无效，请联系管理员", "permission_error")
 		return
 	}
-	writeJSON(w, 200, map[string]any{"user": u, "group_name": name, "key_limit": 32})
+	writeJSON(w, 200, map[string]any{"user": view, "group_name": name, "key_limit": 32})
 }
 func (s *Server) handleUserPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -310,5 +330,13 @@ func (s *Server) handleUserUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q.Location = time.UTC
+	if zone := r.URL.Query().Get("timezone"); zone != "" {
+		location, err := time.LoadLocation(zone)
+		if err != nil {
+			writeErr(w, 400, "时区参数无效", "invalid_request_error")
+			return
+		}
+		q.Location = location
+	}
 	writeJSON(w, 200, s.Store.QueryUserUsage(currentUser(r).ID, q))
 }

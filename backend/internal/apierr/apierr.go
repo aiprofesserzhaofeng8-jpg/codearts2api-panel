@@ -78,6 +78,10 @@ func From(err error) Error {
 		return Error{Status: http.StatusServiceUnavailable, OpenAI: "server_error", Anthropic: "overloaded_error"}
 	}
 	var budget interface{ BudgetExceeded() bool }
+	var concurrency interface{ ConcurrencyExceeded() bool }
+	if errors.As(err, &concurrency) && concurrency.ConcurrencyExceeded() {
+		return Error{Status: http.StatusTooManyRequests, OpenAI: "rate_limit_error", Anthropic: "rate_limit_error"}
+	}
 	if errors.As(err, &budget) && budget.BudgetExceeded() {
 		return Error{Status: http.StatusPaymentRequired, OpenAI: "budget_exceeded", Anthropic: "permission_error"}
 	}

@@ -48,6 +48,9 @@ func (s *Store) BeginKeyBudget(key string) (func(), error) {
 			if k.UserID != "" {
 				u := s.userLocked(k.UserID)
 				owner = userBudgetID(u.ID)
+				if u.MaxConcurrency > 0 && s.budgetActive[owner] >= u.MaxConcurrency {
+					return nil, &access.UserConcurrencyError{}
+				}
 				if err := checkUserReservation(u.Budget, u.BudgetUsage, s.budgetActive[owner]); err != nil {
 					return nil, err
 				}

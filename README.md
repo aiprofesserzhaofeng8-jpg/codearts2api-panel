@@ -31,6 +31,8 @@ CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转�
 
 M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算，普通用户通过 `/user` 管理自己的密钥与用量。使用见 [用户指南](docs/USERS.md)，schema 8 和验证范围见 [M7 报告](docs/acceptance/STRUCTURE-M7-COMPLETE-2026-11-02.md)。
 
+用户中心第一批新增跨密钥用户并发上限、昵称/头像和用量仪表盘。当前 schema 为 9，旧用户保持原有并发行为；充值、订阅和第三方用户登录仍未接入。见 [用户指南](docs/USERS.md)、[设计决定](docs/adr/0012-consumer-profile-dashboard-concurrency.md) 与 [验收报告](docs/acceptance/USER-CENTER-1-2026-11-02.md)。
+
 ## 功能特性
 
 | 功能 | 说明 |

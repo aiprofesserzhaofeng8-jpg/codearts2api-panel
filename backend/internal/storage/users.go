@@ -41,7 +41,7 @@ func (s *Store) Users() []access.UserView {
 	defer s.mu.RUnlock()
 	out := make([]access.UserView, 0, len(s.st.Users))
 	for _, u := range s.st.Users {
-		out = append(out, u.View())
+		out = append(out, s.userViewLocked(u))
 	}
 	return out
 }
@@ -61,6 +61,11 @@ func (s *Store) keyOwnerLocked(k *APIKey) error {
 func userBudgetID(id string) string { return "user:" + id }
 
 func (s *Store) SaveUser(update access.UserUpdate, hash string) (access.UserView, error) {
+	if update.MaxConcurrency != nil {
+		if err := access.ValidateUserConcurrency(*update.MaxConcurrency); err != nil {
+			return access.UserView{}, err
+		}
+	}
 	name, err := access.NormalizeUsername(update.Username)
 	if err != nil {
 		return access.UserView{}, err
@@ -103,6 +108,9 @@ func (s *Store) SaveUser(update access.UserUpdate, hash string) (access.UserView
 	}
 	u.Username = name
 	u.GroupID = update.GroupID
+	if update.MaxConcurrency != nil {
+		u.MaxConcurrency = *update.MaxConcurrency
+	}
 	u.Revision++
 	if hash != "" {
 		u.PasswordHash = hash
@@ -121,7 +129,7 @@ func (s *Store) SaveUser(update access.UserUpdate, hash string) (access.UserView
 			k.GroupID = u.GroupID
 		}
 	}
-	result := u.View()
+	result := s.userViewLocked(*u)
 	if err = s.saveGroupStateLocked(); err != nil {
 		s.st.Users = before
 		for i, k := range s.st.Keys {
@@ -130,6 +138,55 @@ func (s *Store) SaveUser(update access.UserUpdate, hash string) (access.UserView
 		return access.UserView{}, err
 	}
 	return result, nil
+}
+
+func (s *Store) userViewLocked(u access.User) access.UserView {
+	v := u.View()
+	v.InFlight = s.budgetActive[userBudgetID(u.ID)]
+	return v
+}
+
+func (s *Store) UserProfile(id string) (access.UserView, string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	u := s.userLocked(id)
+	if u == nil || !u.Enabled {
+		return access.UserView{}, "", access.ErrUserAuthentication
+	}
+	for _, g := range s.st.Groups {
+		if g.ID == u.GroupID {
+			return s.userViewLocked(*u), g.Name, nil
+		}
+	}
+	return access.UserView{}, "", fmt.Errorf("用户分组权限无效")
+}
+
+// Patch only profile fields against the current user, preserving concurrent
+// settlement, admin revocation and password changes. Profiles do not revoke sessions.
+func (s *Store) UpdateUserProfile(id string, revision uint64, update access.ProfileUpdate) (access.UserView, error) {
+	if err := update.Normalize(); err != nil {
+		return access.UserView{}, err
+	}
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	u := s.userLocked(id)
+	if u == nil || !u.Enabled || u.Revision != revision {
+		return access.UserView{}, access.ErrUserAuthentication
+	}
+	before := *u
+	if update.DisplayName != nil {
+		u.DisplayName = *update.DisplayName
+	}
+	if update.Avatar != nil {
+		u.Avatar = *update.Avatar
+	}
+	if err := s.saveGroupStateLocked(); err != nil {
+		*u = before
+		return access.UserView{}, err
+	}
+	return s.userViewLocked(*u), nil
 }
 func (s *Store) ChangeUserPassword(id string, revision uint64, hash string) error {
 	s.saveMu.Lock()

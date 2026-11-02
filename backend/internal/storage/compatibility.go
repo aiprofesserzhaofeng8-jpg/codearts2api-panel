@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 )
@@ -70,6 +71,11 @@ func Open(path string) (*Store, error) {
 		if err := s.migrate(); err != nil {
 			return nil, err
 		}
+		for _, u := range s.st.Users {
+			if err := access.ValidateUserConcurrency(u.MaxConcurrency); err != nil {
+				return nil, fmt.Errorf("用户并发配置无效: %w", err)
+			}
+		}
 		s.applyDefaults()
 		s.usageBaseReady = true
 		// 收紧已存在状态文件的权限：里面是 STS 凭据与 refresh_token。
@@ -104,6 +110,8 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 8:
+			s.st.Version = 9 // Existing users retain unlimited concurrency.
 		case 7:
 			s.st.Version = 8 // Existing keys remain administrator-owned.
 		case 6:
