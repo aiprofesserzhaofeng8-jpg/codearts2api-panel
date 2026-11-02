@@ -211,8 +211,8 @@ python3 deploy/tests/managed_acceptance.py --first 旧测试版本包.tar.gz --s
 
 ```bash
 sh install.sh check
-sh install.sh download --version v0.3.2 --output ./release-v0.3.2
-sh install.sh install --version v0.3.2 --root "$HOME/codearts2api-managed" --port 10087
+sh install.sh download --version v0.3.3 --output ./release-v0.3.3
+sh install.sh install --version v0.3.3 --root "$HOME/codearts2api-managed" --port 10087
 sh install.sh upgrade --root "$HOME/codearts2api-managed"
 ```
 
@@ -226,7 +226,7 @@ sh install.sh upgrade --root "$HOME/codearts2api-managed"
 
 ```bash
 python3 panelctl.py migrate \
-  --archive codearts2api-panel-v0.3.2-linux-amd64.tar.gz --sha256 '<实际摘要>' \
+  --archive codearts2api-panel-v0.3.3-linux-amd64.tar.gz --sha256 '<实际摘要>' \
   --root "$HOME/codearts2api-managed" --name managed --port 10088 \
   --source-unit codearts2api-panel.service \
   --source-binary /绝对路径/codearts2api-panel/bin/codearts2api-panel \

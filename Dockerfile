@@ -3,7 +3,9 @@
 # 注意：DPAPI 只有 Windows 有，容器里无法自动读取 CodeArts Agent 的 secret storage。
 # 在容器里请通过控制台「手工录入」或「从 session JSON 导入」提供凭据
 # （session JSON 含 refresh_token 与 DPoP 私钥，因此仍可自动续期）。
-FROM node:24.11.0-alpine AS frontend
+# UI assets are architecture independent; run checks natively once, including
+# when the target image is ARM. Avoid executing the test runner under QEMU.
+FROM --platform=$BUILDPLATFORM node:24.11.0-alpine AS frontend
 WORKDIR /src/frontend
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN npm install --global pnpm@10.34.9 && pnpm install --frozen-lockfile
@@ -11,14 +13,16 @@ COPY frontend ./
 COPY api /src/api
 RUN pnpm typecheck && pnpm test && pnpm build
 
-FROM golang:1.27.3-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS build
 WORKDIR /src
 COPY backend/go.mod ./
 COPY backend/cmd ./cmd
 COPY backend/internal ./internal
 COPY --from=frontend /src/backend/internal/webui/dist ./internal/webui/dist
 ARG VERSION=dev
-RUN CGO_ENABLED=0 go build -trimpath \
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath \
       -ldflags "-s -w -X main.version=${VERSION}" \
       -o /out/codearts2api ./cmd/panel
 
