@@ -40,7 +40,7 @@ curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2a
 ```bash
 sudo systemctl status codearts2api
 sudo journalctl -u codearts2api -n 50 --no-pager
-# 打开面板完成向导；v0.3.7 仍按旧向导读取初始化凭证
+# 打开面板，设置管理员邮箱和密码，完成安装向导
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
 ```
 
@@ -74,7 +74,7 @@ python3 panelctl.py install \
 
 若机器没有用户 systemd 会话，先配置登录会话；需要退出 SSH 后继续运行、重启后自动启动时，由管理员执行 `loginctl enable-linger 用户名`。`--no-start` 仅生成安装和 unit，可随后 `systemctl --user daemon-reload`、`systemctl --user enable --now codearts2api-managed.service`。
 
-当前源码的新安装直接填写管理员邮箱和密码，无需 Token 或验证码。v0.3.7 发布包仍使用旧版 Token 向导。请在对外开放前完成初始化；已安装实例的向导永久关闭，旧版 admin 登录继续兼容。普通用户由管理员创建。
+v0.3.8 起的新安装直接填写管理员邮箱和密码，无需 Token 或验证码。请在对外开放前完成初始化；已安装实例的向导永久关闭，旧版 admin 登录继续兼容。普通用户由管理员创建。
 
 已有源码服务可继续使用 `codearts2api-panel.service.example`，但不要同时启动两套程序写同一目录。工具安装的版本化目录和旧源码目录是不同管理方式，`upgrade` 不会接管任意既有服务。
 
@@ -93,7 +93,7 @@ docker compose --env-file .env -f compose.production.yml up -d
 
 不要使用 `latest`。生产模板不会从工作区源码构建；GHCR 包首次发布后的可见性也需在 GitHub 核实。镜像使用 UID/GID 10001 和命名数据卷。改为 bind mount 时，先为专用目录设置该用户可写权限，不要用 `chmod 777`。
 
-打开面板完成首次安装；当前源码无需手动读取初始化文件。
+打开面板完成首次安装；v0.3.8 起无需手动读取初始化文件。
 
 容器健康检查有三种输出：`running`、`setup_required`、`unhealthy`。等待安装时属于存活；`sh /usr/local/bin/codearts-healthcheck --ready` 才是接收推理流量的就绪检查。Compose 的 `unhealthy` 标记本身不会触发 `restart: unless-stopped` 重启，不应误认为已实现自动修复。
 

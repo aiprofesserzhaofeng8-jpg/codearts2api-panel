@@ -72,7 +72,7 @@ M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算�
 
 从 [正式发布页](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest) 下载 `codearts2api-panel-vX.Y.Z-windows-amd64.zip`，**全部解压后双击 `start.cmd`**，打开 http://127.0.0.1:10087/。无需安装 Go、Node.js、Python 或 Docker。
 
-当前源码首次运行通过向导设置管理员邮箱和密码（v0.3.7 发布包仍需从 `state.json.setup.json` 读取初始化凭证）。数据保存在 `%LOCALAPPDATA%\CodeArts2API`；升级前按 Ctrl+C 停止并备份整个数据目录，再运行新包的 `start.cmd`。当前为前台运行版，不注册 Windows 系统服务。详细步骤见 [Windows 使用说明](deploy/windows/README.md)。
+v0.3.8 起首次运行通过向导设置管理员邮箱和密码。数据保存在 `%LOCALAPPDATA%\CodeArts2API`；升级前按 Ctrl+C 停止并备份整个数据目录，再运行新包的 `start.cmd`。当前为前台运行版，不注册 Windows 系统服务。详细步骤见 [Windows 使用说明](deploy/windows/README.md)。
 
 ### 一键安装系统级服务（Linux）
 
@@ -86,7 +86,7 @@ curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2a
 
 ```bash
 sudo systemctl status codearts2api
-# 打开面板完成安装向导；v0.3.7 仍需按页面提示读取初始化凭证
+# 打开面板，设置管理员邮箱和密码，完成安装向导
 # 后续升级（先阅读版本说明）：
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
 ```
@@ -181,7 +181,7 @@ git pull --ff-only
 
 ## 首次使用
 
-1. 当前源码新部署打开面板，根据向导设置管理员邮箱和密码，无需初始化 Token；v0.3.7 发布包仍使用旧版向导。
+1. v0.3.8 起新部署打开面板，根据向导设置管理员邮箱和密码，无需初始化 Token。
 2. 完成后打开 `/login`，使用刚设置的管理员邮箱和密码登录。已有部署沿用原密码。
 3. 在「账号池」点击「添加账号」，选择平台和「浏览器授权」，点击下一步，再生成链接并复制到另一浏览器授权。
 4. 粘贴最终回调地址，提交授权信息，核对账号预览后确认保存。
@@ -190,7 +190,7 @@ git pull --ff-only
 
 ### 首次安装与管理员密码
 
-当前源码：新部署未指定管理密码时，打开面板进入首次安装向导，填写自定义管理员邮箱和至少 12 位密码，不需要初始化 Token 或邮箱验证码。邮箱用作登录名，不会创建真实邮箱，也不代表邮箱归属已验证。v0.3.7 发布包仍使用旧版 Token 向导。
+v0.3.8 起，新部署未指定管理密码时，打开面板进入首次安装向导，填写自定义管理员邮箱和至少 12 位密码，不需要初始化 Token 或邮箱验证码。邮箱用作登录名，不会创建真实邮箱，也不代表邮箱归属已验证。
 
 首次安装默认仅监听回环地址。请通过本机或 SSH 隧道完成初始化，再对外开放服务；可访问未初始化实例的人能够设置首次管理员。
 

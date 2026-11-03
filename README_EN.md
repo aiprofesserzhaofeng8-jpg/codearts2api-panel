@@ -59,7 +59,7 @@ Task availability and rewards come from the upstream account. A real-account che
 
 Download `codearts2api-panel-vX.Y.Z-windows-amd64.zip` from the [stable release](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest), extract all files, and double-click **start.cmd**. Open http://127.0.0.1:10087/. Go, Node.js, Python, and Docker are not required.
 
-Current source lets you choose an administrator email and password without a setup token. Published v0.3.7 still uses the token wizard. Data stays in `%LOCALAPPDATA%\CodeArts2API` across program upgrades. Stop with Ctrl+C and back up that entire directory before running a new release. This is a foreground application, not a Windows service. See the [Windows guide](deploy/windows/README.md).
+Starting with v0.3.8, setup lets you choose an administrator email and password without a setup token. Data stays in `%LOCALAPPDATA%\CodeArts2API` across program upgrades. Stop with Ctrl+C and back up that entire directory before running a new release. This is a foreground application, not a Windows service. See the [Windows guide](deploy/windows/README.md).
 
 ### One-command system service installation on Linux
 
@@ -73,7 +73,7 @@ Defaults: `/opt/codearts2api`, `codearts2api.service`, and `127.0.0.1:10087`. Ac
 
 ```bash
 sudo systemctl status codearts2api
-# Open the panel to complete setup (v0.3.7 still requires its setup token).
+# Open the panel and choose your administrator email and password.
 # Read release notes before upgrading:
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
 ```
@@ -173,7 +173,7 @@ Backups contain account credentials and need protection. Check the corresponding
 
 ### Where is the administrator login password?
 
-Current source opens a first-install wizard for an empty instance. Choose an administrator email and a password of at least 12 bytes; no setup token or email verification is required. The email is a login identifier, not a newly created mailbox or proof of ownership. Published v0.3.7 still uses its setup token wizard.
+Starting with v0.3.8, the panel opens a first-install wizard for an empty instance. Choose an administrator email and a password of at least 12 bytes; no setup token or email verification is required. The email is a login identifier, not a newly created mailbox or proof of ownership.
 
 Complete setup over loopback or an SSH tunnel before exposing the service: anyone who can reach an uninitialized instance can create its first administrator. Setup closes permanently after the initial commit. Existing installations without an administrator email keep their `admin` login and password. Explicit `CODEARTS_ADMIN_PASSWORD` bootstrapping also retains the legacy `admin` identifier on new instances.
 
