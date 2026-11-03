@@ -24,11 +24,68 @@ BASE = 'https://github.com/' + REPO + '/releases/download/'
 
 # The shell feeds Python through stdin; prompts must use the controlling terminal.
 # Interaction follows the curl-pipe pattern used by Sub2API's deploy/install.sh.
-LANGUAGE = 'zh'
+def system_language():
+    # Match POSIX message-locale precedence without requiring the locale to be installed.
+    value = next((os.environ[key] for key in ('LC_ALL', 'LC_MESSAGES', 'LANG') if os.environ.get(key)), '')
+    code = value.lower().split('.')[0].split('@')[0].replace('-', '_')
+    if code.startswith('en_') or code in ('en', 'c', 'posix'):
+        return 'en'
+    return 'zh'
+
+
+def initial_language(argv):
+    language = system_language()
+    for index, value in enumerate(argv):
+        if value == '--':
+            break
+        candidate = value.split('=', 1)[1] if value.startswith('--lang=') else argv[index + 1] if value == '--lang' and index + 1 < len(argv) else None
+        if candidate in ('zh', 'en', 'auto'):
+            language = system_language() if candidate == 'auto' else candidate
+    return language
+
+
+LANGUAGE = system_language()
 
 
 def message(zh, en):
     return en if LANGUAGE == 'en' else zh
+
+
+def colored(text, stream, code):
+    if stream.isatty() and os.environ.get('TERM') != 'dumb' and 'NO_COLOR' not in os.environ:
+        return f'\033[{code}m{text}\033[0m'
+    return text
+
+
+def emit(text, level='info', file=None):
+    stream = sys.stdout if file is None else file
+    labels = {'info': message('信息', 'INFO'), 'success': message('成功', 'SUCCESS'),
+              'warning': message('提示', 'WARNING'), 'error': message('错误', 'ERROR')}
+    codes = {'info': '34', 'success': '32', 'warning': '33', 'error': '31', 'title': '36'}
+    prefix = f'[{labels[level]}] ' if level in labels else ''
+    print(colored(prefix + text, stream, codes[level]), file=stream, flush=True)
+
+
+class InstallerParser(argparse.ArgumentParser):
+    def format_help(self):
+        text = super().format_help()
+        if LANGUAGE == 'zh':
+            text = text.replace('usage: ', '用法：').replace('positional arguments:', '操作：').replace('options:', '选项：')
+        return text
+
+    def error(self, detail):
+        if LANGUAGE == 'zh':
+            patterns = (
+                (r'unrecognized arguments: (.*)', r'无法识别的参数：\1'),
+                (r'argument (.*): invalid choice: (.*) \(choose from (.*)\)', r'参数 \1 的值 \2 无效；可选值：\3'),
+                (r"argument (.*): invalid int value: (.*)", r'参数 \1 必须是整数，收到：\2'),
+                (r'argument (.*): expected one argument', r'参数 \1 缺少值'),
+                (r'argument (.*): not allowed with argument (.*)', r'参数 \1 不能与 \2 同时使用'),
+            )
+            translated = next((re.sub(pattern, replacement, detail) for pattern, replacement in patterns if re.fullmatch(pattern, detail)), None)
+            detail = translated or '参数无效，请使用 --help 查看用法。'
+        emit(detail, 'error', file=sys.stderr)
+        self.exit(2)
 
 
 class InstallCancelled(Exception):
@@ -36,7 +93,7 @@ class InstallCancelled(Exception):
 
 
 def prompt(reader, writer, label, default):
-    writer.write(f'{label} [{default}]: ')
+    writer.write(colored(f'{label} [{default}]: ', writer, '34'))
     writer.flush()
     line = reader.readline()
     if not line:
@@ -62,7 +119,7 @@ def open_terminal():
 
 def configure(args):
     global LANGUAGE
-    LANGUAGE = args.lang or 'zh'
+    LANGUAGE = args.lang if args.lang in ('zh', 'en') else system_language()
     terminal = None
     if not args.non_interactive and args.command == 'install' and (args.system or args.interactive):
         terminal = open_terminal()
@@ -72,16 +129,19 @@ def configure(args):
     if terminal is not None:
         stack, reader, writer = terminal
         with stack:
-            if args.lang is None:
-                writer.write('\n请选择语言 / Select language\n  1) 中文 (默认/default)\n  2) English\n')
+            if args.lang in (None, 'auto'):
+                emit('\n请选择语言 / Select language', 'title', file=writer)
+                writer.write('  1) 中文\n  2) English\n')
+                default = '2' if LANGUAGE == 'en' else '1'
+                writer.write(message('回车跟随系统语言：中文\n', 'Press Enter to follow the system language: English\n'))
                 while True:
-                    language = prompt(reader, writer, '请选择 / Choice', '1').lower()
+                    language = prompt(reader, writer, message('请选择', 'Choice'), default).lower()
                     if language in ('1', 'zh', '2', 'en'):
                         LANGUAGE = 'en' if language in ('2', 'en') else 'zh'
                         break
-                    writer.write('请输入 1 或 2 / Enter 1 or 2.\n')
-            writer.write('\n' + message('CodeArts2API 系统服务安装向导' if args.system else 'CodeArts2API 安装向导',
-                                         'CodeArts2API system service installer' if args.system else 'CodeArts2API installer') + '\n')
+                    emit(message('请输入 1 或 2。', 'Enter 1 or 2.'), 'warning', file=writer)
+            emit('\n' + message('CodeArts2API 系统服务安装向导' if args.system else 'CodeArts2API 安装向导',
+                                         'CodeArts2API system service installer' if args.system else 'CodeArts2API installer'), 'title', file=writer)
             writer.write(message('0.0.0.0 监听所有网卡；127.0.0.1 仅本机访问。\n',
                                  '0.0.0.0 listens on all interfaces; 127.0.0.1 is local only.\n'))
             if args.host is None and args.system:
@@ -100,8 +160,8 @@ def configure(args):
                     writer.write(message('端口必须是 1-65535 之间的整数。\n', 'Port must be an integer from 1 to 65535.\n'))
             args.host = args.host or '127.0.0.1'
             if args.host == '0.0.0.0':
-                writer.write(message('请限制未初始化面板的外部访问；任何可访问者都能创建首个管理员。\n',
-                                     'Restrict access until setup is complete; anyone who can reach setup can create the first administrator.\n'))
+                emit(message('请限制未初始化面板的外部访问；任何可访问者都能创建首个管理员。\n',
+                                     'Restrict access until setup is complete; anyone who can reach setup can create the first administrator.'), 'warning', file=writer)
             writer.write(message('安装目录：', 'Install directory: ') + str(args.root) + '\n')
             writer.write(message('监听地址：', 'Listen address: ') + f'{args.host}:{args.port}\n')
             while True:
@@ -182,28 +242,30 @@ def digest(path):
     return h.hexdigest()
 
 def main():
+    global LANGUAGE
+    LANGUAGE = initial_language(sys.argv[1:])
     require(sys.version_info >= (3, 10), message('需要 Python 3.10 或更新版本', 'Python 3.10 or newer is required'))
-    p = argparse.ArgumentParser(description='CodeArts2API 稳定版本安装入口；升级前请阅读发布说明。离线使用 panelctl.py。')
+    p = InstallerParser(prog='install.sh', add_help=False, description=message('CodeArts2API 稳定版本安装入口；升级前请阅读发布说明。离线使用 panelctl.py。', 'CodeArts2API stable release installer. Read release notes before upgrading. Use panelctl.py offline.'))
+    p.add_argument('-h', '--help', action='help', help=message('显示帮助并退出', 'Show help and exit'))
     p.add_argument('command', nargs='?', choices=['check', 'download', 'install', 'upgrade'])
     p.add_argument('--version', default='latest')
     p.add_argument('--root', type=Path)
     p.add_argument('--output', type=Path)
     p.add_argument('--name', default='managed')
-    p.add_argument('--port', type=int, help='监听端口 / Listen port (default: 10087)')
-    p.add_argument('--system', action='store_true', help='安装系统级服务；无参数时默认启用')
-    p.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], help='监听地址 / Listen address (default: 127.0.0.1)')
-    p.add_argument('--lang', choices=['zh', 'en'], help='安装器语言 / Installer language')
+    p.add_argument('--port', type=int, help=message('监听端口（默认 10087）', 'Listen port (default: 10087)'))
+    p.add_argument('--system', action='store_true', help=message('安装系统级服务；无参数时默认启用', 'Install a system service (default without a command)'))
+    p.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], help=message('监听地址（默认 127.0.0.1）', 'Listen address (default: 127.0.0.1)'))
+    p.add_argument('--lang', choices=['auto', 'zh', 'en'], help=message('安装器语言（默认跟随系统）', 'Installer language (default: system)'))
     mode = p.add_mutually_exclusive_group()
-    mode.add_argument('--interactive', action='store_true', help='强制显示安装向导 / Require installation prompts')
-    mode.add_argument('--non-interactive', action='store_true', help='使用参数和默认值，不提问 / Never prompt')
+    mode.add_argument('--interactive', action='store_true', help=message('强制显示安装向导', 'Require installation prompts'))
+    mode.add_argument('--non-interactive', action='store_true', help=message('使用参数和默认值，不提问', 'Use arguments and defaults without prompting'))
     args = p.parse_args()
-    global LANGUAGE
-    LANGUAGE = args.lang or 'zh'
+    LANGUAGE = args.lang if args.lang in ('zh', 'en') else system_language()
     args.system = args.system or args.command is None or (args.command in ('install', 'upgrade') and args.root is None and os.geteuid() == 0)
     args.command = args.command or 'install'
-    require(not args.interactive or args.command == 'install', '--interactive 仅用于 install / --interactive is only supported for install')
+    require(not args.interactive or args.command == 'install', message('--interactive 仅用于 install', '--interactive is only supported for install'))
     if args.command == 'install' and args.port is not None:
-        require(1 <= args.port <= 65535, '端口必须是 1-65535 之间的整数 / Port must be between 1 and 65535')
+        require(1 <= args.port <= 65535, message('端口必须是 1-65535 之间的整数', 'Port must be between 1 and 65535'))
     if args.system and args.command in ('install', 'upgrade'):
         require(os.geteuid() == 0, message('系统级安装/升级需要 root，请使用 curl … | sudo bash', 'System installation/upgrade requires root; use curl … | sudo bash'))
         args.root = args.root or Path('/opt/codearts2api')
@@ -222,29 +284,29 @@ def main():
     os.umask(0o077)
     with tempfile.TemporaryDirectory(prefix='codearts-release-') as temp:
         work = Path(temp)
-        print(message('正在获取发布版本…', 'Fetching release information…'), flush=True)
+        emit(message('正在获取发布版本…', 'Fetching release information…'))
         tag, data = release(work, args.version)
         name = f'codearts2api-panel-{tag}-linux-{arch}.tar.gz'
         urls = assets(data, tag, [name, 'panelctl.py', 'SHA256SUMS'])
-        print(message('稳定版本：', 'Stable release: ') + tag, flush=True)
+        emit(message('稳定版本：', 'Stable release: ') + tag)
         if args.command == 'check':
-            print(message('发布附件齐全；安装时将继续校验摘要和状态版本。', 'Required assets are present; installation will verify checksums and state compatibility.'))
+            emit(message('发布附件齐全；安装时将继续校验摘要和状态版本。', 'Required assets are present; installation will verify checksums and state compatibility.'))
             return
-        print(message('正在下载校验清单…', 'Downloading checksums…'), flush=True)
+        emit(message('正在下载校验清单…', 'Downloading checksums…'))
         fetch(urls['SHA256SUMS'], work / 'SHA256SUMS', 65536)
         expected = checksums(work / 'SHA256SUMS')
         for item in (name, 'panelctl.py'):
             require(item in expected, message('校验清单缺少必需附件', 'Required assets are missing from checksums'))
-            print(message('正在下载：', 'Downloading: ') + item, flush=True)
+            emit(message('正在下载：', 'Downloading: ') + item)
             fetch(urls[item], work / item, 512 * 1024**2 if item == name else 2 * 1024**2)
             require(digest(work / item) == expected[item], message('附件摘要不匹配，未执行安装', 'Asset checksum mismatch; installation was not executed'))
-        print(message('附件校验通过。', 'Asset checksums verified.'), flush=True)
+        emit(message('附件校验通过。', 'Asset checksums verified.'), 'success')
         if args.command == 'download':
             # Exclusive directory creation avoids replacing previous downloads.
             args.output.mkdir(mode=0o700)
             for item in (name, 'panelctl.py', 'SHA256SUMS'):
                 (args.output / item).write_bytes((work / item).read_bytes())
-            print(message('已校验并下载至：', 'Verified download saved to: ') + str(args.output))
+            emit(message('已校验并下载至：', 'Verified download saved to: ') + str(args.output))
             return
         command = [sys.executable, str(work / 'panelctl.py'), args.command, '--root', str(args.root), '--archive', str(work / name), '--sha256', expected[name]]
         if args.command == 'install':
@@ -255,26 +317,40 @@ def main():
                 command += ['--system', '--host', args.host]
             else:
                 require(args.host == '127.0.0.1', message('自定义监听地址请使用 --system', 'A custom listen address requires --system'))
-        print(message('正在安装服务…' if args.command == 'install' else '正在升级服务…',
-                      'Installing service…' if args.command == 'install' else 'Upgrading service…'), flush=True)
-        subprocess.run(command, check=True)
-        if LANGUAGE == 'en':
-            print('Operation completed. Existing installations retain their login credentials.')
-            if args.command == 'install':
-                print(f'Open http://127.0.0.1:{args.port}/ on the server to set your administrator email and password.')
-                unit = 'codearts2api.service' if args.system and args.name == 'managed' else 'codearts2api-' + args.name + '.service'
-                print(f'Status: {"sudo systemctl" if args.system else "systemctl --user"} status {unit}')
+        emit(message('正在安装服务…' if args.command == 'install' else '正在升级服务…',
+                      'Installing service…' if args.command == 'install' else 'Upgrading service…'))
+        # Released helpers predate language selection. Keep their successful
+        # summary out of the UI and render one localized summary here. Preserve
+        # original failure diagnostics, including external systemd errors.
+        try:
+            subprocess.run(command, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as error:
+            emit(message('维护工具执行失败，原始诊断如下：', 'Maintenance tool failed; original diagnostics follow:'), 'error', file=sys.stderr)
+            for detail in (error.stdout, error.stderr):
+                if detail:
+                    print(detail.rstrip(), file=sys.stderr)
+            raise InstallError(message('安装或升级未完成，请根据诊断检查服务状态。',
+                                       'Installation or upgrade did not complete; check service status using the diagnostics.')) from None
+        if args.command == 'install':
+            emit(message('安装完成；打开面板设置管理员邮箱和密码。',
+                         'Installation complete. Open the panel to set your administrator email and password.'), 'success')
+            emit(message('访问地址：', 'Open: ') + f'http://127.0.0.1:{args.port}/' + message('（服务器本机）', ' (on the server)'))
+            unit = 'codearts2api.service' if args.system and args.name == 'managed' else 'codearts2api-' + args.name + '.service'
+            emit(message('服务状态：', 'Status: ') + f'{"sudo systemctl" if args.system else "systemctl --user"} status {unit}')
+        else:
+            emit(message('升级完成；保留旧程序和升级前备份。',
+                         'Upgrade complete; the previous program and pre-upgrade backup are retained.'), 'success')
 
 if __name__ == '__main__':
     try:
         main()
     except (InstallCancelled, KeyboardInterrupt):
-        print(message('操作已取消。', 'Operation cancelled.'), file=sys.stderr)
+        emit(message('操作已取消。', 'Operation cancelled.'), 'warning', file=sys.stderr)
         sys.exit(130)
     except urllib.error.HTTPError as error:
-        print(message('GitHub 拒绝或限制请求；可稍后重试，或在服务器配置 GITHUB_TOKEN。', 'GitHub denied or rate-limited this request; retry later or configure GITHUB_TOKEN.') if error.code in (403,429) else message('发布版本或附件不可用，请检查版本号。', 'Release or asset unavailable; check the version.'), file=sys.stderr)
+        emit(message('GitHub 拒绝或限制请求；可稍后重试，或在服务器配置 GITHUB_TOKEN。', 'GitHub denied or rate-limited this request; retry later or configure GITHUB_TOKEN.') if error.code in (403,429) else message('发布版本或附件不可用，请检查版本号。', 'Release or asset unavailable; check the version.'), 'error', file=sys.stderr)
         sys.exit(1)
     except Exception as error:
-        print(str(error) if isinstance(error, InstallError) else message('获取或安装失败；请检查网络、发布附件和部署状态。', 'Download or installation failed; check network, release assets and deployment state.'), file=sys.stderr)
+        emit(str(error) if isinstance(error, InstallError) else message('获取或安装失败；请检查网络、发布附件和部署状态。', 'Download or installation failed; check network, release assets and deployment state.'), 'error', file=sys.stderr)
         sys.exit(1)
 PY

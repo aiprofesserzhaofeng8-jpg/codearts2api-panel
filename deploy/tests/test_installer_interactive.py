@@ -4,6 +4,7 @@ from contextlib import ExitStack
 import io
 import json
 import os
+import re
 from pathlib import Path
 import select
 import subprocess
@@ -26,6 +27,9 @@ def options(**overrides):
 
 class ConfigurationTest(unittest.TestCase):
     def setUp(self):
+        self.environment = patch.dict(os.environ, {'LC_ALL': '', 'LC_MESSAGES': '', 'LANG': 'zh_CN.UTF-8'})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
         module.LANGUAGE = 'zh'
 
     def configure(self, replies, **overrides):
@@ -66,6 +70,22 @@ class ConfigurationTest(unittest.TestCase):
                 module.configure(args)
             terminal.assert_not_called()
 
+    def test_system_locale_priority_and_explicit_override(self):
+        for environment, expected in (
+            ({'LC_ALL': 'en_US.UTF-8', 'LC_MESSAGES': 'zh_CN.UTF-8'}, 'en'),
+            ({'LC_ALL': 'zh_CN.UTF-8', 'LANG': 'en_US.UTF-8'}, 'zh'),
+            ({'LC_MESSAGES': 'en_GB.UTF-8'}, 'en'),
+            ({'LANG': 'en_US.UTF-8'}, 'en'),
+            ({'LANG': 'zh_TW.UTF-8'}, 'zh'),
+            ({'LANG': 'C.UTF-8'}, 'en'),
+            ({'LANG': ''}, 'zh'),
+        ):
+            with self.subTest(environment=environment), patch.dict(os.environ, environment):
+                self.assertEqual(module.system_language(), expected)
+                self.assertEqual(module.initial_language(['--lang=zh']), 'zh')
+                self.assertEqual(module.initial_language(['--lang', 'en']), 'en')
+                self.assertEqual(module.initial_language(['--lang', 'auto']), expected)
+
     def test_eof_and_cancel_abort(self):
         for replies in ('', '1\n', '1\n\n\nn\n'):
             with self.subTest(replies=replies), self.assertRaises(module.InstallCancelled):
@@ -85,7 +105,7 @@ class ConfigurationTest(unittest.TestCase):
 
 @unittest.skipUnless(os.name == 'posix', 'controlling-terminal tests require POSIX')
 class PipeTerminalTest(unittest.TestCase):
-    def run_pipe(self, args, exchanges, fixture=False, no_terminal=False):
+    def run_pipe(self, args, exchanges, fixture=False, no_terminal=False, environment=None, fixture_fail=False):
         import fcntl
         import pty
         import termios
@@ -93,10 +113,16 @@ class PipeTerminalTest(unittest.TestCase):
             root = Path(directory)
             record = root / 'executed.json'
             script = SOURCE.read_text()
+            env = {**os.environ, 'LC_ALL': '', 'LC_MESSAGES': '', 'LANG': 'zh_CN.UTF-8', 'TERM': 'xterm-256color'}
+            env.pop('NO_COLOR', None)
+            env.update(environment or {})
             if fixture:
                 # Keep the exact entry, parsing, downloads/checksums and subprocess
                 # execution. Substitute only GitHub bytes and root prerequisites.
                 helper = 'import json,sys\nfrom pathlib import Path\nif "--help" in sys.argv: print("--system")\nelse: Path(' + repr(str(record)) + ').write_text(json.dumps(sys.argv[1:]))\n'
+                helper += 'if "--help" not in sys.argv: print("legacy helper summary: 旧版工具摘要")\n'
+                if fixture_fail:
+                    helper += 'if "--help" not in sys.argv: sys.stderr.write("original failure diagnostic\\n"); sys.exit(5)\n'
                 injection = '''
 os.geteuid = lambda: 0
 original_is_dir = Path.is_dir
@@ -115,13 +141,13 @@ def fetch(url, target, limit):
                 script = script.replace("if __name__ == '__main__':", injection + "\nif __name__ == '__main__':")
             argv = ['bash', '-s', '--', 'install', '--root', str(root / 'installation')] + args
             if no_terminal:
-                result = subprocess.run(argv, input=script, text=True, capture_output=True, start_new_session=True, timeout=15)
+                result = subprocess.run(argv, input=script, text=True, capture_output=True, start_new_session=True, timeout=15, env=env)
                 return result.returncode, result.stdout + result.stderr, json.loads(record.read_text()) if record.exists() else None
             master, slave = pty.openpty()
             def attach():
                 os.setsid()
                 fcntl.ioctl(slave, termios.TIOCSCTTY, 0)
-            process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=slave, stderr=slave, preexec_fn=attach)
+            process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=slave, stderr=slave, preexec_fn=attach, env=env)
             os.close(slave)
             output = b''
             try:
@@ -155,7 +181,7 @@ def fetch(url, target, limit):
 
     def test_piped_system_install_selects_language_host_and_port(self):
         code, output, command = self.run_pipe(['--system'], [
-            ('Choice [1]', '2\n'), ('Listen address [127.0.0.1]', '0.0.0.0\n'),
+            ('请选择 [1]', '2\n'), ('Listen address [127.0.0.1]', '0.0.0.0\n'),
             ('Server port (recommended: 1024-65535) [10087]', '8089\n'), ('Continue installation?', 'y\n')], fixture=True)
         self.assertEqual(code, 0, output)
         self.assertIn('Asset checksums verified', output)
@@ -186,3 +212,51 @@ def fetch(url, target, limit):
         self.assertEqual(code, 1, output)
         self.assertNotIn('Fetching release', output)
         self.assertIsNone(command)
+
+    def test_enter_follows_english_system_and_selection_overrides_it(self):
+        for reply, language in (('\n', 'en'), ('1\n', 'zh')):
+            tail = [('Continue installation?', 'y\n')] if language == 'en' else [('继续安装？', 'y\n')]
+            code, output, command = self.run_pipe(['--system', '--host', '127.0.0.1', '--port', '8089'],
+                [('Choice [2]', reply)] + tail, fixture=True, environment={'LANG': 'en_US.UTF-8'})
+            self.assertEqual(code, 0, output)
+            self.assertIn('\x1b[36m', output)
+            self.assertIn('\x1b[34m', output)
+            self.assertIn('\x1b[32m', output)
+            self.assertNotIn('legacy helper summary', output)
+            text = re.sub(r'\x1b\[[0-9;]*m', '', output)
+            if language == 'zh':
+                text = text.split('CodeArts2API 系统服务安装向导', 1)[1]
+                for phrase in ('INFO', 'SUCCESS', 'Downloading', 'Stable release', 'Installation complete', 'Status:', 'Listen address'):
+                    self.assertNotIn(phrase, text)
+                self.assertIn('安装完成', text)
+            else:
+                text = text.split('CodeArts2API system service installer', 1)[1]
+                self.assertIsNone(re.search(r'[\u4e00-\u9fff]', text), text)
+                self.assertIn('Installation complete', text)
+
+    def test_color_can_be_disabled_and_redirected_output_has_no_ansi(self):
+        for environment, no_terminal in (({'NO_COLOR': '1'}, False), ({'TERM': 'dumb'}, False), ({}, True)):
+            code, output, _ = self.run_pipe(['--system', '--non-interactive', '--lang', 'zh'], [],
+                                           fixture=True, environment=environment, no_terminal=no_terminal)
+            self.assertEqual(code, 0, output)
+            self.assertNotIn('\x1b[', output)
+
+    def test_tool_failure_keeps_original_diagnostics(self):
+        code, output, _ = self.run_pipe(['--system', '--non-interactive', '--lang', 'zh'], [], fixture=True, fixture_fail=True)
+        self.assertEqual(code, 1, output)
+        self.assertIn('原始诊断如下', output)
+        self.assertIn('original failure diagnostic', output)
+        self.assertNotIn('安装完成', output)
+        self.assertNotIn('Traceback', output)
+
+    def test_help_and_argument_errors_obey_explicit_language(self):
+        for args, phrase in ((['--help'], '用法：'), (['--port', 'abc'], '必须是整数'),
+                             (['--port', '0'], '端口必须'), (['--host', 'invalid'], '可选值'),
+                             (['--interactive', '--non-interactive'], '不能与'), (['--bad-option'], '无法识别')):
+            code, output, _ = self.run_pipe(['--lang', 'zh'] + args, [], no_terminal=True, environment={'LANG': 'en_US.UTF-8'})
+            self.assertIn(phrase, output)
+            self.assertNotIn('usage:', output)
+            self.assertNotIn('error:', output)
+            self.assertNotIn('unrecognized arguments', output)
+            self.assertNotIn('invalid choice', output)
+            self.assertNotIn('Listen port', output)
