@@ -5,6 +5,7 @@ command -v python3 >/dev/null 2>&1 || { echo '需要 Python 3.10+ / Python 3.10+
 exec python3 - "$@" <<'PY'
 import argparse
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -193,16 +195,79 @@ class Redirects(urllib.request.HTTPRedirectHandler):
         require(parsed.scheme == 'https' and parsed.hostname in ('github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com') and parsed.port in (None, 443) and not parsed.username, message('下载重定向来源无效', 'Invalid download redirect origin'))
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
+def download_label(url):
+    parsed = urllib.parse.urlsplit(url)
+    # Never expose signed redirect query strings or credentials in diagnostics.
+    return f'{parsed.hostname or "GitHub"}/{Path(parsed.path).name}'
+
+
+def http_failure(error):
+    label = download_label(error.url)
+    if error.code == 404:
+        detail = message('附件或版本未找到，请核对发布内容。', 'Release or asset not found; check the published files.')
+    elif error.code in (500, 502, 503, 504):
+        detail = message('GitHub 下载服务暂时异常，请稍后重试。', 'The GitHub download service is temporarily unavailable; retry later.')
+    elif error.code in (403, 429):
+        detail = message('请求被拒绝或限流。', 'The request was denied or rate-limited.')
+        if error.url.startswith(API):
+            detail += message('可稍后重试或配置 GITHUB_TOKEN。', ' Retry later or configure GITHUB_TOKEN.')
+    elif error.code == 618:
+        detail = message('附件临时下载链接失效，请重新运行以获取新链接。', 'The temporary asset link expired; rerun to obtain a fresh link.')
+    else:
+        detail = message('下载请求失败，请检查网络或稍后重试。', 'Download request failed; check the network or retry later.')
+    return f'HTTP {error.code} · {label} · {detail}'
+
+
 def fetch(url, target, limit):
-    request = urllib.request.Request(url, headers={'User-Agent': 'codearts2api-installer', 'Accept': 'application/vnd.github+json' if url.startswith(API) else 'application/octet-stream'})
-    if url.startswith(API) and os.environ.get('GITHUB_TOKEN'):
-        request.add_header('Authorization', 'Bearer ' + os.environ['GITHUB_TOKEN'])
-    with urllib.request.build_opener(Redirects()).open(request, timeout=30) as source, target.open('xb') as output:
-        size = 0
-        while chunk := source.read(1024 * 1024):
-            size += len(chunk)
-            require(size <= limit, message('下载超出大小限制', 'Download exceeds the size limit'))
-            output.write(chunk)
+    require(not target.exists() and not target.is_symlink(),
+            message('下载目标已存在，拒绝覆盖。', 'Download target exists; refusing to overwrite it.'))
+    is_asset = url.startswith(BASE)
+    attempts = 3 if is_asset else 1
+    for attempt in range(attempts):
+        # Retry from the original trusted asset URL, never an old signed redirect.
+        # A unique query prevents an intermediate cache reusing an error/expired link.
+        request_url = url
+        if attempt:
+            request_url += ('&' if '?' in url else '?') + 'codearts_retry=' + str(time.time_ns())
+        headers = {'User-Agent': 'codearts2api-installer',
+                   'Accept': 'application/vnd.github+json' if url.startswith(API) else 'application/octet-stream',
+                   'Cache-Control': 'no-cache'}
+        request = urllib.request.Request(request_url, headers=headers)
+        if url.startswith(API) and os.environ.get('GITHUB_TOKEN'):
+            request.add_header('Authorization', 'Bearer ' + os.environ['GITHUB_TOKEN'])
+        created = False
+        try:
+            with urllib.request.build_opener(Redirects()).open(request, timeout=30) as source:
+                with target.open('xb') as output:
+                    created = True
+                    size = 0
+                    while chunk := source.read(1024 * 1024):
+                        size += len(chunk)
+                        require(size <= limit, message('下载超出大小限制', 'Download exceeds the size limit'))
+                        output.write(chunk)
+                    length = source.headers.get('Content-Length')
+                    if length is not None and length.isdecimal() and size != int(length):
+                        raise http.client.IncompleteRead(b'', int(length) - size)
+            return
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.IncompleteRead) as error:
+            if created:
+                target.unlink(missing_ok=True)
+            retryable = not isinstance(error, urllib.error.HTTPError) or error.code in (408, 429, 500, 502, 503, 504, 618)
+            if not retryable or attempt + 1 == attempts:
+                raise
+            if isinstance(error, urllib.error.HTTPError):
+                reason = f'HTTP {error.code}'
+                error.close()
+            else:
+                reason = message('连接中断或下载不完整', 'Connection interrupted or incomplete download')
+            emit(message('下载暂时失败，重新获取链接后重试', 'Temporary download failure; refreshing the link and retrying') +
+                 f' ({attempt + 2}/{attempts}) · {download_label(url)} · {reason}', 'warning')
+            time.sleep(attempt + 1)
+        except BaseException:
+            if created:
+                target.unlink(missing_ok=True)
+            raise
+
 
 class NoReleaseRedirects(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -411,9 +476,10 @@ if __name__ == '__main__':
         emit(message('操作已取消。', 'Operation cancelled.'), 'warning', file=sys.stderr)
         sys.exit(130)
     except urllib.error.HTTPError as error:
-        emit(message('GitHub 拒绝或限制请求；可稍后重试，或在服务器配置 GITHUB_TOKEN。', 'GitHub denied or rate-limited this request; retry later or configure GITHUB_TOKEN.') if error.code in (403,429) else message('发布版本或附件不可用，请检查版本号。', 'Release or asset unavailable; check the version.'), 'error', file=sys.stderr)
+        emit(http_failure(error), 'error', file=sys.stderr)
+        error.close()
         sys.exit(1)
-    except (urllib.error.URLError, TimeoutError):
+    except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.IncompleteRead):
         emit(message('GitHub 连接失败或超时；公开发布页或附件下载也不可达，请检查网络后重试。',
                      'GitHub connection failed or timed out; the public release page or assets could not be reached. Check the network and retry.'), 'error', file=sys.stderr)
         sys.exit(1)
