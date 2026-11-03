@@ -1,7 +1,7 @@
 // Fixtures only: never edits the real price table or calls a model.
 const {chromium}=require('playwright');const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||'chrome'});try{
-const context=await browser.newContext({viewport:{width:1460,height:1000}});const errors=[];
+const context=await browser.newContext({locale:'zh-CN',viewport:{width:1460,height:1000}});const errors=[];
 const prices={'deepseek-v4.1-flash':{currency:'USD',input:.3,output:1.2,cached:.006,source:'DeepSeek 官方高峰参考价',updated_at:'2026-10-25'}};
 const stats={total_requests:10,usage_requests:10,priced_requests:8,priced_usd_requests:8,estimated_usd:.25};
 let saves=0;

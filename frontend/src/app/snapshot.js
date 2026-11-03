@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { serverState } from '../shared/read-model';
 import { isAbortError } from '../api/client';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
@@ -46,10 +47,10 @@ export function refresh() {
             showAdminLogin();
         }
         else if (e.status === 403) {
-            toast("管理接口拒绝访问：" + e.message, "err");
+            toast(tr("管理接口拒绝访问：") + e.message, "err");
         }
         else {
-            toast("加载失败：" + e.message, "err");
+            toast(tr("加载失败：") + e.message, "err");
         }
     });
 }

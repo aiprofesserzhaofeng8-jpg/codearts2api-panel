@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
   const access = JSON.parse(fs.readFileSync(process.argv[3] || 'data/state.json.access.json', 'utf8'));
   const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
   try {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    const context = await browser.newContext({locale:'zh-CN', viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));

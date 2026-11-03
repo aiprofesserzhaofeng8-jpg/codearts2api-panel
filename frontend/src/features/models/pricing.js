@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 import { btn, cell, emptyRow, on, row } from '../../components/controls';
 import { serverState } from '../../shared/read-model';
 import { isAbortError } from '../../api/client';
@@ -20,17 +21,17 @@ export function renderPricing() {
     tb.textContent = "";
     ids.sort().forEach(function (id) {
         var p = pricingState.priceCache[id], ops = cell("");
-        ops.appendChild(btn("编辑", "xs", function () { openPriceEditor(id); }));
-        tb.appendChild(row([cell(id, "mono"), cell("USD", "mono"), cell(p ? String(p.input) : "未配置", "mono"), cell(p ? String(p.output) : "未配置", "mono"), cell(p ? String(p.cached) : "未配置", "mono"), cell(p ? p.source + " · " + p.updated_at : "未核实官方单价，可自定义", "muted pricing-source"), ops]));
+        ops.appendChild(btn(tr("编辑"), "xs", function () { openPriceEditor(id); }));
+        tb.appendChild(row([cell(id, "mono"), cell("USD", "mono"), cell(p ? String(p.input) : tr("未配置"), "mono"), cell(p ? String(p.output) : tr("未配置"), "mono"), cell(p ? String(p.cached) : tr("未配置"), "mono"), cell(p ? p.source + " · " + p.updated_at : tr("未核实官方单价，可自定义"), "muted pricing-source"), ops]));
     });
     if (!ids.length)
-        tb.appendChild(emptyRow(7, "暂无模型，请先刷新模型目录"));
+        tb.appendChild(emptyRow(7, tr("暂无模型，请先刷新模型目录")));
 }
 
 export function loadPricing() {
     if (!serverState.data)
         return Promise.resolve();
-    return api("/admin/api/pricing").then(function (d) { pricingState.priceCache = d.prices || {}; renderPricing(); }).catch(function (e) { if (isAbortError(e)) return; toast("价格表加载失败：" + e.message, "err"); });
+    return api("/admin/api/pricing").then(function (d) { pricingState.priceCache = d.prices || {}; renderPricing(); }).catch(function (e) { if (isAbortError(e)) return; toast(tr("价格表加载失败：") + e.message, "err"); });
 }
 
 export function openPriceEditor(id) {
@@ -55,11 +56,11 @@ export function closePriceEditor() { if (!pricingState.priceSaving) {
 export function savePriceEditor() {
     if (pricingState.priceSaving || !pricingState.priceEditing)
         return;
-    var price = { currency: "USD", source: "管理员自定义参考价" }, fields = { input: "#priceEditInput", output: "#priceEditOutput", cached: "#priceEditCached" };
+    var price = { currency: "USD", source: tr("管理员自定义参考价") }, fields = { input: "#priceEditInput", output: "#priceEditOutput", cached: "#priceEditCached" };
     for (var field in fields) {
         var input = domState.$(fields[field]);
         if (input.value.trim() === "" || !input.checkValidity()) {
-            domState.$("#priceEditError").textContent = "请填写三项有效单价，0 表示免费";
+            domState.$("#priceEditError").textContent = tr("请填写三项有效单价，0 表示免费");
             input.focus();
             return;
         }
@@ -73,8 +74,8 @@ export function savePriceEditor() {
         renderPricing();
         domState.$("#priceEditDialog").close();
         pricingState.priceEditing = null;
-        toast("价格已保存，仅影响新请求", "ok");
-    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#priceEditError").textContent = "保存失败：" + e.message; }).finally(function () { pricingState.priceSaving = false; ["#priceEditSave", "#priceEditCancel", "#priceEditClose", "#priceEditInput", "#priceEditOutput", "#priceEditCached"].forEach(function (id) { domState.$(id).disabled = false; }); });
+        toast(tr("价格已保存，仅影响新请求"), "ok");
+    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#priceEditError").textContent = tr("保存失败：") + e.message; }).finally(function () { pricingState.priceSaving = false; ["#priceEditSave", "#priceEditCancel", "#priceEditClose", "#priceEditInput", "#priceEditOutput", "#priceEditCached"].forEach(function (id) { domState.$(id).disabled = false; }); });
 }
 
 export function mountPricing() {

@@ -2,7 +2,7 @@
 const {chromium}=require('playwright');const assert=require('node:assert/strict');const fs=require('node:fs');
 (async()=>{const base=process.env.CODEARTS_TEST_BASE||'http://127.0.0.1:10088';if(!base.endsWith(':10088'))throw Error('Use isolated port 10088');
 const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||'chrome'});try{
-const context=await browser.newContext({viewport:{width:1460,height:1000},permissions:['clipboard-read','clipboard-write']});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+const context=await browser.newContext({locale:'zh-CN',viewport:{width:1460,height:1000},permissions:['clipboard-read','clipboard-write']});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
 fs.mkdirSync('artifacts',{recursive:true});await page.goto(base+'/#keys');await page.locator('#adminLoginDialog').waitFor({state:'visible'});
 assert.equal((await context.request.get(base+'/admin/api/state')).status(),401);
 await page.locator('#pw').fill('wrong');await page.locator('#savePw').click();await page.waitForFunction(()=>document.querySelector('#adminLoginError').textContent.includes('不正确'));

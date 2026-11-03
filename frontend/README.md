@@ -19,6 +19,7 @@ python3 tools/check_api_types.py
 - `src/shared/read-model.ts`：服务端公开快照；不和表单草稿混用。
 - `src/components/controls.ts`：严格类型的安全文本、表格和按钮助手，包含重复提交保护。
 - `src/layouts`：管理员与用户共用 ConsoleLayout、Topbar、品牌、主题开关及 AuthCard；浅黄色明暗主题在 `src/styles`，共用骨架样式独立在 `layout.css`。
+- `src/i18n`：语言检测、偏好保存及界面翻译；`locales/en.json` 使用中文界面原文作为键。
 
 这次保留成熟的原生 DOM 渲染算法，将其按功能拆成 ES 模块；这些控制器仍为 JavaScript，`checkJs: false`，不能将本次类型检查理解为所有遗留函数已经严格类型化。新增 API 客户端、公共控件、装配、SFC 脚本及契约使用 TypeScript。相关限制见 [M4 验收](../docs/acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。
 
@@ -37,9 +38,19 @@ CODEARTS_TEST_BROWSER=chromium make e2e
 
 测试只使用临时数据和模拟接口，不会真实登录、领取奖励或消耗积分。Linux 上已实测开发代理和退出；Windows CI 构建和运行后端测试，Windows 可分别在两个终端启动 Vite 与 Go。
 
+## 界面语言
+
+登录页、首次安装页及管理员/用户顶栏右上角共用 `LocaleSwitcher`，提供“跟随系统 / 中文 / English”。手动选择保存到浏览器 `localStorage.codearts2api_locale`，优先于浏览器语言；未选择或恢复跟随系统时，按 `navigator.languages`、`navigator.language` 检测中文/英文，未识别则默认中文。跟随系统的检测结果不写成手动偏好。
+
+语言在每次加载时确定一次，轮询、切页、其他标签页的存储事件及 `languagechange` 不会改变已挂载页面的语言。参考 Sub2API，手动切换先保存、再刷新整个页面，让 Vue 与原生 `v-once` 控制器使用同一语言；切换前应保存表单草稿。已提交 API 写入期间禁用菜单，避免刷新中断写入的响应处理。本地存储受限时尝试当前标签页的 `sessionStorage`；全部存储不可用或已有只读偏好无法替换时显示错误，不刷新。
+
+新增界面文案显式调用 `t()`（遗留控制器使用 `tr` 别名），并补充英文词条。静态中文原文是中文回退值，不额外维护第二份中文词典。日期和数字使用 `dateLocale`，时区仍跟随浏览器。模型 ID、账号名称、表单值、接口参数和上游内容保持原值；后台错误及活动描述未做服务端国际化。页面关闭浏览器自动翻译，防止第二套翻译器改写界面。
+
+选择规则和组件职责见 [ADR 0016](../docs/adr/0016-interface-language.md)。`i18n-smoke` 使用隔离实例验证检测、持久化、两种角色导航、中文用户数据、手机菜单和存储受限；`setup-smoke` 同时验证安装页的英文检测和中文选择持久化。
+
 M7 的 UsersPage 和 `/user` UserConsole 为独立响应式 Vue 树，API 使用生成类型；不能接管遗留 `v-once` 页面的节点。用户会话只在 Cookie，显式显示的密钥仅留内存，切页/刷新/退出清除。`ConsoleApplication` 统一检查 `/auth/session`；`/login` 登录后按服务端角色进入 `/` 或 `/user`，不提供角色切换入口。原生管理控制器只在管理员身份确认后挂载。开发代理覆盖 `/auth`、`/user/api`。
 
-两端共用侧栏、顶栏和内容区域骨架，通过插槽提供各自导航与操作。管理员导航 Sidebar 及顶栏的标题/退出控件仍由原生控制器独占；`v-once` 只放在它们自己的子树，不放在包含用户响应式分支的条件链上。管理员导航事件只绑定 `控制台分区` 内的 `button[data-tab]`，不能匹配整个页面的导航按钮。
+两端共用侧栏、顶栏和内容区域骨架，通过插槽提供各自导航与操作。管理员导航 Sidebar 及顶栏的标题/退出控件仍由原生控制器独占；`v-once` 只放在它们自己的子树，不放在包含用户响应式分支的条件链上。管理员导航事件只绑定 `#adminNavigation` 内的 `button[data-tab]`，不能匹配整个页面的导航按钮，也不依赖翻译后的标签文本。
 
 用户导航配置归 `features/users/navigation.ts`，使用 `/user#keys` 等片段支持刷新和浏览器前进/后退；切页清除已显示密钥和密码草稿。主题与桌面侧栏折叠偏好共用本机存储，手机导航为抽屉并支持 Escape 和焦点返回。用户页面只请求当前角色的数据，不提供角色切换链接。
 

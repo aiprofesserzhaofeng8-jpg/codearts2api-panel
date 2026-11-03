@@ -3,7 +3,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
  try{
-  const ctx=await browser.newContext({viewport:{width:1460,height:1000}}),page=await ctx.newPage();
+  const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1460,height:1000}}),page=await ctx.newPage();
   const accounts=['codearts','workbuddy','trae'].map(provider=>({id:provider,name:provider+' fixture',provider,scope:'cn',enabled:true,status:'ok',max_in_flight:0}));
   let saves=0,fail=false;const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));

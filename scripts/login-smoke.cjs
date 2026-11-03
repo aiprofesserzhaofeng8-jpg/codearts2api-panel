@@ -9,7 +9,7 @@ async function chooseAccount(page, id, method='browser') {
 }
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||'chrome'});
- let sid,token;const context=await browser.newContext();
+ let sid,token;const context=await browser.newContext({locale:'zh-CN'});
  try{
   const page=await context.newPage();await page.goto('http://127.0.0.1:10087/#accounts');
   token=await page.locator('meta[name="local-panel-session"]').getAttribute('content');

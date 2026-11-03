@@ -1,4 +1,7 @@
 import type { paths } from './generated/admin';
+import { readonly, ref } from 'vue';
+const writes = ref(0);
+export const pendingWrites = readonly(writes);
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; }
 }
@@ -24,6 +27,7 @@ export async function api(path: string, options: RequestOptions = {}): Promise<u
   if (disposed) throw new DOMException('Console disposed', 'AbortError');
   const currentGeneration = generation;
   const method = options.method ?? 'GET';
+  const writing = method !== 'GET' && method !== 'HEAD';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   // Only replaceable page reads are cancelled; writes keep their existing semantics.
   const key = path.split('?')[0]!;
@@ -34,6 +38,7 @@ export async function api(path: string, options: RequestOptions = {}): Promise<u
     queries.get(key)?.abort(); queries.set(key, controller);
     }
   }
+  if (writing) writes.value++;
   try {
     const response = await fetch(path, { method, headers, credentials: 'same-origin', signal: options.signal ?? controller?.signal,
       body: options.body === undefined ? undefined : JSON.stringify(options.body) });
@@ -46,5 +51,5 @@ export async function api(path: string, options: RequestOptions = {}): Promise<u
       throw new ApiError(message ? String(message) : text || `HTTP ${response.status}`, response.status);
     }
     return data;
-  } finally { if (controller) reads.delete(controller); if (controller && queries.get(key) === controller) queries.delete(key); }
+  } finally { if (writing) writes.value--; if (controller) reads.delete(controller); if (controller && queries.get(key) === controller) queries.delete(key); }
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t as tr } from '../i18n';
+
 import { ref } from 'vue';
 const light = ref(document.documentElement.dataset.theme === 'light');
 function toggle() {
@@ -9,8 +11,8 @@ function toggle() {
 }
 </script>
 <template>
-  <button class="btn ghost" id="themeToggle" :aria-label="light ? '切换到深色主题' : '切换到浅色主题'" :title="light ? '切换到深色主题' : '切换到浅色主题'" @click="toggle">
+  <button class="btn ghost" id="themeToggle" :aria-label="light ? tr('切换到深色主题') : tr('切换到浅色主题')" :title="light ? tr('切换到深色主题') : tr('切换到浅色主题')" @click="toggle">
     <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg>
-    <span id="themeLabel">{{light ? '深色' : '浅色'}}</span>
+    <span id="themeLabel">{{light ? tr('深色') : tr('浅色')}}</span>
   </button>
 </template>

@@ -9,7 +9,7 @@ const fs=require('node:fs');
  const out=process.env.CODEARTS_USER_STYLE_ARTIFACTS||'artifacts/user-style/browser';fs.mkdirSync(out,{recursive:true});
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  try{
-  const admin=await browser.newContext(),context=await browser.newContext({viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']});
+  const admin=await browser.newContext({locale:'zh-CN'}),context=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']});
   assert.equal((await admin.request.post(base+'/auth/login',{data:{username:'admin',password}})).status(),200);
   let response=await admin.request.post(base+'/admin/api/groups',{data:{name:'Standard',account_ids:[],model_ids:[]}});
   assert.equal(response.status(),200);const group=(await response.json()).group;

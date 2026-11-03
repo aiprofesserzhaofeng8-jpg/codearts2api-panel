@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t as tr } from '../i18n';
+
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import ConsoleBrand from './ConsoleBrand.vue';
 import Sidebar from './Sidebar.vue';
@@ -27,20 +29,20 @@ onUnmounted(() => { media.removeEventListener('change', resize); document.body.c
 </script>
 <template>
   <div class="app console-layout" :class="{'sidebar-collapsed': collapsed, 'sidebar-open': open}" :data-console-role="role" @keydown.esc="closeMenu">
-    <a class="skip" href="#main">跳到主要内容</a>
-    <aside id="consoleSidebar" class="sidebar" :inert="mobile && !open" aria-label="侧栏导航" @click="navigate">
+    <a class="skip" href="#main">{{tr('跳到主要内容')}}</a>
+    <aside id="consoleSidebar" class="sidebar" :inert="mobile && !open" :aria-label="tr('侧栏导航')" @click="navigate">
       <ConsoleBrand />
-      <button class="btn ghost console-mobile-close" aria-label="关闭导航" @click="closeMenu">关闭</button>
+      <button class="btn ghost console-mobile-close" :aria-label="tr('关闭导航')" @click="closeMenu">{{tr('关闭')}}</button>
       <div class="sidebar-scroll">
-        <p class="sidebar-section-label">{{role === 'admin' ? '管理空间' : '个人空间'}}</p>
+        <p class="sidebar-section-label">{{role === 'admin' ? tr('管理空间') : tr('个人空间')}}</p>
         <slot name="navigation"><Sidebar /></slot>
       </div>
       <div class="sidebar-foot">
-        <slot name="status"><span v-once id="health" class="badge"><i class="dot"></i><span>检测中…</span></span></slot>
-        <button class="btn ghost console-collapse" :aria-label="collapsed ? '展开侧栏' : '收起侧栏'" :aria-expanded="!collapsed" aria-controls="consoleSidebar" @click="collapse"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path :d="collapsed ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'"/></svg><span>{{collapsed ? '展开侧栏' : '收起侧栏'}}</span></button>
+        <slot name="status"><span v-once id="health" class="badge"><i class="dot"></i><span>{{tr('检测中…')}}</span></span></slot>
+        <button class="btn ghost console-collapse" :aria-label="collapsed ? tr('展开侧栏') : tr('收起侧栏')" :aria-expanded="!collapsed" aria-controls="consoleSidebar" @click="collapse"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path :d="collapsed ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'"/></svg><span>{{collapsed ? tr('展开侧栏') : tr('收起侧栏')}}</span></button>
       </div>
     </aside>
-    <button v-if="open" class="console-backdrop" aria-label="关闭侧栏" tabindex="-1" @click="closeMenu"></button>
+    <button v-if="open" class="console-backdrop" :aria-label="tr('关闭侧栏')" tabindex="-1" @click="closeMenu"></button>
     <div class="main" :inert="mobile && open">
       <Topbar :role="role" :name="name" :open="open" @menu="open = !open">
         <template #heading><slot name="heading"></slot></template>

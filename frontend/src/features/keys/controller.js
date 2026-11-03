@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 import { btn, cell, emptyRow, mk, on, pill, row } from '../../components/controls';
 import { isAbortError } from '../../api/client';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
@@ -14,7 +15,7 @@ export function renderKeys(d) {
     tb.textContent = "";
     var keys = d.keys || [];
     if (!keys.length) {
-        tb.appendChild(emptyRow(7, "暂无密钥（未签发时 /v1 仅允许本机直连）"));
+        tb.appendChild(emptyRow(7, tr("暂无密钥（未签发时 /v1 仅允许本机直连）")));
         return;
     }
     keys.forEach(function (k) {
@@ -23,33 +24,33 @@ export function renderKeys(d) {
         keyInput.type = "password";
         keyInput.readOnly = true;
         keyInput.value = k.key;
-        keyInput.setAttribute("aria-label", "API 密钥 " + (k.name || k.key));
+        keyInput.setAttribute("aria-label", tr("API 密钥 ") + (k.name || k.key));
         keyInput.autocomplete = "off";
         keyInput.addEventListener("click", function () { keyInput.select(); });
         keyCell.appendChild(keyInput);
         var st = cell("");
-        st.appendChild(pill(k.enabled ? "启用" : "停用", k.enabled ? "ok" : ""));
+        st.appendChild(pill(k.enabled ? tr("启用") : tr("停用"), k.enabled ? "ok" : ""));
         var ops = cell("", "actions-cell");
         function fetchKey() { return api("/admin/api/keys/reveal", { method: "POST", body: { key: k.ref || k.key } }).then(function (d) { if (!d.value)
-            throw new Error("密钥不存在"); return d.value; }); }
-        ops.appendChild(btn("复制", "xs primary", function () {
-            return fetchKey().then(function (value) { return copyText(value, "密钥已复制"); }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
+            throw new Error(tr("密钥不存在")); return d.value; }); }
+        ops.appendChild(btn(tr("复制"), "xs primary", function () {
+            return fetchKey().then(function (value) { return copyText(value, tr("密钥已复制")); }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
         }));
-        var reveal = btn("显示", "xs", function () {
+        var reveal = btn(tr("显示"), "xs", function () {
             if (keyInput.type === "text") {
                 keyInput.type = "password";
                 keyInput.value = k.key;
-                reveal.textContent = "显示";
+                reveal.textContent = tr("显示");
                 return;
             }
-            return fetchKey().then(function (value) { keyInput.value = value; keyInput.type = "text"; reveal.textContent = "隐藏"; }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
+            return fetchKey().then(function (value) { keyInput.value = value; keyInput.type = "text"; reveal.textContent = tr("隐藏"); }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
         });
         ops.appendChild(reveal);
-        ops.appendChild(btn("预算", "xs", function () { openKeyBudget(k); }));
-        if (!k.user_id) ops.appendChild(btn("分组", "xs", function () { openKeyGroup(k); }));
-        ops.appendChild(btn(k.enabled ? "停用" : "启用", "xs", function () { keyOp("toggle", k.ref || k.key); }));
-        ops.appendChild(btn("删除", "xs danger", function () {
-            if (confirm("确定删除该密钥？"))
+        ops.appendChild(btn(tr("预算"), "xs", function () { openKeyBudget(k); }));
+        if (!k.user_id) ops.appendChild(btn(tr("分组"), "xs", function () { openKeyGroup(k); }));
+        ops.appendChild(btn(k.enabled ? tr("停用") : tr("启用"), "xs", function () { keyOp("toggle", k.ref || k.key); }));
+        ops.appendChild(btn(tr("删除"), "xs danger", function () {
+            if (confirm(tr("确定删除该密钥？")))
                 keyOp("key", k.ref || k.key);
         }));
         tb.appendChild(row([
@@ -61,8 +62,8 @@ export function renderKeys(d) {
 
 export function keyOp(kind, key) {
     return api("/admin/api/keys?" + kind + "=" + encodeURIComponent(key), { method: "DELETE" })
-        .then(function () { toast("操作成功", "ok"); return refresh(); })
-        .catch(function (e) { if (isAbortError(e)) return; toast("失败：" + e.message, "err"); });
+        .then(function () { toast(tr("操作成功"), "ok"); return refresh(); })
+        .catch(function (e) { if (isAbortError(e)) return; toast(tr("失败：") + e.message, "err"); });
 }
 
 keysState.keyCreating = false;
@@ -70,7 +71,7 @@ keysState.keyCreating = false;
 export function closeKeyCreate() { if (!keysState.keyCreating)
     domState.$("#keyCreateDialog").close(); }
 
-export function openKeyGroup(key) { keysState.editingKeyGroup = key.ref || key.key; domState.$("#keyGroupName").textContent = key.name || "未命名密钥"; fillGroupSelect(domState.$("#keyGroupSelect"), key.group_id, "不分组（全部账号）"); domState.$("#keyGroupError").textContent = ""; domState.$("#keyGroupDialog").showModal(); }
+export function openKeyGroup(key) { keysState.editingKeyGroup = key.ref || key.key; domState.$("#keyGroupName").textContent = key.name || tr("未命名密钥"); fillGroupSelect(domState.$("#keyGroupSelect"), key.group_id, tr("不分组（全部账号）")); domState.$("#keyGroupError").textContent = ""; domState.$("#keyGroupDialog").showModal(); }
 
 export function closeKeyGroup() { if (!keysState.keyGroupSaving)
     domState.$("#keyGroupDialog").close(); }
@@ -85,7 +86,7 @@ export function openKeyBudget(k) {
     domState.$("#budgetRequests").value = b.max_requests || 0;
     domState.$("#budgetTokens").value = b.max_tokens || 0;
     domState.$("#budgetUSD").value = b.max_usd || 0;
-    domState.$("#keyBudgetUsage").textContent = "已用：" + (u.requests || 0) + " 次 / " + (u.tokens || 0) + " Token / $" + Number(u.usd || 0).toFixed(6) + (u.incomplete ? " · 存在未报告用量，需核查后重置预算" : "") + (u.unpriced ? " · 存在未定价消耗，USD 预算需核查后重置" : "");
+    domState.$("#keyBudgetUsage").textContent = tr("已用：") + (u.requests || 0) + tr(" 次 / ") + (u.tokens || 0) + " Token / $" + Number(u.usd || 0).toFixed(6) + (u.incomplete ? tr(" · 存在未报告用量，需核查后重置预算") : "") + (u.unpriced ? tr(" · 存在未定价消耗，USD 预算需核查后重置") : "");
     domState.$("#budgetReset").checked = false;
     domState.$("#keyBudgetError").textContent = "";
     domState.$("#keyBudgetDialog").showModal();
@@ -103,17 +104,17 @@ listen(domState.$("#keyCreateForm"), "submit", function (e) {
     keysState.keyCreating = true;
     domState.$("#keyCreateError").textContent = "";
     domState.$("#keyCreateDialog").querySelectorAll("input,select,button").forEach(function (el) { el.disabled = true; });
-    domState.$("#keyCreateSave").textContent = "创建中…";
+    domState.$("#keyCreateSave").textContent = tr("创建中…");
     api("/admin/api/keys", { method: "POST", body: body }).then(function (r) {
         if (!r.ok || !r.key)
-            throw new Error("密钥创建结果未确认");
-        toast("密钥已创建，可在列表中随时显示或复制", "ok");
+            throw new Error(tr("密钥创建结果未确认"));
+        toast(tr("密钥已创建，可在列表中随时显示或复制"), "ok");
         domState.$("#keyCreateDialog").close();
         domState.$("#keyName").value = "";
         return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#keyCreateError").textContent = "创建失败：" + e.message; }).finally(function () {
+    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#keyCreateError").textContent = tr("创建失败：") + e.message; }).finally(function () {
         keysState.keyCreating = false;
-        domState.$("#keyCreateSave").textContent = "创建密钥";
+        domState.$("#keyCreateSave").textContent = tr("创建密钥");
         domState.$("#keyCreateDialog").querySelectorAll("input,select,button").forEach(function (el) { el.disabled = false; });
     });
 });
@@ -127,7 +128,7 @@ on("#keyGroupSave", function () {
     domState.$("#keyGroupError").textContent = "";
     domState.$("#keyGroupSelect").disabled = true;
     return api("/admin/api/keys/group", { method: "POST", body: { ref: keysState.editingKeyGroup, group_id: domState.$("#keyGroupSelect").value } }).then(function (r) { if (!r.ok)
-        throw new Error("分组绑定未确认"); domState.$("#keyGroupDialog").close(); return refresh(); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#keyGroupError").textContent = "保存失败：" + e.message; }).finally(function () { keysState.keyGroupSaving = false; domState.$("#keyGroupSelect").disabled = false; });
+        throw new Error(tr("分组绑定未确认")); domState.$("#keyGroupDialog").close(); return refresh(); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#keyGroupError").textContent = tr("保存失败：") + e.message; }).finally(function () { keysState.keyGroupSaving = false; domState.$("#keyGroupSelect").disabled = false; });
 });
 on("#keyBudgetClose", function () { if (!keysState.budgetBusy)
     domState.$("#keyBudgetDialog").close(); });
@@ -140,18 +141,18 @@ on("#keyBudgetSave", function () {
     for (var name in fields) {
         var el = domState.$(fields[name]);
         if (!el.checkValidity() || !el.value.trim()) {
-            domState.$("#keyBudgetError").textContent = "请填写非负预算";
+            domState.$("#keyBudgetError").textContent = tr("请填写非负预算");
             return;
         }
         budget[name] = Number(el.value);
     }
     keysState.budgetBusy = true;
-    return api("/admin/api/keys/budget", { method: "POST", body: { ref: keysState.budgetKeyRef, budget: budget, reset: domState.$("#budgetReset").checked } }).then(function () { domState.$("#keyBudgetDialog").close(); toast("预算已保存", "ok"); return refresh(); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#keyBudgetError").textContent = e.message; }).finally(function () { keysState.budgetBusy = false; });
+    return api("/admin/api/keys/budget", { method: "POST", body: { ref: keysState.budgetKeyRef, budget: budget, reset: domState.$("#budgetReset").checked } }).then(function () { domState.$("#keyBudgetDialog").close(); toast(tr("预算已保存"), "ok"); return refresh(); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#keyBudgetError").textContent = e.message; }).finally(function () { keysState.budgetBusy = false; });
 });
 on("#addKey", function () {
     domState.$("#keyName").value = "";
     domState.$("#keyCreateError").textContent = "";
-    fillGroupSelect(domState.$("#keyCreateGroup"), "", "不分组（全部账号）");
+    fillGroupSelect(domState.$("#keyCreateGroup"), "", tr("不分组（全部账号）"));
     domState.$("#keyCreateDialog").showModal();
     domState.$("#keyName").focus();
 });

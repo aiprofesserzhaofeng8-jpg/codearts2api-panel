@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 import { cell, emptyRow, on, pill, row } from '../../components/controls';
 import { isAbortError } from '../../api/client';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
@@ -9,7 +10,7 @@ export function renderLogs(logs) {
     var tb = domState.$("#logs");
     tb.textContent = "";
     if (!logs || !logs.length) {
-        tb.appendChild(emptyRow(9, "暂无日志"));
+        tb.appendChild(emptyRow(9, tr("暂无日志")));
         return;
     }
     logs.forEach(function (l) {
@@ -20,11 +21,11 @@ export function renderLogs(logs) {
             errCell.title = l.err;
         var elapsed = cell((l.first_token_ms == null ? "—" : l.first_token_ms + "ms") + " / " + l.latency_ms + "ms", "mono");
         elapsed.title = (l.attempt_details || []).map(function (a) {
-            return "第 " + a.number + " 次：" + (a.duration_ms == null ? "—" : a.duration_ms + "ms") +
+            return tr("第 ") + a.number + tr(" 次：") + (a.duration_ms == null ? "—" : a.duration_ms + "ms") +
                 (a.status ? " · " + a.status : "") + (a.error_kind ? " · " + a.error_kind : "");
         }).join("\n");
         tb.appendChild(row([
-            cell(fmtTime(l.time), "muted"), cell((l.requested_model && l.requested_model !== l.model ? l.requested_model + " → " : "") + l.model, "mono"), cell(l.stream ? "是" : "否", "mono"),
+            cell(fmtTime(l.time), "muted"), cell((l.requested_model && l.requested_model !== l.model ? l.requested_model + " → " : "") + l.model, "mono"), cell(l.stream ? tr("是") : tr("否"), "mono"),
             st, elapsed, cell(l.prompt_len + " / " + l.output_len, "mono"),
             cell(l.account, "mono"), cell(l.key, "mono"), errCell
         ]));
@@ -35,7 +36,7 @@ export function refreshLogs() {
     var limit = domState.$("#logLimit").value;
     return api("/admin/api/logs?limit=" + encodeURIComponent(limit)).then(function (d) {
         renderLogs(d.logs);
-    }).catch(function (e) { if (isAbortError(e)) return; toast("日志加载失败：" + e.message, "err"); });
+    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("日志加载失败：") + e.message, "err"); });
 }
 
 logsState.auditPage = 1;
@@ -51,8 +52,8 @@ export function loadAudit() {
         tb.textContent = "";
         (d.events || []).forEach(function (e) { tb.appendChild(row([cell(fmtTime(e.time)), cell(e.actor), cell(e.operation), cell(e.path, "mono"), cell(e.peer, "mono"), cell(e.status, "mono")])); });
         if (!tb.children.length)
-            tb.appendChild(emptyRow(6, "暂无管理记录"));
-        domState.$("#auditPage").textContent = "第 " + logsState.auditPage + " 页 · 共 " + logsState.auditTotal + " 条";
+            tb.appendChild(emptyRow(6, tr("暂无管理记录")));
+        domState.$("#auditPage").textContent = tr("第 ") + logsState.auditPage + tr(" 页 · 共 ") + logsState.auditTotal + tr(" 条");
         domState.$("#auditPrev").disabled = logsState.auditPage <= 1;
         domState.$("#auditNext").disabled = logsState.auditPage * 50 >= logsState.auditTotal;
     }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
@@ -61,10 +62,10 @@ export function loadAudit() {
 export function mountLogs() {
 on("#reloadLogs", refreshLogs);
 on("#clearLogs", function () {
-    if (!confirm("确定清空全部日志？"))
+    if (!confirm(tr("确定清空全部日志？")))
         return;
-    api("/admin/api/logs", { method: "DELETE" }).then(function () { toast("已清空", "ok"); return refreshLogs(); })
-        .catch(function (e) { if (isAbortError(e)) return; toast("失败：" + e.message, "err"); });
+    api("/admin/api/logs", { method: "DELETE" }).then(function () { toast(tr("已清空"), "ok"); return refreshLogs(); })
+        .catch(function (e) { if (isAbortError(e)) return; toast(tr("失败：") + e.message, "err"); });
 });
 domState.$("#logLimit").onchange = refreshLogs;
 on("#reloadAudit", loadAudit);

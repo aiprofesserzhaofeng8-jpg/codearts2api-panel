@@ -2,7 +2,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  try{
-  const context=await browser.newContext({viewport:{width:1500,height:1000}}),page=await context.newPage(),errors=[],requests=[];let rejectState=true;
+  const context=await browser.newContext({locale:'zh-CN',viewport:{width:1500,height:1000}}),page=await context.newPage(),errors=[],requests=[];let rejectState=true;
   page.on('pageerror',error=>errors.push(error.message));page.on('console',message=>{if(message.type()==='error'&&/Content Security|Refused to/.test(message.text()))errors.push(message.text());});
   const base=process.env.CODEARTS_TEST_BASE;
   await context.route(base+'/',async route=>{const response=await route.fetch();const body=(await response.text()).replace(/name="local-panel-session" content="[^"]*"/,'name="local-panel-session" content=""');await route.fulfill({response,body});});

@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { serverState } from '../shared/read-model';
 import { cancelPageQueries } from '../api/client';
 import { every } from '../shared/lifecycle';
@@ -21,15 +22,15 @@ export const routesState = {};
 routesState.TAB_IDS = { accounts: 1, groups: 1, users: 1, overview: 1, models: 1, keys: 1, logs: 1, audit: 1, settings: 1 };
 
 routesState.TAB_META = {
-    overview: { title: "用量", hint: "请求、Token 与耗时统计", doc: "用量" },
-    models: { title: "模型", hint: "模型目录、积分倍率与可用性", doc: "模型" },
-    accounts: { title: "账号池", hint: "账号状态、额度与调度", doc: "账号池" },
-    groups: { title: "账号分组", hint: "账号与模型访问范围", doc: "账号分组" },
-    users: { title: "用户管理", hint: "用户、分组权限与共享预算", doc: "用户管理" },
-    keys: { title: "API 密钥", hint: "客户端接入与密钥管理", doc: "API 密钥" },
-    logs: { title: "运行日志", hint: "请求记录与错误排查", doc: "运行日志" },
-    audit: { title: "管理审计", hint: "管理操作、登录与敏感信息访问记录", doc: "管理审计" },
-    settings: { title: "配置", hint: "调度策略与运行参数", doc: "配置" }
+    overview: { title: tr("用量"), hint: tr("请求、Token 与耗时统计"), doc: tr("用量") },
+    models: { title: tr("模型"), hint: tr("模型目录、积分倍率与可用性"), doc: tr("模型") },
+    accounts: { title: tr("账号池"), hint: tr("账号状态、额度与调度"), doc: tr("账号池") },
+    groups: { title: tr("账号分组"), hint: tr("账号与模型访问范围"), doc: tr("账号分组") },
+    users: { title: tr("用户管理"), hint: tr("用户、分组权限与共享预算"), doc: tr("用户管理") },
+    keys: { title: tr("API 密钥"), hint: tr("客户端接入与密钥管理"), doc: tr("API 密钥") },
+    logs: { title: tr("运行日志"), hint: tr("请求记录与错误排查"), doc: tr("运行日志") },
+    audit: { title: tr("管理审计"), hint: tr("管理操作、登录与敏感信息访问记录"), doc: tr("管理审计") },
+    settings: { title: tr("配置"), hint: tr("调度策略与运行参数"), doc: tr("配置") }
 };
 
 // activateTab 是唯一的页签切换入口：同步 class / aria-selected / URL hash。
@@ -41,7 +42,7 @@ export function activateTab(name, updateHash, warm) {
         return;
     if (name !== "keys" && serverState.data)
         renderKeys(serverState.data);
-    document.querySelectorAll('nav[aria-label="控制台分区"] button[data-tab]').forEach(function (x) {
+    document.querySelectorAll('#adminNavigation button[data-tab]').forEach(function (x) {
         var sel = x.dataset.tab === name;
         x.classList.toggle("on", sel);
         x.setAttribute("aria-selected", sel ? "true" : "false");
@@ -53,7 +54,7 @@ export function activateTab(name, updateHash, warm) {
     var meta = routesState.TAB_META[name];
     domState.$("#pageTitle").textContent = meta.title;
     domState.$("#pageHint").textContent = meta.hint;
-    document.title = meta.doc + " · CodeArts2API 控制台";
+    document.title = meta.doc + tr(" · CodeArts2API 控制台");
     if (updateHash) {
         try {
             history.replaceState(null, "", "#" + name);
@@ -83,7 +84,7 @@ export function activateTab(name, updateHash, warm) {
 routesState.initialTab = location.hash.slice(1);
 
 export function mountRoutes() {
-document.querySelectorAll('nav[aria-label="控制台分区"] button[data-tab]').forEach(function (b) {
+document.querySelectorAll('#adminNavigation button[data-tab]').forEach(function (b) {
     listen(b, "click", function () { activateTab(b.dataset.tab, true); });
     // WAI-ARIA tabs：左右方向键切换
     listen(b, "keydown", function (e) {
@@ -99,7 +100,7 @@ document.querySelectorAll('nav[aria-label="控制台分区"] button[data-tab]').
             return;
         e.preventDefault();
         activateTab(keys[i], true);
-        document.querySelector('nav[aria-label="控制台分区"] button[data-tab="' + keys[i] + '"]').focus();
+        document.querySelector('#adminNavigation button[data-tab="' + keys[i] + '"]').focus();
     });
 });
 listen(window, "hashchange", function () {

@@ -1,3 +1,4 @@
-export const userNumber = (value: unknown) => Number(value ?? 0).toLocaleString();
+import { dateLocale } from '../../i18n';
+export const userNumber = (value: unknown) => Number(value ?? 0).toLocaleString(dateLocale);
 export const userUSD = (value: unknown) => '$' + Number(value ?? 0).toFixed(6);
-export const userDate = (time: number) => time ? new Date(time * 1000).toLocaleString() : '—';
+export const userDate = (time: number) => time ? new Date(time * 1000).toLocaleString(dateLocale) : '—';

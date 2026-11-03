@@ -7,7 +7,7 @@ const assert=require('node:assert/strict');
  assert.match(version,/^v[0-9]+\.[0-9]+\.[0-9]+$/);
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  try {
-  const context=await browser.newContext({viewport:{width:1360,height:900}});
+  const context=await browser.newContext({locale:'zh-CN',viewport:{width:1360,height:900}});
   const response=await context.request.post(base+'/auth/login',{headers:{Origin:base},data:{username:'admin',password}});
   assert.equal(response.status(),200);
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));

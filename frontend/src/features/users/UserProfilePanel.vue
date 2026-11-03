@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t as tr } from '../../i18n';
+
 import { computed, ref, watch } from 'vue';
 import type { components } from '../../api/generated/admin';
 import { prepareAvatar } from './avatar';
@@ -31,21 +33,21 @@ function save() {
 </script>
 <template>
   <section class="portal-card" id="userProfile">
-    <div class="portal-section-heading"><div><h2>资料与头像</h2><p>维护公开展示信息，设置你的头像与昵称。</p></div></div>
+    <div class="portal-section-heading"><div><h2>{{tr('资料与头像')}}</h2><p>{{tr('维护公开展示信息，设置你的头像与昵称。')}}</p></div></div>
     <form class="portal-profile-grid" @submit.prevent="save">
       <div class="user-avatar-editor">
-        <img v-if="avatar" :src="avatar" class="user-avatar large" alt="头像预览">
-        <span v-else class="user-avatar large" aria-label="默认头像">{{(name||user.username).slice(0,1).toUpperCase()}}</span>
-        <h3>资料头像</h3><p class="portal-muted">静态图片自动压缩到 20KB 以内；GIF 须不超过 20KB。</p>
+        <img v-if="avatar" :src="avatar" class="user-avatar large" :alt="tr('头像预览')">
+        <span v-else class="user-avatar large" :aria-label="tr('默认头像')">{{(name||user.username).slice(0,1).toUpperCase()}}</span>
+        <h3>{{tr('资料头像')}}</h3><p class="portal-muted">{{tr('静态图片自动压缩到 20KB 以内；GIF 须不超过 20KB。')}}</p>
         <div class="portal-inline-actions">
-        <label class="btn user-upload">上传图片<input id="userAvatarFile" type="file" accept="image/png,image/jpeg,image/gif" :disabled="busy||preparing" @change="select"></label>
-        <button class="btn" id="userAvatarRemove" type="button" :disabled="busy||preparing||!avatar" @click="avatar=''">删除头像</button>
+        <label class="btn user-upload">{{tr('上传图片')}}<input id="userAvatarFile" type="file" accept="image/png,image/jpeg,image/gif" :disabled="busy||preparing" @change="select"></label>
+        <button class="btn" id="userAvatarRemove" type="button" :disabled="busy||preparing||!avatar" @click="avatar=''">{{tr('删除头像')}}</button>
         </div>
-        <p v-if="preparing" role="status">正在处理图片…</p>
+        <p v-if="preparing" role="status">{{tr('正在处理图片…')}}</p>
       </div>
-      <div class="portal-profile-form"><h3>编辑个人资料</h3><div class="field"><label for="userDisplayName">昵称</label><input id="userDisplayName" v-model="name" maxlength="40" :disabled="busy||preparing" placeholder="留空使用登录用户名"></div>
-        <p class="portal-note">登录用户名为 {{user.username}}，修改昵称不会更改登录账号。</p>
-        <button class="btn primary" id="userProfileSave" :disabled="busy||preparing||!dirty">保存资料</button>
+      <div class="portal-profile-form"><h3>{{tr('编辑个人资料')}}</h3><div class="field"><label for="userDisplayName">{{tr('昵称')}}</label><input id="userDisplayName" v-model="name" maxlength="40" :disabled="busy||preparing" :placeholder="tr('留空使用登录用户名')"></div>
+        <p class="portal-note">{{tr('登录用户名为 ')}}{{user.username}}{{tr('，修改昵称不会更改登录账号。')}}</p>
+        <button class="btn primary" id="userProfileSave" :disabled="busy||preparing||!dirty">{{tr('保存资料')}}</button>
       </div>
     </form>
     <p v-if="error" class="err-text" role="alert">{{error}}</p>

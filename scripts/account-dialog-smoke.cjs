@@ -10,7 +10,7 @@ async function chooseAccount(page, id, method='browser') {
 (async()=>{
  const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL||'chrome',headless:true});
  try{
-  const context=await browser.newContext({viewport:{width:1280,height:1000},permissions:['clipboard-read','clipboard-write']});
+  const context=await browser.newContext({locale:'zh-CN',viewport:{width:1280,height:1000},permissions:['clipboard-read','clipboard-write']});
   let accounts=[{id:'fixture-existing',name:'待删除的测试账号',enabled:true,status:'ok',source:'browser',pool:{state:'ready',in_flight:0,max_in_flight:2},has_refresh:false,model_health:{'fixture-model':{failures:1,cooldown_until:Math.floor(Date.now()/1000)+60,updated_at:Math.floor(Date.now()/1000),last_error:'测试模型限流'}}}];
   let verified=false,deleteFailure=true;const counts={start:0,poll:0,callback:0,complete:0,remove:0};
   await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));

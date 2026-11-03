@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});
  try {
-  const ctx=await browser.newContext({viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];
+  const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   const data={accounts:[
    {id:'wb',name:'WB fixture',provider:'workbuddy',scope:'cn',enabled:true,status:'ok'},

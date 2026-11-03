@@ -2,7 +2,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});try{
- const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
+ const context=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  const accounts=['a','b'].map(id=>({id,name:'WorkBuddy '+id,provider:'workbuddy',scope:'cn',enabled:true,growth_tasks_supported:true,status:'ok',pool:{state:'ready',in_flight:0,max_in_flight:2}}));
  let states={},posts=[],accepts=[],active=0,peak=0,pending='',perAccount={};

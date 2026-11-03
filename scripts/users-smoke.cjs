@@ -10,7 +10,7 @@ const fs=require('node:fs');
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  const errors=[];
  try{
-  const admin=await browser.newContext({viewport:{width:1440,height:1000}}),a=await browser.newContext({viewport:{width:1440,height:1000}}),b=await browser.newContext();
+  const admin=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),a=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),b=await browser.newContext({locale:'zh-CN'});
   assert.equal((await admin.request.post(base+'/auth/login',{data:{username:'admin',password}})).status(),200);
   let response=await admin.request.post(base+'/admin/api/groups',{data:{name:'M7 consumer group',account_ids:[],model_ids:[]}});
   assert.equal(response.status(),200);const group=(await response.json()).group;

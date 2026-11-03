@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t as tr } from '../../i18n';
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import ConsoleLayout from '../../layouts/ConsoleLayout.vue';
 import UserNavigation from './UserNavigation.vue';
@@ -32,7 +34,7 @@ function navigate(page:UserPage){
   if(tab.value!==page)history.pushState(null,'','#'+page);
   readRoute();
 }
-watch([tab,user],()=>{document.title=(user.value?currentPage.value.name:'用户登录')+' · CodeArts2API';});
+watch([tab,user],()=>{document.title=(user.value?currentPage.value.name:tr('用户登录'))+' · CodeArts2API';});
 const apiBase=location.origin+'/v1';
 function expired(){epoch++;user.value=undefined;profile.value=undefined;keys.value=[];models.value=[];usage.value=undefined;revealed.value={};oldPassword.value='';newPassword.value='';tab.value='dashboard';}
 function usagePath(page:number){
@@ -47,12 +49,12 @@ async function refresh(page=1){
 }
 async function act(fn:()=>Promise<void>){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}finally{busy.value=false;}}
 function logout(){return act(async()=>{await api('/auth/logout',{method:'POST'});expireSession();});}
-function createKey(name:string){return act(async()=>{await api('/user/api/keys',{method:'POST',body:{name}});keyName.value='';await refresh();message.value='密钥已创建，可点击“显示 / 复制”接入客户端。';});}
+function createKey(name:string){return act(async()=>{await api('/user/api/keys',{method:'POST',body:{name}});keyName.value='';await refresh();message.value=tr('密钥已创建，可点击“显示 / 复制”接入客户端。');});}
 function reveal(ref:string){return act(async()=>{if(revealed.value[ref]){delete revealed.value[ref];return;}const d=await api('/user/api/keys/reveal',{method:'POST',body:{ref}});revealed.value[ref]=d.value;});}
-function copy(ref:string){return act(async()=>{const d=await api('/user/api/keys/reveal',{method:'POST',body:{ref}});try{await navigator.clipboard.writeText(d.value);message.value='密钥已复制';}catch{revealed.value[ref]=d.value;message.value='请选择显示的密钥手动复制';}});}
-function change(ref:string,action:string){if(action==='delete'&&!confirm('删除该密钥？使用它的客户端将无法继续调用。'))return;return act(async()=>{await api('/user/api/keys?ref='+encodeURIComponent(ref)+'&action='+action,{method:'DELETE'});await refresh();});}
-function changePassword(){return act(async()=>{await api('/user/api/password',{method:'POST',body:{old_password:oldPassword.value,password:newPassword.value}});expireSession('密码已修改，请重新登录。');});}
-function saveProfile(update:components['schemas']['UserProfileUpdate']){return act(async()=>{const p=await api('/user/api/profile',{method:'POST',body:update});profile.value=p;user.value=p.user;message.value='个人资料已保存';});}
+function copy(ref:string){return act(async()=>{const d=await api('/user/api/keys/reveal',{method:'POST',body:{ref}});try{await navigator.clipboard.writeText(d.value);message.value=tr('密钥已复制');}catch{revealed.value[ref]=d.value;message.value=tr('请选择显示的密钥手动复制');}});}
+function change(ref:string,action:string){if(action==='delete'&&!confirm(tr('删除该密钥？使用它的客户端将无法继续调用。')))return;return act(async()=>{await api('/user/api/keys?ref='+encodeURIComponent(ref)+'&action='+action,{method:'DELETE'});await refresh();});}
+function changePassword(){return act(async()=>{await api('/user/api/password',{method:'POST',body:{old_password:oldPassword.value,password:newPassword.value}});expireSession(tr('密码已修改，请重新登录。'));});}
+function saveProfile(update:components['schemas']['UserProfileUpdate']){return act(async()=>{const p=await api('/user/api/profile',{method:'POST',body:update});profile.value=p;user.value=p.user;message.value=tr('个人资料已保存');});}
 onMounted(async()=>{window.addEventListener('hashchange',readRoute);try{await refresh();}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}});
 onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);expired();});
 </script>
@@ -63,17 +65,17 @@ onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);expired();})
     <template #heading><h1>{{currentPage.name}}</h1><p class="page-hint">{{currentPage.hint}}</p></template>
     <template #identity>
       <span v-if="user.wallet.enabled" class="portal-wallet-chip"><UserIcon name="wallet" />${{credits(user.wallet.balance)}}</span>
-      <div class="portal-topbar-user"><img v-if="user.avatar" :src="user.avatar" class="user-avatar" alt="用户头像"><span v-else class="user-avatar">{{(user.display_name||user.username).slice(0,1).toUpperCase()}}</span><div><strong>{{user.display_name||user.username}}</strong><span>普通用户</span></div></div>
+      <div class="portal-topbar-user"><img v-if="user.avatar" :src="user.avatar" class="user-avatar" :alt="tr('用户头像')"><span v-else class="user-avatar">{{(user.display_name||user.username).slice(0,1).toUpperCase()}}</span><div><strong>{{user.display_name||user.username}}</strong><span>{{tr('普通用户')}}</span></div></div>
     </template>
-    <template #actions><button class="btn ghost" id="userLogout" :disabled="busy" @click="logout">退出登录</button></template>
-    <template #status><span class="portal-sidebar-user"><UserIcon name="shield" />个人工作空间</span></template>
+    <template #actions><button class="btn ghost" id="userLogout" :disabled="busy" @click="logout">{{tr('退出登录')}}</button></template>
+    <template #status><span class="portal-sidebar-user"><UserIcon name="shield" />{{tr('个人工作空间')}}</span></template>
     <div class="user-main" :class="{'portal-narrow':['profile','identity','password','entitlements'].includes(tab)}">
       <div class="portal-page-actions">
-        <div v-if="tab==='dashboard'" class="portal-welcome"><h2>你好，{{user.display_name||user.username}}</h2><p>查看你的 API 用量与账户状态。</p></div>
-        <span v-else class="portal-breadcrumb">个人空间 <span>/</span> {{currentPage.name}}</span>
+        <div v-if="tab==='dashboard'" class="portal-welcome"><h2>{{tr('你好，')}}{{user.display_name||user.username}}</h2><p>{{tr('查看你的 API 用量与账户状态。')}}</p></div>
+        <span v-else class="portal-breadcrumb">{{tr('个人空间 ')}}<span>/</span> {{currentPage.name}}</span>
         <div class="portal-filter-actions">
-          <label v-if="tab==='dashboard'||tab==='usage'" class="portal-range" for="userUsageRange"><UserIcon name="clock" /><span class="portal-sr-only">统计范围</span><select id="userUsageRange" v-model="range" :disabled="busy" @change="act(()=>refresh())"><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="0">全部历史</option></select></label>
-          <button class="btn" id="userRefresh" :disabled="busy" @click="act(()=>refresh())"><UserIcon name="refresh" /><span>刷新</span></button>
+          <label v-if="tab==='dashboard'||tab==='usage'" class="portal-range" for="userUsageRange"><UserIcon name="clock" /><span class="portal-sr-only">{{tr('统计范围')}}</span><select id="userUsageRange" v-model="range" :disabled="busy" @change="act(()=>refresh())"><option value="7">{{tr('近 7 天')}}</option><option value="30">{{tr('近 30 天')}}</option><option value="0">{{tr('全部历史')}}</option></select></label>
+          <button class="btn" id="userRefresh" :disabled="busy" @click="act(()=>refresh())"><UserIcon name="refresh" /><span>{{tr('刷新')}}</span></button>
         </div>
       </div>
       <p v-if="error" id="userConsoleError" class="portal-notice danger" role="alert">{{error}}</p><p v-if="message" class="portal-notice success" role="status">{{message}}</p>
@@ -86,8 +88,8 @@ onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);expired();})
       <UserIdentityPanel v-if="tab==='identity'" :user="user" @changed="act(()=>refresh())" />
       <template v-if="tab==='profile'"><UserAccountCard :user="user" :group-name="profile?.group_name" /><UserProfilePanel :user="user" :busy="busy" @save="saveProfile" /></template>
       <section v-if="tab==='password'" class="portal-card portal-security">
-        <div class="portal-section-heading"><div><h2>修改密码</h2><p>定期更新密码，保护你的账户安全。</p></div><span class="portal-icon-surface"><UserIcon name="lock" /></span></div>
-        <form class="portal-password-form" @submit.prevent="changePassword"><div class="field"><label for="userOldPassword">当前密码</label><input id="userOldPassword" v-model="oldPassword" type="password" autocomplete="current-password" placeholder="输入当前密码" required maxlength="256"></div><div class="field"><label for="userNewPassword">新密码</label><input id="userNewPassword" v-model="newPassword" type="password" autocomplete="new-password" placeholder="至少 12 位，建议包含字母与数字" required minlength="12" maxlength="256"></div><p class="portal-note">修改后，当前登录及其他已登录会话将失效，需要重新登录。</p><button class="btn primary" :disabled="busy">修改并重新登录</button></form>
+        <div class="portal-section-heading"><div><h2>{{tr('修改密码')}}</h2><p>{{tr('定期更新密码，保护你的账户安全。')}}</p></div><span class="portal-icon-surface"><UserIcon name="lock" /></span></div>
+        <form class="portal-password-form" @submit.prevent="changePassword"><div class="field"><label for="userOldPassword">{{tr('当前密码')}}</label><input id="userOldPassword" v-model="oldPassword" type="password" autocomplete="current-password" :placeholder="tr('输入当前密码')" required maxlength="256"></div><div class="field"><label for="userNewPassword">{{tr('新密码')}}</label><input id="userNewPassword" v-model="newPassword" type="password" autocomplete="new-password" :placeholder="tr('至少 12 位，建议包含字母与数字')" required minlength="12" maxlength="256"></div><p class="portal-note">{{tr('修改后，当前登录及其他已登录会话将失效，需要重新登录。')}}</p><button class="btn primary" :disabled="busy">{{tr('修改并重新登录')}}</button></form>
       </section>
     </div>
   </ConsoleLayout>

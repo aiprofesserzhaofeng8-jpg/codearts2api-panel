@@ -9,7 +9,7 @@ const assert=require('node:assert/strict');
   if(!expected)throw new Error('An enabled existing key is required');
   const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||undefined});
   try {
-    const context=await browser.newContext({permissions:['clipboard-read','clipboard-write']});
+    const context=await browser.newContext({locale:'zh-CN',permissions:['clipboard-read','clipboard-write']});
     const access=JSON.parse(fs.readFileSync('data/state.json.access.json','utf8'));
     const login=await context.request.post(base+'/auth/login',{data:{username:'admin',password:process.env.CODEARTS_ADMIN_PASSWORD||access.admin_password}});
     if(!login.ok())throw new Error('Administrator login failed; set CODEARTS_ADMIN_PASSWORD if it has changed');

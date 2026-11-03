@@ -23,6 +23,8 @@ CodeArts2API Panel provides account management, model request forwarding, protoc
 
 Run it locally, on a server, or in Docker. The listening address and port are configurable, and an HTTPS reverse proxy can provide public access. The architecture supports one process, one administrator, and multiple consumer users. Users receive a group and a shared budget and manage their own keys and usage at `/user`; see the [user guide](docs/USERS.md). Multiple instances must not share the same state file.
 
+The interface supports Chinese and English. The top-right menu offers System language, 中文, and English. Manual choices are saved in the current browser. Without a manual choice, the interface follows the browser's supported language and falls back to Chinese. Switching reloads the page; save form drafts first.
+
 ## Features
 
 | Feature | Description |

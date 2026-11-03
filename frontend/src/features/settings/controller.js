@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 import { clearStoredPw } from '../../app/session';
 import { on } from '../../components/controls';
 import { isAbortError } from '../../api/client';
@@ -27,7 +28,7 @@ export function readProviderPolicy(key) {
 export function renderSettings(s) {
     // 用户正在编辑设置时不要用服务端值覆盖 —— 否则在别的页签点一下
     // 「探活」触发的 refresh() 会静默丢掉未保存的改动。
-    domState.$("#sPw").placeholder = s.admin_password_set ? "已设置，留空则不修改" : "未设置";
+    domState.$("#sPw").placeholder = s.admin_password_set ? tr("已设置，留空则不修改") : tr("未设置");
     if (settingsState.settingsDirty)
         return;
     const common=s.common_prompt || {prompt_mode:'passthrough',prompt_text:'',prompt_fallback:true,sanitize:true};
@@ -102,7 +103,7 @@ on("#saveSettings", function () {
         aliases = JSON.parse(domState.$("#sAliases").value || "{}");
     }
     catch {
-        toast("模型别名不是合法 JSON", "err");
+        toast(tr("模型别名不是合法 JSON"), "err");
         return;
     }
     var body = {
@@ -147,13 +148,13 @@ on("#saveSettings", function () {
         body.admin_password = np;
     return api("/admin/api/settings", { method: "POST", body: body }).then(function (r) {
         domState.$("#sPw").value = "";
-        toast("设置已保存", "ok");
+        toast(tr("设置已保存"), "ok");
         clearSettingsDirty();
         renderSettings(r.settings || {});
         if (np !== "")
             return adminLogin(np.trim()).then(refresh);
         return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; toast("保存失败：" + e.message, "err"); });
+    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("保存失败：") + e.message, "err"); });
 });
 // 设置表单一旦被编辑就标记为脏，refresh() 不再覆盖它。
 ["input", "change"].forEach(function (evt) {

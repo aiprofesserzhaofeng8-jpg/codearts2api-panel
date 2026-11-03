@@ -7,7 +7,7 @@ async function until(check){const end=Date.now()+5000;while(!check()){assert.ok(
 (async()=>{
  const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL||'chrome',headless:true});
  try{
-  const ctx=await browser.newContext({viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];
+  const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   let accounts=['a','b','c','disabled'].map(id=>({id,name:'WorkBuddy '+id,provider:'workbuddy',scope:'cn',enabled:id!=='disabled',growth_tasks_supported:true,status:'ok',pool:{state:id==='disabled'?'disabled':'ready',in_flight:0,max_in_flight:2}}));
   accounts.push({id:'global',name:'WB global',provider:'workbuddy',scope:'global',enabled:true},{id:'enterprise',name:'WB enterprise',provider:'workbuddy',scope:'cn',enabled:true},{id:'trae',name:'Trae fixture',provider:'trae',enabled:true},{id:'ca',name:'CodeArts fixture',provider:'codearts',enabled:true});

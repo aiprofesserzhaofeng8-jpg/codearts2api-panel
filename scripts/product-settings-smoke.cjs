@@ -3,7 +3,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  try{
-  const ctx=await browser.newContext({viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   const data=fixture();data.accounts[0].name='WorkBuddy fixture';data.models[0].name='DeepSeek-V4.1-Flash';data.settings={common_prompt:{prompt_mode:'custom',prompt_text:'COMMON',prompt_fallback:true,sanitize:true},codearts:{prompt_mode:'passthrough',prompt_text:'CA',prompt_fallback:true,sanitize:true},workbuddy:{prompt_mode:'custom',prompt_text:'WB',prompt_fallback:true,sanitize:true,prompt_overrides:{prompt_fallback:false,sanitize:false,prompt_text:''}},trae:{prompt_mode:'passthrough',prompt_text:'TR',prompt_fallback:true,sanitize:true}};
   let savedSettings,groupWrites=0;
   await mock(ctx,{onRequest:async(route,url,req)=>{

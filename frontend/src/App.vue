@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t as tr } from './i18n';
+
 import { onMounted, onUnmounted } from "vue";
 import { startConsole } from "./app/bootstrap";
 import AccountsPage from './features/accounts/AccountsPage.vue';
@@ -29,5 +31,5 @@ onUnmounted(() => dispose?.());
     <AuditPage />
     <SettingsPage />
   </ConsoleLayout>
-  <div class="toast" id="toast" role="status" aria-live="polite" title="点击关闭"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" :title="tr('点击关闭')"></div>
 </template>

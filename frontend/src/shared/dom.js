@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { listen } from './lifecycle';
 import { mk } from '../components/controls';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
@@ -40,7 +41,7 @@ export function legacyCopy(text) {
 // 失败再回退到已废弃的 execCommand。
 export function copyText(text, okMsg) {
     var done = function (ok) {
-        toast(ok ? (okMsg || "已复制") : "复制失败，请手动选择后按 Ctrl+C", ok ? "ok" : "err");
+        toast(ok ? (okMsg || tr("已复制")) : tr("复制失败，请手动选择后按 Ctrl+C"), ok ? "ok" : "err");
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
         return navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(legacyCopy(text)); });
@@ -61,11 +62,11 @@ export function fmtDur(sec) {
     if (sec === undefined || sec === null)
         return "—";
     if (sec <= 0)
-        return "已过期";
+        return tr("已过期");
     var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
     if (h > 0)
-        return h + " 小时 " + m + " 分";
-    return m + " 分 " + (sec % 60) + " 秒";
+        return h + tr(" 小时 ") + m + tr(" 分");
+    return m + tr(" 分 ") + (sec % 60) + tr(" 秒");
 }
 
 export function fmtNum(n) {

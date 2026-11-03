@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { shallowRef } from 'vue';
 import type { components } from '../api/generated/admin';
 
@@ -6,7 +7,7 @@ export const principal = shallowRef<Principal>();
 export const loginNotice = shallowRef('');
 
 export function setPrincipal(value: Principal): void {
-  if (value.role !== 'admin' && value.role !== 'user') throw new Error('登录身份无效');
+  if (value.role !== 'admin' && value.role !== 'user') throw new Error(tr("登录身份无效"));
   principal.value = value;
   loginNotice.value = '';
 }

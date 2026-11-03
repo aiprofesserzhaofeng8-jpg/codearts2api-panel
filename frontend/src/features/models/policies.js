@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 import { btn, cell, emptyRow, mk, on, row } from '../../components/controls';
 import { serverState } from '../../shared/read-model';
 import { isAbortError } from '../../api/client';
@@ -17,7 +18,7 @@ policiesState.policyFields = { context_window: "#policyContext", max_output_toke
 export function loadModelPolicies() {
     if (!serverState.data)
         return Promise.resolve();
-    return api("/admin/api/model-policies").then(function (d) { policiesState.modelPolicies = d.policies || {}; renderModelPolicies(); }).catch(function (e) { if (isAbortError(e)) return; toast("策略加载失败：" + e.message, "err"); });
+    return api("/admin/api/model-policies").then(function (d) { policiesState.modelPolicies = d.policies || {}; renderModelPolicies(); }).catch(function (e) { if (isAbortError(e)) return; toast(tr("策略加载失败：") + e.message, "err"); });
 }
 
 export function renderModelPolicies() {
@@ -28,14 +29,14 @@ export function renderModelPolicies() {
     tb.textContent = "";
     ids.sort().forEach(function (id) {
         var p = policiesState.modelPolicies[id], ops = cell("");
-        ops.appendChild(btn("编辑", "xs", function () { openModelPolicy(id); }));
+        ops.appendChild(btn(tr("编辑"), "xs", function () { openModelPolicy(id); }));
         tb.appendChild(row([
-            cell(id, "mono"), cell(p ? p.context_window + " / " + p.max_output_tokens : "未配置", "mono"), cell(p ? p.trigger_tokens + " / " + p.keep_recent_tokens : "—", "mono"),
-            cell(p && p.summary_enabled ? (p.summary_retry ? "完整性保护 · 最多 2 次" : "完整性保护 · 单次") : "关闭", "muted"), cell(p ? p.source : "先验证模型能力，再配置", "muted pricing-source"), ops
+            cell(id, "mono"), cell(p ? p.context_window + " / " + p.max_output_tokens : tr("未配置"), "mono"), cell(p ? p.trigger_tokens + " / " + p.keep_recent_tokens : "—", "mono"),
+            cell(p && p.summary_enabled ? (p.summary_retry ? tr("完整性保护 · 最多 2 次") : tr("完整性保护 · 单次")) : tr("关闭"), "muted"), cell(p ? p.source : tr("先验证模型能力，再配置"), "muted pricing-source"), ops
         ]));
     });
     if (!ids.length)
-        tb.appendChild(emptyRow(6, "暂无模型"));
+        tb.appendChild(emptyRow(6, tr("暂无模型")));
 }
 
 export function openModelPolicy(id) {
@@ -48,7 +49,7 @@ export function openModelPolicy(id) {
     Object.keys(policiesState.policyFields).forEach(function (k) { domState.$(policiesState.policyFields[k]).value = p[k] || ""; });
     var fallback = domState.$("#policyFallback");
     fallback.textContent = "";
-    var none = mk("option", "", "不使用备用模型");
+    var none = mk("option", "", tr("不使用备用模型"));
     none.value = "";
     fallback.appendChild(none);
     ((serverState.data || {}).models || []).forEach(function (m) { if (m.source !== "alias" && m.id !== id) {
@@ -75,7 +76,7 @@ export function saveModelPolicy() {
     for (var k in policiesState.policyFields) {
         var input = domState.$(policiesState.policyFields[k]);
         if (!input.checkValidity() || input.value.trim() === "") {
-            domState.$("#policyError").textContent = "请填写有效整数参数";
+            domState.$("#policyError").textContent = tr("请填写有效整数参数");
             input.focus();
             return;
         }
@@ -84,7 +85,7 @@ export function saveModelPolicy() {
     policy.summary_fallback_model = domState.$("#policyFallback").value;
     policiesState.savingPolicy = true;
     domState.$("#policyError").textContent = "";
-    return api("/admin/api/model-policies", { method: "POST", body: { model: policiesState.editingPolicy, policy: policy } }).then(function (d) { policiesState.modelPolicies = d.policies; renderModelPolicies(); domState.$("#policyDialog").close(); policiesState.editingPolicy = null; toast("策略已保存；重新运行客户端启动器获取更新", "ok"); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#policyError").textContent = e.message; }).finally(function () { policiesState.savingPolicy = false; });
+    return api("/admin/api/model-policies", { method: "POST", body: { model: policiesState.editingPolicy, policy: policy } }).then(function (d) { policiesState.modelPolicies = d.policies; renderModelPolicies(); domState.$("#policyDialog").close(); policiesState.editingPolicy = null; toast(tr("策略已保存；重新运行客户端启动器获取更新"), "ok"); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#policyError").textContent = e.message; }).finally(function () { policiesState.savingPolicy = false; });
 }
 
 export function mountPolicies() {

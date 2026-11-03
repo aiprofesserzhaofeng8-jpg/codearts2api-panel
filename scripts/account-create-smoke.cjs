@@ -3,7 +3,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
 (async()=>{
  const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});
  try{
-  const ctx=await browser.newContext({viewport:{width:1280,height:1000}});const page=await ctx.newPage(),errors=[];
+  const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1280,height:1000}});const page=await ctx.newPage(),errors=[];
   let starts=0,cancels=0,failCancel=true,failImport=true,imports=0;
   page.on('pageerror',e=>errors.push(e.message));
   await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));

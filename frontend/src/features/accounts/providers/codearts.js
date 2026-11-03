@@ -1,3 +1,4 @@
+import { t as tr } from '../../../i18n';
 import { on } from '../../../components/controls';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
 import { copyText, domState, fmtTime, toast } from '../../../shared/dom';
@@ -91,24 +92,24 @@ export function generateLogin() {
     domState.$("#loginError").classList.add("hidden");
     return api("/admin/api/login/start", { method: "POST", body: {} }).then(function (r) {
         if (!isTrustedAuthURL(r.auth_url))
-            throw new Error("授权地址无效");
+            throw new Error(tr("授权地址无效"));
         codeartsState.loginSid = r.session_id;
         codeartsState.loginPreview = null;
         rememberLogin(r);
         drawLogin();
         domState.$("#loginPasted").value = "";
-        domState.$("#loginStatus").textContent = "链接已生成。请复制到另一浏览器完成登录，再返回提交授权信息。";
+        domState.$("#loginStatus").textContent = tr("链接已生成。请复制到另一浏览器完成登录，再返回提交授权信息。");
     }).catch(loginFailure).finally(function () { setLoginBusy(false); });
 }
 
 export function pollLogin() {
     if (!codeartsState.loginSid)
-        return Promise.reject(new Error("请先生成登录链接"));
+        return Promise.reject(new Error(tr("请先生成登录链接")));
     return api("/admin/api/login/poll", { method: "POST", body: { session_id: codeartsState.loginSid } }).then(function (r) {
         if (r.saved) {
             stopLogin();
             drawLogin();
-            domState.$("#loginStatus").textContent = "本次登录已保存，可关闭窗口。";
+            domState.$("#loginStatus").textContent = tr("本次登录已保存，可关闭窗口。");
             return refresh();
         }
         if (r.status === "confirmed" && r.ready) {
@@ -116,17 +117,17 @@ export function pollLogin() {
             domState.$("#loginError").classList.add("hidden");
             codeartsState.loginPreview = r;
             domState.$("#loginPasted").value = "";
-            domState.$("#loginAccountName").textContent = r.account_name || r.account || "码道账号";
-            domState.$("#loginAccountInfo").textContent = (r.domain_id ? "账号标识：" + r.domain_id + " · " : "") + (r.has_refresh ? "可自动续期" : "临时凭据，到期需重新登录") + " · 有效期至 " + fmtTime(r.expires_at);
+            domState.$("#loginAccountName").textContent = r.account_name || r.account || tr("码道账号");
+            domState.$("#loginAccountInfo").textContent = (r.domain_id ? tr("账号标识：") + r.domain_id + " · " : "") + (r.has_refresh ? tr("可自动续期") : tr("临时凭据，到期需重新登录")) + tr(" · 有效期至 ") + fmtTime(r.expires_at);
             domState.$("#loginReplaceLabel").classList.toggle("hidden", !r.existing);
             domState.$("#loginReplace").checked = false;
-            domState.$("#loginStatus").textContent = "授权已验证，尚未保存。请核对账号，再点击「确认完成登录」。";
+            domState.$("#loginStatus").textContent = tr("授权已验证，尚未保存。请核对账号，再点击「确认完成登录」。");
         }
         else {
             codeartsState.loginPreview = null;
-            domState.$("#loginStatus").textContent = r.message || "尚未收到授权，请在另一浏览器登录后重试。";
+            domState.$("#loginStatus").textContent = r.message || tr("尚未收到授权，请在另一浏览器登录后重试。");
             if (["failed", "expired", "canceled"].indexOf(r.status) >= 0)
-                loginFailure(new Error((r.message || "本次授权未完成") + "。请重新生成登录链接。"));
+                loginFailure(new Error((r.message || tr("本次授权未完成")) + tr("。请重新生成登录链接。")));
         }
         drawLogin();
     });
@@ -171,8 +172,8 @@ export function setLoginURL(raw, callback, tunnel) {
     else {
         a.removeAttribute("href");
         a.classList.add("hidden");
-        toast("授权地址不在白名单内，已禁止直接打开：\n" + raw +
-            "\n（仅允许 *.huaweicloud.com / *.huaweicloud.cn / *.huawei.com 与本机回环）", "err");
+        toast(tr("授权地址不在白名单内，已禁止直接打开：\n") + raw +
+            tr("\n（仅允许 *.huaweicloud.com / *.huaweicloud.cn / *.huawei.com 与本机回环）"), "err");
     }
     return ok;
 }
@@ -186,7 +187,7 @@ export function cancelLogin(restart) {
         stopLogin();
         drawLogin();
         domState.$("#loginPasted").value = "";
-        domState.$("#loginStatus").textContent = "先生成链接，再到另一浏览器完成授权。";
+        domState.$("#loginStatus").textContent = tr("先生成链接，再到另一浏览器完成授权。");
         setLoginBusy(false);
         if (restart)
             return generateLogin();
@@ -195,7 +196,7 @@ export function cancelLogin(restart) {
 
 export function mountCodearts() {
 on("#loginGenerate", generateLogin);
-on("#loginCopy", function () { return copyText(domState.$("#loginURL").value, "链接已复制，请在另一个浏览器打开"); });
+on("#loginCopy", function () { return copyText(domState.$("#loginURL").value, tr("链接已复制，请在另一个浏览器打开")); });
 on("#loginCheck", function () {
     if (codeartsState.loginBusy)
         return;
@@ -207,7 +208,7 @@ on("#loginComplete", function () {
     if (codeartsState.loginBusy || !codeartsState.loginPreview || !codeartsState.loginSid)
         return;
     if (codeartsState.loginPreview.existing && !domState.$("#loginReplace").checked) {
-        loginFailure(new Error("请勾选确认更新已有账号，或重新生成链接登录其他账号"));
+        loginFailure(new Error(tr("请勾选确认更新已有账号，或重新生成链接登录其他账号")));
         return;
     }
     setLoginBusy(true);
@@ -216,7 +217,7 @@ on("#loginComplete", function () {
         stopLogin();
         drawLogin();
         finishAccountCreation();
-        toast("账号已保存", "ok");
+        toast(tr("账号已保存"), "ok");
         return refresh();
     }).catch(loginFailure).finally(function () { setLoginBusy(false); });
 });
@@ -225,7 +226,7 @@ on("#loginSubmit", function () {
         return;
     var input = domState.$("#loginPasted").value.trim();
     if (!codeartsState.loginSid) {
-        loginFailure(new Error("请先生成登录链接"));
+        loginFailure(new Error(tr("请先生成登录链接")));
         return;
     }
     if (!input) {
@@ -238,11 +239,11 @@ on("#loginSubmit", function () {
     domState.$("#loginError").classList.add("hidden");
     return api("/admin/api/login/callback", { method: "POST", body: { session_id: codeartsState.loginSid, input: input } }).then(function () {
         domState.$("#loginPasted").value = "";
-        domState.$("#loginStatus").textContent = "授权信息已提交，正在换取凭据。稍后点击检查授权信息。";
+        domState.$("#loginStatus").textContent = tr("授权信息已提交，正在换取凭据。稍后点击检查授权信息。");
         return pollLogin();
     }).catch(loginFailure).finally(function () { setLoginBusy(false); });
 });
 on("#loginCancel", function () { return cancelLogin(false); });
 on("#loginRestart", function () { return cancelLogin(true); });
-on("#copyTunnel", function () { return copyText(domState.$("#loginTunnel").value, "转发命令已复制"); });
+on("#copyTunnel", function () { return copyText(domState.$("#loginTunnel").value, tr("转发命令已复制")); });
 }

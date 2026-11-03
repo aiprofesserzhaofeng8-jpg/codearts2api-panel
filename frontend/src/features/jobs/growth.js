@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 // WorkBuddy only. Existing bounded workers and unknown-result rules are preserved.
 export function createGrowth(ui) {
     var $=function(id){return document.getElementById(id);};
@@ -45,29 +46,29 @@ export function createGrowth(ui) {
       $("growthRunAll").disabled=busy||!runCount;
       $("growthBuddyConsent").classList.toggle("hidden",!entries.some(needsConsent));
       $("growthBuddyAgree").disabled=busy;
-      $("growthRefresh").textContent=busyKind==="refresh"?"刷新中…":"刷新进度";
-      $("growthAcceptAll").textContent=busyKind==="accept"?"接取中…":"接取未报名任务";
+      $("growthRefresh").textContent=busyKind==="refresh"?tr("刷新中…"):tr("刷新进度");
+      $("growthAcceptAll").textContent=busyKind==="accept"?tr("接取中…"):tr("接取未报名任务");
       var hasActivity=entries.some(function(e){return e.tasks.some(function(t){return t.activity_only&&eligible(e,t,"run");});});
-      $("growthRunAll").textContent=busyKind==="run"?"执行中…":(entries.some(needsBuddy)||hasActivity?"执行成长任务":"执行对话任务")+(runCount?"（"+runCount+"）":"");
-      $("growthClaimAll").textContent=busyKind==="claim"?"领取中…":"领取可领奖励";
-      $("growthRunAll").title=runCount?"按依赖顺序执行；先执行不调用模型的事件任务，再执行会消耗积分的模型、专家和技能任务":"当前没有可执行的任务；其他任务需在官方应用完成";
-      $("growthClaimAll").title=$("growthClaimAll").disabled&&!busy?"当前没有可领取的奖励，请先完成任务并刷新进度":"只领取上游已确认达标的奖励";
+      $("growthRunAll").textContent=busyKind==="run"?tr("执行中…"):(entries.some(needsBuddy)||hasActivity?tr("执行成长任务"):tr("执行对话任务"))+(runCount?"（"+runCount+"）":"");
+      $("growthClaimAll").textContent=busyKind==="claim"?tr("领取中…"):tr("领取可领奖励");
+      $("growthRunAll").title=runCount?tr("按依赖顺序执行；先执行不调用模型的事件任务，再执行会消耗积分的模型、专家和技能任务"):tr("当前没有可执行的任务；其他任务需在官方应用完成");
+      $("growthClaimAll").title=$("growthClaimAll").disabled&&!busy?tr("当前没有可领取的奖励，请先完成任务并刷新进度"):tr("只领取上游已确认达标的奖励");
       var all=entries.flatMap(function(e){return e.tasks;}),failed=entries.filter(function(e){return e.error;});
-      $("growthSummary").textContent=(entries.length>1?entries.length+" 个账号 · ":"")+all.length+" 项任务 · "+all.filter(function(t){return t.claimed;}).length+" 项已领取 · "+all.filter(function(t){return t.claimable;}).length+" 项可领取 · "+all.filter(function(t){return t.auto_supported&&!t.claimed;}).length+" 项支持自动执行";
+      $("growthSummary").textContent=(entries.length>1?entries.length+tr(" 个账号 · "):"")+all.length+tr(" 项任务 · ")+all.filter(function(t){return t.claimed;}).length+tr(" 项已领取 · ")+all.filter(function(t){return t.claimable;}).length+tr(" 项可领取 · ")+all.filter(function(t){return t.auto_supported&&!t.claimed;}).length+tr(" 项支持自动执行");
       $("growthNotice").textContent=notice;
-      $("growthError").textContent=failed.length?(failed.length>1?failed.length+" 个账号操作未完成；":"")+(entries.length>1?(failed[0].account.name||"WorkBuddy")+"：":"")+failed[0].error:"";
+      $("growthError").textContent=failed.length?(failed.length>1?failed.length+tr(" 个账号操作未完成；"):"")+(entries.length>1?(failed[0].account.name||"WorkBuddy")+"：":"")+failed[0].error:"";
       var list=$("growthTaskList");list.setAttribute("aria-busy",busy?"true":"false");list.textContent="";
-      if(!entries.length){list.appendChild(ui.mk("p","empty","没有支持成长任务的账号"));return;}
+      if(!entries.length){list.appendChild(ui.mk("p","empty",tr("没有支持成长任务的账号")));return;}
       entries.forEach(function(entry){
         var group=ui.mk("div","growth-account");group.dataset.accountId=entry.account.id;
         if(entries.length>1){
           var header=ui.mk("div","growth-account-head");header.appendChild(ui.mk("strong","",entry.account.name||"WorkBuddy"));
-          if(!entry.account.enabled)header.appendChild(ui.pill("已停用",""));
+          if(!entry.account.enabled)header.appendChild(ui.pill(tr("已停用"),""));
           group.appendChild(header);
           if(entry.error)group.appendChild(ui.mk("p","err-text growth-account-error",entry.error));
         }
-        if(!entry.loaded){group.appendChild(ui.mk("p","hint",entry.error?"任务未加载，请刷新重试":"正在读取任务…"));}
-        else if(!entry.tasks.length){group.appendChild(ui.mk("p","empty","当前账号没有成长任务"));}
+        if(!entry.loaded){group.appendChild(ui.mk("p","hint",entry.error?tr("任务未加载，请刷新重试"):tr("正在读取任务…")));}
+        else if(!entry.tasks.length){group.appendChild(ui.mk("p","empty",tr("当前账号没有成长任务")));}
         entry.tasks.slice().sort(function(a,b){return (a.task_code==="first_buddy"&&!a.claimed?-1:0)-(b.task_code==="first_buddy"&&!b.claimed?-1:0);}).forEach(function(task){
           var item=ui.mk("div","growth-task"),content=ui.mk("div","growth-task-content");item.dataset.taskCode=task.task_code;
           content.appendChild(ui.mk("strong","growth-task-title",task.title||task.task_code));
@@ -75,25 +76,25 @@ export function createGrowth(ui) {
           if(description)content.appendChild(ui.mk("p","growth-task-description",description));
           if(!task.claimed&&(task.action_description||task.manual_instruction))content.appendChild(ui.mk("p","growth-task-description",task.action_description||task.manual_instruction));
           var meta=ui.mk("div","growth-task-meta");
-          meta.appendChild(ui.mk("span","",task.target>0?"进度 "+task.current+" / "+task.target:"进度待确认"));
+          meta.appendChild(ui.mk("span","",task.target>0?tr("进度 ")+task.current+" / "+task.target:tr("进度待确认")));
           var rewards=[];
-          if(task.credit)rewards.push("+"+task.credit+" 积分");
-          if(task.energy)rewards.push("+"+task.energy+" 能量");
-          if(task.reward_buddy)rewards.push("Buddy 奖励");
-          meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||"奖励以上游活动为准"));
-          var status=task.claimed?"已领取":(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned?"已领养":(task.locked?"未解锁":(entry.running===task.task_code?"执行中":(entry.rejected.has(task.task_code)?"操作未完成":(entry.blocked.has(task.task_code)||task.execution_pending?"待刷新确认":(task.claimable?"可领取":(task.accept_status==="not_accepted"&&!task.accept_not_required?"未报名":"未完成")))))));
+          if(task.credit)rewards.push("+"+task.credit+tr(" 积分"));
+          if(task.energy)rewards.push("+"+task.energy+tr(" 能量"));
+          if(task.reward_buddy)rewards.push(tr("Buddy 奖励"));
+          meta.appendChild(ui.mk("span","growth-task-reward",rewards.join(" · ")||tr("奖励以上游活动为准")));
+          var status=task.claimed?tr("已领取"):(task.task_code==="first_buddy"&&entry.buddy&&entry.buddy.owned?tr("已领养"):(task.locked?tr("未解锁"):(entry.running===task.task_code?tr("执行中"):(entry.rejected.has(task.task_code)?tr("操作未完成"):(entry.blocked.has(task.task_code)||task.execution_pending?tr("待刷新确认"):(task.claimable?tr("可领取"):(task.accept_status==="not_accepted"&&!task.accept_not_required?tr("未报名"):tr("未完成"))))))));
           meta.appendChild(ui.pill(status,task.claimed?"ok":(task.claimable&&!entry.blocked.has(task.task_code)?"warn":"")));
           content.appendChild(meta);item.appendChild(content);
           var actions=ui.mk("div","growth-task-actions");
           if(!task.accept_not_required&&task.accept_status==="not_accepted"){
-            var accept=ui.btn("接取任务","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"accept");});
+            var accept=ui.btn(tr("接取任务"),"xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"accept");});
             accept.disabled=busy||!eligible(entry,task,"accept");actions.appendChild(accept);
           }
           if(task.auto_supported){
-            var run=ui.btn(task.task_code==="first_buddy"?"解锁并领养":"执行任务","xs",function(){return runTask(entry,task.task_code);});
+            var run=ui.btn(task.task_code==="first_buddy"?tr("解锁并领养"):tr("执行任务"),"xs",function(){return runTask(entry,task.task_code);});
             run.disabled=busy||!eligible(entry,task,"run");actions.appendChild(run);
           }
-          var button=ui.btn("领取奖励","xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"claim");});
+          var button=ui.btn(tr("领取奖励"),"xs",function(){return operate([{entry:entry,codes:[task.task_code]}],"claim");});
           button.disabled=busy||!claimable(entry,task);actions.appendChild(button);item.appendChild(actions);group.appendChild(item);
         });
         list.appendChild(group);
@@ -104,26 +105,26 @@ export function createGrowth(ui) {
       var seq=++sequence;
       $("growthBuddyAgree").checked=false;
       entries=accounts.filter(function(a){return !select.value||a.id===select.value;}).map(function(a){return {account:a,tasks:[],buddy:null,loaded:false,error:"",blocked:new Set(),acceptBlocked:new Set(),rejected:new Set()};});
-      $("growthAccountName").textContent=select.value?((accounts.find(function(a){return a.id===select.value;})||{}).name||"WorkBuddy"):"全部 WorkBuddy 账号";
-      busy=true;busyKind="refresh";notice="正在刷新任务进度…";render();
+      $("growthAccountName").textContent=select.value?((accounts.find(function(a){return a.id===select.value;})||{}).name||"WorkBuddy"):tr("全部 WorkBuddy 账号");
+      busy=true;busyKind="refresh";notice=tr("正在刷新任务进度…");render();
       return workers(entries,seq,async function(entry){
         try{
           var r=await ui.api("/admin/api/workbuddy/tasks?id="+encodeURIComponent(entry.account.id));
           if(active(seq)){entry.tasks=r.tasks||[];entry.buddy=r.buddy||null;entry.loaded=true;entry.error=r.buddy_error||"";}
-        }catch(e){if(active(seq))entry.error="查询失败："+e.message;}
+        }catch(e){if(active(seq))entry.error=tr("查询失败：")+e.message;}
         if(active(seq))render();
       }).finally(function(){if(active(seq)){
         busy=false;busyKind="";
         var tasks=entries.flatMap(function(e){return e.tasks;});
-        notice=entries.some(function(e){return !e.loaded;})?"部分任务未能读取，请查看原因并刷新重试":"刷新完成："+tasks.length+" 项任务，"+tasks.filter(function(t){return t.claimable;}).length+" 项可领取。";
+        notice=entries.some(function(e){return !e.loaded;})?tr("部分任务未能读取，请查看原因并刷新重试"):tr("刷新完成：")+tasks.length+tr(" 项任务，")+tasks.filter(function(t){return t.claimable;}).length+tr(" 项可领取。");
         render();
       }});
     }
     async function operate(jobs,kind){
       if(busy||!jobs.length)return;
-      if(kind==="run"&&!$("growthBuddyAgree").checked&&jobs.some(function(job){return needsConsent(job.entry);})){jobs.forEach(function(job){if(needsConsent(job.entry))job.entry.error="请先阅读官方活动规则，并勾选同意领养协议";});notice="尚未开始执行，未产生对话消耗。";render();$("growthBuddyAgree").focus();return;}
+      if(kind==="run"&&!$("growthBuddyAgree").checked&&jobs.some(function(job){return needsConsent(job.entry);})){jobs.forEach(function(job){if(needsConsent(job.entry))job.entry.error=tr("请先阅读官方活动规则，并勾选同意领养协议");});notice=tr("尚未开始执行，未产生对话消耗。");render();$("growthBuddyAgree").focus();return;}
       var seq=sequence,confirmed=0,total=jobs.reduce(function(n,job){return n+job.codes.length;},0);
-      busy=true;busyKind=kind;notice=kind==="accept"?"正在接取任务…":(kind==="run"?"正在执行成长任务并核对进度，请稍候…":"正在领取已达标奖励…");
+      busy=true;busyKind=kind;notice=kind==="accept"?tr("正在接取任务…"):(kind==="run"?tr("正在执行成长任务并核对进度，请稍候…"):tr("正在领取已达标奖励…"));
       controller=kind==="run"?new AbortController():null;
       var signal=controller?controller.signal:undefined;
       jobs.forEach(function(job){job.entry.error="";});render();
@@ -145,7 +146,7 @@ export function createGrowth(ui) {
               if(kind==="accept")confirmed+=codes.filter(function(c){return accepted(entry,c);}).length;
               else if(r.state==="claimed"||r.state==="already_claimed"||prepared)confirmed++;
               if(r.state!=="claimed"&&r.state!=="already_claimed"&&!prepared&&!(kind==="accept"&&r.state==="accepted")){
-                codes.forEach(function(c){if(kind!=="accept"||!accepted(entry,c))block(entry,c,kind);});entry.error=r.message||"操作结果待确认，请刷新任务进度";break;
+                codes.forEach(function(c){if(kind!=="accept"||!accepted(entry,c))block(entry,c,kind);});entry.error=r.message||tr("操作结果待确认，请刷新任务进度");break;
               }
               if(r.balance_error)entry.error=r.balance_error;
             }catch(e){
@@ -159,7 +160,7 @@ export function createGrowth(ui) {
                     if(!active(seq))break;
                     entry.tasks=updated.tasks||entry.tasks;
                     if(updated.buddy)entry.buddy=updated.buddy;
-                  }catch(readError){if(active(seq))entry.error+="；接取后回查失败，请刷新进度核对";}
+                  }catch(readError){if(active(seq))entry.error+=tr("；接取后回查失败，请刷新进度核对");}
                 }
                 if(active(seq))codes.forEach(function(c){
                   if(kind==="accept"&&accepted(entry,c)){confirmed++;return;}
@@ -173,7 +174,7 @@ export function createGrowth(ui) {
         });
       }finally{if(active(seq)){
         busy=false;busyKind="";controller=null;
-        notice=(kind==="accept"?"接取":(kind==="run"?"执行":"领取"))+"结束：已确认 "+confirmed+" 项"+(confirmed<total?"，"+(total-confirmed)+" 项未完成，请查看原因。":"。");
+        notice=(kind==="accept"?tr("接取"):(kind==="run"?tr("执行"):tr("领取")))+tr("结束：已确认 ")+confirmed+tr(" 项")+(confirmed<total?"，"+(total-confirmed)+tr(" 项未完成，请查看原因。"):"。");
         render();
       }}
     }
@@ -188,7 +189,7 @@ export function createGrowth(ui) {
       sequence++;busy=false;entries=[];
       accounts=list.map(function(a){return {id:a.id,name:a.name,enabled:a.enabled};});
       select.textContent="";
-      if(accounts.length>1){var all=ui.mk("option","","全部账号（"+accounts.length+"）");all.value="";select.appendChild(all);}
+      if(accounts.length>1){var all=ui.mk("option","",tr("全部账号（")+accounts.length+"）");all.value="";select.appendChild(all);}
       accounts.forEach(function(a){var option=ui.mk("option","",a.name||"WorkBuddy");option.value=a.id;select.appendChild(option);});
       $("growthAccountPicker").classList.toggle("hidden",accounts.length<2);
       if(!dialog.open)dialog.showModal();

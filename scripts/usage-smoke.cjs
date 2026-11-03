@@ -1,7 +1,7 @@
 // Synthetic history only; no upstream requests or production mutations.
 const {chromium}=require('playwright');const assert=require('node:assert/strict');const fs=require('node:fs');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||'chrome'});try{
- const context=await browser.newContext({viewport:{width:1460,height:1100},timezoneId:'Asia/Shanghai'});
+ const context=await browser.newContext({locale:'zh-CN',viewport:{width:1460,height:1100},timezoneId:'Asia/Shanghai'});
  const now=Math.floor(Date.now()/1000), today=Math.floor((Date.now()+8*3600000)/86400000)*86400-8*3600;
  const models=['deepseek-v4.1-flash','glm-5.3','workbuddy/cn/claude-sonnet','trae/cn/gpt-5.3'];
  const logs=Array.from({length:125},(_,i)=>({time:i<73?today+100+i:i<113?today-1000-i:today-40*86400-i,model:models[i%4],provider:i%4===2?'workbuddy':i%4===3?'trae':'codearts',protocol:['responses','chat_completions','messages'][i%3],status:i%17===0?502:200,latency_ms:19240,usage:{known:true,input_tokens:1200+i*10,output_tokens:200+i*5,cached_tokens:1000},estimated_cost:{currency:'USD',amount:.0005}})).sort((a,b)=>b.time-a.time);

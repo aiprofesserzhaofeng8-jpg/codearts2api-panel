@@ -2,7 +2,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});try{
- const ctx=await browser.newContext({viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const accounts=['a','b','c','disabled'].map(id=>({id,name:'WorkBuddy '+id,provider:'workbuddy',scope:'cn',enabled:id!=='disabled',growth_tasks_supported:true,status:'ok',pool:{state:id==='disabled'?'disabled':'ready',in_flight:0,max_in_flight:2}}));
  let tasks={},posts=[],active=0,peak=0,perAccount={},pending='',prerequisite='',requestDelay=50,aborted=0;
  function reset(accepted=false){for(const a of accounts)tasks[a.id]=['Model_chat_GLM5.2','chat_5','automation_1'].map(code=>({task_code:code,title:code,description:'任务说明',auto_supported:code!=='automation_1',action_description:code==='automation_1'?'':'真实对话会消耗积分，最多 5 次，每次最多 32 Token',manual_instruction:code==='automation_1'?'请在官方应用真实创建定时任务':'',accept_status:accepted?'accepted':'not_accepted',target:code==='chat_5'?5:1,current:0,claimed:false,claimable:false}));}

@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  const base=process.env.CODEARTS_TEST_BASE,password=process.env.CODEARTS_TEST_ADMIN_PASSWORD,out='artifacts/user-center-2/browser';assert(base&&password);fs.mkdirSync(out,{recursive:true});
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'}),errors=[];
  try{
- const admin=await browser.newContext({viewport:{width:1440,height:1000}}),user=await browser.newContext({viewport:{width:1440,height:1000}});
+ const admin=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),user=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}});
  assert.equal((await admin.request.post(base+'/auth/login',{data:{username:'admin',password}})).status(),200);
  let r=await admin.request.post(base+'/admin/api/groups',{data:{name:'Consumer acceptance',account_ids:[],model_ids:[]}});assert.equal(r.status(),200);const group=(await r.json()).group;
  r=await admin.request.post(base+'/admin/api/users',{data:{username:'entitlement-user',password:'entitlement-test-password',group_id:group.id,max_concurrency:3,budget:{max_usd:100}}});assert.equal(r.status(),200);const u=(await r.json()).user;

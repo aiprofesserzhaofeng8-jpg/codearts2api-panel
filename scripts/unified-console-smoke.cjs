@@ -9,8 +9,8 @@ const fs=require('node:fs');
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  const errors=[];
  try{
-  const admin=await browser.newContext({viewport:{width:1440,height:1000}});
-  const consumer=await browser.newContext({viewport:{width:1440,height:1000}});
+  const admin=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}});
+  const consumer=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}});
   const ap=await admin.newPage(),page=await consumer.newPage();
   for(const p of [ap,page]){
    p.on('pageerror',e=>errors.push(e.message));

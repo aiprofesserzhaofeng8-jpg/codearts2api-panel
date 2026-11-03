@@ -1,3 +1,4 @@
+import { t as tr } from '../../i18n';
 import { copyText } from '../../shared/dom';
 import { btn, busyable, cell, emptyRow, mk, on, pill, row } from '../../components/controls';
 import { serverState } from '../../shared/read-model';
@@ -31,7 +32,7 @@ export function accountMenuButton(label, account, items) {
         if (same)
             return;
         menu.textContent = "";
-        menu.setAttribute("aria-label", (account.name || "未命名账号") + " · " + label);
+        menu.setAttribute("aria-label", (account.name || tr("未命名账号")) + " · " + label);
         items.forEach(function (item) {
             var action = btn(item.label, "account-menu-item" + (item.danger ? " danger" : ""), function () {
                 closeAccountMenu(true);
@@ -74,16 +75,16 @@ export function renderAccounts(d) {
         inFlight += a.pool ? a.pool.in_flight || 0 : 0;
     });
     domState.$("#navAccountCount").textContent = accts.length;
-    domState.$("#accountCount").textContent = accts.length + " 个账号";
+    domState.$("#accountCount").textContent = accts.length + tr(" 个账号");
     var stats = domState.$("#poolStats");
     stats.textContent = "";
     [
-        { label: "账号总数", value: accts.length },
-        { label: "可调度", value: counts.ready, tone: "good" },
-        { label: "冷却中", value: counts.cooling, tone: "warning" },
-        { label: "暂停 / 停用", value: counts.paused + " / " + counts.disabled },
-        { label: "在途请求", value: inFlight },
-        { label: "调度策略", value: ({ least_inflight: "最少并发", round_robin: "轮询", sequential_exhaust: "顺序耗尽" })[((d.settings || {}).pool || {}).strategy] || "—", text: true }
+        { label: tr("账号总数"), value: accts.length },
+        { label: tr("可调度"), value: counts.ready, tone: "good" },
+        { label: tr("冷却中"), value: counts.cooling, tone: "warning" },
+        { label: tr("暂停 / 停用"), value: counts.paused + " / " + counts.disabled },
+        { label: tr("在途请求"), value: inFlight },
+        { label: tr("调度策略"), value: ({ least_inflight: tr("最少并发"), round_robin: tr("轮询"), sequential_exhaust: tr("顺序耗尽") })[((d.settings || {}).pool || {}).strategy] || "—", text: true }
     ].forEach(function (item) {
         var stat = mk("div", "pool-stat");
         if (item.tone)
@@ -97,43 +98,43 @@ export function renderAccounts(d) {
         return (!domState.$("#accountProvider").value || (a.provider || "codearts") === domState.$("#accountProvider").value) && (accountsState.accountFilter === "all" || accountState(a) === accountsState.accountFilter) &&
             (!query || [a.name, a.source, sourceName(a.source), a.provider, a.scope].join(" ").toLowerCase().indexOf(query) !== -1);
     });
-    domState.$("#accountFilterCount").textContent = visible.length + " / " + accts.length + " 个账号";
+    domState.$("#accountFilterCount").textContent = visible.length + " / " + accts.length + tr(" 个账号");
     if (!accts.length) {
-        tb.appendChild(emptyRow(10, "还没有账号。点击「浏览器登录」，复制链接授权后确认添加。"));
+        tb.appendChild(emptyRow(10, tr("还没有账号。点击「浏览器登录」，复制链接授权后确认添加。")));
         return;
     }
     if (!visible.length) {
-        tb.appendChild(emptyRow(10, "没有符合条件的账号，请更换筛选条件。"));
+        tb.appendChild(emptyRow(10, tr("没有符合条件的账号，请更换筛选条件。")));
         return;
     }
     visible.forEach(function (a) {
         var statusCell = cell("");
         if (a.pool && a.pool.state !== "ready") {
-            var labels = { paused: "已暂停选号", cooling: "冷却中", busy: "并发已满", disabled: "已停用" };
+            var labels = { paused: tr("已暂停选号"), cooling: tr("冷却中"), busy: tr("并发已满"), disabled: tr("已停用") };
             statusCell.appendChild(pill(labels[a.pool.state] || a.pool.state, "warn"));
             if (a.pool.cooldown_remaining_sec > 0)
-                statusCell.appendChild(mk("div", "sub", "剩余 " + fmtDur(a.pool.cooldown_remaining_sec)));
+                statusCell.appendChild(mk("div", "sub", tr("剩余 ") + fmtDur(a.pool.cooldown_remaining_sec)));
             if (a.cooldown_reason)
                 statusCell.title = a.cooldown_reason;
         }
         else if (a.enabled) {
             var okStatus = a.status === "ok";
-            statusCell.appendChild(pill(okStatus ? "可用" : "待检查", okStatus ? "ok" : "err"));
+            statusCell.appendChild(pill(okStatus ? tr("可用") : tr("待检查"), okStatus ? "ok" : "err"));
         }
         else {
-            statusCell.appendChild(pill("已停用"));
+            statusCell.appendChild(pill(tr("已停用")));
         }
         if (a.has_refresh)
             statusCell.appendChild(document.createTextNode(" "));
         if (a.has_refresh)
-            statusCell.appendChild(pill("可续期", "ok"));
+            statusCell.appendChild(pill(tr("可续期"), "ok"));
         if (a.pool)
-            statusCell.appendChild(mk("div", "sub", "在途 " + a.pool.in_flight + " / " + a.pool.max_in_flight));
-        statusCell.title = (a.max_in_flight > 0 ? "独立并发上限：" + a.max_in_flight : "并发上限使用全局默认值") + (statusCell.title ? "；" + statusCell.title : "");
+            statusCell.appendChild(mk("div", "sub", tr("在途 ") + a.pool.in_flight + " / " + a.pool.max_in_flight));
+        statusCell.title = (a.max_in_flight > 0 ? tr("独立并发上限：") + a.max_in_flight : tr("并发上限使用全局默认值")) + (statusCell.title ? "；" + statusCell.title : "");
         var expCell = cell("", "cell-stack");
         if (a.permanent) {
             // 永久 AK/SK：没有过期时间，也不参与续期。
-            expCell.appendChild(mk("span", "mono", "永不过期"));
+            expCell.appendChild(mk("span", "mono", tr("永不过期")));
             expCell.appendChild(mk("span", "sub", "IAM AK/SK"));
         }
         else if (a.expires_at) {
@@ -148,47 +149,47 @@ export function renderAccounts(d) {
         }
         var claimCell = cell("");
         if (a.daily_claim_supported === false) {
-            claimCell.appendChild(mk("span", "muted", "未接入"));
+            claimCell.appendChild(mk("span", "muted", tr("未接入")));
         }
         else if (a.claimed_today) {
-            claimCell.appendChild(pill("已领", "ok"));
+            claimCell.appendChild(pill(tr("已领"), "ok"));
         }
         else {
-            claimCell.appendChild(pill(({ unavailable: "暂不可领", unknown: "待确认", failed: "领取失败" })[a.last_claim_state] || (a.provider && a.provider !== "codearts" ? "待查询" : "未领"), "warn"));
+            claimCell.appendChild(pill(({ unavailable: tr("暂不可领"), unknown: tr("待确认"), failed: tr("领取失败") })[a.last_claim_state] || (a.provider && a.provider !== "codearts" ? tr("待查询") : tr("未领")), "warn"));
         }
         if (a.last_claim_msg)
             claimCell.title = a.last_claim_msg;
         if (a.last_claim_err)
             claimCell.title = a.last_claim_err;
         var ops = cell("", "actions-cell"), actions = mk("div", "account-actions");
-        actions.appendChild(accountMenuButton("设置", a, [
-            { label: "并发设置", run: function () { openAccountConcurrency(a); } },
-            { label: "模型健康", run: function () { openModelHealth(a); } }
+        actions.appendChild(accountMenuButton(tr("设置"), a, [
+            { label: tr("并发设置"), run: function () { openAccountConcurrency(a); } },
+            { label: tr("模型健康"), run: function () { openModelHealth(a); } }
         ]));
-        actions.appendChild(btn("探活", "xs", function () { return checkin(a.id); }));
+        actions.appendChild(btn(tr("探活"), "xs", function () { return checkin(a.id); }));
         if (a.daily_claim_supported !== false)
-            actions.appendChild(btn(a.provider && a.provider !== "codearts" ? "每日签到" : "领福利", "xs", function () { return claim(a.id); }));
+            actions.appendChild(btn(a.provider && a.provider !== "codearts" ? tr("每日签到") : tr("领福利"), "xs", function () { return claim(a.id); }));
         var more = [
-            { label: "导出", run: function () { return exportSession(a.id); } },
-            { label: a.enabled ? "停用" : "启用", run: function () { return accountOp("toggle", { id: a.id }); } },
-            { label: a.paused ? "恢复选号" : "暂停选号", run: function () { return accountOp(a.paused ? "resume" : "pause", { id: a.id }); } }
+            { label: tr("导出"), run: function () { return exportSession(a.id); } },
+            { label: a.enabled ? tr("停用") : tr("启用"), run: function () { return accountOp("toggle", { id: a.id }); } },
+            { label: a.paused ? tr("恢复选号") : tr("暂停选号"), run: function () { return accountOp(a.paused ? "resume" : "pause", { id: a.id }); } }
         ];
         if (a.growth_tasks_supported)
-            more.unshift({ label: "成长任务", run: function () { return openGrowth(a); } });
+            more.unshift({ label: tr("成长任务"), run: function () { return openGrowth(a); } });
         if (a.source === "desktop")
-            more.push({ label: "重读", run: function () { return accountOp("reimport", { id: a.id }); } });
+            more.push({ label: tr("重读"), run: function () { return accountOp("reimport", { id: a.id }); } });
         if (a.failures > 0 || (a.pool && a.pool.cooldown_remaining_sec > 0) || Object.keys(a.model_health || {}).some(function (m) { return a.model_health[m].failures > 0; }))
-            more.push({ label: "解除冷却 / 清错", run: function () { return accountOp("clear-errors", { id: a.id }); } });
-        more.push({ label: "删除", danger: true, run: function () { showDeleteAccount(a); } });
-        actions.appendChild(accountMenuButton("更多", a, more));
+            more.push({ label: tr("解除冷却 / 清错"), run: function () { return accountOp("clear-errors", { id: a.id }); } });
+        more.push({ label: tr("删除"), danger: true, run: function () { showDeleteAccount(a); } });
+        actions.appendChild(accountMenuButton(tr("更多"), a, more));
         ops.appendChild(actions);
         var identity = cell("", "account-identity");
         var who = mk("div", "account-who");
-        who.appendChild(mk("span", "account-avatar", Array.from(a.name || "码")[0].toUpperCase()));
+        who.appendChild(mk("span", "account-avatar", Array.from(a.name || tr("码"))[0].toUpperCase()));
         var info = mk("div", "account-name");
-        info.appendChild(mk("strong", "account-title", a.name || "未命名账号"));
-        info.appendChild(pill(a.provider === "trae" ? "Trae · 国内" : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? "国际" : "国内") : "华为云码道")));
-        info.appendChild(mk("span", "account-caption", a.has_refresh ? "自动续期已就绪" : "临时凭据"));
+        info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
+        info.appendChild(pill(a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
+        info.appendChild(mk("span", "account-caption", a.has_refresh ? tr("自动续期已就绪") : tr("临时凭据")));
         who.appendChild(info);
         identity.appendChild(who);
         var r = row([
@@ -197,7 +198,7 @@ export function renderAccounts(d) {
             cell(fmtTime(a.last_used), "muted nowrap"), ops
         ]);
         r.dataset.state = accountState(a);
-        var labels = ["账号", "来源", "AK", "凭据有效期", "积分额度", "状态", "今日领取", "失败次数", "最近使用", "操作"];
+        var labels = [tr("账号"), tr("来源"), "AK", tr("凭据有效期"), tr("积分额度"), tr("状态"), tr("今日领取"), tr("失败次数"), tr("最近使用"), tr("操作")];
         Array.from(r.children).forEach(function (td, i) { td.dataset.label = labels[i]; });
         if (a.last_err)
             r.title = a.last_err;
@@ -213,7 +214,7 @@ export function accountState(a) {
     return a.pool ? a.pool.state : "ready";
 }
 
-export function sourceName(source) { return ({ browser: "浏览器登录", desktop: "桌面端导入", manual: "手工录入", session: "会话导入" })[source] || source || "—"; }
+export function sourceName(source) { return ({ browser: tr("浏览器登录"), desktop: tr("桌面端导入"), manual: tr("手工录入"), session: tr("会话导入") })[source] || source || "—"; }
 
 export function accountOp(action, extra) {
     var body = { action: action };
@@ -221,21 +222,21 @@ export function accountOp(action, extra) {
         for (var k in extra)
             body[k] = extra[k];
     return api("/admin/api/accounts", { method: "POST", body: body }).then(function () {
-        toast("操作成功", "ok");
+        toast(tr("操作成功"), "ok");
         return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; toast("失败：" + e.message, "err"); });
+    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("失败：") + e.message, "err"); });
 }
 
 export function exportSession(id) {
-    toast("导出中…");
+    toast(tr("导出中…"));
     return api("/admin/api/accounts", { method: "POST", body: { action: "export", id: id } }).then(function (r) {
         domState.$("#exportJSON").value = r.session_json || "";
-        domState.$("#exportMeta").textContent = "账号 " + (r.name || "") +
-            " · 凭据有效期至 " + fmtTime(r.expires_at) +
-            " · 可续期 " + (r.has_refresh ? "是" : "否");
+        domState.$("#exportMeta").textContent = tr("账号 ") + (r.name || "") +
+            tr(" · 凭据有效期至 ") + fmtTime(r.expires_at) +
+            tr(" · 可续期 ") + (r.has_refresh ? tr("是") : tr("否"));
         domState.$("#exportPanel").classList.remove("hidden");
-        toast("已导出（含 refresh_token，请勿外传）", "ok");
-    }).catch(function (e) { if (isAbortError(e)) return; toast("导出失败：" + e.message, "err"); });
+        toast(tr("已导出（含 refresh_token，请勿外传）"), "ok");
+    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("导出失败：") + e.message, "err"); });
 }
 
 accountsState.deletingAccount = null;
@@ -259,9 +260,9 @@ export function openAccountConcurrency(a) {
     accountsState.concurrencyAccountID = a.id;
     var defaults = ((serverState.data || {}).settings || {}).pool || {};
     var fallback = defaults.max_in_flight || 2;
-    domState.$("#accountConcurrencyName").textContent = a.name || "未命名账号";
+    domState.$("#accountConcurrencyName").textContent = a.name || tr("未命名账号");
     domState.$("#accountConcurrencyDefault").checked = !(a.max_in_flight > 0);
-    domState.$("#accountConcurrencyDefaultHint").textContent = "当前全局默认值：" + fallback;
+    domState.$("#accountConcurrencyDefaultHint").textContent = tr("当前全局默认值：") + fallback;
     domState.$("#accountConcurrencyLimit").value = a.max_in_flight > 0 ? a.max_in_flight : fallback;
     domState.$("#accountConcurrencyLimit").disabled = domState.$("#accountConcurrencyDefault").checked;
     domState.$("#accountConcurrencyError").textContent = "";
@@ -276,9 +277,9 @@ export function closeAccountConcurrency() { if (!accountsState.concurrencySaving
 export function openModelHealth(a) {
     var tb = domState.$("#modelHealthRows");
     tb.textContent = "";
-    Object.keys(a.model_health || {}).sort().forEach(function (model) { var v = a.model_health[model]; var remaining = Math.max(0, v.cooldown_until - Math.floor(Date.now() / 1000)); tb.appendChild(row([cell(model, "mono"), cell(v.failures), cell(remaining ? "冷却 " + remaining + " 秒" : "可调度"), cell(fmtTime(v.updated_at)), cell(v.last_error || "—", "muted")])); });
+    Object.keys(a.model_health || {}).sort().forEach(function (model) { var v = a.model_health[model]; var remaining = Math.max(0, v.cooldown_until - Math.floor(Date.now() / 1000)); tb.appendChild(row([cell(model, "mono"), cell(v.failures), cell(remaining ? tr("冷却 ") + remaining + tr(" 秒") : tr("可调度")), cell(fmtTime(v.updated_at)), cell(v.last_error || "—", "muted")])); });
     if (!tb.children.length)
-        tb.appendChild(emptyRow(5, "暂无模型请求记录"));
+        tb.appendChild(emptyRow(5, tr("暂无模型请求记录")));
     domState.$("#modelHealthDialog").showModal();
 }
 
@@ -338,11 +339,11 @@ on("#deleteAccountConfirm", function () {
     domState.$("#deleteAccountError").classList.add("hidden");
     return api("/admin/api/accounts", { method: "POST", body: { action: "remove", id: id } }).then(function (r) {
         if (!r.ok || r.removed_id !== id)
-            throw new Error("删除未完成，请刷新后重试");
+            throw new Error(tr("删除未完成，请刷新后重试"));
         invalidateCredit(id);
         accountsState.deletingAccount = null;
         domState.$("#deleteAccountDialog").close();
-        toast("账号已删除", "ok");
+        toast(tr("账号已删除"), "ok");
         return refresh();
     }).catch(function (e) { if (isAbortError(e)) return; domState.$("#deleteAccountError").textContent = e.message; domState.$("#deleteAccountError").classList.remove("hidden"); })
         .finally(function () { accountsState.deleteBusy = false; domState.$("#deleteAccountCancel").disabled = false; });
@@ -356,7 +357,7 @@ on("#accountConcurrencySave", function () {
         return;
     var useDefault = domState.$("#accountConcurrencyDefault").checked, input = domState.$("#accountConcurrencyLimit"), value = useDefault ? 0 : Number(input.value);
     if (!useDefault && (!input.value.trim() || !input.checkValidity() || !Number.isInteger(value) || value < 1 || value > 32)) {
-        domState.$("#accountConcurrencyError").textContent = "请填写 1–32 的整数并发上限";
+        domState.$("#accountConcurrencyError").textContent = tr("请填写 1–32 的整数并发上限");
         return;
     }
     accountsState.concurrencySaving = true;
@@ -365,22 +366,22 @@ on("#accountConcurrencySave", function () {
     var id = accountsState.concurrencyAccountID;
     return api("/admin/api/accounts", { method: "POST", body: { action: "concurrency", id: id, max_in_flight: value } }).then(function (r) {
         if (!r.ok || r.id !== id || r.max_in_flight !== value)
-            throw new Error("保存结果未确认，请刷新账号列表核对");
+            throw new Error(tr("保存结果未确认，请刷新账号列表核对"));
         domState.$("#accountConcurrencyDialog").close();
         accountsState.concurrencyAccountID = "";
-        toast("并发设置已保存", "ok");
+        toast(tr("并发设置已保存"), "ok");
         return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountConcurrencyError").textContent = "保存失败：" + e.message; }).finally(function () {
+    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountConcurrencyError").textContent = tr("保存失败：") + e.message; }).finally(function () {
         accountsState.concurrencySaving = false;
         ["#accountConcurrencyDefault", "#accountConcurrencyCancel", "#accountConcurrencyClose"].forEach(function (id) { domState.$(id).disabled = false; });
         domState.$("#accountConcurrencyLimit").disabled = domState.$("#accountConcurrencyDefault").checked;
     });
 });
 on("#modelHealthClose", function () { domState.$("#modelHealthDialog").close(); });
-on("#copyBaseURL", function () { return copyText(location.origin + "/v1", "API 地址已复制"); });
+on("#copyBaseURL", function () { return copyText(location.origin + "/v1", tr("API 地址已复制")); });
 domState.$("#apiBaseURL").textContent = location.origin + "/v1";
 on("#copyExport", function () {
-    return copyText(domState.$("#exportJSON").value, "已复制到剪贴板（注意不要外传）");
+    return copyText(domState.$("#exportJSON").value, tr("已复制到剪贴板（注意不要外传）"));
 });
 on("#closeExport", function () {
     domState.$("#exportJSON").value = "";

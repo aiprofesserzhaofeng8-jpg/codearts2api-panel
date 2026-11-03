@@ -4,7 +4,7 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
  const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL||'chrome',headless:true});
  try{
-  const context=await browser.newContext({viewport:{width:1200,height:765}}),page=await context.newPage(),errors=[];
+  const context=await browser.newContext({locale:'zh-CN',viewport:{width:1200,height:765}}),page=await context.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   const account={id:'fixture',name:'WorkBuddy fixture',provider:'workbuddy',scope:'cn',enabled:true,growth_tasks_supported:true,status:'ok',pool:{state:'ready',in_flight:0,max_in_flight:2}};
   const task=(code,extra={})=>({task_code:code,title:code,description:'请在官方应用按任务说明完成操作。'.repeat(4),manual_instruction:'请按说明在官方应用完成',current:0,target:0,accept_status:'not_accepted',claimable:false,claimed:false,locked:false,...extra});

@@ -1,3 +1,4 @@
+import { t as tr } from '../../../i18n';
 import { on } from '../../../components/controls';
 import { serverState } from '../../../shared/read-model';
 import { isAbortError } from '../../../api/client';
@@ -33,14 +34,14 @@ export function updateAccountCreateBusy() {
     ["#addAccountClose", "#accountCreateCancel", "#accountCreateBack", "#accountCreateNext"].forEach(function (id) { domState.$(id).disabled = busy; });
 }
 
-export function accountPlatformLabel() { return { codearts: "华为云码道", workbuddy: "WorkBuddy", trae: "Trae CN / SOLO" }[providersState.accountCreatePlatform]; }
+export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO" }[providersState.accountCreatePlatform]; }
 
 export function renderAccountChoices() {
     document.querySelectorAll("[data-account-platform]").forEach(function (b) { var selected = b.dataset.accountPlatform === providersState.accountCreatePlatform; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     document.querySelectorAll("[data-account-method]").forEach(function (b) { var selected = b.dataset.accountMethod === providersState.accountCreateMethod; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
-    domState.$("#accountBrowserHint").textContent = "通过 " + accountPlatformLabel() + " 官方页面登录并授权";
-    domState.$("#accountImportHint").textContent = providersState.accountCreatePlatform === "codearts" ? "本机客户端、STS / AK/SK 或 session JSON" : "从已有客户端导入完整凭据 JSON";
-    domState.$("#accountChoiceHint").textContent = providersState.accountCreatePlatform === "trae" && providersState.accountCreateMethod === "browser" ? "下一步填写官方客户端设备信息，再生成授权链接。" : "选择平台和添加方式后继续，账号核对完成后再保存。";
+    domState.$("#accountBrowserHint").textContent = tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
+    domState.$("#accountImportHint").textContent = providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : tr("从已有客户端导入完整凭据 JSON");
+    domState.$("#accountChoiceHint").textContent = providersState.accountCreatePlatform === "trae" && providersState.accountCreateMethod === "browser" ? tr("下一步填写官方客户端设备信息，再生成授权链接。") : tr("选择平台和添加方式后继续，账号核对完成后再保存。");
 }
 
 export function showAccountChoices() {
@@ -51,7 +52,7 @@ export function showAccountChoices() {
     domState.$("#accountCreateBack").classList.add("hidden");
     domState.$("#accountChooseStep").classList.add("active");
     domState.$("#accountAuthorizeStep").classList.remove("active");
-    domState.$("#accountAuthorizeLabel").textContent = "账号授权";
+    domState.$("#accountAuthorizeLabel").textContent = tr("账号授权");
     renderAccountChoices();
 }
 
@@ -77,7 +78,7 @@ export function beginAccountAuthorization() {
     domState.$("#accountCreateBack").classList.remove("hidden");
     domState.$("#accountChooseStep").classList.remove("active");
     domState.$("#accountAuthorizeStep").classList.add("active");
-    domState.$("#accountAuthorizeLabel").textContent = accountPlatformLabel() + (providersState.accountCreateMethod === "browser" ? "授权" : "导入");
+    domState.$("#accountAuthorizeLabel").textContent = accountPlatformLabel() + (providersState.accountCreateMethod === "browser" ? tr("授权") : tr("导入"));
     ["#providerLoginDialog", "#loginPanel", "#manualAccountPanel"].forEach(function (id) { domState.$(id).classList.add("hidden"); });
     var name = domState.$("#accountCreateName").value.trim();
     if (providersState.accountCreatePlatform === "codearts") {
@@ -132,7 +133,7 @@ export function leaveAccountCreate(close) {
             domState.$("#addAccountDialog").close();
         else
             showAccountChoices();
-    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = "取消授权失败：" + e.message; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
+    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = tr("取消授权失败：") + e.message; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
 }
 
 export function addAccountCredentials(action, extra) {
@@ -142,10 +143,10 @@ export function addAccountCredentials(action, extra) {
     updateAccountCreateBusy();
     domState.$("#accountCreateError").textContent = "";
     return api("/admin/api/accounts", { method: "POST", body: Object.assign({ action: action }, extra) }).then(function () {
-        toast("账号已导入", "ok");
+        toast(tr("账号已导入"), "ok");
         finishAccountCreation();
         return refresh().then(function () { return true; });
-    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = "导入失败：" + e.message; return false; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
+    }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = tr("导入失败：") + e.message; return false; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
 }
 
 export function providerLabel() { return providersState.activeProvider === "trae" ? "Trae" : "WorkBuddy"; }
@@ -158,7 +159,7 @@ export function showDeviceChoices(devices) {
     clearDeviceResults();
     providersState.providerDevices = devices.map(function (d) {
         if (!d || typeof d.machine_id !== "string" || typeof d.device_id !== "string" || !/^[A-Za-z0-9_.-]{1,256}$/.test(d.machine_id) || !/^[0-9]{8,32}$/.test(d.device_id))
-            throw new Error("设备信息不完整或格式无效，请复制官方客户端读取结果");
+            throw new Error(tr("设备信息不完整或格式无效，请复制官方客户端读取结果"));
         return d;
     });
     if (!providersState.providerDevices.length)
@@ -166,7 +167,7 @@ export function showDeviceChoices(devices) {
     var select = domState.$("#providerDeviceChoice");
     var placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent = "请选择要使用的客户端设备";
+    placeholder.textContent = tr("请选择要使用的客户端设备");
     select.appendChild(placeholder);
     providersState.providerDevices.forEach(function (d, i) { var option = document.createElement("option"); option.value = String(i); option.textContent = (d.client || "Trae") + " · " + d.device_id + (d.source ? " · " + d.source : ""); select.appendChild(option); });
     if (providersState.providerDevices.length === 1)
@@ -175,16 +176,16 @@ export function showDeviceChoices(devices) {
         domState.$("#providerMachineID").value = "";
         domState.$("#providerDeviceID").value = "";
         domState.$("#providerDeviceChoices").classList.remove("hidden");
-        domState.$("#providerDeviceStatus").textContent = "发现多组客户端记录，请选择一组后填入。";
+        domState.$("#providerDeviceStatus").textContent = tr("发现多组客户端记录，请选择一组后填入。");
     }
 }
 
 export function fillDeviceInfo(d) {
     if (providersState.providerSession)
-        throw new Error("本次授权已绑定设备，请先关闭登录窗口再修改");
+        throw new Error(tr("本次授权已绑定设备，请先关闭登录窗口再修改"));
     domState.$("#providerMachineID").value = d.machine_id;
     domState.$("#providerDeviceID").value = d.device_id;
-    domState.$("#providerDeviceStatus").textContent = "已填入 " + (d.client || "Trae") + " 的设备信息" + (d.source ? "，来源：" + d.source : "") + "。可继续生成登录链接。";
+    domState.$("#providerDeviceStatus").textContent = tr("已填入 ") + (d.client || "Trae") + tr(" 的设备信息") + (d.source ? tr("，来源：") + d.source : "") + tr("。可继续生成登录链接。");
 }
 
 providersState.traeDeviceWindowsCommand = String.raw `Get-ChildItem "$env:APPDATA\*Trae*\User\globalStorage\storage.json", "$env:LOCALAPPDATA\*Trae*\User\globalStorage\storage.json" -ErrorAction SilentlyContinue |
@@ -234,8 +235,8 @@ export function selectProvider(name) { domState.$("#providerTraeDevice").classLi
     domState.$("#providerImportJSON").value = "";
     domState.$("#providerAccountName").value = "";
     domState.$("#providerImportReplace").checked = false;
-} providersState.activeProvider = name; domState.$("#providerLoginTitle").textContent = "添加 " + providerLabel() + " 账号"; domState.$("#providerImportTitle").textContent = "导入 " + providerLabel() + " 凭据 JSON"; domState.$("#providerScope").querySelector("option[value=global]").disabled = name === "trae"; if (name === "trae")
-    domState.$("#providerScope").value = "cn"; domState.$("#providerImportHint").textContent = name === "trae" ? "支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。" : "支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。"; domState.$("#providerLoginCallback").placeholder = name === "trae" ? "粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）" : "完成授权后可直接检查，也可粘贴带 state 的回调地址"; }
+} providersState.activeProvider = name; domState.$("#providerLoginTitle").textContent = tr("添加 ") + providerLabel() + tr(" 账号"); domState.$("#providerImportTitle").textContent = tr("导入 ") + providerLabel() + tr(" 凭据 JSON"); domState.$("#providerScope").querySelector("option[value=global]").disabled = name === "trae"; if (name === "trae")
+    domState.$("#providerScope").value = "cn"; domState.$("#providerImportHint").textContent = name === "trae" ? tr("支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。") : tr("支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。"); domState.$("#providerLoginCallback").placeholder = name === "trae" ? tr("粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）") : tr("完成授权后可直接检查，也可粘贴带 state 的回调地址"); }
 
 export function openProvider(name) { if (!sessionState.adminAuthenticated) {
     showAdminLogin();
@@ -254,7 +255,7 @@ export function providerJob(fn) { if (providersState.providerBusy)
 
 export function providerCall(action, extra) { return api("/admin/api/provider-login", { method: "POST", body: Object.assign({ action: action, session_id: providersState.providerSession }, extra || {}) }); }
 
-export function refreshAfterProviderSave() { resetProviderLogin(); domState.$("#providerImportJSON").value = ""; finishAccountCreation(); toast(providerLabel() + " 账号已保存，正在刷新模型目录", "ok"); return api("/admin/api/models/refresh", { method: "POST" }).catch(function (e) { if (isAbortError(e)) return; toast("账号已保存，模型目录刷新失败：" + e.message, "err"); }).then(refresh); }
+export function refreshAfterProviderSave() { resetProviderLogin(); domState.$("#providerImportJSON").value = ""; finishAccountCreation(); toast(providerLabel() + tr(" 账号已保存，正在刷新模型目录"), "ok"); return api("/admin/api/models/refresh", { method: "POST" }).catch(function (e) { if (isAbortError(e)) return; toast(tr("账号已保存，模型目录刷新失败：") + e.message, "err"); }).then(refresh); }
 
 export function trustedProviderURL(raw) { try {
     var u = new URL(raw);
@@ -273,15 +274,15 @@ on("#accountCreateBack", function () { return leaveAccountCreate(false); });
 on("#accountCreateCancel", function () { return leaveAccountCreate(true); });
 on("#addAccountClose", function () { return leaveAccountCreate(true); });
 listen(domState.$("#addAccountDialog"), "cancel", function (e) { e.preventDefault(); leaveAccountCreate(true); });
-on("#providerDeviceCommand", function () { return copyText(domState.$("#providerDeviceOS").value === "windows" ? providersState.traeDeviceWindowsCommand : providersState.traeDeviceUnixCommand, "读取命令已复制，请在已登录 Trae 官方客户端的电脑执行"); });
+on("#providerDeviceCommand", function () { return copyText(domState.$("#providerDeviceOS").value === "windows" ? providersState.traeDeviceWindowsCommand : providersState.traeDeviceUnixCommand, tr("读取命令已复制，请在已登录 Trae 官方客户端的电脑执行")); });
 on("#providerDeviceRead", function () {
     return providerJob(function () {
         if (providersState.providerSession)
-            throw new Error("本次授权已绑定设备，请先关闭登录窗口再读取");
-        domState.$("#providerDeviceStatus").textContent = "正在读取面板运行电脑上的 Trae 客户端记录…";
+            throw new Error(tr("本次授权已绑定设备，请先关闭登录窗口再读取"));
+        domState.$("#providerDeviceStatus").textContent = tr("正在读取面板运行电脑上的 Trae 客户端记录…");
         return api("/admin/api/trae-device").then(function (d) { showDeviceChoices(d.devices || []); if (!providersState.providerDevices.length)
-            domState.$("#providerDeviceStatus").textContent = d.message || "未找到官方客户端设备信息，请在对应电脑执行读取命令。"; if (d.warnings && d.warnings.length)
-            domState.$("#providerDeviceStatus").textContent += " " + d.warnings.join("；"); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#providerDeviceStatus").textContent = "读取失败，可重试或复制命令到客户端所在电脑执行。"; throw e; });
+            domState.$("#providerDeviceStatus").textContent = d.message || tr("未找到官方客户端设备信息，请在对应电脑执行读取命令。"); if (d.warnings && d.warnings.length)
+            domState.$("#providerDeviceStatus").textContent += " " + d.warnings.join("；"); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#providerDeviceStatus").textContent = tr("读取失败，可重试或复制命令到客户端所在电脑执行。"); throw e; });
     });
 });
 listen(domState.$("#providerDeviceChoice"), "change", function () { var value = this.value; if (value !== "" && providersState.providerDevices[Number(value)])
@@ -289,17 +290,17 @@ listen(domState.$("#providerDeviceChoice"), "change", function () { var value = 
 on("#providerDeviceApply", function () {
     return providerJob(function () {
         if (providersState.providerSession)
-            throw new Error("本次授权已绑定设备，请先关闭登录窗口再修改");
+            throw new Error(tr("本次授权已绑定设备，请先关闭登录窗口再修改"));
         var data;
         try {
             data = JSON.parse(domState.$("#providerDeviceJSON").value.trim());
         }
         catch (e) {
-            throw new Error("请粘贴读取命令输出的设备信息 JSON");
+            throw new Error(tr("请粘贴读取命令输出的设备信息 JSON"));
         }
         showDeviceChoices(Array.isArray(data) ? data : [data]);
         if (!providersState.providerDevices.length)
-            throw new Error("命令输出没有设备信息，请确认在已登录官方客户端的电脑执行");
+            throw new Error(tr("命令输出没有设备信息，请确认在已登录官方客户端的电脑执行"));
         domState.$("#providerDeviceJSON").value = "";
     });
 });
@@ -310,28 +311,28 @@ on("#providerLoginStart", function () {
             options.machine_id = domState.$("#providerMachineID").value.trim();
             options.device_id = domState.$("#providerDeviceID").value.trim();
             if (!options.machine_id || !options.device_id)
-                throw new Error("请填写 Trae 官方客户端的机器标识和设备标识");
+                throw new Error(tr("请填写 Trae 官方客户端的机器标识和设备标识"));
             if (!/^[A-Za-z0-9_.-]{1,256}$/.test(options.machine_id))
-                throw new Error("机器标识格式无效，请复制官方客户端的完整值");
+                throw new Error(tr("机器标识格式无效，请复制官方客户端的完整值"));
             if (!/^[0-9]{8,32}$/.test(options.device_id))
-                throw new Error("设备标识应为官方客户端的 8 至 32 位数字设备号");
+                throw new Error(tr("设备标识应为官方客户端的 8 至 32 位数字设备号"));
         }
         var previous = providersState.providerSession ? providerCall("cancel") : Promise.resolve();
         return previous.then(function () { resetProviderLogin(); return providerCall("start", options); }).then(function (d) { if (!trustedProviderURL(d.url))
-            throw new Error("授权链接不在所选上游官方域名范围"); providersState.providerSession = d.session_id; domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.remove("hidden"); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "trae" ? "请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。" : "链接已生成。请复制到另一浏览器完成授权，再点击检查。"; });
+            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.remove("hidden"); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); });
     });
 });
-on("#providerLoginCopy", function () { return copyText(domState.$("#providerLoginURL").value, providerLabel() + " 授权链接已复制"); });
+on("#providerLoginCopy", function () { return copyText(domState.$("#providerLoginURL").value, providerLabel() + tr(" 授权链接已复制")); });
 on("#providerLoginCheck", function () { return providerJob(function () { providersState.providerPreviewID = ""; domState.$("#providerPreview").classList.add("hidden"); return providerCall("check", { input: domState.$("#providerLoginCallback").value.trim() }).then(function (d) { if (!d.ready) {
-    domState.$("#providerLoginStatus").textContent = d.message || "尚未完成授权";
+    domState.$("#providerLoginStatus").textContent = d.message || tr("尚未完成授权");
     return;
-} providersState.providerPreviewID = d.preview_id; domState.$("#providerPreviewText").textContent = (d.name || providerLabel() + " 账号") + " · " + d.uid + " · " + (d.scope === "global" ? "国际版" : "国内版") + (d.existing ? " · 已存在，保存将更新凭据" : " · 新账号"); domState.$("#providerPreview").classList.remove("hidden"); domState.$("#providerLoginStatus").textContent = "账号已验证，点击确认保存才会加入账号池。"; domState.$("#providerLoginCallback").value = ""; }); }); });
+} providersState.providerPreviewID = d.preview_id; domState.$("#providerPreviewText").textContent = (d.name || providerLabel() + tr(" 账号")) + " · " + d.uid + " · " + (d.scope === "global" ? tr("国际版") : tr("国内版")) + (d.existing ? tr(" · 已存在，保存将更新凭据") : tr(" · 新账号")); domState.$("#providerPreview").classList.remove("hidden"); domState.$("#providerLoginStatus").textContent = tr("账号已验证，点击确认保存才会加入账号池。"); domState.$("#providerLoginCallback").value = ""; }); }); });
 on("#providerLoginComplete", function () { return providerJob(function () { return providerCall("complete", { preview_id: providersState.providerPreviewID, replace_existing: domState.$("#providerReplace").checked, name: domState.$("#providerAccountName").value.trim() }).then(refreshAfterProviderSave); }); });
 on("#providerImport", function () { return providerJob(function () { var credentials; try {
     credentials = JSON.parse(domState.$("#providerImportJSON").value);
 }
 catch (e) {
-    throw new Error("请粘贴有效的 " + providerLabel() + " JSON 凭据");
+    throw new Error(tr("请粘贴有效的 ") + providerLabel() + tr(" JSON 凭据"));
 } return api("/admin/api/provider-import", { method: "POST", body: { provider: providersState.activeProvider, credentials: credentials, replace_existing: domState.$("#providerImportReplace").checked, name: domState.$("#providerAccountName").value.trim() } }).then(refreshAfterProviderSave); }); });
 document.querySelectorAll("[data-account-filter]").forEach(function (button) {
     listen(button, "click", function () {
@@ -353,14 +354,14 @@ listen(domState.$("#manualKind"), "change", function () {
     if (isAKSK)
         domState.$("#manualSTS").value = "";
     domState.$("#manualKindHint").textContent = isAKSK
-        ? "永久 AK/SK 不过期、无需续期；请勿与 STS 临时凭据混用。"
-        : "STS 临时凭据约 2 小时过期，到期需重新录入或用 refresh_token 续期。";
+        ? tr("永久 AK/SK 不过期、无需续期；请勿与 STS 临时凭据混用。")
+        : tr("STS 临时凭据约 2 小时过期，到期需重新录入或用 refresh_token 续期。");
 });
 on("#addManual", function () {
     var ak = domState.$("#manualAK").value.trim(), sk = domState.$("#manualSK").value.trim();
     var kind = domState.$("#manualKind").value;
     if (!ak || !sk) {
-        toast("请填写 Access Key 与 Secret Key", "err");
+        toast(tr("请填写 Access Key 与 Secret Key"), "err");
         return;
     }
     var payload = {
@@ -380,7 +381,7 @@ on("#addManual", function () {
 on("#addSession", function () {
     var js = domState.$("#sessionJSON").value.trim();
     if (!js) {
-        toast("请粘贴 session JSON", "err");
+        toast(tr("请粘贴 session JSON"), "err");
         return;
     }
     return addAccountCredentials("session-json", { name: domState.$("#sessionName").value.trim(), session_json: js }).then(function (ok) {

@@ -5,7 +5,7 @@ const fs=require('node:fs');
 (async()=>{
  const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL||'chrome',headless:true});
  try{
-  const ctx=await browser.newContext({viewport:{width:1440,height:1000}}),page=await ctx.newPage();
+  const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000}}),page=await ctx.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const accounts=[
    {id:'wb-a',name:'WorkBuddy A',provider:'workbuddy',growth_tasks_supported:true},

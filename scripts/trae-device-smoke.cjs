@@ -16,7 +16,7 @@ async function chooseAccount(page, id, method='browser') {
   const browser=await chromium.launch({channel:process.env.CODEARTS_TEST_BROWSER || 'chrome',headless:true});
   const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'trae-device-command-'));
   try{
-    const ctx=await browser.newContext({viewport:{width:1460,height:1100},permissions:['clipboard-read','clipboard-write']});
+    const ctx=await browser.newContext({locale:'zh-CN',viewport:{width:1460,height:1100},permissions:['clipboard-read','clipboard-write']});
     const page=await ctx.newPage(),errors=[];let reads=0;
     const first={client:'Trae CN',source:'/fixture/Trae CN/storage.json',machine_id:'machine-fixture',device_id:'1234567890123456'};
     const second={client:'TRAE SOLO CN',source:'/fixture/TRAE SOLO CN/storage.json',machine_id:'second-machine',device_id:'2222222222222222'};

@@ -5,7 +5,7 @@ const fs=require('node:fs');
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||undefined});
  try{
-  const context=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'dark',hasTouch:true});
+  const context=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000},colorScheme:'dark',hasTouch:true});
   const now=Math.floor(Date.now()/1000);
   const accounts=['主力开发账号','项目测试账号','备用账号','个人体验账号'].map((name,i)=>({
    id:'fixture-'+i,name,source:'browser',enabled:true,paused:i===3,status:'ok',failures:0,
