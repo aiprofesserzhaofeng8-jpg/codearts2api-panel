@@ -55,6 +55,35 @@ sudo python3 /opt/codearts2api/current/panelctl.py doctor --data-dir /opt/codear
 
 恢复后的文件默认归操作用户所有；系统服务恢复到新目录后，在启动前将 data 设为服务用户所有、目录 0700/文件 0600，并保持程序和父目录由 root 管理。恢复不会自动改写 unit 或覆盖现有 data。跨 schema 降级仍不支持。
 
+## 终端交互向导
+
+当前 `main/deploy/install.sh` 已提供终端向导；v0.3.8 已发布附件保持原样，下载其内置 `install.sh` 不会出现新菜单。下面的 raw `main` 命令获取新脚本，并继续下载最新稳定版程序。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
+```
+
+系统级全新安装检测到可用终端时，按顺序选择：
+
+1. 中文或 English，默认中文；`--lang zh|en` 可预选语言。
+2. 监听地址，默认 `127.0.0.1`，也可选 `0.0.0.0`。
+3. 端口，默认 `10087`；支持 1–65535，建议使用 1024–65535。
+4. 核对目录和监听地址，回车继续，输入 `n` 取消。
+
+选择所有网卡时，请先限制未初始化面板的访问，完成管理员设置后再对外开放。向导选择的语言仅用于安装器，不覆盖浏览器的语言偏好；下载的旧版维护工具可能仍输出中文诊断。
+
+脚本直接读取 `/dev/tty`，不从管道读取回答。Ctrl+C 或终端输入结束会取消操作；确认前不下载、不创建服务。安装目录存在时直接拒绝覆盖，不提供删除旧数据的选项。用户级安装需显式指定 `--interactive` 才提问；`check`、`download`、`upgrade` 不询问安装参数，升级沿用原服务配置。
+
+显式给定 `--host` 或 `--port` 后不重复询问对应字段。自动化脚本应使用：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- install --non-interactive --lang en --host 127.0.0.1 --port 10087
+```
+
+没有控制终端时自动使用参数和默认值；需要确保必须交互时添加 `--interactive`，缺少终端会报错，不会静默继续。`--interactive` 与 `--non-interactive` 互斥。安装目录仍由默认值或 `--root` 指定。GitHub 限流、摘要校验、已有目录保护和升级流程保持原行为；终端向导不绕过这些检查。
+
+参考 [Sub2API install.sh](https://github.com/Wei-Shaw/sub2api/blob/main/deploy/install.sh) 的控制终端交互方式，在本项目现有 Python 安装器内实现，未引入额外 shell 下载或执行入口。
+
 ## 固定版本包与首次安装
 
 从项目的同一个 GitHub Release 下载对应架构的 `codearts2api-panel-vX.Y.Z-linux-amd64.tar.gz`（ARM 用 arm64）、`panelctl.py` 和 `SHA256SUMS`。安装工具作为独立附件提供，其摘要也在清单中；先校验再执行。版本号只是示例，必须替换成实际已发布版本。SHA-256 用于完整性校验，不是发布者签名，文件及校验值都应来自可信发布页。

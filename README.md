@@ -82,6 +82,8 @@ v0.3.8 起首次运行通过向导设置管理员邮箱和密码。数据保存�
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
 ```
 
+当前 `main` 安装脚本会在可用终端中依次询问语言、监听地址、端口并确认安装；回车使用默认值。通过 `curl | sudo bash` 运行同样可交互。添加 `--non-interactive` 可跳过提问，详细参数见 [部署指南](deploy/README.md#终端交互向导)。
+
 默认安装到 `/opt/codearts2api`，服务名 `codearts2api.service`，监听 `127.0.0.1:10087`。通过 SSH 隧道或 HTTPS 反代访问；需要直接监听所有网卡时，在命令末尾改用 `sudo bash -s -- install --host 0.0.0.0`。服务以不可登录的专用用户运行，程序和升级配置由 root 管理。
 
 ```bash

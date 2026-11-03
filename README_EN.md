@@ -69,6 +69,8 @@ Requires Python 3.10+, systemd, and sudo. Downloads and verifies the latest stab
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash
 ```
 
+The current `main` installer prompts for language, listen address, port, and confirmation when a controlling terminal is available, including `curl | sudo bash`. Press Enter for defaults. Use `--non-interactive` for automation or `--lang en` to select English. Explicit `--host` and `--port` values skip their respective prompts. Without a terminal, defaults and supplied arguments are used.
+
 Defaults: `/opt/codearts2api`, `codearts2api.service`, and `127.0.0.1:10087`. Access through an SSH tunnel or HTTPS proxy. To bind all interfaces explicitly, use `sudo bash -s -- install --host 0.0.0.0` at the end of the pipeline. The daemon runs as a dedicated user; root owns its program and deployment configuration.
 
 ```bash
