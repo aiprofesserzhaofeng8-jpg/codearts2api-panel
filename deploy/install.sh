@@ -204,9 +204,65 @@ def fetch(url, target, limit):
             require(size <= limit, message('下载超出大小限制', 'Download exceeds the size limit'))
             output.write(chunk)
 
+class NoReleaseRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def public_latest_version():
+    # Stop at GitHub's public latest -> tag redirect. Do not follow arbitrary
+    # locations, scrape HTML, or send API credentials to this endpoint.
+    url = 'https://github.com/' + REPO + '/releases/latest'
+    request = urllib.request.Request(url, method='HEAD', headers={'User-Agent': 'codearts2api-installer'})
+    try:
+        with urllib.request.build_opener(NoReleaseRedirects()).open(request, timeout=20):
+            raise InstallError(message('公开发布入口未返回稳定版本。', 'The public release entry did not return a stable version.'))
+    except urllib.error.HTTPError as error:
+        try:
+            if error.code not in (301, 302, 303, 307, 308):
+                raise
+            location = urllib.parse.urljoin(url, error.headers.get('Location', ''))
+            prefix = 'https://github.com/' + REPO + '/releases/tag/'
+            require(location.startswith(prefix), message('公开发布跳转来源无效。', 'Invalid public release redirect origin.'))
+            return version(location.removeprefix(prefix))
+        finally:
+            error.close()
+
+
+def public_release(work, selected):
+    tag = public_latest_version()
+    # Public latest excludes drafts/prereleases. For an older explicitly pinned
+    # tag, only the API can verify its stable-release flags; fail closed instead.
+    require(selected == 'latest' or selected == tag,
+            message('API 不可用时仅支持公开最新稳定版；指定旧版本请稍后重试或配置 GITHUB_TOKEN。',
+                    'Without the API, only the public latest stable release is supported; retry later or configure GITHUB_TOKEN for older versions.'))
+    path = work / 'public-SHA256SUMS'
+    fetch(BASE + tag + '/SHA256SUMS', path, 65536)
+    expected = checksums(path)
+    # Derive download locations only from this repository and the validated tag;
+    # checksum filenames cannot inject hosts, paths or shell commands.
+    data = {'tag_name': tag, 'source': 'public-checksums', 'assets': [
+        {'name': name, 'browser_download_url': BASE + tag + '/' + name}
+        for name in [*expected, 'SHA256SUMS']
+    ]}
+    return tag, data
+
+
 def release(work, selected):
     meta = work / 'release.json'
-    fetch(API + ('latest' if selected == 'latest' else 'tags/' + version(selected)), meta, 2 * 1024**2)
+    url = API + ('latest' if selected == 'latest' else 'tags/' + version(selected))
+    try:
+        fetch(url, meta, 2 * 1024**2)
+    except (urllib.error.URLError, TimeoutError) as error:
+        # A missing release, bad credentials, malformed metadata, or a checksum
+        # failure is not a reason to silently select a different version.
+        if isinstance(error, urllib.error.HTTPError) and error.code not in (403, 429, 500, 502, 503, 504):
+            raise
+        if isinstance(error, urllib.error.HTTPError):
+            error.close()
+        emit(message('GitHub API 暂不可用，正在通过公开发布入口查询稳定版（无需 Token）…',
+                     'GitHub API is unavailable; checking the public stable release entry without a token…'), 'warning')
+        return public_release(work, selected)
     data = json.loads(meta.read_text())
     require(isinstance(data, dict) and not data.get('draft') and not data.get('prerelease'), message('没有可用的正式发布', 'No stable release is available'))
     tag = version(data.get('tag_name', ''))
@@ -290,10 +346,17 @@ def main():
         urls = assets(data, tag, [name, 'panelctl.py', 'SHA256SUMS'])
         emit(message('稳定版本：', 'Stable release: ') + tag)
         if args.command == 'check':
-            emit(message('发布附件齐全；安装时将继续校验摘要和状态版本。', 'Required assets are present; installation will verify checksums and state compatibility.'))
+            if data.get('source') == 'public-checksums':
+                emit(message('公开校验清单包含所需附件；安装时将下载并验证附件摘要和状态版本。',
+                             'The public checksum list includes required assets; installation will download and verify them and check state compatibility.'))
+            else:
+                emit(message('发布附件齐全；安装时将继续校验摘要和状态版本。', 'Required assets are present; installation will verify checksums and state compatibility.'))
             return
         emit(message('正在下载校验清单…', 'Downloading checksums…'))
-        fetch(urls['SHA256SUMS'], work / 'SHA256SUMS', 65536)
+        if data.get('source') == 'public-checksums':
+            (work / 'public-SHA256SUMS').replace(work / 'SHA256SUMS')
+        else:
+            fetch(urls['SHA256SUMS'], work / 'SHA256SUMS', 65536)
         expected = checksums(work / 'SHA256SUMS')
         for item in (name, 'panelctl.py'):
             require(item in expected, message('校验清单缺少必需附件', 'Required assets are missing from checksums'))
@@ -349,6 +412,10 @@ if __name__ == '__main__':
         sys.exit(130)
     except urllib.error.HTTPError as error:
         emit(message('GitHub 拒绝或限制请求；可稍后重试，或在服务器配置 GITHUB_TOKEN。', 'GitHub denied or rate-limited this request; retry later or configure GITHUB_TOKEN.') if error.code in (403,429) else message('发布版本或附件不可用，请检查版本号。', 'Release or asset unavailable; check the version.'), 'error', file=sys.stderr)
+        sys.exit(1)
+    except (urllib.error.URLError, TimeoutError):
+        emit(message('GitHub 连接失败或超时；公开发布页或附件下载也不可达，请检查网络后重试。',
+                     'GitHub connection failed or timed out; the public release page or assets could not be reached. Check the network and retry.'), 'error', file=sys.stderr)
         sys.exit(1)
     except Exception as error:
         emit(str(error) if isinstance(error, InstallError) else message('获取或安装失败；请检查网络、发布附件和部署状态。', 'Download or installation failed; check network, release assets and deployment state.'), 'error', file=sys.stderr)

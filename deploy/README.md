@@ -82,7 +82,7 @@ curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2a
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- install --non-interactive --lang en --host 127.0.0.1 --port 10087
 ```
 
-没有控制终端时自动使用参数和默认值；需要确保必须交互时添加 `--interactive`，缺少终端会报错，不会静默继续。`--interactive` 与 `--non-interactive` 互斥。安装目录仍由默认值或 `--root` 指定。GitHub 限流、摘要校验、已有目录保护和升级流程保持原行为；终端向导不绕过这些检查。
+没有控制终端时自动使用参数和默认值；需要确保必须交互时添加 `--interactive`，缺少终端会报错，不会静默继续。`--interactive` 与 `--non-interactive` 互斥。安装目录仍由默认值或 `--root` 指定。API 限流时使用下文的公开发布备用通道；摘要校验、已有目录保护和升级流程保持不变。
 
 参考 [Sub2API install.sh](https://github.com/Wei-Shaw/sub2api/blob/main/deploy/install.sh) 的控制终端交互方式，在本项目现有 Python 安装器内实现，未引入额外 shell 下载或执行入口。
 
@@ -310,4 +310,10 @@ journalctl --user -u codearts2api-managed.service -n 100
 python3 panelctl.py doctor --data-dir "$HOME/codearts2api-managed/data" --url http://127.0.0.1:10088
 ```
 
-GitHub 匿名 API 有查询限额。若显示“拒绝或限制请求”，可稍后重试，或由运维在服务器进程环境设置 `GITHUB_TOKEN`。只查询公开仓库，不需要写入权限；该值仅发送到固定的 GitHub API，不发送到附件下载主机，也不会返回网页。环境凭据不得写入仓库或公开日志。
+### GitHub API 限流与公开下载备用通道
+
+当前 main 安装脚本在 GitHub API 返回 403、429、常见 5xx 或网络连接失败/超时时，自动尝试公开 `releases/latest` 入口。仅接受本仓库指向 `releases/tag/vX.Y.Z` 的 HTTPS 跳转，取得公开 SHA256SUMS 后继续下载并校验程序与维护脚本；不需要 GitHub Token，不使用第三方镜像，也不跳过摘要校验。
+
+指定 `--version` 时，备用通道仅支持当前公开最新稳定版；旧版本不会被悄悄替换为新版。API 返回 401/404、元数据无效、草稿或预发布时不会使用备用通道掩盖错误。`check` 在备用通道中验证公开校验清单包含所需附件，实际字节和状态兼容性仍在安装时验证。若公开网页或附件主机也无法连接，仍需恢复网络或稍后重试。
+
+下载旧版本或希望使用认证额度时，可由运维在安装进程环境设置 `GITHUB_TOKEN`；通过 sudo 时需显式保留该变量（例如 `sudo --preserve-env=GITHUB_TOKEN bash`）。只查询公开仓库，不需要写入权限；Token 仅发送到固定的 GitHub API，不发送到公开发布页或附件下载主机。环境凭据不得写入仓库或公开日志。v0.3.8 已发布附件不作覆盖，旧安装脚本仍使用原有 API 流程。
