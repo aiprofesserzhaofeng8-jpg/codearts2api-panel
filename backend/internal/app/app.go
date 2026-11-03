@@ -46,7 +46,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
 	credits := &accounts.Credits{}
-	users := access.NewUsers(st, func() string { return st.Settings().AdminPassword })
+	users := access.NewUsers(st, func() string { return st.Settings().AdminPassword }, func() string { return st.Settings().AdminEmail })
 	return server.New(st, server.Dependencies{
 		Users:     users,
 		Identity:  access.NewIdentity(st, users, &identitytransport.Client{}),

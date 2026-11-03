@@ -3554,9 +3554,6 @@
                     "needs_setup": {
                       "type": "boolean"
                     },
-                    "admin_username": {
-                      "type": "string"
-                    },
                     "ready": {
                       "type": "boolean",
                       "description": "正式服务已就绪；初始安装提交后交接期间仍为 false。"
@@ -3564,7 +3561,6 @@
                   },
                   "required": [
                     "needs_setup",
-                    "admin_username",
                     "ready"
                   ]
                 }
@@ -3588,7 +3584,7 @@
       "post": {
         "operationId": "post__setup_install",
         "security": [],
-        "description": "Available only in the temporary first-install runtime, before any accounts or normal services exist. Requires the private server installation token. Permanently rejected after installation.",
+        "description": "Creates the first administrator from email and password in a fresh instance only. No setup token or login session. Permanently rejected after installation.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3597,11 +3593,6 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                  "setup_token": {
-                    "type": "string",
-                    "minLength": 32,
-                    "maxLength": 256
-                  },
                   "password": {
                     "type": "string",
                     "minLength": 12,
@@ -3611,10 +3602,15 @@
                     "type": "string",
                     "minLength": 12,
                     "maxLength": 256
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
                   }
                 },
                 "required": [
-                  "setup_token",
+                  "email",
                   "password",
                   "confirm_password"
                 ]

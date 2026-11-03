@@ -24,8 +24,8 @@ def run(archive):
         old_path.write_text(f'[Unit]\nDescription=Isolated migration fixture\n[Service]\nExecStart={binary} -host 127.0.0.1 -port {app_port} -data {data}/state.json -no-import -no-refresh\n[Install]\nWantedBy=default.target\n')
         try:
             ops.run(['systemctl','--user','daemon-reload']);ops.run(['systemctl','--user','enable','--now',old]);wait(base,'setup_required')
-            password=secrets.token_urlsafe(24);token=json.loads((data/'state.json.setup.json').read_text())['setup_token']
-            post(base,'/setup/install',{'setup_token':token,'password':password,'confirm_password':password});wait(base,'running')
+            password=secrets.token_urlsafe(24);email='owner@example.com'
+            post(base,'/setup/install',{'email':email,'password':password,'confirm_password':password});wait(base,'running')
             ops.Service(unit=old).stop()
             snapshot=json.loads((data/'state.json').read_text())
             entry={'sequence':snapshot.get('usage_sequence',0)+1,'key_hash':hashlib.sha256(snapshot['keys'][0]['key'].encode()).hexdigest(),
@@ -39,7 +39,7 @@ def run(archive):
             args=['migrate','--root',str(root/'managed'),'--archive',str(archive),'--sha256',ops.sha256(archive),'--name','migrated-'+suffix,'--port',str(app_port),'--source-unit',old,'--source-binary',str(binary),'--data-dir',str(data),'--no-refresh']
             subprocess.run([sys.executable,str(release/'panelctl.py'),*args],check=True)
             wait(base,'running')
-            assert post(base,'/auth/login',{'username':'admin','password':password})['user']['role']=='admin'
+            assert post(base,'/auth/login',{'username':'owner@example.com','password':password})['user']['role']=='admin'
             assert (root/'managed/data/private/fixture').read_text()=='synthetic latest credential'
             assert not ops.Service(unit=old).running()
             assert ops.run(['systemctl','--user','is-enabled',old],check=False).stdout.strip()=='disabled'

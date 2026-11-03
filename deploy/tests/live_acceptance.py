@@ -66,11 +66,11 @@ def run(archive, caddy=None):
         try:
             process = start(data)
             wait(base, 'setup_required')
-            token = json.loads((data / 'state.json.setup.json').read_text())['setup_token']
+            email='owner@example.com'
             password = secrets.token_urlsafe(24)
-            assert post(base, '/setup/install', {'setup_token': token, 'password': password, 'confirm_password': password})['ok']
+            assert post(base, '/setup/install', {'email': email, 'password': password, 'confirm_password': password})['ok']
             wait(base, 'running')
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             assert not (data / 'state.json.setup.json').exists()
             checks.append('real_binary_install_health_and_admin_login')
             try:
@@ -105,7 +105,7 @@ def run(archive, caddy=None):
             assert ops.inventory(restored) == ops.inventory(data)
             process = start(restored)
             wait(base, 'running')
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             stop(process)
             resumed = json.loads((restored / 'state.json').read_text())
             assert resumed['version'] == snapshot['version'] == meta['schema']
@@ -155,7 +155,7 @@ def proxy_acceptance(caddy, base, root, start_app, stop_app, password):
         wait(proxy_base, 'running')
         browser = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPCookieProcessor())
         request = urllib.request.Request(proxy_base + '/auth/login',
-            data=json.dumps({'username': 'admin', 'password': password}).encode(),
+            data=json.dumps({'username': 'owner@example.com', 'password': password}).encode(),
             headers={'Content-Type': 'application/json', 'Origin': proxy_base})
         with browser.open(request, timeout=10) as response:
             assert json.load(response)['user']['role'] == 'admin'

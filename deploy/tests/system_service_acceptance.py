@@ -57,9 +57,9 @@ def run(first, second):
             setup = root / 'data/state.json.setup.json'
             assert setup.stat().st_mode & 0o777 == 0o600 and setup.stat().st_uid == account.pw_uid
             password = secrets.token_urlsafe(24)
-            post(base, '/setup/install', {'setup_token': json.loads(setup.read_text())['setup_token'], 'password': password, 'confirm_password': password})
+            post(base, '/setup/install', {'email': 'owner@example.com', 'password': password, 'confirm_password': password})
             wait(base, 'running')
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             binary = (root / 'current').resolve() / 'codearts2api-panel'
             assert binary.stat().st_uid == 0
             assert ops.run(['runuser', '-u', 'codearts2api', '--', 'test', '-w', str(binary)], check=False).returncode != 0
@@ -82,10 +82,10 @@ def run(first, second):
             after = json.loads((root / 'data/state.json').read_text())
             for key in ('settings', 'keys', 'users', 'groups', 'stats', 'usage_sequence'):
                 assert before.get(key) == after.get(key), key
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             assert len(list((root / 'backups').glob('*.tar.gz'))) == 1
             assert ops.run(['systemctl', 'is-enabled', unit]).stdout.strip() == 'enabled'
-            print(json.dumps({'checks': ['no_argument_system_install', 'dedicated_nonroot_uid', 'root_owned_program', 'private_setup_token', 'initial_setup_and_login', 'duplicate_rejected', 'restart', 'system_scope_upgrade', 'backup_created', 'password_and_state_preserved', 'boot_enabled'], 'network': 'release fixture; real systemd and program'}))
+            print(json.dumps({'checks': ['no_argument_system_install', 'dedicated_nonroot_uid', 'root_owned_program', 'private_pending_marker', 'initial_setup_and_login', 'duplicate_rejected', 'restart', 'system_scope_upgrade', 'backup_created', 'password_and_state_preserved', 'boot_enabled'], 'network': 'release fixture; real systemd and program'}))
         finally:
             ops.run(['systemctl', 'disable', '--now', unit], check=False)
             unit_file.unlink(missing_ok=True)

@@ -31,9 +31,9 @@ def run(archive):
         p=port();base=f'http://127.0.0.1:{p}';root=folder/'managed'
         try:
             with patch.object(installer,'fetch',side_effect=fetch),patch.object(sys,'argv',['installer','install','--version',tag,'--root',str(root),'--name',suffix,'--port',str(p)]):installer.main()
-            wait(base,'setup_required');token=json.loads((root/'data/state.json.setup.json').read_text())['setup_token'];password=secrets.token_urlsafe(24)
-            post(base,'/setup/install',dict(setup_token=token,password=password,confirm_password=password));wait(base,'running')
-            assert post(base,'/auth/login',{'username':'admin','password':password})['user']['role']=='admin'
+            wait(base,'setup_required');email='owner@example.com';password=secrets.token_urlsafe(24)
+            post(base,'/setup/install',dict(email=email,password=password,confirm_password=password));wait(base,'running')
+            assert post(base,'/auth/login',{'username':'owner@example.com','password':password})['user']['role']=='admin'
             ops.verify_process(unit,(root/'current').resolve()/'codearts2api-panel')
             print(json.dumps({'checks':['same_bootstrap_entry','release_bytes_verified','real_managed_install','initial_setup','admin_login','actual_binary_version'],'network':'local release fixture, not GitHub publication'}))
         finally:

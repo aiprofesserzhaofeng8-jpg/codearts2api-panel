@@ -59,7 +59,7 @@ Task availability and rewards come from the upstream account. A real-account che
 
 Download `codearts2api-panel-vX.Y.Z-windows-amd64.zip` from the [stable release](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest), extract all files, and double-click **start.cmd**. Open http://127.0.0.1:10087/. Go, Node.js, Python, and Docker are not required.
 
-Read the initial setup token from `%LOCALAPPDATA%\CodeArts2API\state.json.setup.json` and set your own `admin` password in the wizard. Data stays in `%LOCALAPPDATA%\CodeArts2API` across program upgrades. Stop with Ctrl+C and back up that entire directory before running a new release. This is a foreground application, not a Windows service. See the [Windows guide](deploy/windows/README.md).
+Current source lets you choose an administrator email and password without a setup token. Published v0.3.7 still uses the token wizard. Data stays in `%LOCALAPPDATA%\CodeArts2API` across program upgrades. Stop with Ctrl+C and back up that entire directory before running a new release. This is a foreground application, not a Windows service. See the [Windows guide](deploy/windows/README.md).
 
 ### One-command system service installation on Linux
 
@@ -73,7 +73,7 @@ Defaults: `/opt/codearts2api`, `codearts2api.service`, and `127.0.0.1:10087`. Ac
 
 ```bash
 sudo systemctl status codearts2api
-sudo cat /opt/codearts2api/data/state.json.setup.json
+# Open the panel to complete setup (v0.3.7 still requires its setup token).
 # Read release notes before upgrading:
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
 ```
@@ -91,7 +91,7 @@ sh install.sh install --version v0.3.3 --root "$HOME/codearts2api-managed" --por
 sh install.sh upgrade --root "$HOME/codearts2api-managed"
 ```
 
-The installer verifies the release archive and operations tool before execution. Set the `admin` password through the first-install wizard. The service binds to loopback; use an SSH tunnel or HTTPS reverse proxy for remote access. Existing source installations need an explicit migration. See the [deployment guide](deploy/README.md) for migration, Docker, HTTPS, backups, and recovery.
+The installer verifies the release archive and operations tool before execution. Set the administrator email and password through the first-install wizard. The service binds to loopback; use an SSH tunnel or HTTPS reverse proxy for remote access. Existing source installations need an explicit migration. See the [deployment guide](deploy/README.md) for migration, Docker, HTTPS, backups, and recovery.
 
 ### Option 1: Build from source
 
@@ -164,8 +164,8 @@ Backups contain account credentials and need protection. Check the corresponding
 
 ## Initial setup
 
-1. Retrieve the administrator password and API key generated on first startup.
-2. Open the panel and sign in with `admin_password`.
+1. Complete the first-install wizard with your administrator email and password.
+2. Sign in with the email and password you chose.
 3. Under the account pool (账号池), open the browser login dialog, generate a link, and copy it to another browser to authorize the account.
 4. Paste the final callback URL, submit the authorization information, review the account preview, and confirm saving.
 5. Refresh the model catalog and use an available model ID. Model probes consume real upstream quota.
@@ -173,21 +173,9 @@ Backups contain account credentials and need protection. Check the corresponding
 
 ### Where is the administrator login password?
 
-The first startup generates an administrator password. Open the initial credentials file below and use the **value of `admin_password`** to sign in to the panel. The `api_key` field is for client API calls, not administrator login.
+Current source opens a first-install wizard for an empty instance. Choose an administrator email and a password of at least 12 bytes; no setup token or email verification is required. The email is a login identifier, not a newly created mailbox or proof of ownership. Published v0.3.7 still uses its setup token wizard.
 
-**Source / start.sh deployment**: run this from the project directory to view `data/state.json.access.json`:
-
-```bash
-cat data/state.json.access.json
-```
-
-**Docker Compose deployment**: view `/data/codearts2api-data.json.access.json` inside the container:
-
-```bash
-docker compose exec codearts2api cat /data/codearts2api-data.json.access.json
-```
-
-If you supplied `CODEARTS_ADMIN_PASSWORD` at startup, use that password. The initial credentials file is not updated after later password changes. The value stored in `state.json` is a password hash and cannot be used as the login password.
+Complete setup over loopback or an SSH tunnel before exposing the service: anyone who can reach an uninitialized instance can create its first administrator. Setup closes permanently after the initial commit. Existing installations without an administrator email keep their `admin` login and password. Explicit `CODEARTS_ADMIN_PASSWORD` bootstrapping also retains the legacy `admin` identifier on new instances.
 
 To reset a forgotten password, set a new `CODEARTS_ADMIN_PASSWORD` in the service's startup environment and restart it. When using `start.sh`, stop the existing service first, then run:
 

@@ -52,17 +52,18 @@ def run(binary, output):
 
         try:
             process = start()
-            assert status() == {"needs_setup": True, "ready": False, "admin_username": "admin"}
-            token = json.loads(token_path.read_text())["setup_token"]
+            assert status() == {"needs_setup": True, "ready": False}
+            assert json.loads(token_path.read_text()) == {"pending": True}
+            email = "owner@example.com"
             stop()
             assert not state.exists(), "waiting installer persisted normal state"
             process = start()
             assert status()["needs_setup"]
-            assert token == json.loads(token_path.read_text())["setup_token"]
-            checks.append("interrupted_pending_install_reuses_private_owner_token")
+            assert json.loads(token_path.read_text()) == {"pending": True}
+            checks.append("interrupted_pending_install_resumes_without_token")
             password = secrets.token_urlsafe(24)
             browser_env = {**env, "CODEARTS_TEST_BASE": base,
-                           "CODEARTS_TEST_SETUP_TOKEN": token, "CODEARTS_TEST_ADMIN_PASSWORD": password,
+                           "CODEARTS_TEST_ADMIN_EMAIL": email, "CODEARTS_TEST_ADMIN_PASSWORD": password,
                            "CODEARTS_SETUP_ARTIFACTS": str(output / "browser"),
                            "NODE_PATH": str(ROOT / "frontend/node_modules") + os.pathsep + env.get("NODE_PATH", "")}
             result = subprocess.run(["node", str(ROOT / "scripts/setup-smoke.cjs")], cwd=ROOT, env=browser_env,
@@ -75,17 +76,17 @@ def run(binary, output):
             assert Path(str(state) + ".installed").exists()
             assert not Path(str(state) + ".access.json").exists()
             raw = state.read_text()
-            assert token not in raw and password not in raw
-            assert token not in (temp / "server.log").read_text() and password not in (temp / "server.log").read_text()
+            assert password not in raw
+            assert password not in (temp / "server.log").read_text()
             stop()
             # Removing only the marker cannot reopen an installed state.
             Path(str(state) + ".installed").unlink()
-            # Model a crash after state commit but before token removal/sealing.
-            token_path.write_text(json.dumps({"setup_token": token}))
+            # Model a crash after state commit but before pending-marker removal/sealing.
+            token_path.write_text(json.dumps({"pending": True}))
             token_path.chmod(0o600)
             process = start()
-            assert status() == {"needs_setup": False, "ready": True, "admin_username": "admin"}
-            request = urllib.request.Request(base + "/auth/login", data=json.dumps({"username": "admin", "password": password}).encode(), headers={"Content-Type": "application/json"})
+            assert status() == {"needs_setup": False, "ready": True}
+            request = urllib.request.Request(base + "/auth/login", data=json.dumps({"username": email, "password": password}).encode(), headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(request) as response:
                 assert json.load(response)["user"]["role"] == "admin"
             assert not token_path.exists() and Path(str(state) + ".installed").exists()

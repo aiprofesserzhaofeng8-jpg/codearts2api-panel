@@ -27,7 +27,7 @@ async function login() {
     <div class="auth-theme"><LocaleSwitcher /><ThemeToggle /></div>
     <AuthCard :title="tr('欢迎回来')" :description="tr('登录您的账号以继续')">
       <form id="loginForm" @submit.prevent="login">
-        <div class="field"><label for="loginUsername">{{tr('用户名')}}</label><input id="loginUsername" v-model="username" required autocomplete="username" maxlength="64"></div>
+        <div class="field"><label for="loginUsername">{{tr('邮箱或用户名')}}</label><input id="loginUsername" v-model="username" required autocomplete="username" maxlength="254"></div>
         <div class="field"><label for="loginPassword">{{tr('密码')}}</label><input id="loginPassword" v-model="password" required type="password" autocomplete="current-password" maxlength="4096"></div>
         <button class="btn primary" :disabled="busy">{{busy ? tr('登录中…') : tr('登录')}}</button>
       </form>

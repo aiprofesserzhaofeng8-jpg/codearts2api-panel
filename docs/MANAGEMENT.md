@@ -39,7 +39,7 @@ Chat Completions、Responses 和 Messages 均限制到组内账号；粘性会�
 
 ## 登录与恢复
 
-本机和远程统一使用 `/login` 登录。管理员用户名为 `admin`；新部署先通过安装向导设置至少 12 位密码，需输入服务器 `data/state.json.setup.json` 的 `setup_token`。安装完成会删除初始化凭证、创建 `.installed` 标记，之后不能重新初始化。普通用户仅由管理员创建并绑定分组。
+本机和远程统一使用 `/login` 登录。当前源码新部署通过向导设置管理员邮箱及至少 12 位密码，无需 Token 或邮箱验证码。旧部署未配置邮箱时继续使用 `admin`。请先完成初始化再开放公网。安装完成删除待安装标记、创建 `.installed` 标记，之后不能重新初始化。普通用户仅由管理员创建并绑定分组。
 
 已有部署沿用原密码，不重新进入向导。旧版或显式 `CODEARTS_ADMIN_PASSWORD` 自动部署的首次密码在 `data/state.json.access.json` 的 `admin_password` 字段；该文件是初始值记录，之后不会跟随改密。旧部署原先没有密码时生成 `data/state.json.admin-recovery.json`。忘记密码可通过 `CODEARTS_ADMIN_PASSWORD='新密码' ./start.sh` 重设；运行服务需在其启动环境中配置后重启。不要删除状态或账本来重置安装。
 

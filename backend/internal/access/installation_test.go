@@ -7,26 +7,26 @@ import (
 	"testing"
 )
 
-type installationCommitFunc func(string) error
+type installationCommitFunc func(string, string) error
 
-func (f installationCommitFunc) InstallInitialAdmin(hash string) error { return f(hash) }
+func (f installationCommitFunc) InstallInitialAdmin(email, hash string) error { return f(email, hash) }
 
 func TestInstallationValidatesBeforeHashOrCommit(t *testing.T) {
 	var calls int
-	i := NewInstallation(installationCommitFunc(func(string) error { calls++; return nil }), "owner-token")
-	for _, tc := range []struct{ token, password, confirmation string }{
+	i := NewInstallation(installationCommitFunc(func(string, string) error { calls++; return nil }))
+	for _, tc := range []struct{ email, password, confirmation string }{
 		{"wrong", "long-password-here", "long-password-here"},
 		{"", "long-password-here", "long-password-here"},
-		{"owner-token", "short", "short"},
-		{"owner-token", "long-password-here", "different-password"},
+		{"owner@example.com", "short", "short"},
+		{"owner@example.com", "long-password-here", "different-password"},
 	} {
-		if err := i.Install(context.Background(), tc.token, tc.password, tc.confirmation); err == nil {
+		if err := i.Install(context.Background(), tc.email, tc.password, tc.confirmation); err == nil {
 			t.Fatal("invalid installation accepted")
 		}
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if err := i.Install(ctx, "owner-token", "long-password-here", "long-password-here"); !errors.Is(err, context.Canceled) {
+	if err := i.Install(ctx, "owner@example.com", "long-password-here", "long-password-here"); !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
 	}
 	if calls != 0 || !i.Pending() {
@@ -38,7 +38,7 @@ func TestInstallationFailureRetryAndSingleCommit(t *testing.T) {
 	var calls atomic.Int32
 	entered, release := make(chan struct{}), make(chan struct{})
 	failure := errors.New("disk unavailable")
-	i := NewInstallation(installationCommitFunc(func(hash string) error {
+	i := NewInstallation(installationCommitFunc(func(email, hash string) error {
 		if !VerifyAdminPassword(hash, "long-password-here") {
 			t.Error("not a usable hash")
 		}
@@ -48,16 +48,16 @@ func TestInstallationFailureRetryAndSingleCommit(t *testing.T) {
 		close(entered)
 		<-release
 		return nil
-	}), "owner-token")
-	if err := i.Install(context.Background(), "owner-token", "long-password-here", "long-password-here"); !errors.Is(err, failure) || !i.Pending() {
+	}))
+	if err := i.Install(context.Background(), "owner@example.com", "long-password-here", "long-password-here"); !errors.Is(err, failure) || !i.Pending() {
 		t.Fatal("failed commit cannot retry", err)
 	}
 	done := make(chan error, 1)
 	go func() {
-		done <- i.Install(context.Background(), "owner-token", "long-password-here", "long-password-here")
+		done <- i.Install(context.Background(), "owner@example.com", "long-password-here", "long-password-here")
 	}()
 	<-entered
-	if err := i.Install(context.Background(), "owner-token", "long-password-here", "long-password-here"); !errors.Is(err, ErrInstallationBusy) {
+	if err := i.Install(context.Background(), "owner@example.com", "long-password-here", "long-password-here"); !errors.Is(err, ErrInstallationBusy) {
 		t.Fatal("parallel hash/commit allowed", err)
 	}
 	close(release)
@@ -67,7 +67,7 @@ func TestInstallationFailureRetryAndSingleCommit(t *testing.T) {
 	if i.Pending() {
 		t.Fatal("installation still open")
 	}
-	if err := i.Install(context.Background(), "owner-token", "replacement-password", "replacement-password"); !errors.Is(err, ErrInstallationClosed) || calls.Load() != 2 {
+	if err := i.Install(context.Background(), "owner@example.com", "replacement-password", "replacement-password"); !errors.Is(err, ErrInstallationClosed) || calls.Load() != 2 {
 		t.Fatal("reinitialization accepted", err)
 	}
 }

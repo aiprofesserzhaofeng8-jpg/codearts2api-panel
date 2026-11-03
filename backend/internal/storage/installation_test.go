@@ -19,7 +19,8 @@ func TestFirstInstallationResumesSealsAndPreservesState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token, tokenPath, err := s.PrepareInstallation()
+	tokenPath := path + ".setup.json"
+	err = s.PrepareInstallation()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,12 +38,12 @@ func TestFirstInstallationResumesSealsAndPreservesState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reused, _, err := restarted.PrepareInstallation()
-	if err != nil || reused != token {
-		t.Fatal("interrupted install rotated owner credential", err)
+	err = restarted.PrepareInstallation()
+	if err != nil {
+		t.Fatal("interrupted install could not resume", err)
 	}
-	i := access.NewInstallation(restarted, token)
-	if err := i.Install(context.Background(), token, "new-owner-password", "new-owner-password"); err != nil {
+	i := access.NewInstallation(restarted)
+	if err := i.Install(context.Background(), "Owner@Example.com", "new-owner-password", "new-owner-password"); err != nil {
 		t.Fatal(err)
 	}
 	if err := restarted.SealInstallation(); err != nil {
@@ -55,20 +56,20 @@ func TestFirstInstallationResumesSealsAndPreservesState(t *testing.T) {
 		t.Fatal("wizard wrote plaintext password")
 	}
 	raw, _ := os.ReadFile(path)
-	if bytes.Contains(raw, []byte("new-owner-password")) || bytes.Contains(raw, []byte(token)) {
+	if bytes.Contains(raw, []byte("new-owner-password")) {
 		t.Fatal("plaintext secret in state")
 	}
 	loaded, err := Open(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !access.VerifyAdminPassword(loaded.Settings().AdminPassword, "new-owner-password") || len(loaded.Keys()) != 1 || loaded.Settings().AutoClaim || loaded.Settings().WriteBackToIDE {
+	if !access.VerifyAdminPassword(loaded.Settings().AdminPassword, "new-owner-password") || loaded.Settings().AdminEmail != "owner@example.com" || len(loaded.Keys()) != 1 || loaded.Settings().AutoClaim || loaded.Settings().WriteBackToIDE {
 		t.Fatal("invalid installed state")
 	}
-	if _, _, err := loaded.PrepareInstallation(); err == nil {
+	if err := loaded.PrepareInstallation(); err == nil {
 		t.Fatal("installed store reopened setup")
 	}
-	if err := loaded.InstallInitialAdmin(loaded.Settings().AdminPassword); err == nil {
+	if err := loaded.InstallInitialAdmin("other@example.com", loaded.Settings().AdminPassword); err == nil {
 		t.Fatal("existing state overwritten")
 	}
 	after, _ := os.ReadFile(path)
@@ -110,14 +111,14 @@ func TestInitialCommitFailureRollsBackAndCanRetry(t *testing.T) {
 	// Force serialization to fail after credentials have been prepared, without
 	// relying on chmod (which does not fail writes when CI runs as root).
 	s.st.Stats.EstimatedUSD = math.NaN()
-	if err := s.InstallInitialAdmin(hash); err == nil {
+	if err := s.InstallInitialAdmin("owner@example.com", hash); err == nil {
 		t.Fatal("failed persistence accepted")
 	}
-	if s.Settings().AdminPassword != "" || len(s.Keys()) != 0 {
+	if s.Settings().AdminPassword != "" || s.Settings().AdminEmail != "" || len(s.Keys()) != 0 {
 		t.Fatal("failed transaction left credentials in memory")
 	}
 	s.st.Stats.EstimatedUSD = 0
-	if err := s.InstallInitialAdmin(hash); err != nil {
+	if err := s.InstallInitialAdmin("owner@example.com", hash); err != nil {
 		t.Fatal("retry failed", err)
 	}
 }

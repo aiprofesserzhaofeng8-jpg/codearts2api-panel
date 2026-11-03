@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 
 	"codearts2api/internal/access"
@@ -18,7 +19,7 @@ func setupStatus(w http.ResponseWriter, r *http.Request, pending, ready bool) {
 		writeErr(w, 403, "跨站请求被拒绝", "permission_error")
 		return
 	}
-	writeJSON(w, 200, map[string]any{"needs_setup": pending, "ready": ready, "admin_username": access.AdminUsername})
+	writeJSON(w, 200, map[string]any{"needs_setup": pending, "ready": ready})
 }
 
 func installedSetupStatus(w http.ResponseWriter, r *http.Request) { setupStatus(w, r, false, true) }
@@ -55,30 +56,28 @@ func NewSetupHandler(installation *access.Installation, completed func()) http.H
 			return
 		}
 		var body struct {
-			Token        string `json:"setup_token"`
+			Email        string `json:"email"`
 			Password     string `json:"password"`
 			Confirmation string `json:"confirm_password"`
 		}
 		if !decodeUserBody(w, r, &body) {
 			return
 		}
-		err := installation.Install(r.Context(), body.Token, body.Password, body.Confirmation)
+		err := installation.Install(r.Context(), body.Email, body.Password, body.Confirmation)
 		if err != nil {
 			switch {
-			case errors.Is(err, access.ErrInstallationToken):
-				failures.failure(r.RemoteAddr)
-				writeErr(w, 403, err.Error(), "permission_error")
 			case errors.Is(err, access.ErrInstallationClosed):
 				closedSetupInstall(w, r)
 			case errors.Is(err, access.ErrInstallationBusy):
 				w.Header().Set("Retry-After", "2")
 				writeErr(w, 429, err.Error(), "rate_limit_error")
 			default:
+				failures.failure(r.RemoteAddr)
 				writeErr(w, 400, "初始安装未完成："+err.Error(), "invalid_request_error")
 			}
 			return
 		}
-		writeJSON(w, 200, map[string]any{"ok": true, "admin_username": access.AdminUsername})
+		writeJSON(w, 200, map[string]any{"ok": true, "admin_username": strings.ToLower(strings.TrimSpace(body.Email))})
 		// Shutdown waits for this handler to return before normal startup.
 		once.Do(completed)
 	})

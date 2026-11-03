@@ -12,17 +12,17 @@ import (
 	"codearts2api/internal/storage"
 )
 
-func TestSetupOwnerOnlyAndApplicationIsolation(t *testing.T) {
+func TestSetupEmailAndApplicationIsolation(t *testing.T) {
 	s, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	token, _, err := s.PrepareInstallation()
+	err = s.PrepareInstallation()
 	if err != nil {
 		t.Fatal(err)
 	}
 	completed := 0
-	h := NewSetupHandler(access.NewInstallation(s, token), func() { completed++ })
+	h := NewSetupHandler(access.NewInstallation(s), func() { completed++ })
 	request := func(method, path, body, origin string) *httptest.ResponseRecorder {
 		r := httptest.NewRequest(method, "http://localhost"+path, strings.NewReader(body))
 		r.RemoteAddr = "127.0.0.1:1000"
@@ -38,38 +38,38 @@ func TestSetupOwnerOnlyAndApplicationIsolation(t *testing.T) {
 			t.Fatal("normal runtime exposed", path, w.Code)
 		}
 	}
-	if w := request("GET", "/setup", "", ""); w.Code != 200 || w.Header().Get("Content-Security-Policy") == "" || strings.Contains(w.Body.String(), token) {
+	if w := request("GET", "/setup", "", ""); w.Code != 200 || w.Header().Get("Content-Security-Policy") == "" {
 		t.Fatal("installer HTML/CSP/credential leak", w.Code)
 	}
-	if w := request("GET", "/setup/status", "", ""); w.Code != 200 || !strings.Contains(w.Body.String(), `"needs_setup":true`) || strings.Contains(w.Body.String(), token) {
+	if w := request("GET", "/setup/status", "", ""); w.Code != 200 || !strings.Contains(w.Body.String(), `"needs_setup":true`) {
 		t.Fatal("pending status", w.Code)
 	}
 	if w := request("GET", "/setup/install", "", ""); w.Code != 405 {
 		t.Fatal(w.Code)
 	}
-	body := func(token string) string {
-		raw, _ := json.Marshal(map[string]string{"setup_token": token, "password": "owner-password-here", "confirm_password": "owner-password-here"})
+	body := func(email string) string {
+		raw, _ := json.Marshal(map[string]string{"email": email, "password": "owner-password-here", "confirm_password": "owner-password-here"})
 		return string(raw)
 	}
-	if w := request("POST", "/setup/install", body(token), "https://evil.example"); w.Code != 403 {
+	if w := request("POST", "/setup/install", body("owner@example.com"), "https://evil.example"); w.Code != 403 {
 		t.Fatal("CSRF accepted", w.Code)
 	}
-	if w := request("POST", "/setup/install", body("wrong"), ""); w.Code != 403 {
-		t.Fatal("unknown owner accepted", w.Code)
+	if w := request("POST", "/setup/install", body("wrong"), ""); w.Code != 400 {
+		t.Fatal("invalid email accepted", w.Code)
 	}
-	if w := request("POST", "/setup/install", strings.TrimSuffix(body(token), "}")+`,"role":"admin"}`, ""); w.Code != 400 {
+	if w := request("POST", "/setup/install", strings.TrimSuffix(body("owner@example.com"), "}")+`,"role":"admin"}`, ""); w.Code != 400 {
 		t.Fatal("unknown parameter accepted", w.Code)
 	}
-	if w := request("POST", "/setup/install", body(token)+`{}`, ""); w.Code != 400 {
+	if w := request("POST", "/setup/install", body("owner@example.com")+`{}`, ""); w.Code != 400 {
 		t.Fatal("trailing JSON accepted", w.Code)
 	}
-	if w := request("POST", "/setup/install", body(token), "http://localhost"); w.Code != 200 || len(w.Result().Cookies()) != 0 {
+	if w := request("POST", "/setup/install", body("owner@example.com"), "http://localhost"); w.Code != 200 || len(w.Result().Cookies()) != 0 {
 		t.Fatal("install unexpectedly logged in", w.Code)
 	}
 	if completed != 1 {
 		t.Fatal("wrong completion count")
 	}
-	if w := request("POST", "/setup/install", body(token), ""); w.Code != 403 || completed != 1 {
+	if w := request("POST", "/setup/install", body("owner@example.com"), ""); w.Code != 403 || completed != 1 {
 		t.Fatal("reinstallation allowed", w.Code)
 	}
 	w := httptest.NewRecorder()
@@ -78,7 +78,7 @@ func TestSetupOwnerOnlyAndApplicationIsolation(t *testing.T) {
 		t.Fatal("normal setup status")
 	}
 	w = httptest.NewRecorder()
-	closedSetupInstall(w, httptest.NewRequest(http.MethodPost, "http://localhost/setup/install", strings.NewReader(body(token))))
+	closedSetupInstall(w, httptest.NewRequest(http.MethodPost, "http://localhost/setup/install", strings.NewReader(body("owner@example.com"))))
 	if w.Code != 403 {
 		t.Fatal("normal server installation unlocked")
 	}

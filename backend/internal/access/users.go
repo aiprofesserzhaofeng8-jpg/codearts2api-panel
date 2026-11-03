@@ -114,12 +114,17 @@ type Users struct {
 	sessions      map[string]userSession
 	passwordSlots chan struct{}
 	adminPassword func() string
+	adminEmail    func() string
 }
 
-func NewUsers(store UserStore, adminPassword ...func() string) *Users {
+// Optional administrator callbacks supply the password, then the login email.
+func NewUsers(store UserStore, adminCredentials ...func() string) *Users {
 	s := &Users{store: store, sessions: map[string]userSession{}, passwordSlots: make(chan struct{}, 2)}
-	if len(adminPassword) != 0 {
-		s.adminPassword = adminPassword[0]
+	if len(adminCredentials) != 0 {
+		s.adminPassword = adminCredentials[0]
+	}
+	if len(adminCredentials) > 1 {
+		s.adminEmail = adminCredentials[1]
 	}
 	return s
 }
@@ -155,7 +160,7 @@ func (s *Users) Save(ctx context.Context, update UserUpdate) (out UserView, err 
 	return s.store.SaveUser(update, hash)
 }
 func (s *Users) Login(ctx context.Context, name, password, token string) (out UserView, expires time.Time, err error) {
-	if strings.EqualFold(strings.TrimSpace(name), AdminUsername) {
+	if strings.EqualFold(strings.TrimSpace(name), s.adminLoginName()) {
 		return s.loginAdmin(ctx, password, token)
 	}
 	name, _ = NormalizeUsername(name)
@@ -240,7 +245,7 @@ func (s *Users) Authenticate(token string) (UserView, bool) {
 		if session.id != BuiltinAdminID || password == "" || !sessionEqual(session.credentialVersion, sessionDigest(password)) {
 			return UserView{}, false
 		}
-		return administratorView(), true
+		return s.administratorView(), true
 	}
 	if session.role != RoleUser {
 		return UserView{}, false

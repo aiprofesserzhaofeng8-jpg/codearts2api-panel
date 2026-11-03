@@ -34,9 +34,9 @@ def run(image):
             wait(base, 'setup_required')
             assert dc('exec', '-T', 'codearts2api', 'sh', '/usr/local/bin/codearts-healthcheck').stdout.strip() == 'setup_required'
             assert dc('exec', '-T', 'codearts2api', 'sh', '/usr/local/bin/codearts-healthcheck', '--ready', check=False).returncode != 0
-            token = json.loads(dc('exec', '-T', 'codearts2api', 'cat', '/data/codearts2api-data.json.setup.json').stdout)['setup_token']
+            email='owner@example.com'
             password = secrets.token_urlsafe(24)
-            post(base, '/setup/install', {'setup_token': token, 'password': password, 'confirm_password': password})
+            post(base, '/setup/install', {'email': email, 'password': password, 'confirm_password': password})
             wait(base, 'running')
             assert dc('exec', '-T', 'codearts2api', 'sh', '/usr/local/bin/codearts-healthcheck', '--ready').stdout.strip() == 'running'
             assert dc('exec', '-T', 'codearts2api', 'id', '-u').stdout.strip() == '10001'
@@ -67,7 +67,7 @@ def run(image):
             restored = root / 'restored'
             ops.unpack(archive, restored, 'backup')
             assert ops.inventory(restored) == ops.inventory(staging)
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             print(json.dumps({'passed': True, 'checks': ['production_compose_loopback_nonroot', 'container_setup_and_readiness',
                                                        'container_running_health', 'container_unreachable_health_fails',
                                                        'stopped_volume_copy_backup_restore', 'login_survives_restart'],

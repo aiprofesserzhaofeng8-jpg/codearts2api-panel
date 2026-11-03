@@ -60,7 +60,7 @@ func Start(st *storage.Store, srv *server.Server, options Options) *Runtime {
 		}
 		switch {
 		case st.Settings().AdminPassword != "":
-			log.Printf("控制台需要统一账号登录（8 小时角色会话；管理员用户名 admin）")
+			log.Printf("控制台需要统一账号登录（8 小时角色会话；使用安装时设置的账号）")
 		case server.IsLoopbackHost(options.Host):
 			log.Printf("未设置管理密码，管理接口仅允许本机直连访问（可用 -admin-password 设置）")
 		default:

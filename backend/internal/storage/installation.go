@@ -50,41 +50,26 @@ func checkInitialFiles(path string, requireAbsent bool) error {
 	return nil
 }
 
-// PrepareInstallation persists a server-owner credential across interrupted
-// first starts. It is never placed in a URL, HTML, API response or log.
-func (s *Store) PrepareInstallation() (token, path string, err error) {
-	if err = s.CheckFreshInstallation(); err != nil {
-		return
+// PrepareInstallation records pending setup for deployment backup/health tools.
+// No ownership token is needed; only a fresh instance can enter this runtime.
+func (s *Store) PrepareInstallation() error {
+	if err := s.CheckFreshInstallation(); err != nil {
+		return err
 	}
-	path = s.path + ".setup.json"
-	if err = os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
-		return
+	if err := os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
+		return err
 	}
-	raw, readErr := os.ReadFile(path)
-	if readErr == nil {
-		var data struct {
-			Token string `json:"setup_token"`
+	path := s.path + ".setup.json"
+	if raw, err := os.ReadFile(path); err == nil {
+		// Accept pending files from previous releases without rotating credentials.
+		if !json.Valid(raw) {
+			return fmt.Errorf("初始化标记文件无效")
 		}
-		if err = json.Unmarshal(raw, &data); err != nil {
-			return
-		}
-		if len(data.Token) < 32 {
-			err = fmt.Errorf("初始化凭证文件无效: %s", path)
-			return
-		}
-		err = os.Chmod(path, 0600)
-		return data.Token, path, err
+		return os.Chmod(path, 0600)
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
 	}
-	if !errors.Is(readErr, os.ErrNotExist) {
-		return "", path, readErr
-	}
-	token = rand.Text() + rand.Text()
-	raw, err = json.Marshal(map[string]string{"setup_token": token})
-	if err != nil {
-		return
-	}
-	err = writeInstallationFile(path, append(raw, '\n'), 0600)
-	return
+	return writeInstallationFile(path, []byte("{\"pending\":true}\n"), 0600)
 }
 
 func writeInstallationFile(path string, raw []byte, mode os.FileMode) error {
@@ -115,7 +100,11 @@ func writeInstallationFile(path string, raw []byte, mode os.FileMode) error {
 // InstallInitialAdmin is an all-or-nothing initial state transaction. No
 // plaintext administrator password is written. A default key keeps the normal
 // gateway's legacy no-key local access from becoming active after installation.
-func (s *Store) InstallInitialAdmin(hash string) error {
+func (s *Store) InstallInitialAdmin(email, hash string) error {
+	var err error
+	if email, err = access.NormalizeEmail(email); err != nil {
+		return err
+	}
 	if !strings.HasPrefix(hash, access.PasswordHashPrefix) {
 		return fmt.Errorf("初始密码必须先完成哈希")
 	}
@@ -128,6 +117,7 @@ func (s *Store) InstallInitialAdmin(hash string) error {
 	}
 	previousSettings, previousKeys := s.st.Settings, s.st.Keys
 	s.st.Settings.AdminPassword = hash
+	s.st.Settings.AdminEmail = email
 	s.st.Settings.AutoClaim, s.st.Settings.WriteBackToIDE = false, false
 	s.st.Keys = []*APIKey{{Key: "sk-ca-" + rand.Text() + rand.Text(), Name: "默认调用密钥", Enabled: true, CreatedAt: time.Now().Unix()}}
 	if err := s.saveGroupStateLocked(); err != nil {

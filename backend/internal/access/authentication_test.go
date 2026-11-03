@@ -82,3 +82,28 @@ func TestUnifiedSessionsConcurrentAndBounded(t *testing.T) {
 		t.Fatal("revoked sessions retained")
 	}
 }
+
+func TestCustomAdministratorEmailLogin(t *testing.T) {
+	password := "custom-email-password"
+	s := NewUsers(&identityFixture{}, func() string { return password }, func() string { return "owner@example.com" })
+	for _, name := range []string{"admin", "other@example.com"} {
+		if _, _, err := s.Login(context.Background(), name, password, "invalid"); err == nil {
+			t.Fatal("wrong administrator identifier accepted", name)
+		}
+	}
+	if _, _, err := s.Login(context.Background(), "owner@example.com", "wrong", "invalid"); err == nil {
+		t.Fatal("wrong password accepted")
+	}
+	u, _, err := s.Login(context.Background(), " Owner@Example.COM ", password, "email-session")
+	if err != nil || u.Role != RoleAdmin || u.Username != "owner@example.com" || u.EmailVerified {
+		t.Fatal("email login or unproven email verification", u, err)
+	}
+	current, ok := s.Authenticate("email-session")
+	if !ok || current.Username != u.Username || current.ID != BuiltinAdminID {
+		t.Fatal("session identity changed", current)
+	}
+	password = "changed-password"
+	if _, ok := s.Authenticate("email-session"); ok {
+		t.Fatal("password change did not revoke email session")
+	}
+}

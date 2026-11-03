@@ -7,7 +7,7 @@
 1. 从本项目 GitHub Release 下载 `codearts2api-panel-vX.Y.Z-windows-amd64.zip`，使用资源管理器“全部解压缩”到自己的文件夹；不要直接在压缩包中运行。
 2. 双击 **start.cmd**，以普通用户运行即可，不需要管理员权限。保留命令行窗口。
 3. 打开 **http://127.0.0.1:10087/**。默认仅本机可访问。
-4. 在资源管理器地址栏输入 `%LOCALAPPDATA%\CodeArts2API`，用记事本打开 `state.json.setup.json`，复制 `setup_token` 的值到首次安装向导，自行设置管理员密码。用户名固定为 `admin`，没有通用默认密码。安装成功后凭证文件自动删除。
+4. 当前源码构建的版本直接填写管理员邮箱和密码，无需 Token 或验证码。v0.3.7 发布包仍需从 `%LOCALAPPDATA%\CodeArts2API\state.json.setup.json` 读取初始化凭证，使用旧版向导。
 5. 使用 `admin` 和刚设置的密码登录，在账号池添加自己的平台账号，在 API 密钥页面创建或查看调用密钥。普通用户由管理员创建。
 
 启动器默认不导入本机 IDE 的账号。账号导入、登录和后续平台操作在管理页面中显式进行。若出现端口占用，不要反复启动；先检查是否已经有一个实例运行。
@@ -50,7 +50,7 @@ SHA-256 用于完整性校验，不是代码签名。程序目前没有 Authenti
 
 ## English
 
-Extract the Windows x64 ZIP and double-click **start.cmd** as a regular user. No Go, Node.js, Python, Docker, or WSL runtime is required. Open **http://127.0.0.1:10087/**. Read `setup_token` from `%LOCALAPPDATA%\CodeArts2API\state.json.setup.json`, complete the wizard, then log in as **admin** using the password you chose. The token file is deleted after setup.
+Extract the Windows x64 ZIP and double-click **start.cmd** as a regular user. No Go, Node.js, Python, Docker, or WSL runtime is required. Open **http://127.0.0.1:10087/**. Current source asks for an administrator email and password without a setup token. Published v0.3.7 still requires the token from `state.json.setup.json` and uses the **admin** login.
 
 Keep the console window open. Press **Ctrl+C** and wait for the process to exit before backing up the entire `%LOCALAPPDATA%\CodeArts2API` folder or upgrading. Extract the new ZIP and run its `start.cmd` under the same Windows account to reuse existing data. Do not run two copies against the same data. Launching the EXE directly uses a different default data location; use `start.cmd` consistently or pass an explicit `-data` path.
 

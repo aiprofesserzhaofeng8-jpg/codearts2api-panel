@@ -1268,5 +1268,12 @@
   "浏览器禁止保存语言偏好，请允许站点存储后重试。": "Your browser blocked language preferences. Allow site storage and try again.",
   "跟随系统": "System language",
   "选择语言": "Select language",
-  "CodeArts2API Panel · 多上游账号网关": "CodeArts2API Panel · Multi-provider gateway"
+  "CodeArts2API Panel · 多上游账号网关": "CodeArts2API Panel · Multi-provider gateway",
+  "管理员邮箱": "Administrator email",
+  "例如 admin@example.com": "For example, admin@example.com",
+  "邮箱作为登录账号，无需邮箱验证码。普通用户由管理员创建。": "Use this email as your login. No email verification code is required. Administrators create regular users.",
+  "完成首次安装，设置管理员邮箱和密码。": "Set your administrator email and password to complete setup.",
+  "使用你设置的邮箱和密码登录，然后添加上游账号、创建分组和普通用户。": "Sign in with your email and password, then add upstream accounts, groups and users.",
+  "请在对外开放服务前完成管理员初始化。": "Complete administrator setup before making the service publicly accessible.",
+  "邮箱或用户名": "Email or username"
 }

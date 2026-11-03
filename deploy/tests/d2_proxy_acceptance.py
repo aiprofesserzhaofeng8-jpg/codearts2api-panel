@@ -123,13 +123,13 @@ def app_acceptance(binary, caddy, root):
             wait(f'http://127.0.0.1:{app_port}', 'setup_required')
             with proxy(caddy, root, f'127.0.0.1:{app_port}') as (client, http_port):
                 assert client.json('/setup/status')['needs_setup']
-                token = json.loads((data / 'state.json.setup.json').read_text())['setup_token']
+                email='owner@example.com'
                 password = secrets.token_urlsafe(24)
-                assert client.json('/setup/install', {'setup_token': token, 'password': password,
+                assert client.json('/setup/install', {'email': email, 'password': password,
                     'confirm_password': password})['ok']
                 wait(f'http://127.0.0.1:{app_port}', 'running')
                 checks.append('verified_tls_first_install_through_proxy')
-                assert client.login('admin', password) == 'admin'
+                assert client.login('owner@example.com', password) == 'admin'
                 checks.append('initial_admin_https_login_sets_secure_session_cookie')
                 try:
                     client.opener.open(f'http://localhost:{http_port}/auth/session', timeout=3)
@@ -157,7 +157,7 @@ def app_acceptance(binary, caddy, root):
                     assert response.code == 403
                 checks.append('https_user_login_retains_role_boundary')
                 try:
-                    with client.open('/auth/login', {'username': 'admin', 'password': password},
+                    with client.open('/auth/login', {'username': 'owner@example.com', 'password': password},
                         {'Origin': 'https://untrusted.invalid'}):
                         raise AssertionError('cross-origin login was accepted')
                 except urllib.error.HTTPError as response:

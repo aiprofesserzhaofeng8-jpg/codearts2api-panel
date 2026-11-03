@@ -974,7 +974,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Available only in the temporary first-install runtime, before any accounts or normal services exist. Requires the private server installation token. Permanently rejected after installation. */
+        /** @description Creates the first administrator from email and password in a fresh instance only. No setup token or login session. Permanently rejected after installation. */
         post: operations["post__setup_install"];
         delete?: never;
         options?: never;
@@ -4054,7 +4054,6 @@ export interface operations {
                 content: {
                     "application/json": {
                         needs_setup: boolean;
-                        admin_username: string;
                         /** @description 正式服务已就绪；初始安装提交后交接期间仍为 false。 */
                         ready: boolean;
                     };
@@ -4081,9 +4080,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    setup_token: string;
                     password: string;
                     confirm_password: string;
+                    /** Format: email */
+                    email: string;
                 };
             };
         };

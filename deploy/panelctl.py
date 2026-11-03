@@ -348,7 +348,7 @@ def health(base):
         pass
     try:
         value = json_get(base.rstrip('/') + '/setup/status')
-        if value.get('needs_setup') is True and value.get('ready') is False and value.get('admin_username') == 'admin':
+        if value.get('needs_setup') is True and value.get('ready') is False:
             return 'setup_required'
     except (OSError, ValueError):
         pass
@@ -555,9 +555,8 @@ def install(args):
         except Exception:
             service.stop()
             raise
-    print('版本与服务配置已准备。' if args.no_start else '安装完成；首次安装凭证位于 data/state.json.setup.json。管理员用户名 admin。')
+    print('版本与服务配置已准备。' if args.no_start else '安装完成；打开面板设置管理员邮箱和密码。')
     print(f'访问地址：http://127.0.0.1:{args.port}（服务器本机）')
-    print(f'读取安装凭证：{"sudo " if system else ""}cat {root}/data/state.json.setup.json')
     print(f'服务状态：{"sudo systemctl" if system else "systemctl --user"} status {unit}')
 
 

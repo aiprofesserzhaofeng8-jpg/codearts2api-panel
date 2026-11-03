@@ -111,14 +111,14 @@ def run(archive):
         try:
             start(first, False)
             assert not state.exists()
-            token = json.loads(token_path.read_text(encoding='utf-8'))['setup_token']
+            email='owner@example.com'
             assert request('/admin/api/state')[0] == 503
             stop()
             start(first, False)
-            assert json.loads(token_path.read_text(encoding='utf-8'))['setup_token'] == token
+            assert json.loads(token_path.read_text(encoding='utf-8')) == {'pending': True}
             password = secrets.token_urlsafe(24)
-            body = {'setup_token': token, 'password': password, 'confirm_password': password}
-            assert request('/setup/install', {**body, 'setup_token': 'wrong'})[0] == 403
+            body = {'email': email, 'password': password, 'confirm_password': password}
+            assert request('/setup/install', {**body, 'email': 'invalid'})[0] == 400
             assert request('/setup/install', body, 'https://foreign.example')[0] == 403
             assert request('/setup/install', body)[0] == 200
             wait_ready(True)
@@ -130,7 +130,7 @@ def run(archive):
             assert status == 200
             asset = re.search(rb'(?:src|href)="(/assets/[^" ]+\.js)"', html)[1].decode()
             assert request(asset)[0] == 200
-            login('admin', password)
+            login('owner@example.com', password)
             assert request('/admin/api/state')[0] == 200
             status, payload = request('/admin/api/groups', {'name': 'Windows persistence', 'account_ids': [], 'model_ids': []})
             assert status == 200
@@ -140,7 +140,7 @@ def run(archive):
             stop()
             # Extracted program locations change on upgrade; launcher data must remain fixed.
             start(second, True)
-            login('admin', password)
+            login('owner@example.com', password)
             status, payload = request('/admin/api/groups')
             assert status == 200 and any(group['id'] == group_id for group in json.loads(payload)['groups'])
             login('windows-test', user_password)
@@ -151,14 +151,14 @@ def run(archive):
             stop()
             log.flush()
             logs = log_path.read_bytes()
-            assert token.encode() not in logs and password.encode() not in logs and user_password.encode() not in logs
+            assert password.encode() not in logs and user_password.encode() not in logs
             assert logs.count('已退出'.encode()) == 2, 'Both installed runs must flush state and exit gracefully'
         finally:
             stop()
             log.close()
     print(json.dumps({'passed': True, 'version': manifest['version'], 'platform': 'windows-amd64',
                       'checks': ['zip_checksums', 'native_exe_version', 'packaged_cmd_launcher',
-                                 'spaces_unicode_and_unrelated_cwd', 'setup_token_survives_restart',
+                                 'spaces_unicode_and_unrelated_cwd', 'pending_setup_survives_restart',
                                  'setup_authentication_and_origin', 'embedded_ui', 'admin_and_user_login',
                                  'role_isolation', 'state_reused_after_program_directory_change',
                                  'graceful_shutdown', 'no_secret_logs'], 'real_provider_requests': 0}, indent=2))

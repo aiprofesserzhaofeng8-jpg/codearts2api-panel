@@ -77,9 +77,9 @@ def run(first, second, failure_cases=False):
             subprocess.run(ctl + ['install', '--root', str(root), '--name', name, '--port', str(app_port),
                                  '--archive', str(first), '--sha256', ops.sha256(first)], check=True)
             wait(base, 'setup_required')
-            token = json.loads((root / 'data/state.json.setup.json').read_text())['setup_token']
+            email='owner@example.com'
             password = secrets.token_urlsafe(24)
-            post(base, '/setup/install', {'setup_token': token, 'password': password, 'confirm_password': password})
+            post(base, '/setup/install', {'email': email, 'password': password, 'confirm_password': password})
             wait(base, 'running')
             live_archive = Path(temporary) / 'should-not-exist.tar.gz'
             denied = subprocess.run(ctl + ['backup', '--offline', '--data-dir', str(root / 'data'),
@@ -95,7 +95,7 @@ def run(first, second, failure_cases=False):
                                  '--sha256', ops.sha256(second)], check=True)
             assert (root / 'current').resolve() != old
             assert old.is_dir()
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             archives = list((root / 'backups').glob('*.tar.gz'))
             assert len(archives) == 1
             ops.unpack(archives[0], Path(temporary) / 'backup-verification', 'backup')

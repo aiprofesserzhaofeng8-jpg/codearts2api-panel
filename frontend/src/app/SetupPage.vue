@@ -8,7 +8,7 @@ import LocaleSwitcher from '../layouts/LocaleSwitcher.vue';
 import { api, isAbortError } from '../api/client';
 
 const step = ref(1);
-const token = ref('');
+const email = ref('');
 const password = ref('');
 const confirmation = ref('');
 const error = ref('');
@@ -22,7 +22,7 @@ onMounted(() => { document.title = tr('首次安装 · CodeArts2API'); });
 onUnmounted(() => {
   disposed = true;
   clearTimeout(timer);
-  token.value = password.value = confirmation.value = '';
+  password.value = confirmation.value = '';
 });
 
 function login() { window.location.assign('/login'); }
@@ -52,7 +52,7 @@ async function install() {
   error.value = '';
   try {
     await api('/setup/install', { method: 'POST', body: {
-      setup_token: token.value.trim(), password: password.value, confirm_password: confirmation.value,
+      email: email.value.trim(), password: password.value, confirm_password: confirmation.value,
     } });
     showComplete();
     // The temporary installer drains its response before starting the normal
@@ -72,7 +72,7 @@ async function install() {
 }
 
 function showComplete() {
-  token.value = password.value = confirmation.value = '';
+  password.value = confirmation.value = '';
   step.value = 3;
 }
 </script>
@@ -82,30 +82,29 @@ function showComplete() {
     <div class="auth-theme"><LocaleSwitcher /><ThemeToggle /></div>
     <main class="auth-card setup-card">
       <ConsoleBrand />
-      <div class="auth-heading"><h1>{{tr('欢迎使用 CodeArts2API')}}</h1><p class="hint">{{tr('完成首次安装，创建你的管理员登录密码。')}}</p></div>
+      <div class="auth-heading"><h1>{{tr('欢迎使用 CodeArts2API')}}</h1><p class="hint">{{tr('完成首次安装，设置管理员邮箱和密码。')}}</p></div>
       <ol class="setup-steps" :aria-label="tr('安装步骤')">
         <li v-for="(title, index) in [tr('设置管理员'), tr('确认安装'), tr('安装完成')]" :key="title" :class="{active: step === index + 1, done: step > index + 1}" :aria-current="step === index + 1 ? 'step' : undefined"><span>{{ step > index + 1 ? '✓' : index + 1 }}</span>{{ title }}</li>
       </ol>
       <form v-if="step === 1" id="setupForm" @submit.prevent="review">
-        <div class="field"><label for="setupToken">{{tr('初始化凭证')}}</label><input id="setupToken" v-model="token" type="password" required minlength="32" maxlength="256" autocomplete="off" :placeholder="tr('粘贴服务器上的初始化凭证')"><p class="hint">{{tr('由本次部署生成，保存在状态文件旁的 ')}}<code>*.setup.json</code>{{tr(' 文件中。它仅用于这次安装。')}}</p></div>
-        <div class="field"><label for="setupUsername">{{tr('管理员用户名')}}</label><input id="setupUsername" value="admin" readonly autocomplete="username"><p class="hint">{{tr('使用 admin 登录管理界面，普通用户由管理员创建。')}}</p></div>
+        <div class="field"><label for="setupEmail">{{tr('管理员邮箱')}}</label><input id="setupEmail" v-model="email" type="email" required maxlength="254" autocomplete="username" :placeholder="tr('例如 admin@example.com')"><p class="hint">{{tr('邮箱作为登录账号，无需邮箱验证码。普通用户由管理员创建。')}}</p></div>
         <div class="field"><label for="setupPassword">{{tr('管理员密码')}}</label><input id="setupPassword" v-model="password" type="password" required minlength="12" maxlength="256" autocomplete="new-password" :placeholder="tr('至少 12 位，建议包含字母与数字')"></div>
         <div class="field"><label for="setupConfirm">{{tr('确认密码')}}</label><input id="setupConfirm" v-model="confirmation" type="password" required minlength="12" maxlength="256" autocomplete="new-password" :placeholder="tr('再次输入管理员密码')"></div>
         <button class="btn primary">{{tr('下一步')}}</button>
       </form>
       <section v-else-if="step === 2" class="setup-review" aria-labelledby="setupReviewTitle">
         <h2 id="setupReviewTitle">{{tr('确认安装信息')}}</h2>
-        <dl><div><dt>{{tr('管理员账号')}}</dt><dd>admin</dd></div><div><dt>{{tr('登录密码')}}</dt><dd>{{tr('已设置')}}</dd></div><div><dt>{{tr('普通用户')}}</dt><dd>{{tr('由管理员创建')}}</dd></div></dl>
+        <dl><div><dt>{{tr('管理员账号')}}</dt><dd>{{ email.trim().toLowerCase() }}</dd></div><div><dt>{{tr('登录密码')}}</dt><dd>{{tr('已设置')}}</dd></div><div><dt>{{tr('普通用户')}}</dt><dd>{{tr('由管理员创建')}}</dd></div></dl>
         <p class="hint">{{tr('完成后，初始化入口将关闭。请妥善保存你刚刚设置的密码。')}}</p>
         <div class="setup-actions"><button class="btn" :disabled="busy" @click="step = 1; error = ''">{{tr('上一步')}}</button><button class="btn primary" :disabled="busy" @click="install">{{ busy ? tr('正在安装…') : tr('完成安装') }}</button></div>
       </section>
       <section v-else class="setup-complete" aria-labelledby="setupCompleteTitle">
         <span class="setup-success-icon" aria-hidden="true">✓</span><h2 id="setupCompleteTitle">{{tr('安装完成')}}</h2>
-        <p class="hint">{{tr('使用 admin 和你设置的密码登录，然后添加上游账号、创建分组和普通用户。')}}</p>
+        <p class="hint">{{tr('使用你设置的邮箱和密码登录，然后添加上游账号、创建分组和普通用户。')}}</p>
         <button class="btn primary" :disabled="!serviceReady" @click="login">{{ serviceReady ? tr('前往登录') : tr('正在启动服务…') }}</button>
       </section>
       <p v-if="error" class="err-text setup-error" role="alert">{{ error }}</p>
-      <p class="setup-footer">{{tr('初始化凭证与登录密码仅用于当前部署。')}}</p>
+      <p class="setup-footer">{{tr('请在对外开放服务前完成管理员初始化。')}}</p>
     </main>
   </div>
 </template>

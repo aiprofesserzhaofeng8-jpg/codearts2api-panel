@@ -72,7 +72,7 @@ M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算�
 
 从 [正式发布页](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest) 下载 `codearts2api-panel-vX.Y.Z-windows-amd64.zip`，**全部解压后双击 `start.cmd`**，打开 http://127.0.0.1:10087/。无需安装 Go、Node.js、Python 或 Docker。
 
-首次运行在 `%LOCALAPPDATA%\CodeArts2API\state.json.setup.json` 读取初始化凭证，通过向导设置 `admin` 密码。数据保存在 `%LOCALAPPDATA%\CodeArts2API`；升级前按 Ctrl+C 停止并备份整个数据目录，再运行新包的 `start.cmd`。当前为前台运行版，不注册 Windows 系统服务。详细步骤见 [Windows 使用说明](deploy/windows/README.md)。
+当前源码首次运行通过向导设置管理员邮箱和密码（v0.3.7 发布包仍需从 `state.json.setup.json` 读取初始化凭证）。数据保存在 `%LOCALAPPDATA%\CodeArts2API`；升级前按 Ctrl+C 停止并备份整个数据目录，再运行新包的 `start.cmd`。当前为前台运行版，不注册 Windows 系统服务。详细步骤见 [Windows 使用说明](deploy/windows/README.md)。
 
 ### 一键安装系统级服务（Linux）
 
@@ -86,7 +86,7 @@ curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2a
 
 ```bash
 sudo systemctl status codearts2api
-sudo cat /opt/codearts2api/data/state.json.setup.json  # 在服务器读取初始化凭证
+# 打开面板完成安装向导；v0.3.7 仍需按页面提示读取初始化凭证
 # 后续升级（先阅读版本说明）：
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
 ```
@@ -181,8 +181,8 @@ git pull --ff-only
 
 ## 首次使用
 
-1. 新部署打开面板，根据首次安装向导设置管理员密码；需提供服务器上生成的初始化凭证。
-2. 完成后打开 `/login`，使用 `admin` 和刚设置的密码登录。已有部署沿用原密码。
+1. 当前源码新部署打开面板，根据向导设置管理员邮箱和密码，无需初始化 Token；v0.3.7 发布包仍使用旧版向导。
+2. 完成后打开 `/login`，使用刚设置的管理员邮箱和密码登录。已有部署沿用原密码。
 3. 在「账号池」点击「添加账号」，选择平台和「浏览器授权」，点击下一步，再生成链接并复制到另一浏览器授权。
 4. 粘贴最终回调地址，提交授权信息，核对账号预览后确认保存。
 5. 刷新模型目录，使用实际可用的模型 ID；测活会消耗真实额度。
@@ -190,21 +190,11 @@ git pull --ff-only
 
 ### 首次安装与管理员密码
 
-新部署未指定管理密码时，打开面板会进入首次安装向导。先在服务器读取状态文件旁的初始化凭证，把 `setup_token` 填入向导，再设置至少 12 位的管理员密码。用户名固定为 `admin`，密码由你设置，不提供公共注册。
+当前源码：新部署未指定管理密码时，打开面板进入首次安装向导，填写自定义管理员邮箱和至少 12 位密码，不需要初始化 Token 或邮箱验证码。邮箱用作登录名，不会创建真实邮箱，也不代表邮箱归属已验证。v0.3.7 发布包仍使用旧版 Token 向导。
 
-**源码 / start.sh 部署**：在项目目录读取初始化凭证：
+首次安装默认仅监听回环地址。请通过本机或 SSH 隧道完成初始化，再对外开放服务；可访问未初始化实例的人能够设置首次管理员。
 
-```bash
-cat data/state.json.setup.json
-```
-
-**Docker Compose 部署**：读取容器内初始化凭证：
-
-```bash
-docker compose exec codearts2api cat /data/codearts2api-data.json.setup.json
-```
-
-完成安装后，初始化凭证会删除，并创建独立的 `.installed` 标记；密码仅以哈希写入状态文件。等待安装时重启可继续使用同一初始化凭证。正式服务和后台任务只在完成安装后启动，默认调用密钥在登录后的「API 密钥」中查看或另行创建。
+安装完成后删除待安装标记，创建 `.installed` 标记；邮箱和密码哈希原子保存。后台任务仅在安装完成后启动，默认调用密钥在登录后的「API 密钥」中查看。已有部署没有配置管理员邮箱时继续使用 `admin` 和原密码。
 
 普通用户由管理员在「用户管理」创建，并绑定分组；普通用户与管理员使用同一登录页，服务端根据身份显示对应界面。
 

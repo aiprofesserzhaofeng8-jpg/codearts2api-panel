@@ -43,7 +43,8 @@ it('shows setup without loading authentication or any management data',async()=>
  vi.stubGlobal('fetch',vi.fn(()=>Promise.resolve(new Response(JSON.stringify({needs_setup:true,ready:false,admin_username:'admin'})))));
  const wrapper=mount(App,{attachTo:document.body});await flushPromises();
  expect(wrapper.find('#setupForm').exists()).toBe(true);
- expect(wrapper.find('#setupUsername').attributes('readonly')).toBeDefined();
+ expect(wrapper.find('#setupEmail').attributes('type')).toBe('email');
+ expect(wrapper.find('#setupToken').exists()).toBe(false);
  expect(wrapper.find('#loginForm').exists()).toBe(false);
  expect(location.pathname).toBe('/setup');
  expect(vi.mocked(fetch).mock.calls.map(call=>call[0])).toEqual(['/setup/status']);
@@ -54,12 +55,13 @@ it('reconciles a lost installation reply without submitting the administrator tw
  let installed=false, submissions=0;
  vi.stubGlobal('fetch',vi.fn((path:string,options?:RequestInit)=>{
   if(path==='/setup/install'&&options?.method==='POST'){
+   expect(JSON.parse(options.body as string)).toEqual({email:'owner@example.com',password:'owner-password-here',confirm_password:'owner-password-here'});
    installed=true;submissions++;return Promise.reject(new TypeError('Connection closed'));
   }
   return Promise.resolve(new Response(JSON.stringify({needs_setup:!installed,ready:installed,admin_username:'admin'})));
  }));
  const wrapper=mount(App,{attachTo:document.body});await flushPromises();
- await wrapper.find('#setupToken').setValue('owner-token-long-enough-for-initial-setup');
+ await wrapper.find('#setupEmail').setValue('owner@example.com');
  await wrapper.find('#setupPassword').setValue('owner-password-here');
  await wrapper.find('#setupConfirm').setValue('different-password');
  await wrapper.find('#setupForm').trigger('submit');

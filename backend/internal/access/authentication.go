@@ -47,5 +47,23 @@ func (s *Users) loginAdmin(ctx context.Context, password, token string) (UserVie
 	if stored == "" || !sessionEqual(stored, s.currentAdminPassword()) {
 		return UserView{}, time.Time{}, ErrUserAuthentication
 	}
-	return s.openSession(administratorView(), token, sessionDigest(stored))
+	return s.openSession(s.administratorView(), token, sessionDigest(stored))
+}
+
+// Empty email preserves login for existing installations and explicit CLI passwords.
+func (s *Users) adminLoginName() string {
+	if s.adminEmail != nil {
+		if email := s.adminEmail(); email != "" {
+			return email
+		}
+	}
+	return AdminUsername
+}
+func (s *Users) administratorView() UserView {
+	u := administratorView()
+	u.Username = s.adminLoginName()
+	if u.Username != AdminUsername {
+		u.Email = u.Username
+	}
+	return u
 }

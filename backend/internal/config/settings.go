@@ -16,6 +16,7 @@ type Settings struct {
 	MaxRetries     int               `json:"max_retries"`
 	LogKeep        int               `json:"log_keep"`
 	CORSOrigin     string            `json:"cors_origin"`
+	AdminEmail     string            `json:"admin_email,omitempty"`
 	AdminPassword  string            `json:"admin_password"`
 
 	// AutoRefresh 允许在凭据过期且 IDE 未续期时自行用 refresh_token 续期。

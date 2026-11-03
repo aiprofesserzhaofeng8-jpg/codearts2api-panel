@@ -41,9 +41,9 @@ def run(image):
         try:
             dc('up', '-d', '--pull', 'never')
             wait(base, 'setup_required')
-            token = json.loads((data / 'state.json.setup.json').read_text())['setup_token']
+            email='owner@example.com'
             password = secrets.token_urlsafe(24)
-            post(base, '/setup/install', {'setup_token': token, 'password': password, 'confirm_password': password})
+            post(base, '/setup/install', {'email': email, 'password': password, 'confirm_password': password})
             wait(base, 'running')
             dc('pause', 'codearts2api')
             denied = root / 'paused.tar.gz'
@@ -71,7 +71,7 @@ def run(image):
             compose.write_text(json.dumps(config))
             dc('up', '-d', '--pull', 'never')
             wait(base, 'running')
-            assert post(base, '/auth/login', {'username': 'admin', 'password': password})['user']['role'] == 'admin'
+            assert post(base, '/auth/login', {'username': 'owner@example.com', 'password': password})['user']['role'] == 'admin'
             checks.append('restored_bind_mount_starts_with_original_login')
             print(json.dumps({'passed': True, 'checks': checks, 'real_provider_requests': 0}, indent=2))
         finally:
