@@ -55,6 +55,12 @@ Task availability and rewards come from the upstream account. A real-account che
 
 ## Deployment
 
+### Download and run on Windows x64
+
+Download `codearts2api-panel-vX.Y.Z-windows-amd64.zip` from the [stable release](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest), extract all files, and double-click **start.cmd**. Open http://127.0.0.1:10087/. Go, Node.js, Python, and Docker are not required.
+
+Read the initial setup token from `%LOCALAPPDATA%\CodeArts2API\state.json.setup.json` and set your own `admin` password in the wizard. Data stays in `%LOCALAPPDATA%\CodeArts2API` across program upgrades. Stop with Ctrl+C and back up that entire directory before running a new release. This is a foreground application, not a Windows service. See the [Windows guide](deploy/windows/README.md).
+
 ### One-command system service installation on Linux
 
 Requires Python 3.10+, systemd, and sudo. Downloads and verifies the latest stable release, creates a dedicated service user, and enables startup at boot:

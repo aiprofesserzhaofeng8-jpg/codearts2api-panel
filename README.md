@@ -68,6 +68,12 @@ M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算�
 
 ## 部署
 
+### Windows x64 下载运行
+
+从 [正式发布页](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/latest) 下载 `codearts2api-panel-vX.Y.Z-windows-amd64.zip`，**全部解压后双击 `start.cmd`**，打开 http://127.0.0.1:10087/。无需安装 Go、Node.js、Python 或 Docker。
+
+首次运行在 `%LOCALAPPDATA%\CodeArts2API\state.json.setup.json` 读取初始化凭证，通过向导设置 `admin` 密码。数据保存在 `%LOCALAPPDATA%\CodeArts2API`；升级前按 Ctrl+C 停止并备份整个数据目录，再运行新包的 `start.cmd`。当前为前台运行版，不注册 Windows 系统服务。详细步骤见 [Windows 使用说明](deploy/windows/README.md)。
+
 ### 一键安装系统级服务（Linux）
 
 需要 Python 3.10+、systemd 和 sudo。自动下载最新稳定版并校验，创建专用服务用户、注册开机启动：

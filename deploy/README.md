@@ -1,6 +1,6 @@
 # 单实例部署与运维
 
-适用 Linux amd64/arm64。一个进程写一个专用数据目录；多个进程/容器不能共享写 JSON 状态和账本。运维工具在宿主机运行，需要 Python 3.10+；恢复还要求 libc、内核和文件系统支持 `renameat2(RENAME_NOREPLACE)`，不支持时拒绝恢复，不降级为可能覆盖目录的操作。不进入推理热路径，不改上游协议。
+本页运维工具适用 Linux amd64/arm64。Windows x64 ZIP 的启动、备份和升级见 [Windows 使用说明](windows/README.md)。一个进程写一个专用数据目录；多个进程/容器不能共享写 JSON 状态和账本。Linux 运维工具在宿主机运行，需要 Python 3.10+；恢复还要求 libc、内核和文件系统支持 `renameat2(RENAME_NOREPLACE)`，不支持时拒绝恢复，不降级为可能覆盖目录的操作。不进入推理热路径，不改上游协议。
 
 源码构建仍使用根 `Dockerfile`、`docker-compose.yml`、`build.sh` 和 `start.sh`。`deploy/` 提供生产镜像配置、反代模板、版本安装及离线数据工具。
 
@@ -8,6 +8,7 @@
 
 | 场景 | 入口 |
 |---|---|
+| Windows x64 本机使用 | Release ZIP 全部解压后运行 `start.cmd`，见 [Windows 指南](windows/README.md) |
 | 开发、修改源码 | 根目录 `./build.sh`、`./start.sh` 或 `docker compose up -d --build` |
 | Linux 系统级服务 | `curl …/main/deploy/install.sh \| sudo bash`，专用非 root 用户运行 |
 | Linux 单机，不安装编译环境 | 固定版本包 + `panelctl.py install`，用户级 systemd |
