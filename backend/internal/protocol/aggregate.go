@@ -27,11 +27,12 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 	// Choice and tool indices are independent namespaces. Keep each candidate's
 	// text, refusal, reasoning, tool arguments and finish reason separate.
 	type choiceState struct {
-		content, think, refusal strings.Builder
-		hasRefusal              bool
-		finish                  string
-		calls                   map[int]*toolCall
-		order                   []int
+		content, think, refusal, signature strings.Builder
+		nativeThinking                     []json.RawMessage
+		hasRefusal                         bool
+		finish                             string
+		calls                              map[int]*toolCall
+		order                              []int
 	}
 	var (
 		id          string
@@ -51,10 +52,12 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 			Choices []struct {
 				Index int `json:"index"`
 				Delta struct {
-					Refusal          *string `json:"refusal"`
-					Content          string  `json:"content"`
-					ReasoningContent string  `json:"reasoning_content"`
-					ToolCalls        []struct {
+					Refusal            *string           `json:"refusal"`
+					Content            string            `json:"content"`
+					ReasoningContent   string            `json:"reasoning_content"`
+					ReasoningSignature string            `json:"reasoning_signature"`
+					NativeThinking     []json.RawMessage `json:"anthropic_thinking_blocks"`
+					ToolCalls          []struct {
 						Index    int    `json:"index"`
 						ID       string `json:"id"`
 						Type     string `json:"type"`
@@ -89,6 +92,8 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 			}
 			state.content.WriteString(ch.Delta.Content)
 			state.think.WriteString(ch.Delta.ReasoningContent)
+			state.signature.WriteString(ch.Delta.ReasoningSignature)
+			state.nativeThinking = append(state.nativeThinking, ch.Delta.NativeThinking...)
 			if ch.Delta.Refusal != nil {
 				state.hasRefusal = true
 				state.refusal.WriteString(*ch.Delta.Refusal)
@@ -131,6 +136,12 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 		}
 		if state.think.Len() > 0 {
 			msg["reasoning_content"] = state.think.String()
+			if state.signature.Len() > 0 {
+				msg["reasoning_signature"] = state.signature.String()
+			}
+		}
+		if len(state.nativeThinking) > 0 {
+			msg["anthropic_thinking_blocks"] = state.nativeThinking
 		}
 		if len(state.order) > 0 {
 			sort.Ints(state.order)

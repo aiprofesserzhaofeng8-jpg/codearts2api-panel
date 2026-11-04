@@ -1202,6 +1202,18 @@
                   },
                   "trae": {
                     "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "qoder": {
+                    "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "kiro": {
+                    "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "chatgpt": {
+                    "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "claude": {
+                    "$ref": "#/components/schemas/ProviderSettings"
                   }
                 },
                 "additionalProperties": true
@@ -4163,6 +4175,18 @@
                 "$ref": "#/components/schemas/ProviderSettings"
               },
               "trae": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "qoder": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "kiro": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "chatgpt": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "claude": {
                 "$ref": "#/components/schemas/ProviderSettings"
               }
             },

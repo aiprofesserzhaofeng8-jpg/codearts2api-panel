@@ -30,7 +30,7 @@ import { t as tr } from '../../i18n';
         </div>
         <div v-once class="usage-record-filters" :aria-label="tr('用量筛选')">
           <div v-once class="usage-record-fields">
-            <label>{{tr('上游')}}<select id="usageProvider" :aria-label="tr('按上游筛选用量')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option></select></label>
+            <label>{{tr('上游')}}<select id="usageProvider" :aria-label="tr('按上游筛选用量')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option></select></label>
             <label>{{tr('模型')}}<select id="usageModel" :aria-label="tr('按模型筛选用量')"><option value="">{{tr('全部模型')}}</option></select></label>
             <label>{{tr('接口')}}<select id="usageProtocol" :aria-label="tr('按接口筛选用量')"><option value="">{{tr('全部接口')}}</option><option value="chat_completions">Chat Completions</option><option value="responses">Responses</option><option value="messages">Messages</option><option value="search">{{tr('联网搜索')}}</option><option value="growth">{{tr('成长任务')}}</option></select></label>
             <label>{{tr('请求状态')}}<select id="usageStatus" :aria-label="tr('按请求状态筛选用量')"><option value="">{{tr('全部状态')}}</option><option value="success">{{tr('成功')}}</option><option value="error">{{tr('失败')}}</option></select></label>

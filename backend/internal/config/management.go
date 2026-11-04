@@ -49,7 +49,7 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 	}
 	policies := map[string]ProviderSettings{}
-	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae} {
+	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae, "qoder": body.Qoder, "kiro": body.Kiro, "claude": body.Claude, "chatgpt": body.ChatGPT} {
 		if len(raw) == 0 {
 			continue
 		}
@@ -74,10 +74,14 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 		policies[name] = config
 	}
-	for _, name := range []string{"codearts", "trae", "workbuddy"} {
+	for _, name := range []string{"codearts", "trae", "workbuddy", "qoder", "kiro", "claude", "chatgpt"} {
 		candidate, ok := policies[name]
 		if !ok {
 			candidate = current.ConfiguredProvider(name)
+			// Older in-memory settings may predate the additive provider field.
+			if (name == "qoder" || name == "kiro" || name == "chatgpt" || name == "claude") && candidate.PromptMode == "" {
+				candidate = DefaultProviderSettings(name)
+			}
 		}
 		if err := candidate.ResolvePrompt(common).ValidateFor(name); err != nil {
 			return err
@@ -110,6 +114,18 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 		if config, ok := policies["trae"]; ok {
 			st.Trae = config
+		}
+		if config, ok := policies["qoder"]; ok {
+			st.Qoder = config
+		}
+		if config, ok := policies["kiro"]; ok {
+			st.Kiro = config
+		}
+		if config, ok := policies["claude"]; ok {
+			st.Claude = config
+		}
+		if config, ok := policies["chatgpt"]; ok {
+			st.ChatGPT = config
 		}
 		if len(body.Pool) > 0 {
 			st.Pool = poolConfig

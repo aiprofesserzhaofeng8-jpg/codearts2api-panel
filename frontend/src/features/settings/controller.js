@@ -17,12 +17,12 @@ function applyInheritedPrompt(prefix) {
 }
 settingsState.settingsDirty = false;
 
-settingsState.providerPolicyFields = [{ key: "codearts", prefix: "sCA" }, { key: "workbuddy", prefix: "sWB" }, { key: "trae", prefix: "sTR" }];
+settingsState.providerPolicyFields = [{ key: "codearts", prefix: "sCA" }, { key: "workbuddy", prefix: "sWB" }, { key: "trae", prefix: "sTR" }, { key: "qoder", prefix: "sQD" }, { key: "kiro", prefix: "sKI" }, { key: "chatgpt", prefix: "sCG" }, { key: "claude", prefix: "sCL" }];
 
 export function readProviderPolicy(key) {
     var def = settingsState.providerPolicyFields.find(function (item) { return item.key === key; }), field = function (name) { return document.getElementById(def.prefix + name); };
     var overrides={};Object.entries(promptFields).forEach(([suffix,key])=>{if(!field(suffix+'Inherit').checked){const el=field(suffix);overrides[key]=el.type==='checkbox'?el.checked:el.value;}});
-    return { prompt_overrides:Object.keys(overrides).length===4 ? null : overrides, prompt_mode: field("PromptMode").value, prompt_text: field("PromptText").value, prompt_fallback: field("PromptFallback").checked, sanitize: field("Sanitize").checked, search_enabled: field("Search").checked, search_scope: key === "workbuddy" ? field("SearchScope").value : "cn", search_backend: key === "workbuddy" ? "native" : "searxng", search_url: key === "workbuddy" ? "" : field("SearchURL").value.trim() };
+    return { prompt_overrides:Object.keys(overrides).length===4 ? null : overrides, prompt_mode: field("PromptMode").value, prompt_text: field("PromptText").value, prompt_fallback: field("PromptFallback").checked, sanitize: field("Sanitize").checked, search_enabled: ["qoder", "kiro", "chatgpt", "claude"].includes(key) ? false : field("Search").checked, search_scope: key === "workbuddy" ? field("SearchScope").value : "cn", search_backend: key === "workbuddy" ? "native" : "searxng", search_url: ["workbuddy", "qoder", "kiro", "chatgpt", "claude"].includes(key) ? "" : field("SearchURL").value.trim() };
 }
 
 export function renderSettings(s) {
@@ -42,6 +42,7 @@ export function renderSettings(s) {
         const overrides=config.prompt_overrides;
         Object.entries(promptFields).forEach(([suffix,key])=>{const el=field(suffix);field(suffix+'Inherit').checked=overrides!=null && overrides[key]==null;if(overrides?.[key]!=null){if(el.type==='checkbox')el.checked=overrides[key];else el.value=overrides[key];}});
         applyInheritedPrompt(def.prefix);
+        if (["qoder", "kiro", "chatgpt", "claude"].includes(def.key)) return;
         field("Search").checked = def.key === "workbuddy" ? config.search_enabled !== false : !!config.search_enabled;
         if (def.key === "workbuddy")
             field("SearchScope").value = config.search_scope || "cn";
@@ -108,7 +109,7 @@ on("#saveSettings", function () {
     }
     var body = {
         common_prompt:readPrompt("sCommon"),
-        codearts: readProviderPolicy("codearts"), workbuddy: readProviderPolicy("workbuddy"), trae: readProviderPolicy("trae"),
+        codearts: readProviderPolicy("codearts"), workbuddy: readProviderPolicy("workbuddy"), trae: readProviderPolicy("trae"), qoder: readProviderPolicy("qoder"), kiro: readProviderPolicy("kiro"), chatgpt: readProviderPolicy("chatgpt"), claude: readProviderPolicy("claude"),
         pool: {
             strategy: domState.$("#sPoolStrategy").value,
             max_in_flight: Number(domState.$("#sPoolConcurrency").value),

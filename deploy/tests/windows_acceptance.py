@@ -30,7 +30,7 @@ def run(archive):
         with zipfile.ZipFile(archive) as package:
             manifest = json.loads(package.read('manifest.json'))
             assert manifest['os'] == 'windows' and manifest['arch'] == 'amd64'
-            expected = {'codearts2api-panel.exe', 'start.cmd', 'README.md', 'LICENSE', 'LICENSE.workbuddy'}
+            expected = {'codearts2api-panel.exe', 'start.cmd', 'README.md', 'LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro'}
             assert set(manifest['files']) == expected
             assert set(package.namelist()) == expected | {'manifest.json'}
             for name, entry in manifest['files'].items():

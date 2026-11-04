@@ -276,6 +276,26 @@ func (p *ModelPlan) FilterMessages(thinking bool) error {
 	}
 	return nil
 }
+
+// FilterProvider narrows this request's authorized candidates when a native
+// protocol feature cannot be represented by the other providers. Admission
+// still rechecks the selected raw model and account under the Store lock.
+func (p *ModelPlan) FilterProvider(platform string) error {
+	if p == nil {
+		return nil
+	}
+	ids := make([]string, 0, len(p.IDs))
+	for _, id := range p.IDs {
+		if ModelProvider(p.Models[id]) == platform {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return &provider.Error{Status: 400, Message: "此统一模型没有支持原生 Messages 思考与签名的来源"}
+	}
+	p.IDs = ids
+	return nil
+}
 func (s *Routing) ModelPolicy(key string, model provider.Model, policies *config.ModelPolicies) (config.ModelPolicy, bool) {
 	if model.Source != "mapping" {
 		return policies.For(model)

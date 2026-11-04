@@ -119,7 +119,7 @@ export function usageMetricValue(stats, metric) {
 export function usageMetricText(value, metric) { return metric === "cost" ? "$" + Number(value).toFixed(4) : usageNumber(value); }
 
 export function usageSeriesName(name, kind) {
-    var providers = { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae" };
+    var providers = { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude" };
     var protocols = { chat_completions: "Chat Completions", responses: "Responses", messages: "Messages", anthropic_messages: "Messages", search: tr("联网搜索"), growth: tr("成长任务"), unknown: tr("未记录接口") };
     return kind === "providers" ? (providers[name] || name) : kind === "protocols" ? (protocols[name] || name) : name;
 }

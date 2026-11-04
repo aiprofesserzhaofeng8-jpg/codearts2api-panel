@@ -69,7 +69,7 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 	case accounts.LoginStarted:
 		writeJSON(w, 200, map[string]any{"session_id": result.SessionID, "url": result.URL, "provider": result.Provider, "scope": result.Scope, "expires_at": result.ExpiresAt})
 	case accounts.LoginPending:
-		writeJSON(w, 200, map[string]any{"ready": false, "message": "尚未完成授权；Trae 请在浏览器授权后粘贴完整回调地址，WorkBuddy 可直接检查"})
+		writeJSON(w, 200, map[string]any{"ready": false, "message": "尚未完成授权；Trae 请在浏览器授权后粘贴完整回调地址，WorkBuddy / Qoder / Kiro 可直接检查"})
 	case accounts.LoginPreview:
 		writeJSON(w, 200, map[string]any{"ready": true, "provider": result.Provider, "scope": result.Scope, "name": result.Identity.Name, "uid": codearts.Mask(result.Identity.ID), "expires_at": result.Identity.ExpiresAt, "has_refresh": result.Identity.HasRefresh, "preview_id": result.PreviewID, "existing": result.Existing})
 	case accounts.LoginSaved:

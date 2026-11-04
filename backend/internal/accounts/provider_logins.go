@@ -256,7 +256,7 @@ func (s *ProviderLogins) complete(body ProviderLoginRequest, adapters LoginAdapt
 	if len(f.credentials) == 0 || body.Preview != fingerprintCredentials(f.credentials) {
 		return loginFailure(LoginConflict, "请检查授权并核对账号预览")
 	}
-	if f.identity.ExpiresAt <= time.Now().Unix() {
+	if !f.identity.NonExpiring && f.identity.ExpiresAt <= time.Now().Unix() {
 		return loginFailure(LoginExpired, "授权凭据已过期")
 	}
 	name := strings.TrimSpace(body.Name)
@@ -282,7 +282,7 @@ func (s *ProviderLogins) Import(ctx context.Context, body ProviderImportRequest,
 	if err != nil {
 		return "", &LoginError{Kind: LoginInvalid, Message: err.Error()}
 	}
-	if identity.ExpiresAt <= time.Now().Unix() {
+	if !identity.NonExpiring && identity.ExpiresAt <= time.Now().Unix() {
 		return "", &LoginError{Kind: LoginInvalid, Message: "导入凭据已过期，请先在原客户端刷新或重新登录"}
 	}
 	verifier, ok := adapter.(interface {

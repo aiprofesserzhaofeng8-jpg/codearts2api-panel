@@ -68,7 +68,19 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	upReq, err := protocol.ToOpenAI(&req, model.ID)
+	convert := protocol.ToOpenAI
+	nativeMessages := model.Provider == provider.Claude
+	if model.Source == "mapping" && protocol.RequiresNativeMessages(&req) {
+		if err := mappedPlan(r.Context()).FilterProvider(provider.Claude); err != nil {
+			reject(400, "invalid_request_error", err.Error())
+			return
+		}
+		nativeMessages = true
+	}
+	if nativeMessages {
+		convert = protocol.ToOpenAINativeMessages
+	}
+	upReq, err := convert(&req, model.ID)
 	if err != nil {
 		reject(http.StatusBadRequest, "invalid_request_error", err.Error())
 		return
@@ -168,7 +180,7 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 				reason = "max_tokens"
 			}
 			if u := currentAttemptUsage(ctx); u.Known {
-				st.inTok = int(u.InputTokens - u.CachedTokens)
+				st.inTok = max(0, int(u.InputTokens-u.CachedTokens)-st.cacheWriteTok)
 				st.outTok = int(u.OutputTokens)
 				st.cachedTok = int(u.CachedTokens)
 			}
@@ -201,12 +213,13 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 
 // anthropicStream 把上游 OpenAI SSE 分片转换为 Anthropic SSE 事件。
 type anthropicStream struct {
-	cachedTok int
-	w         http.ResponseWriter
-	flusher   http.Flusher
-	msgID     string
-	model     string
-	inTok     int
+	cachedTok     int
+	cacheWriteTok int
+	w             http.ResponseWriter
+	flusher       http.Flusher
+	msgID         string
+	model         string
+	inTok         int
 
 	index     int
 	kind      string // current text/thinking block; tool blocks have independent lifetimes
@@ -340,12 +353,19 @@ func (a *anthropicStream) textDelta(text string) int {
 // consume 处理一个上游分片，返回新增的输出字符数。
 func (a *anthropicStream) consume(chunk []byte) (int, error) {
 	var c struct {
+		Usage struct {
+			PromptDetails struct {
+				Creation *int `json:"cache_creation_tokens"`
+			} `json:"prompt_tokens_details"`
+		} `json:"usage"`
 		Choices []struct {
 			Delta struct {
-				Content          string `json:"content"`
-				ReasoningContent string `json:"reasoning_content"`
-				Refusal          string `json:"refusal"`
-				ToolCalls        []struct {
+				Content            string            `json:"content"`
+				ReasoningContent   string            `json:"reasoning_content"`
+				ReasoningSignature string            `json:"reasoning_signature"`
+				NativeThinking     []json.RawMessage `json:"anthropic_thinking_blocks"`
+				Refusal            string            `json:"refusal"`
+				ToolCalls          []struct {
 					Index    int    `json:"index"`
 					ID       string `json:"id"`
 					Function struct {
@@ -360,6 +380,9 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 	if err := json.Unmarshal(chunk, &c); err != nil {
 		return 0, nil
 	}
+	if c.Usage.PromptDetails.Creation != nil {
+		a.cacheWriteTok = max(0, *c.Usage.PromptDetails.Creation)
+	}
 	n := 0
 	for _, ch := range c.Choices {
 		if ch.Delta.ReasoningContent != "" {
@@ -370,6 +393,24 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 				"type": "content_block_delta", "index": a.index,
 				"delta": map[string]any{"type": "thinking_delta", "thinking": ch.Delta.ReasoningContent},
 			})
+		}
+		if ch.Delta.ReasoningSignature != "" {
+			a.openBlock("thinking")
+			a.send("content_block_delta", map[string]any{"type": "content_block_delta", "index": a.index, "delta": map[string]string{"type": "signature_delta", "signature": ch.Delta.ReasoningSignature}})
+		}
+		for _, raw := range ch.Delta.NativeThinking {
+			var block map[string]any
+			if json.Unmarshal(raw, &block) != nil {
+				return n, fmt.Errorf("原生思考块无效")
+			}
+			if block["type"] == "redacted_thinking" {
+				a.closeBlock()
+				a.index++
+				a.send("content_block_start", map[string]any{"type": "content_block_start", "index": a.index, "content_block": block})
+				a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": a.index})
+			} else {
+				a.closeBlock()
+			}
 		}
 		n += a.textDelta(ch.Delta.Content)
 		n += a.textDelta(ch.Delta.Refusal)
@@ -408,10 +449,14 @@ func (a *anthropicStream) finish(stopReason string) error {
 	for _, tool := range a.toolOrder {
 		a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": tool.index})
 	}
+	usage := map[string]any{"input_tokens": a.inTok, "cache_read_input_tokens": a.cachedTok, "output_tokens": a.outTok}
+	if a.cacheWriteTok > 0 {
+		usage["cache_creation_input_tokens"] = a.cacheWriteTok
+	}
 	a.send("message_delta", map[string]any{
 		"type":  "message_delta",
 		"delta": map[string]any{"stop_reason": stopReason, "stop_sequence": nil},
-		"usage": map[string]any{"input_tokens": a.inTok, "cache_read_input_tokens": a.cachedTok, "output_tokens": a.outTok},
+		"usage": usage,
 	})
 	a.send("message_stop", map[string]any{"type": "message_stop"})
 	return nil

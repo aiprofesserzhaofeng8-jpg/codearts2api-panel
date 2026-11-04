@@ -34,13 +34,13 @@ export function updateAccountCreateBusy() {
     ["#addAccountClose", "#accountCreateCancel", "#accountCreateBack", "#accountCreateNext"].forEach(function (id) { domState.$(id).disabled = busy; });
 }
 
-export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO" }[providersState.accountCreatePlatform]; }
+export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude" }[providersState.accountCreatePlatform]; }
 
 export function renderAccountChoices() {
     document.querySelectorAll("[data-account-platform]").forEach(function (b) { var selected = b.dataset.accountPlatform === providersState.accountCreatePlatform; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     document.querySelectorAll("[data-account-method]").forEach(function (b) { var selected = b.dataset.accountMethod === providersState.accountCreateMethod; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
-    domState.$("#accountBrowserHint").textContent = tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
-    domState.$("#accountImportHint").textContent = providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : tr("从已有客户端导入完整凭据 JSON");
+    domState.$("#accountBrowserHint").textContent = providersState.accountCreatePlatform === "kiro" ? tr("通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。") : tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
+    domState.$("#accountImportHint").textContent = providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
     domState.$("#accountChoiceHint").textContent = providersState.accountCreatePlatform === "trae" && providersState.accountCreateMethod === "browser" ? tr("下一步填写官方客户端设备信息，再生成授权链接。") : tr("选择平台和添加方式后继续，账号核对完成后再保存。");
 }
 
@@ -149,7 +149,7 @@ export function addAccountCredentials(action, extra) {
     }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = tr("导入失败：") + e.message; return false; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
 }
 
-export function providerLabel() { return providersState.activeProvider === "trae" ? "Trae" : "WorkBuddy"; }
+export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude"}[providersState.activeProvider] || providersState.activeProvider; }
 
 export function clearDeviceResults() { providersState.providerDevices = []; domState.$("#providerDeviceChoices").classList.add("hidden"); domState.$("#providerDeviceChoice").textContent = ""; domState.$("#providerDeviceStatus").textContent = ""; }
 
@@ -227,16 +227,40 @@ if not found: print('No registered Trae device found on this computer.', file=sy
 PY
 `;
 
-export function selectProvider(name) { domState.$("#providerTraeDevice").classList.toggle("hidden", name !== "trae"); domState.$("#providerLoginCallback").type = name === "trae" ? "password" : "text"; if (providersState.activeProvider !== name) {
-    domState.$("#providerMachineID").value = "";
-    domState.$("#providerDeviceID").value = "";
-    clearDeviceResults();
-    domState.$("#providerDeviceJSON").value = "";
-    domState.$("#providerImportJSON").value = "";
-    domState.$("#providerAccountName").value = "";
-    domState.$("#providerImportReplace").checked = false;
-} providersState.activeProvider = name; domState.$("#providerLoginTitle").textContent = tr("添加 ") + providerLabel() + tr(" 账号"); domState.$("#providerImportTitle").textContent = tr("导入 ") + providerLabel() + tr(" 凭据 JSON"); domState.$("#providerScope").querySelector("option[value=global]").disabled = name === "trae"; if (name === "trae")
-    domState.$("#providerScope").value = "cn"; domState.$("#providerImportHint").textContent = name === "trae" ? tr("支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。") : tr("支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。"); domState.$("#providerLoginCallback").placeholder = name === "trae" ? tr("粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）") : tr("完成授权后可直接检查，也可粘贴带 state 的回调地址"); }
+export function selectProvider(name) {
+    domState.$("#providerTraeDevice").classList.toggle("hidden", name !== "trae");
+    domState.$("#providerLoginCallback").type = name === "trae" ? "password" : "text";
+    domState.$("#providerLoginCallback").parentElement.classList.toggle("hidden", name === "qoder" || name === "kiro");
+    if (providersState.activeProvider !== name) {
+        domState.$("#providerMachineID").value = "";
+        domState.$("#providerDeviceID").value = "";
+        clearDeviceResults();
+        domState.$("#providerDeviceJSON").value = "";
+        domState.$("#providerImportJSON").value = "";
+        domState.$("#providerAccountName").value = "";
+        domState.$("#providerImportReplace").checked = false;
+    }
+    providersState.activeProvider = name;
+    domState.$("#providerLoginTitle").textContent = tr("添加 ") + providerLabel() + tr(" 账号");
+    domState.$("#providerImportTitle").textContent = tr("导入 ") + providerLabel() + tr(" 凭据 JSON");
+    var scopeSelect = domState.$("#providerScope");
+    var scopeValue = scopeSelect.value;
+    scopeSelect.textContent = "";
+    var scopes = ["chatgpt", "claude"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
+    scopes.forEach(function (entry) { var option = document.createElement("option"); option.value = entry[0]; option.textContent = entry[1]; option.disabled = name === "trae" && entry[0] === "global"; scopeSelect.appendChild(option); });
+    if (scopes.some(function (entry) { return entry[0] === scopeValue && !(name === "trae" && scopeValue === "global"); })) scopeSelect.value = scopeValue;
+    const hints = {
+chatgpt: "支持 Codex auth.json 或 access_token、account_id、user_id、expires_at；也可导入官方 OpenAI api_key（sk- 开头）。浏览器授权后粘贴完整 localhost:1455/auth/callback 地址。",
+claude: "支持 access_token、account_uuid、expires_at 和可选 refresh_token；也可导入官方 Anthropic api_key（sk-ant- 开头）。浏览器授权后粘贴 code#state 或完整回调地址。",
+        trae: "支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。",
+        workbuddy: "支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。",
+        kiro: "Kiro 支持 Builder ID 设备授权；也可导入 api_key（ksk_ 开头）或完整 OAuth JSON。region 默认 us-east-1；导入前校验上游模型访问。",
+        qoder: "Qoder 凭据需包含 access_token、uid、expires_at、machine_id 和 scope（cn / global）。导入前会向上游核对身份。"
+    };
+    domState.$("#providerImportHint").textContent = tr(hints[name]);
+    document.querySelector('label[for="providerLoginCallback"]').textContent = ["chatgpt", "claude"].includes(name) ? tr("回调地址或授权码（必填）") : tr("回调地址（可选）");
+    domState.$("#providerLoginCallback").placeholder = name === "chatgpt" ? tr("粘贴完整 http://localhost:1455/auth/callback?code=…&state=… 地址") : name === "claude" ? tr("粘贴 code#state 或完整 Claude OAuth 回调地址") : name === "trae" ? tr("粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）") : tr("完成授权后可直接检查，也可粘贴带 state 的回调地址");
+}
 
 export function openProvider(name) { if (!sessionState.adminAuthenticated) {
     showAdminLogin();
@@ -259,7 +283,7 @@ export function refreshAfterProviderSave() { resetProviderLogin(); domState.$("#
 
 export function trustedProviderURL(raw) { try {
     var u = new URL(raw);
-    return u.protocol === "https:" && !u.username && !u.password && (providersState.activeProvider === "trae" ? ["trae.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
+    return u.protocol === "https:" && !u.username && !u.password && (providersState.activeProvider === "trae" ? ["trae.cn"] : providersState.activeProvider === "chatgpt" ? ["auth.openai.com"] : providersState.activeProvider === "claude" ? ["claude.com"] : providersState.activeProvider === "kiro" ? ["view.awsapps.com", "device.sso.us-east-1.amazonaws.com", "device.sso.eu-central-1.amazonaws.com"] : providersState.activeProvider === "qoder" ? ["qoder.com", "qoder.com.cn", "qoder.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
 }
 catch (e) {
     return false;
@@ -319,14 +343,14 @@ on("#providerLoginStart", function () {
         }
         var previous = providersState.providerSession ? providerCall("cancel") : Promise.resolve();
         return previous.then(function () { resetProviderLogin(); return providerCall("start", options); }).then(function (d) { if (!trustedProviderURL(d.url))
-            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.remove("hidden"); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); });
+            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.remove("hidden"); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : providersState.activeProvider === "chatgpt" ? tr("授权后复制完整 localhost:1455/auth/callback 地址并粘贴。若页面显示连接失败，仍可复制地址栏中的回调地址；检查预览后再保存。") : providersState.activeProvider === "claude" ? tr("授权后粘贴 code#state 或完整 Claude OAuth 回调地址，检查预览后再保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); });
     });
 });
 on("#providerLoginCopy", function () { return copyText(domState.$("#providerLoginURL").value, providerLabel() + tr(" 授权链接已复制")); });
 on("#providerLoginCheck", function () { return providerJob(function () { providersState.providerPreviewID = ""; domState.$("#providerPreview").classList.add("hidden"); return providerCall("check", { input: domState.$("#providerLoginCallback").value.trim() }).then(function (d) { if (!d.ready) {
     domState.$("#providerLoginStatus").textContent = d.message || tr("尚未完成授权");
     return;
-} providersState.providerPreviewID = d.preview_id; domState.$("#providerPreviewText").textContent = (d.name || providerLabel() + tr(" 账号")) + " · " + d.uid + " · " + (d.scope === "global" ? tr("国际版") : tr("国内版")) + (d.existing ? tr(" · 已存在，保存将更新凭据") : tr(" · 新账号")); domState.$("#providerPreview").classList.remove("hidden"); domState.$("#providerLoginStatus").textContent = tr("账号已验证，点击确认保存才会加入账号池。"); domState.$("#providerLoginCallback").value = ""; }); }); });
+} providersState.providerPreviewID = d.preview_id; domState.$("#providerPreviewText").textContent = (d.name || providerLabel() + tr(" 账号")) + " · " + d.uid + " · " + (providersState.activeProvider === "kiro" ? d.scope : d.scope === "global" ? tr("国际版") : tr("国内版")) + (d.existing ? tr(" · 已存在，保存将更新凭据") : tr(" · 新账号")); domState.$("#providerPreview").classList.remove("hidden"); domState.$("#providerLoginStatus").textContent = tr("账号已验证，点击确认保存才会加入账号池。"); domState.$("#providerLoginCallback").value = ""; }); }); });
 on("#providerLoginComplete", function () { return providerJob(function () { return providerCall("complete", { preview_id: providersState.providerPreviewID, replace_existing: domState.$("#providerReplace").checked, name: domState.$("#providerAccountName").value.trim() }).then(refreshAfterProviderSave); }); });
 on("#providerImport", function () { return providerJob(function () { var credentials; try {
     credentials = JSON.parse(domState.$("#providerImportJSON").value);

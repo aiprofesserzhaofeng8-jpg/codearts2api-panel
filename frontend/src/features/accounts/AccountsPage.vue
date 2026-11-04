@@ -46,7 +46,7 @@ import CredentialImport from './providers/CredentialImport.vue';
           </div>
 
           <div v-once class="account-toolbar">
-            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option></select></label>
+            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option></select></label>
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" :placeholder="tr('搜索账号名称或来源')" :aria-label="tr('搜索账号')"></label>
             <div v-once class="account-filters" role="group" :aria-label="tr('账号状态筛选')">
               <button class="filter-chip on" data-account-filter="all" aria-pressed="true">{{tr('全部')}}</button>
@@ -126,6 +126,10 @@ import CredentialImport from './providers/CredentialImport.vue';
         <button id="browserLogin" class="account-platform selected" data-account-platform="codearts" aria-pressed="true"><span class="platform-symbol" aria-hidden="true">C</span><span>{{tr('华为云码道')}}</span></button>
         <button id="workbuddyLogin" class="account-platform" data-account-platform="workbuddy" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">W</span><span>WorkBuddy</span></button>
         <button id="traeLogin" class="account-platform" data-account-platform="trae" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">T</span><span>Trae CN / SOLO</span></button>
+        <button id="kiroLogin" class="account-platform" data-account-platform="kiro" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">K</span><span>Kiro</span></button>
+        <button id="qoderLogin" class="account-platform" data-account-platform="qoder" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">Q</span><span>Qoder</span></button>
+        <button id="chatgptLogin" class="account-platform" data-account-platform="chatgpt" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">G</span><span>ChatGPT / Codex</span></button>
+        <button id="claudeLogin" class="account-platform" data-account-platform="claude" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">A</span><span>Claude</span></button>
       </div>
       <p class="account-field-label" id="accountMethodLabel">{{tr('添加方式')}}</p>
       <div v-once class="account-methods" role="group" aria-labelledby="accountMethodLabel">

@@ -1285,7 +1285,7 @@ body.admin-locked .app { visibility: hidden; }
 .account-create-steps .active{color:var(--text)}
 .account-create-steps .active b{background:var(--accent-solid);color:var(--accent-on-solid)}
 .account-field-label{margin:24px 0 9px;color:var(--text-2);font-size:13px}
-.account-platforms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:var(--surface-2);padding:5px;border-radius:10px}
+.account-platforms{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;background:var(--surface-2);padding:5px;border-radius:10px}
 .account-platform,.account-method{font:inherit;color:var(--text-2);cursor:pointer;border:1px solid transparent;background:transparent;text-align:left}
 .account-platform{display:flex;align-items:center;justify-content:center;gap:9px;padding:15px 10px;border-radius:7px}
 .account-platform:hover,.account-method:hover{background:var(--surface-3)}

@@ -59,6 +59,10 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 					row["expires_at"] = identity.ExpiresAt
 					row["expires_in"] = identity.ExpiresAt - time.Now().Unix()
 					row["has_refresh"] = identity.HasRefresh
+					row["non_expiring"] = identity.NonExpiring
+					if identity.NonExpiring {
+						row["expires_in"] = 0
+					}
 					row["access_key"] = "已保存"
 				}
 			}

@@ -32,7 +32,7 @@ RUN apk add --no-cache ca-certificates tzdata && \
     mkdir -p /data && chown 10001:10001 /data
 COPY --from=build /out/codearts2api /usr/local/bin/codearts2api
 COPY deploy/healthcheck.sh /usr/local/bin/codearts-healthcheck
-COPY LICENSE LICENSE.workbuddy /usr/share/licenses/codearts2api/
+COPY LICENSE LICENSE.workbuddy LICENSE.qoder LICENSE.kiro /usr/share/licenses/codearts2api/
 USER 10001:10001
 WORKDIR /data
 VOLUME ["/data"]

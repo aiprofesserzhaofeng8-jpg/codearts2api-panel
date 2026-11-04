@@ -58,7 +58,7 @@ func (s *ProviderCredentials) Resolve(ctx context.Context, id string, adapter Cr
 	if identity.ID != latest.ExternalID || identity.Scope != latest.Scope {
 		return nil, &provider.Error{Status: 401, AccountFault: true, Message: "上游凭据身份或地区与账号记录不一致，请重新导入"}
 	}
-	if time.Unix(identity.ExpiresAt, 0).After(time.Now().Add(5 * time.Minute)) {
+	if identity.NonExpiring || time.Unix(identity.ExpiresAt, 0).After(time.Now().Add(5*time.Minute)) {
 		return raw, nil
 	}
 	if !s.allowRefresh() {

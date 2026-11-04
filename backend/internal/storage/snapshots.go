@@ -68,6 +68,10 @@ func (s *Store) Settings() Settings {
 	cp := s.st.Settings
 	cp.CodeArts = cp.CodeArts.Clone()
 	cp.Trae = cp.Trae.Clone()
+	cp.Qoder = cp.Qoder.Clone()
+	cp.Kiro = cp.Kiro.Clone()
+	cp.Claude = cp.Claude.Clone()
+	cp.ChatGPT = cp.ChatGPT.Clone()
 	cp.WorkBuddy = cp.WorkBuddy.Clone()
 	cp.ModelAliases = map[string]string{}
 	for k, v := range s.st.Settings.ModelAliases {

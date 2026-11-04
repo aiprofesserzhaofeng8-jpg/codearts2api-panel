@@ -94,6 +94,14 @@ func (s Settings) ConfiguredProvider(name string) ProviderSettings {
 		return s.CodeArts
 	case "trae":
 		return s.Trae
+	case "qoder":
+		return s.Qoder
+	case "kiro":
+		return s.Kiro
+	case "claude":
+		return s.Claude
+	case "chatgpt":
+		return s.ChatGPT
 	case "workbuddy":
 		return s.WorkBuddy
 	}

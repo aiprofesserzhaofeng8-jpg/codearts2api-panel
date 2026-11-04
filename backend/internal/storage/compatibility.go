@@ -29,6 +29,10 @@ func DefaultSettings() Settings {
 		WorkBuddy:      DefaultWorkBuddySettings(),
 		CodeArts:       DefaultProviderSettings("codearts"),
 		Trae:           DefaultProviderSettings("trae"),
+		Qoder:          DefaultProviderSettings("qoder"),
+		Kiro:           DefaultProviderSettings("kiro"),
+		Claude:         DefaultProviderSettings("claude"),
+		ChatGPT:        DefaultProviderSettings("chatgpt"),
 		ModelAliases:   map[string]string{},
 		DefaultModel:   codearts.DefaultModel,
 		RequestTimeout: 300,
@@ -155,6 +159,18 @@ func (s *Store) applyDefaults() {
 	}
 	if st.Trae.ValidateFor("trae") != nil {
 		st.Trae = def.Trae
+	}
+	if st.Kiro.ValidateFor("kiro") != nil {
+		st.Kiro = def.Kiro
+	}
+	if st.Claude.ValidateFor("claude") != nil {
+		st.Claude = def.Claude
+	}
+	if st.ChatGPT.ValidateFor("chatgpt") != nil {
+		st.ChatGPT = def.ChatGPT
+	}
+	if st.Qoder.ValidateFor("qoder") != nil {
+		st.Qoder = def.Qoder
 	}
 	if st.WorkBuddy.ValidateFor("workbuddy") != nil {
 		st.WorkBuddy = def.WorkBuddy

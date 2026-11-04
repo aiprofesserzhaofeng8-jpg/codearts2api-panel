@@ -132,7 +132,11 @@ export function renderAccounts(d) {
             statusCell.appendChild(mk("div", "sub", tr("在途 ") + a.pool.in_flight + " / " + a.pool.max_in_flight));
         statusCell.title = (a.max_in_flight > 0 ? tr("独立并发上限：") + a.max_in_flight : tr("并发上限使用全局默认值")) + (statusCell.title ? "；" + statusCell.title : "");
         var expCell = cell("", "cell-stack");
-        if (a.permanent) {
+        if (a.non_expiring) {
+            expCell.appendChild(mk("span", "mono", tr("长期密钥")));
+            expCell.appendChild(mk("span", "sub", tr("有效性以上游为准")));
+        }
+        else if (a.permanent) {
             // 永久 AK/SK：没有过期时间，也不参与续期。
             expCell.appendChild(mk("span", "mono", tr("永不过期")));
             expCell.appendChild(mk("span", "sub", "IAM AK/SK"));
@@ -188,7 +192,7 @@ export function renderAccounts(d) {
         who.appendChild(mk("span", "account-avatar", Array.from(a.name || tr("码"))[0].toUpperCase()));
         var info = mk("div", "account-name");
         info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
-        info.appendChild(pill(a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
+        info.appendChild(pill(a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
         info.appendChild(mk("span", "account-caption", a.has_refresh ? tr("自动续期已就绪") : tr("临时凭据")));
         who.appendChild(info);
         identity.appendChild(who);

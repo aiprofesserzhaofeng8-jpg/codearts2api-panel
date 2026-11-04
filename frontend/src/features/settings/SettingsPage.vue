@@ -243,6 +243,60 @@ import { t as tr } from '../../i18n';
           </div>
 
           <div v-once class="settings-group">
+            <h3>Qoder</h3>
+            <label class="check prompt-inherit"><input id="sQDPromptModeInherit" type="checkbox">{{tr('继承公共值 · 模式')}}</label>
+<div v-once class="field"><label for="sQDPromptMode">{{tr('系统提示词')}}</label><select id="sQDPromptMode"><option value="passthrough">{{tr('透传客户端提示词')}}</option><option value="custom">{{tr('自定义（替换客户端 system / developer）')}}</option></select></div>
+            <label class="check prompt-inherit"><input id="sQDPromptTextInherit" type="checkbox">{{tr('继承公共值 · 提示词')}}</label>
+<div v-once class="field"><label for="sQDPromptText">{{tr('自定义提示词（留空使用内置工程助手提示词）')}}</label><textarea id="sQDPromptText" maxlength="65536" rows="5" :placeholder="tr('输入系统提示词')"></textarea></div>
+            <div v-once class="row">
+              <label class="check prompt-inherit"><input id="sQDPromptFallbackInherit" type="checkbox">{{tr('继承公共值 · 拦截恢复')}}</label>
+<label class="check"><input id="sQDPromptFallback" type="checkbox">{{tr('透传遇明确内容策略拦截时，使用中性提示词重试一次')}}</label>
+              <label class="check prompt-inherit"><input id="sQDSanitizeInherit" type="checkbox">{{tr('继承公共值 · 清洗')}}</label>
+<label class="check"><input id="sQDSanitize" type="checkbox">{{tr('仅清洗系统提示词中的客户端模板')}}</label>
+            </div>
+          </div>
+
+          <div v-once class="settings-group">
+            <h3>Kiro</h3>
+            <label class="check prompt-inherit"><input id="sKIPromptModeInherit" type="checkbox">{{tr('继承公共值 · 模式')}}</label>
+<div v-once class="field"><label for="sKIPromptMode">{{tr('系统提示词')}}</label><select id="sKIPromptMode"><option value="passthrough">{{tr('透传客户端提示词')}}</option><option value="custom">{{tr('自定义（替换客户端 system / developer）')}}</option></select></div>
+            <label class="check prompt-inherit"><input id="sKIPromptTextInherit" type="checkbox">{{tr('继承公共值 · 提示词')}}</label>
+<div v-once class="field"><label for="sKIPromptText">{{tr('自定义提示词（留空使用内置工程助手提示词）')}}</label><textarea id="sKIPromptText" maxlength="65536" rows="5" :placeholder="tr('输入系统提示词')"></textarea></div>
+            <div v-once class="row">
+              <label class="check prompt-inherit"><input id="sKIPromptFallbackInherit" type="checkbox">{{tr('继承公共值 · 拦截恢复')}}</label>
+<label class="check"><input id="sKIPromptFallback" type="checkbox">{{tr('透传遇明确内容策略拦截时，使用中性提示词重试一次')}}</label>
+              <label class="check prompt-inherit"><input id="sKISanitizeInherit" type="checkbox">{{tr('继承公共值 · 清洗')}}</label>
+<label class="check"><input id="sKISanitize" type="checkbox">{{tr('仅清洗系统提示词中的客户端模板')}}</label>
+            </div>
+          </div>
+          <div v-once class="settings-group">
+            <h3>ChatGPT / Codex</h3>
+            <label class="check prompt-inherit"><input id="sCGPromptModeInherit" type="checkbox">{{tr('继承公共值 · 模式')}}</label>
+<div v-once class="field"><label for="sCGPromptMode">{{tr('系统提示词')}}</label><select id="sCGPromptMode"><option value="passthrough">{{tr('透传客户端提示词')}}</option><option value="custom">{{tr('自定义（替换客户端 system / developer）')}}</option></select></div>
+            <label class="check prompt-inherit"><input id="sCGPromptTextInherit" type="checkbox">{{tr('继承公共值 · 提示词')}}</label>
+<div v-once class="field"><label for="sCGPromptText">{{tr('自定义提示词（留空使用内置工程助手提示词）')}}</label><textarea id="sCGPromptText" maxlength="65536" rows="5" :placeholder="tr('输入系统提示词')"></textarea></div>
+            <div v-once class="row">
+              <label class="check prompt-inherit"><input id="sCGPromptFallbackInherit" type="checkbox">{{tr('继承公共值 · 拦截恢复')}}</label>
+<label class="check"><input id="sCGPromptFallback" type="checkbox">{{tr('透传遇明确内容策略拦截时，使用中性提示词重试一次')}}</label>
+              <label class="check prompt-inherit"><input id="sCGSanitizeInherit" type="checkbox">{{tr('继承公共值 · 清洗')}}</label>
+<label class="check"><input id="sCGSanitize" type="checkbox">{{tr('仅清洗系统提示词中的客户端模板')}}</label>
+            </div>
+          </div>
+          <div v-once class="settings-group">
+            <h3>Claude</h3>
+            <label class="check prompt-inherit"><input id="sCLPromptModeInherit" type="checkbox">{{tr('继承公共值 · 模式')}}</label>
+<div v-once class="field"><label for="sCLPromptMode">{{tr('系统提示词')}}</label><select id="sCLPromptMode"><option value="passthrough">{{tr('透传客户端提示词')}}</option><option value="custom">{{tr('自定义（替换客户端 system / developer）')}}</option></select></div>
+            <label class="check prompt-inherit"><input id="sCLPromptTextInherit" type="checkbox">{{tr('继承公共值 · 提示词')}}</label>
+<div v-once class="field"><label for="sCLPromptText">{{tr('自定义提示词（留空使用内置工程助手提示词）')}}</label><textarea id="sCLPromptText" maxlength="65536" rows="5" :placeholder="tr('输入系统提示词')"></textarea></div>
+            <div v-once class="row">
+              <label class="check prompt-inherit"><input id="sCLPromptFallbackInherit" type="checkbox">{{tr('继承公共值 · 拦截恢复')}}</label>
+<label class="check"><input id="sCLPromptFallback" type="checkbox">{{tr('透传遇明确内容策略拦截时，使用中性提示词重试一次')}}</label>
+              <label class="check prompt-inherit"><input id="sCLSanitizeInherit" type="checkbox">{{tr('继承公共值 · 清洗')}}</label>
+<label class="check"><input id="sCLSanitize" type="checkbox">{{tr('仅清洗系统提示词中的客户端模板')}}</label>
+            </div>
+          </div>
+
+          <div v-once class="settings-group">
             <h3>{{tr('模型别名')}}</h3>
             <p class="group-hint">{{tr('JSON 对象，例如 ')}}<code>{"my-model":"glm-5.3"}</code>{{tr('。别名只改变名称，不改变实际调用的模型。')}}</p>
             <textarea id="sAliases" spellcheck="false" :aria-label="tr('模型别名 JSON')"></textarea>

@@ -7,6 +7,7 @@
 package protocol
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -53,12 +54,55 @@ type Reply struct {
 // --- Anthropic → OpenAI ---
 
 // ToOpenAI 把 Anthropic 请求转换为 OpenAI Chat Completions 请求体。
-func ToOpenAI(req *Request, model string) (map[string]any, error) {
+func ToOpenAI(req *Request, model string) (map[string]any, error) { return toOpenAI(req, model, false) }
+
+// ToOpenAINativeMessages preserves Anthropic thinking controls and signed history.
+// The HTTP boundary selects this only after resolving a native Messages route.
+func ToOpenAINativeMessages(req *Request, model string) (map[string]any, error) {
+	return toOpenAI(req, model, true)
+}
+
+// RequiresNativeMessages identifies controls/history that need a native
+// Messages target. It does not infer capabilities from model names.
+func RequiresNativeMessages(req *Request) bool {
+	var thinking map[string]json.RawMessage
+	if json.Unmarshal(req.Thinking, &thinking) == nil {
+		var typ string
+		_ = json.Unmarshal(thinking["type"], &typ)
+		if typ == "enabled" || typ == "adaptive" {
+			return true
+		}
+	}
+	if len(req.OutputConfig) > 0 && string(bytes.TrimSpace(req.OutputConfig)) != "null" {
+		return true
+	}
+	for _, m := range req.Messages {
+		var blocks []struct {
+			Type string `json:"type"`
+		}
+		if json.Unmarshal(m.Content, &blocks) == nil {
+			for _, b := range blocks {
+				if b.Type == "thinking" || b.Type == "redacted_thinking" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+func toOpenAI(req *Request, model string, native bool) (map[string]any, error) {
 	out := map[string]any{
 		"model":  model,
 		"stream": req.Stream,
 	}
-	if err := applyAnthropicThinking(req, out); err != nil {
+	if native {
+		if len(req.Thinking) > 0 {
+			out["thinking"] = req.Thinking
+		}
+		if len(req.OutputConfig) > 0 {
+			out["output_config"] = req.OutputConfig
+		}
+	} else if err := applyAnthropicThinking(req, out); err != nil {
 		return nil, err
 	}
 	if req.MaxTokens > 0 {
@@ -79,7 +123,7 @@ func ToOpenAI(req *Request, model string) (map[string]any, error) {
 		msgs = append(msgs, map[string]any{"role": "system", "content": sys})
 	}
 	for _, m := range req.Messages {
-		converted, err := MessageToOpenAI(m)
+		converted, err := messageToOpenAI(m, native)
 		if err != nil {
 			return nil, err
 		}
@@ -133,22 +177,26 @@ func ToolChoice(raw json.RawMessage) any {
 // MessageToOpenAI 把一条 Anthropic 消息展开为一条或多条 OpenAI 消息。
 //
 // tool_use 会变成 assistant.tool_calls，tool_result 会变成独立的 role=tool 消息。
-func MessageToOpenAI(m Message) ([]map[string]any, error) {
+func MessageToOpenAI(m Message) ([]map[string]any, error) { return messageToOpenAI(m, false) }
+func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 	var text string
 	if err := json.Unmarshal(m.Content, &text); err == nil {
 		return []map[string]any{{"role": m.Role, "content": text}}, nil
 	}
 
 	var blocks []map[string]any
-	if err := json.Unmarshal(m.Content, &blocks); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(m.Content))
+	decoder.UseNumber()
+	if err := decoder.Decode(&blocks); err != nil {
 		return nil, fmt.Errorf("content 字段格式不支持")
 	}
 
 	role := m.Role
 	var (
-		parts     []any
-		toolCalls []any
-		toolMsgs  []map[string]any
+		parts          []any
+		toolCalls      []any
+		toolMsgs       []map[string]any
+		thinkingBlocks []any
 	)
 
 	for _, b := range blocks {
@@ -178,12 +226,20 @@ func MessageToOpenAI(m Message) ([]map[string]any, error) {
 				"content":      ToolResultText(b),
 			})
 		case "thinking", "redacted_thinking":
-			// 不回流推理内容：上游不需要，且会浪费上下文
+			if native {
+				if m.Role != "assistant" {
+					return nil, fmt.Errorf("思考块只允许在助手消息中")
+				}
+				thinkingBlocks = append(thinkingBlocks, b)
+			}
 		}
 	}
 
 	out := make([]map[string]any, 0, 2)
 	msg := map[string]any{"role": role}
+	if len(thinkingBlocks) > 0 {
+		msg["anthropic_thinking_blocks"] = thinkingBlocks
+	}
 	if len(parts) == 1 {
 		// 单个文本块直接摊平成字符串，与 OpenAI 的常见写法一致
 		if p, ok := parts[0].(map[string]any); ok && p["type"] == "text" {
@@ -199,7 +255,7 @@ func MessageToOpenAI(m Message) ([]map[string]any, error) {
 	if len(toolCalls) > 0 {
 		msg["tool_calls"] = toolCalls
 	}
-	if len(parts) > 0 || len(toolCalls) > 0 {
+	if len(parts) > 0 || len(toolCalls) > 0 || len(thinkingBlocks) > 0 {
 		out = append(out, msg)
 	}
 	out = append(out, toolMsgs...)
@@ -290,10 +346,12 @@ func FromOpenAI(raw []byte, model string) Reply {
 	var resp struct {
 		Choices []struct {
 			Message struct {
-				Content          string `json:"content"`
-				ReasoningContent string `json:"reasoning_content"`
-				Refusal          string `json:"refusal"`
-				ToolCalls        []struct {
+				Content            string            `json:"content"`
+				ReasoningContent   string            `json:"reasoning_content"`
+				ReasoningSignature string            `json:"reasoning_signature"`
+				NativeThinking     []json.RawMessage `json:"anthropic_thinking_blocks"`
+				Refusal            string            `json:"refusal"`
+				ToolCalls          []struct {
 					ID       string `json:"id"`
 					Function struct {
 						Name      string `json:"name"`
@@ -308,7 +366,8 @@ func FromOpenAI(raw []byte, model string) Reply {
 			CompletionTokens *int `json:"completion_tokens"`
 			CacheHit         *int `json:"prompt_cache_hit_tokens"`
 			PromptDetails    struct {
-				Cached *int `json:"cached_tokens"`
+				Cached   *int `json:"cached_tokens"`
+				Creation *int `json:"cache_creation_tokens"`
 			} `json:"prompt_tokens_details"`
 		} `json:"usage"`
 	}
@@ -321,8 +380,19 @@ func FromOpenAI(raw []byte, model string) Reply {
 		ch := resp.Choices[0]
 		thinking = ch.Message.ReasoningContent
 		text = ch.Message.Content
-		if thinking != "" {
-			content = append(content, map[string]any{"type": "thinking", "thinking": thinking})
+		if len(ch.Message.NativeThinking) > 0 {
+			for _, raw := range ch.Message.NativeThinking {
+				var block map[string]any
+				if json.Unmarshal(raw, &block) == nil {
+					content = append(content, block)
+				}
+			}
+		} else if thinking != "" {
+			block := map[string]any{"type": "thinking", "thinking": thinking}
+			if ch.Message.ReasoningSignature != "" {
+				block["signature"] = ch.Message.ReasoningSignature
+			}
+			content = append(content, block)
 		}
 		if text != "" {
 			content = append(content, map[string]any{"type": "text", "text": text})
@@ -379,6 +449,11 @@ func FromOpenAI(raw []byte, model string) Reply {
 		cached = min(max(0, cached), in)
 		usage["input_tokens"] = in - cached
 		usage["cache_read_input_tokens"] = cached
+	}
+	if resp.Usage.PromptDetails.Creation != nil {
+		creation := min(max(0, *resp.Usage.PromptDetails.Creation), in-cached)
+		usage["input_tokens"] = in - cached - creation
+		usage["cache_creation_input_tokens"] = creation
 	}
 
 	return Reply{

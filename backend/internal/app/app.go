@@ -10,12 +10,16 @@ import (
 	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/catalog"
+	"codearts2api/internal/chatgpt"
+	"codearts2api/internal/claude"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/identitytransport"
 	"codearts2api/internal/jobs"
+	"codearts2api/internal/kiro"
 	"codearts2api/internal/provider"
+	"codearts2api/internal/qoder"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/server"
 	"codearts2api/internal/storage"
@@ -32,7 +36,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 	}
 	up := codearts.NewClient()
 	adapters := provider.NewRegistry()
-	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New()} {
+	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New(), qoder.New(), kiro.New(), chatgpt.New(), claude.New()} {
 		if err := adapters.Register(adapter); err != nil {
 			return nil, fmt.Errorf("register %s: %w", adapter.Describe().ID, err)
 		}

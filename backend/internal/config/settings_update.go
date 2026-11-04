@@ -6,6 +6,10 @@ type SettingsUpdate struct {
 	CommonPrompt      json.RawMessage   `json:"common_prompt"`
 	CodeArts          json.RawMessage   `json:"codearts"`
 	Trae              json.RawMessage   `json:"trae"`
+	Qoder             json.RawMessage   `json:"qoder"`
+	Kiro              json.RawMessage   `json:"kiro"`
+	Claude            json.RawMessage   `json:"claude"`
+	ChatGPT           json.RawMessage   `json:"chatgpt"`
 	WorkBuddy         json.RawMessage   `json:"workbuddy"`
 	ModelAliases      map[string]string `json:"model_aliases"`
 	Pool              json.RawMessage   `json:"pool"`

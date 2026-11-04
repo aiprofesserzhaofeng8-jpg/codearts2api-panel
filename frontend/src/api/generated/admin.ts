@@ -1137,6 +1137,10 @@ export interface components {
                 codearts?: components["schemas"]["ProviderSettings"];
                 workbuddy?: components["schemas"]["ProviderSettings"];
                 trae?: components["schemas"]["ProviderSettings"];
+                qoder?: components["schemas"]["ProviderSettings"];
+                kiro?: components["schemas"]["ProviderSettings"];
+                chatgpt?: components["schemas"]["ProviderSettings"];
+                claude?: components["schemas"]["ProviderSettings"];
             } & {
                 [key: string]: unknown;
             };
@@ -2339,6 +2343,10 @@ export interface operations {
                     codearts?: components["schemas"]["ProviderSettings"];
                     workbuddy?: components["schemas"]["ProviderSettings"];
                     trae?: components["schemas"]["ProviderSettings"];
+                    qoder?: components["schemas"]["ProviderSettings"];
+                    kiro?: components["schemas"]["ProviderSettings"];
+                    chatgpt?: components["schemas"]["ProviderSettings"];
+                    claude?: components["schemas"]["ProviderSettings"];
                 } & {
                     [key: string]: unknown;
                 };

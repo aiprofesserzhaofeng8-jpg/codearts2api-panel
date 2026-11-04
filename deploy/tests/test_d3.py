@@ -105,7 +105,7 @@ class PackageBoundaryTest(unittest.TestCase):
         ops.unpack(archive, target, 'release', ops.sha256(archive))
         for name in ('panelctl.py', 'Caddyfile', 'compose.production.yml', 'healthcheck.sh', '.env.example', 'README.md'):
             self.assertEqual((target / name).read_bytes(), (packaging.ROOT / 'deploy' / name).read_bytes())
-        for name in ('LICENSE', 'LICENSE.workbuddy'):
+        for name in ('LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro'):
             self.assertEqual((target / name).read_bytes(), (packaging.ROOT / name).read_bytes())
         self.assertEqual(archive.with_name(archive.name + '.sha256').read_text(), f'{ops.sha256(archive)}  {archive.name}\n')
         self.assertEqual(json.loads((target / 'manifest.json').read_text())['arch'], 'amd64')

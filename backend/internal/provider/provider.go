@@ -14,6 +14,10 @@ import (
 const CodeArts = "codearts"
 const WorkBuddy = "workbuddy"
 const Trae = "trae"
+const Qoder = "qoder"
+const Kiro = "kiro"
+const ChatGPT = "chatgpt"
+const Claude = "claude"
 
 type Model struct {
 	ID         string `json:"id"`
@@ -34,6 +38,8 @@ type Identity struct {
 	Scope      string `json:"scope"`
 	ExpiresAt  int64  `json:"expires_at"`
 	HasRefresh bool   `json:"has_refresh"`
+	// NonExpiring is for static API keys; ExpiresAt remains zero, not a fake date.
+	NonExpiring bool `json:"non_expiring,omitempty"`
 }
 type Descriptor struct {
 	ID        string   `json:"id"`

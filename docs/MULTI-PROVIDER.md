@@ -1,10 +1,10 @@
-# 多上游开发版：码道、WorkBuddy 与 Trae CN / SOLO
+# 多上游：码道、WorkBuddy、Trae、Qoder、Kiro、ChatGPT 与 Claude
 
 此功能位于 `develop`，版本 `0.3.0-dev`。`v0.1.0` 标签固定原码道版本。
 
 ## 使用入口
 
-账号池统一使用「添加账号」入口。在同一个弹窗先选择华为云码道、WorkBuddy 或 Trae，再选择浏览器授权或凭据导入，点击下一步进入对应表单。平台选择本身不会生成授权链接或保存账号；上一步和关闭会取消当前未完成的授权，并清空已粘贴的凭据。WorkBuddy 可选择国内或国际地区：
+账号池统一使用「添加账号」入口。在同一个弹窗先选择华为云码道、WorkBuddy、Trae、Qoder、Kiro、ChatGPT 或 Claude，再选择浏览器授权或凭据导入，点击下一步进入对应表单。平台选择本身不会生成授权链接或保存账号；上一步和关闭会取消当前未完成的授权，并清空已粘贴的凭据。Qoder 的使用与验证范围见 [Qoder 上游](QODER.md)。Kiro 使用与限制见 [Kiro 上游](KIRO.md)，使用 AWS 地区，不能标成国内/国际版。WorkBuddy 可选择国内或国际地区：
 
 1. 生成授权链接。
 2. 复制链接到另一个浏览器登录；面板不自动导航、不自动保存账号。
@@ -26,6 +26,12 @@
 | `workbuddy/cn/<上游模型ID>` | WorkBuddy 国内账号 |
 | `workbuddy/global/<上游模型ID>` | WorkBuddy 国际账号 |
 | `trae/cn/<config_name>` | Trae 国内 CN/SOLO 原生通道 |
+| `qoder/cn/<chat目录key>` | Qoder 国内账号 |
+| `qoder/global/<chat目录key>` | Qoder 国际账号 |
+| `kiro/us-east-1/<modelId>` | Kiro 美国地区账号 |
+| `kiro/eu-central-1/<modelId>` | Kiro 欧洲地区账号 |
+| `chatgpt/global/<model-id>` | ChatGPT / Codex 或官方 OpenAI API Key |
+| `claude/global/<model-id>` | Claude OAuth 或官方 Anthropic API Key |
 | `trae/global/...` | 国际版尚未接入，拒绝调用 |
 
 WorkBuddy 模型来自该地区的上游目录，不在没有账号时虚构可用模型。保存账号后面板会刷新目录，也可手动刷新。各上游刷新结果独立保留；一个目录更新不会覆盖另一个上游或地区。
@@ -67,3 +73,5 @@ Trae CN/SOLO 实现 Adapter、BrowserLogin 和 CallbackLogin，通过粘贴带 t
 已接入 `/v1/search/messages`、custom/passthrough 系统提示词和可关闭的出站指纹清洗。配置入口为「配置 → WorkBuddy」，搜索遵守分组、并发和请求次数预算；启用 Token/USD 预算的密钥因无搜索计费回执而拒绝搜索。接口示例、默认值和验证边界见 [WorkBuddy 专用功能](WORKBUDDY-FEATURES.md)。
 
 提示词、指纹清洗与各平台搜索入口的配置和维护方式见 [平台能力](PROVIDER-FEATURES.md)。CodeArts/Trae 搜索使用独立 SearXNG，需先配置服务；WorkBuddy 继续走原生搜索。
+
+ChatGPT 和 Claude 的认证、模型来源及参数边界分别见 [CHATGPT.md](CHATGPT.md) 与 [CLAUDE.md](CLAUDE.md)。两个平台各自使用官方端点，不将订阅和 API Key 计费混为一谈；未实现余额查询时显示未知。

@@ -7,6 +7,10 @@ type Settings struct {
 	CommonPrompt   PromptSettings    `json:"common_prompt"`
 	CodeArts       ProviderSettings  `json:"codearts"`
 	Trae           ProviderSettings  `json:"trae"`
+	Qoder          ProviderSettings  `json:"qoder"`
+	Kiro           ProviderSettings  `json:"kiro"`
+	Claude         ProviderSettings  `json:"claude"`
+	ChatGPT        ProviderSettings  `json:"chatgpt"`
 	WorkBuddy      WorkBuddySettings `json:"workbuddy"`
 	Pool           PoolSettings      `json:"pool"`
 	ModelAliases   map[string]string `json:"model_aliases"`

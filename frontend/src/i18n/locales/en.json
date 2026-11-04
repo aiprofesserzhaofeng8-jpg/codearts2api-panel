@@ -1275,5 +1275,19 @@
   "完成首次安装，设置管理员邮箱和密码。": "Set your administrator email and password to complete setup.",
   "使用你设置的邮箱和密码登录，然后添加上游账号、创建分组和普通用户。": "Sign in with your email and password, then add upstream accounts, groups and users.",
   "请在对外开放服务前完成管理员初始化。": "Complete administrator setup before making the service publicly accessible.",
-  "邮箱或用户名": "Email or username"
+  "邮箱或用户名": "Email or username",
+  "Qoder 凭据需包含 access_token、uid、expires_at、machine_id 和 scope（cn / global）。导入前会向上游核对身份。": "Qoder credentials require access_token, uid, expires_at, machine_id and scope (cn / global). The account identity is verified before import.",
+  "尚未完成授权；Trae 请在浏览器授权后粘贴完整回调地址，WorkBuddy / Qoder 可直接检查": "Authorization is pending. For Trae, paste the full callback URL after authorization. For WorkBuddy / Qoder, check directly.",
+  "长期密钥": "Long-lived key",
+  "有效性以上游为准": "Validity is determined by the provider",
+  "通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。": "Sign in with AWS Builder ID device authorization. Import credentials for other sign-in methods.",
+  "Kiro 支持 Builder ID 设备授权；也可导入 api_key（ksk_ 开头）或完整 OAuth JSON。region 默认 us-east-1；导入前校验上游模型访问。": "Kiro supports Builder ID device authorization, api_key (ksk_ prefix), or complete OAuth JSON. The default region is us-east-1. Model access is verified before import.",
+  "导入 OAuth 凭据或官方 API Key JSON": "Import OAuth credentials or an official API key as JSON",
+  "支持 Codex auth.json 或 access_token、account_id、user_id、expires_at；也可导入官方 OpenAI api_key（sk- 开头）。浏览器授权后粘贴完整 localhost:1455/auth/callback 地址。": "Import Codex auth.json, or access_token, account_id, user_id and expires_at; official OpenAI api_key (sk-) is also supported. Paste the complete localhost:1455/auth/callback URL after browser authorization.",
+  "支持 access_token、account_uuid、expires_at 和可选 refresh_token；也可导入官方 Anthropic api_key（sk-ant- 开头）。浏览器授权后粘贴 code#state 或完整回调地址。": "Import access_token, account_uuid, expires_at and optional refresh_token; official Anthropic api_key (sk-ant-) is also supported. Paste code#state or the complete callback URL after browser authorization.",
+  "回调地址或授权码（必填）": "Callback URL or authorization code (required)",
+  "粘贴完整 http://localhost:1455/auth/callback?code=…&state=… 地址": "Paste the complete http://localhost:1455/auth/callback?code=…&state=… URL",
+  "粘贴 code#state 或完整 Claude OAuth 回调地址": "Paste code#state or the complete Claude OAuth callback URL",
+  "授权后复制完整 localhost:1455/auth/callback 地址并粘贴。若页面显示连接失败，仍可复制地址栏中的回调地址；检查预览后再保存。": "After authorization, paste the complete localhost:1455/auth/callback URL. If the page cannot connect, copy the callback URL from the address bar anyway. Check the preview before saving.",
+  "授权后粘贴 code#state 或完整 Claude OAuth 回调地址，检查预览后再保存。": "After authorization, paste code#state or the complete Claude OAuth callback URL. Check the preview before saving."
 }

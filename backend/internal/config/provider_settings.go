@@ -27,11 +27,14 @@ func DefaultProviderSettings(name string) ProviderSettings {
 	if name == provider.WorkBuddy {
 		w.PromptMode, w.SearchEnabled, w.SearchBackend = "custom", true, "native"
 	}
+	if name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude {
+		w.PromptOverrides = &PromptOverrides{}
+	}
 	return w
 }
 
 func (w ProviderSettings) ValidateFor(name string) error {
-	if name != provider.WorkBuddy && name != provider.CodeArts && name != provider.Trae {
+	if name != provider.WorkBuddy && name != provider.CodeArts && name != provider.Trae && name != provider.Qoder && name != provider.Kiro && name != provider.ChatGPT && name != provider.Claude {
 		return fmt.Errorf("未知平台配置")
 	}
 	if w.PromptMode != "custom" && w.PromptMode != "passthrough" {
@@ -42,6 +45,9 @@ func (w ProviderSettings) ValidateFor(name string) error {
 	}
 	if w.SearchScope != "cn" && !(name == provider.WorkBuddy && w.SearchScope == "global") {
 		return fmt.Errorf("%s 搜索地区无效", name)
+	}
+	if (name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude) && (w.SearchEnabled || w.SearchURL != "") {
+		return fmt.Errorf("%s 尚未接入独立联网搜索", name)
 	}
 	if name == provider.WorkBuddy {
 		if w.SearchBackend != "" && w.SearchBackend != "native" || w.SearchURL != "" {
