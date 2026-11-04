@@ -535,6 +535,7 @@ func sanitizedSettings(st storage.Settings) map[string]any {
 		"kiro":                   st.Kiro,
 		"chatgpt":                st.ChatGPT,
 		"claude":                 st.Claude,
+		"teleagent":              st.TeleAgent,
 		"model_aliases":          st.ModelAliases,
 		"default_model":          st.DefaultModel,
 		"force_model":            st.ForceModel,

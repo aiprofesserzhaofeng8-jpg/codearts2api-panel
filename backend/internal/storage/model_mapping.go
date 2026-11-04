@@ -43,7 +43,7 @@ func validateMappings(mappings []ModelMapping) error {
 		platforms := map[string]bool{}
 		for _, id := range m.Sources {
 			p, scope, _ := provider.ParseModel(id)
-			if id == "" || len(id) > 256 || (p != provider.CodeArts && p != provider.WorkBuddy && p != provider.Trae && p != provider.Qoder && p != provider.Kiro && p != provider.ChatGPT && p != provider.Claude) {
+			if id == "" || len(id) > 256 || (p != provider.CodeArts && p != provider.WorkBuddy && p != provider.Trae && p != provider.Qoder && p != provider.Kiro && p != provider.ChatGPT && p != provider.Claude && p != provider.TeleAgent) {
 				return fmt.Errorf("%s 的原始型号无效", m.Name)
 			}
 			k := p + "/" + scope

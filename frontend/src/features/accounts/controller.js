@@ -192,7 +192,7 @@ export function renderAccounts(d) {
         who.appendChild(mk("span", "account-avatar", Array.from(a.name || tr("码"))[0].toUpperCase()));
         var info = mk("div", "account-name");
         info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
-        info.appendChild(pill(a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
+        info.appendChild(pill(a.provider === "teleagent" ? "TeleAgent · " + tr("国内") : a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
         info.appendChild(mk("span", "account-caption", a.has_refresh ? tr("自动续期已就绪") : tr("临时凭据")));
         who.appendChild(info);
         identity.appendChild(who);

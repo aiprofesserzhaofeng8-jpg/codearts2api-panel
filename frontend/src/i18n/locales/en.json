@@ -1322,5 +1322,10 @@
   "上游未返回 Kiro Credits 用量明细，无法推断剩余额度": "Kiro returned no Credits breakdown; remaining quota is unknown.",
   "上游未返回 Kiro Credits 数量，无法推断剩余额度": "Kiro returned no Credits amounts; remaining quota is unknown.",
   "上游未返回 Qoder 额度明细，无法推断剩余额度": "Qoder returned no quota breakdown; remaining quota is unknown.",
-  "上游返回全零且标记超限的空额度，不能据此判断真实余额": "The provider returned an empty quota marked as exceeded; this does not establish a real zero balance."
+  "上游返回全零且标记超限的空额度，不能据此判断真实余额": "The provider returned an empty quota marked as exceeded; this does not establish a real zero balance.",
+  "当前通过完整凭据 JSON 导入；请先在官方客户端登录。": "Import complete credentials after signing in to the official client.",
+  "TeleAgent 需要 token、api_key、device_id、install_id、app_version，account_id 与 expires_at 可从 JWT 读取。使用本人获准使用的完整凭据；到期需重新登录。operation_token / oper_token 可选，用于独立积分门户。": "TeleAgent requires token, api_key, device_id, install_id and app_version. Account ID and expiry can be read from the JWT. Import credentials you are authorized to use; sign in again after expiry. Optional operation_token / oper_token are for the separate credits portal.",
+  "积分余额": "Credit balance",
+  "上游未返回 TeleAgent 积分余额，无法推断剩余额度": "TeleAgent returned no credit balance; remaining quota is unknown.",
+  "在官方客户端登录后，导入完整账号与设备凭据": "Sign in to the official client, then import complete account and device credentials."
 }

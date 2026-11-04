@@ -102,6 +102,8 @@ func (s Settings) ConfiguredProvider(name string) ProviderSettings {
 		return s.Claude
 	case "chatgpt":
 		return s.ChatGPT
+	case "teleagent":
+		return s.TeleAgent
 	case "workbuddy":
 		return s.WorkBuddy
 	}

@@ -39,7 +39,7 @@ def build(version, output, go):
                        cwd=ROOT / 'backend', check=True,
                        env={**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'windows', 'GOARCH': 'amd64'})
         # An explicit allowlist keeps runtime state and credentials out of packages.
-        for name in ('LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro'):
+        for name in ('LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
             (staging / name).write_bytes((ROOT / name).read_bytes())
         for name in ('start.cmd', 'README.md'):
             text = (ROOT / 'deploy/windows' / name).read_text(encoding='utf-8')

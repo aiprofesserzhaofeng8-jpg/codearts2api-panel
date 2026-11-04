@@ -18,6 +18,7 @@ const Qoder = "qoder"
 const Kiro = "kiro"
 const ChatGPT = "chatgpt"
 const Claude = "claude"
+const TeleAgent = "teleagent"
 
 type Model struct {
 	ID         string `json:"id"`

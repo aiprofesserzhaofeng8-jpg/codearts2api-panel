@@ -1,6 +1,6 @@
 # 各平台的提示词、清洗与联网搜索
 
-配置按 `codearts`、`workbuddy`、`trae` 三个对象独立保存，控制台「配置」也分为三个区块。保存后对新请求生效。
+配置按平台独立保存，控制台「配置」提供对应区块。Qoder、Kiro、ChatGPT、Claude 与 [TeleAgent](TELEAGENT.md) 继承公共提示词，也可逐项覆盖；目前没有独立搜索实现。下表描述 CodeArts、WorkBuddy 与 Trae 的搜索能力。保存后对新请求生效。
 
 | 能力 | CodeArts | WorkBuddy | Trae CN |
 |---|---|---|---|

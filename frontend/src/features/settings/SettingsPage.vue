@@ -295,6 +295,19 @@ import { t as tr } from '../../i18n';
 <label class="check"><input id="sCLSanitize" type="checkbox">{{tr('仅清洗系统提示词中的客户端模板')}}</label>
             </div>
           </div>
+          <div v-once class="settings-group">
+            <h3>TeleAgent</h3>
+            <label class="check prompt-inherit"><input id="sTAPromptModeInherit" type="checkbox">{{tr('继承公共值 · 模式')}}</label>
+<div v-once class="field"><label for="sTAPromptMode">{{tr('系统提示词')}}</label><select id="sTAPromptMode"><option value="passthrough">{{tr('透传客户端提示词')}}</option><option value="custom">{{tr('自定义（替换客户端 system / developer）')}}</option></select></div>
+            <label class="check prompt-inherit"><input id="sTAPromptTextInherit" type="checkbox">{{tr('继承公共值 · 提示词')}}</label>
+<div v-once class="field"><label for="sTAPromptText">{{tr('自定义提示词（留空使用内置工程助手提示词）')}}</label><textarea id="sTAPromptText" maxlength="65536" rows="5" :placeholder="tr('输入系统提示词')"></textarea></div>
+            <div v-once class="row">
+              <label class="check prompt-inherit"><input id="sTAPromptFallbackInherit" type="checkbox">{{tr('继承公共值 · 拦截恢复')}}</label>
+<label class="check"><input id="sTAPromptFallback" type="checkbox">{{tr('透传遇明确内容策略拦截时，使用中性提示词重试一次')}}</label>
+              <label class="check prompt-inherit"><input id="sTASanitizeInherit" type="checkbox">{{tr('继承公共值 · 清洗')}}</label>
+<label class="check"><input id="sTASanitize" type="checkbox">{{tr('仅清洗系统提示词中的客户端模板')}}</label>
+            </div>
+          </div>
 
           <div v-once class="settings-group">
             <h3>{{tr('模型别名')}}</h3>

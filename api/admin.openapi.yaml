@@ -1214,6 +1214,9 @@
                   },
                   "claude": {
                     "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "teleagent": {
+                    "$ref": "#/components/schemas/ProviderSettings"
                   }
                 },
                 "additionalProperties": true
@@ -4236,6 +4239,9 @@
                 "$ref": "#/components/schemas/ProviderSettings"
               },
               "claude": {
+                "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "teleagent": {
                 "$ref": "#/components/schemas/ProviderSettings"
               }
             },

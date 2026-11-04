@@ -49,7 +49,7 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 	}
 	policies := map[string]ProviderSettings{}
-	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae, "qoder": body.Qoder, "kiro": body.Kiro, "claude": body.Claude, "chatgpt": body.ChatGPT} {
+	for name, raw := range map[string]json.RawMessage{"workbuddy": body.WorkBuddy, "codearts": body.CodeArts, "trae": body.Trae, "qoder": body.Qoder, "kiro": body.Kiro, "claude": body.Claude, "chatgpt": body.ChatGPT, "teleagent": body.TeleAgent} {
 		if len(raw) == 0 {
 			continue
 		}
@@ -74,12 +74,12 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 		policies[name] = config
 	}
-	for _, name := range []string{"codearts", "trae", "workbuddy", "qoder", "kiro", "claude", "chatgpt"} {
+	for _, name := range []string{"codearts", "trae", "workbuddy", "qoder", "kiro", "claude", "chatgpt", "teleagent"} {
 		candidate, ok := policies[name]
 		if !ok {
 			candidate = current.ConfiguredProvider(name)
 			// Older in-memory settings may predate the additive provider field.
-			if (name == "qoder" || name == "kiro" || name == "chatgpt" || name == "claude") && candidate.PromptMode == "" {
+			if (name == "qoder" || name == "kiro" || name == "chatgpt" || name == "claude" || name == "teleagent") && candidate.PromptMode == "" {
 				candidate = DefaultProviderSettings(name)
 			}
 		}
@@ -126,6 +126,9 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 		if config, ok := policies["chatgpt"]; ok {
 			st.ChatGPT = config
+		}
+		if config, ok := policies["teleagent"]; ok {
+			st.TeleAgent = config
 		}
 		if len(body.Pool) > 0 {
 			st.Pool = poolConfig

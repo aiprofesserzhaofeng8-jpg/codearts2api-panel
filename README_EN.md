@@ -19,6 +19,8 @@ Access CodeArts, WorkBuddy, and Trae CN/SOLO accounts through Chat Completions, 
 
 The source tree also includes an initial [Qoder CN/global adapter](docs/QODER.md): browser authorization, token refresh, dynamic models, group model mappings, and all three client protocols. Isolated regression checks pass; real-account validation is pending. Quota queries now expose plan, add-on and available organization Credits; see [account quotas](docs/ACCOUNT-QUOTAS.md). Daily rewards and standalone search are not implemented.
 
+The source tree includes [TeleAgent (TeleAI)](docs/TELEAGENT.md): complete credential import, read-only identity verification, signed native forwarding, the existing three client protocols and credit queries. The catalog is preset; real-account validation is pending. Browser authorization, automatic renewal and daily rewards are not provided.
+
 Source adapters for [ChatGPT / Codex and OpenAI API](docs/CHATGPT.md) and [Claude / Anthropic](docs/CLAUDE.md) add browser OAuth, official API key import, refresh, dynamic models, existing group mappings and three client protocols. Isolated regression checks pass; real-upstream validation is pending.
 
 An initial [Kiro adapter](docs/KIRO.md) adds Builder ID device authorization, API key / OAuth import, token refresh, dynamic models and existing group mappings. Real-upstream validation is pending. See the guide for unsupported native controls and output-limit restrictions. Protocol reference attribution is retained in [LICENSE.kiro](LICENSE.kiro).

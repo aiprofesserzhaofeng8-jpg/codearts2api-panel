@@ -34,13 +34,18 @@ export function updateAccountCreateBusy() {
     ["#addAccountClose", "#accountCreateCancel", "#accountCreateBack", "#accountCreateNext"].forEach(function (id) { domState.$(id).disabled = busy; });
 }
 
-export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude" }[providersState.accountCreatePlatform]; }
+export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude", teleagent: "TeleAgent" }[providersState.accountCreatePlatform]; }
 
 export function renderAccountChoices() {
+    var importOnly = providersState.accountCreatePlatform === "teleagent";
+    var browserButton = document.querySelector('[data-account-method="browser"]');
+    browserButton.disabled = importOnly;
+    browserButton.classList.toggle("hidden", importOnly);
+    if (importOnly) providersState.accountCreateMethod = "import";
     document.querySelectorAll("[data-account-platform]").forEach(function (b) { var selected = b.dataset.accountPlatform === providersState.accountCreatePlatform; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     document.querySelectorAll("[data-account-method]").forEach(function (b) { var selected = b.dataset.accountMethod === providersState.accountCreateMethod; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
-    domState.$("#accountBrowserHint").textContent = providersState.accountCreatePlatform === "kiro" ? tr("通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。") : tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
-    domState.$("#accountImportHint").textContent = providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
+    domState.$("#accountBrowserHint").textContent = importOnly ? tr("当前通过完整凭据 JSON 导入；请先在官方客户端登录。") : providersState.accountCreatePlatform === "kiro" ? tr("通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。") : tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
+    domState.$("#accountImportHint").textContent = importOnly ? tr("在官方客户端登录后，导入完整账号与设备凭据") : providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
     domState.$("#accountChoiceHint").textContent = providersState.accountCreatePlatform === "trae" && providersState.accountCreateMethod === "browser" ? tr("下一步填写官方客户端设备信息，再生成授权链接。") : tr("选择平台和添加方式后继续，账号核对完成后再保存。");
 }
 
@@ -149,7 +154,7 @@ export function addAccountCredentials(action, extra) {
     }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = tr("导入失败：") + e.message; return false; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
 }
 
-export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude"}[providersState.activeProvider] || providersState.activeProvider; }
+export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude",teleagent:"TeleAgent"}[providersState.activeProvider] || providersState.activeProvider; }
 
 export function clearDeviceResults() { providersState.providerDevices = []; domState.$("#providerDeviceChoices").classList.add("hidden"); domState.$("#providerDeviceChoice").textContent = ""; domState.$("#providerDeviceStatus").textContent = ""; }
 
@@ -246,10 +251,11 @@ export function selectProvider(name) {
     var scopeSelect = domState.$("#providerScope");
     var scopeValue = scopeSelect.value;
     scopeSelect.textContent = "";
-    var scopes = ["chatgpt", "claude"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
+    var scopes = name === "teleagent" ? [["cn", tr("国内版")]] : ["chatgpt", "claude"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
     scopes.forEach(function (entry) { var option = document.createElement("option"); option.value = entry[0]; option.textContent = entry[1]; option.disabled = name === "trae" && entry[0] === "global"; scopeSelect.appendChild(option); });
     if (scopes.some(function (entry) { return entry[0] === scopeValue && !(name === "trae" && scopeValue === "global"); })) scopeSelect.value = scopeValue;
     const hints = {
+teleagent: "TeleAgent 需要 token、api_key、device_id、install_id、app_version，account_id 与 expires_at 可从 JWT 读取。使用本人获准使用的完整凭据；到期需重新登录。operation_token / oper_token 可选，用于独立积分门户。",
 chatgpt: "支持 Codex auth.json 或 access_token、account_id、user_id、expires_at；也可导入官方 OpenAI api_key（sk- 开头）。浏览器授权后粘贴完整 localhost:1455/auth/callback 地址。",
 claude: "支持 access_token、account_uuid、expires_at 和可选 refresh_token；也可导入官方 Anthropic api_key（sk-ant- 开头）。浏览器授权后粘贴 code#state 或完整回调地址。",
         trae: "支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。",

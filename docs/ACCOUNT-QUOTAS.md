@@ -8,6 +8,7 @@
 | Qoder CN / global | `GET /api/v2/quota/usage` | 套餐 Credits、附加 Credits、可用组织共享额度；分别保留精度和上限 |
 | Kiro OAuth / API Key | 同地区 `GET /getUsageLimits?origin=AI_EDITOR&resourceType=AGENTIC_REQUEST` | 套餐 Credits、有效试用及赠送 Credits；套餐重置时间与包到期时间分别展示 |
 | ChatGPT / Codex OAuth | `GET /backend-api/wham/usage` | 主/次及附加使用窗口、使用比例、实际窗口时长、重置时间；返回时显示额外 Credits 余额 |
+| TeleAgent | 当前账号 userCenter；显式提供门户凭据时使用独立 points/detail | 积分余额；无总额时不伪造已用量，缺失不补零 |
 | Claude OAuth | `GET /api/oauth/usage` | 5 小时、7 天及上游确实返回的细分周窗口、使用比例和重置时间 |
 | OpenAI / Anthropic API Key | 当前没有订阅窗口查询 | 显示「暂不支持查询」，不冒充订阅额度或零余额；到官方 API 控制台查看实际用量/账单 |
 

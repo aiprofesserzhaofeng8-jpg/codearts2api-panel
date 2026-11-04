@@ -1141,6 +1141,7 @@ export interface components {
                 kiro?: components["schemas"]["ProviderSettings"];
                 chatgpt?: components["schemas"]["ProviderSettings"];
                 claude?: components["schemas"]["ProviderSettings"];
+                teleagent?: components["schemas"]["ProviderSettings"];
             } & {
                 [key: string]: unknown;
             };
@@ -2391,6 +2392,7 @@ export interface operations {
                     kiro?: components["schemas"]["ProviderSettings"];
                     chatgpt?: components["schemas"]["ProviderSettings"];
                     claude?: components["schemas"]["ProviderSettings"];
+                    teleagent?: components["schemas"]["ProviderSettings"];
                 } & {
                     [key: string]: unknown;
                 };

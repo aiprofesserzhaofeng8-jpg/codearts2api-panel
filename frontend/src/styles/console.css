@@ -1368,6 +1368,7 @@ body.admin-locked .app { visibility: hidden; }
 
 /* Provider quotas: finite credit buckets and independent subscription windows. */
 .account-quota{min-width:190px;max-width:290px;gap:8px}
+.account-method.hidden{display:none}
 .account-quota-window{display:flex;flex-direction:column;gap:3px}
 .account-quota-window+.account-quota-window{border-top:1px solid var(--line);padding-top:7px}
 .quota-window-name{font-weight:600;font-size:12px;color:var(--text-2)}

@@ -33,6 +33,7 @@ func DefaultSettings() Settings {
 		Kiro:           DefaultProviderSettings("kiro"),
 		Claude:         DefaultProviderSettings("claude"),
 		ChatGPT:        DefaultProviderSettings("chatgpt"),
+		TeleAgent:      DefaultProviderSettings("teleagent"),
 		ModelAliases:   map[string]string{},
 		DefaultModel:   codearts.DefaultModel,
 		RequestTimeout: 300,
@@ -168,6 +169,9 @@ func (s *Store) applyDefaults() {
 	}
 	if st.ChatGPT.ValidateFor("chatgpt") != nil {
 		st.ChatGPT = def.ChatGPT
+	}
+	if st.TeleAgent.ValidateFor("teleagent") != nil {
+		st.TeleAgent = def.TeleAgent
 	}
 	if st.Qoder.ValidateFor("qoder") != nil {
 		st.Qoder = def.Qoder

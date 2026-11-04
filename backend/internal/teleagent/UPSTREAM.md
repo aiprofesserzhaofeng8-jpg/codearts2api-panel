@@ -1,0 +1,3 @@
+# TeleAgent protocol references
+
+`backend/internal/teleagent` implements the account-bound TeleAI model gateway, identity checks and credit queries. Protocol facts were cross-checked against MIT projects `liao96312/teleagent-proxy` (875a2b4080ded5f9eebada6d43c94c77ebddc5a5), `anbulang/dsh-connect-teleagent` (14bb4bb16d6961addff63ced79866f9a74391108) and `anye-99/dsh-codearts-auth` (686658793c982cd0e1baedbcfa10a396ce5d1a09). The notices are retained in `LICENSE.teleagent` and distributed with all packages/images. No desktop runtime, account files or third-party embedded gateway key are bundled. See [TeleAgent](../../../docs/TELEAGENT.md) for supported fields and unverified real-provider scope.

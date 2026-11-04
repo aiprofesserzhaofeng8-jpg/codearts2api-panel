@@ -16,7 +16,7 @@ NEUTRAL = {
     "access", "accounts", "catalog", "config", "gateway", "jobs", "protocol",
     "provider", "scheduler", "ratelimit", "requestpolicy", "responsescompat", "upstream", "usage",
 }
-PLATFORMS = {"codearts", "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude"}
+PLATFORMS = {"codearts", "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude", "teleagent"}
 PURE = {"access", "protocol", "ratelimit", "responsescompat", "scheduler", "usage"}
 
 

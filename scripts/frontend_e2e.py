@@ -11,7 +11,7 @@ import tempfile
 import time
 import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ("providers-smoke", "qoder-smoke", "kiro-smoke", "subscriptions-smoke", "quota-smoke", "trae-smoke", "trae-device-smoke", "groups-smoke", "account-create-smoke", "growth-multi-smoke", "growth-tasks-smoke", "growth-actions-smoke", "growth-buddy-smoke", "frontend-smoke", "product-settings-smoke", "users-smoke", "consumer-entitlements-smoke", "unified-console-smoke", "user-style-smoke", "i18n-smoke")
+CASES = ("providers-smoke", "qoder-smoke", "kiro-smoke", "subscriptions-smoke", "teleagent-smoke", "quota-smoke", "trae-smoke", "trae-device-smoke", "groups-smoke", "account-create-smoke", "growth-multi-smoke", "growth-tasks-smoke", "growth-actions-smoke", "growth-buddy-smoke", "frontend-smoke", "product-settings-smoke", "users-smoke", "consumer-entitlements-smoke", "unified-console-smoke", "user-style-smoke", "i18n-smoke")
 def run(binary, output):
     output.mkdir(parents=True, exist_ok=True)
     results=[]
