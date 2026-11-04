@@ -51,16 +51,18 @@ func parseQuota(o map[string]json.RawMessage, now int64) (json.RawMessage, error
 		info.Reason = "上游未返回 Kiro Credits 用量明细，无法推断剩余额度"
 		return json.Marshal(info)
 	}
-	// The AGENTIC_REQUEST contract returns the credit resource first. Prefer an
-	// explicitly identified credit resource when several resources are returned.
-	row := rows[0]
+	// resourceType is the semantic resource. The upstream CREDIT resource uses
+	// INVOCATIONS as its generic transport unit; that is still Credits, not a
+	// number of model calls. Prefer explicit credit metadata over legacy rows.
+	var row map[string]json.RawMessage
+	rank := 0
 	for _, v := range rows {
-		if strings.EqualFold(field(v, "unit"), "CREDITS") || field(v, "resourceType") == "AGENTIC_REQUEST" {
+		if score := creditResourceRank(v); score > rank {
 			row = v
-			break
+			rank = score
 		}
 	}
-	if unit := strings.ToLower(field(row, "unit")); unit != "" && unit != "credit" && unit != "credits" {
+	if row == nil {
 		info.Reason = "上游未返回 Kiro Credits 数量，无法推断剩余额度"
 		return json.Marshal(info)
 	}
@@ -127,6 +129,37 @@ func parseQuota(o map[string]json.RawMessage, now int64) (json.RawMessage, error
 	}
 	return json.Marshal(info)
 }
+
+func creditResourceRank(row map[string]json.RawMessage) int {
+	unit := strings.ToUpper(field(row, "unit"))
+	switch unit {
+	case "", "CREDIT", "CREDITS", "INVOCATIONS", "COUNT":
+	default:
+		return 0
+	}
+	switch strings.ToUpper(field(row, "resourceType")) {
+	case "CREDIT", "CREDITS":
+		return 4
+	case "AGENTIC_REQUEST":
+		return 3
+	case "":
+		if unit == "CREDIT" || unit == "CREDITS" {
+			return 2
+		}
+		for _, key := range []string{"displayName", "displayNamePlural"} {
+			if name := strings.ToUpper(field(row, key)); name == "CREDIT" || name == "CREDITS" {
+				return 2
+			}
+		}
+		// Preserve older responses without resource metadata. The request itself
+		// is restricted to AGENTIC_REQUEST; explicit other resources never fall back.
+		if unit == "" && field(row, "displayName", "displayNamePlural") == "" {
+			return 1
+		}
+	}
+	return 0
+}
+
 func quotaTime(b json.RawMessage) int64 {
 	if n := providerhttp.Timestamp(b); n > 0 {
 		return n

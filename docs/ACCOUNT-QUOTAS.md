@@ -17,6 +17,8 @@ ChatGPT 的 primary / secondary 不硬编码成短窗/周窗，标签由 `limit_
 
 Qoder `cap=-1` 的组织池只显示「额度未设上限」，不把占位 remaining 算成无限积分。上游全零且标记超限的退化响应不当成已确认的零余额；不使用含义未确认的顶层 expiresAt 推算积分过期。Kiro 的过期/停用试用和赠送包不计入有效额度，不从模型消耗 Token 推算 Credits。
 
+Kiro 的语义资源与底层单位是两个字段：Credits 可以表现为 `resourceType=CREDIT`、`unit=INVOCATIONS`。解析优先识别资源类型，保留精度字段；多种资源同时返回时优先选择明确的 Credits 记录，不将其它资源或含义不明的调用次数换算成积分。该组合的原始响应示例见 [CodexBar 的 Kiro 复现记录](https://github.com/steipete/CodexBar/issues/3359)。
+
 ## 刷新与权限
 
 保留既有管理员 `/admin/api/credits`：普通读取使用 60 秒缓存，「刷新额度」强制回源；单账号 15 秒截止，批量最多 4 路。需要续期时仍通过唯一的凭据协调器与条件提交，不另建 token 刷新路径。

@@ -66,3 +66,5 @@ API Key 不经过 OAuth 刷新，也不伪造一个远期过期时间。面板�
 ## 额度与用量
 
 已接入同地区只读 getUsageLimits，支持 OAuth 与 API Key。显示套餐、有效试用和赠送 Credits，保留精度与上游重置时间；未返回的数据不补为 0。查询缓存与不支持项见 [账号额度](ACCOUNT-QUOTAS.md)。
+
+Credits 资源可能使用 `INVOCATIONS` 作为底层单位；依据 `resourceType=CREDIT` 识别其语义，不能只接受字面单位 `CREDITS`。多资源返回时优先选择明确的 Credits 记录。

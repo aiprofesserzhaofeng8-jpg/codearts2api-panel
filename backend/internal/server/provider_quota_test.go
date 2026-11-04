@@ -39,7 +39,7 @@ func TestProviderQuotaWindowsCreditsCacheAndAdminBoundary(t *testing.T) {
 		case "/api/oauth/usage":
 			w.Write([]byte(`{"five_hour":{"utilization":20,"resets_at":"2026-11-06T00:00:00Z"},"seven_day":{"utilization":70}}`))
 		case "/getUsageLimits":
-			w.Write([]byte(`{"subscriptionInfo":{"subscriptionTitle":"KIRO PRO"},"usageBreakdownList":[{"currentUsageWithPrecision":15.5,"usageLimitWithPrecision":100}]}`))
+			w.Write([]byte(`{"subscriptionInfo":{"subscriptionTitle":"KIRO PRO"},"usageBreakdownList":[{"resourceType":"CREDIT","unit":"INVOCATIONS","displayName":"Credit","displayNamePlural":"Credits","currentUsageWithPrecision":15.5,"usageLimitWithPrecision":100}]}`))
 		case "/api/v2/quota/usage":
 			w.Write([]byte(`{"userQuota":{"total":300,"used":100,"remaining":200},"addOnQuota":{"total":50,"used":2.5,"remaining":47.5}}`))
 		default:
