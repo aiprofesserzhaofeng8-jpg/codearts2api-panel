@@ -1365,3 +1365,15 @@ body.admin-locked .app { visibility: hidden; }
 .consumer-form .actions input,.consumer-form .actions select{width:auto;max-width:100%;flex:1;min-width:150px}
 .consumer-form h3{margin:20px 0 10px}.consumer-form .check{margin:12px 0}.user-recovery{margin-top:18px}
 .consumer-form .field-grid{gap:16px}.consumer-form textarea{resize:vertical}
+
+/* Provider quotas: finite credit buckets and independent subscription windows. */
+.account-quota{min-width:190px;max-width:290px;gap:8px}
+.account-quota-window{display:flex;flex-direction:column;gap:3px}
+.account-quota-window+.account-quota-window{border-top:1px solid var(--line);padding-top:7px}
+.quota-window-name{font-weight:600;font-size:12px;color:var(--text-2)}
+.quota-window-value{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+.quota-window-bar{width:100%;min-width:120px}
+.quota-query-error{max-width:270px;white-space:normal;overflow-wrap:anywhere}
+.quota-plan-name,.quota-updated{font-size:11px}
+
+.cell-stack .quota-query-error,.account-quota .sub{white-space:normal;overflow-wrap:anywhere}

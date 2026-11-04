@@ -315,6 +315,3 @@ func (c *Client) Verify(ctx context.Context, raw json.RawMessage) (provider.Iden
 	}
 	return identity(a), nil
 }
-func (*Client) Credit(context.Context, json.RawMessage) (json.RawMessage, error) {
-	return json.RawMessage(`{"available":false,"reason":"Kiro 配额查询尚未接入；以官方账号页面为准"}`), nil
-}

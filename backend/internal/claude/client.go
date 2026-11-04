@@ -279,9 +279,7 @@ func (c *Client) Verify(ctx context.Context, raw json.RawMessage) (provider.Iden
 	}
 	return identity(a), e
 }
-func (*Client) Credit(context.Context, json.RawMessage) (json.RawMessage, error) {
-	return json.RawMessage(`{"available":false,"reason":"Claude / Anthropic 配额以官方账号页面为准"}`), nil
-}
+
 func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Request, emit func([]byte) error) error {
 	a, e := decode(raw)
 	if e != nil {

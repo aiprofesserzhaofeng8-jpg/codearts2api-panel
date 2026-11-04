@@ -59,7 +59,7 @@ import CredentialImport from './providers/CredentialImport.vue';
           </div>
           <div v-once class="table-wrap account-table-wrap">
             <table class="account-table">
-              <thead><tr><th>{{tr('名称')}}</th><th>{{tr('来源')}}</th><th>AK</th><th>{{tr('凭据有效期')}}</th><th>{{tr('积分额度')}}</th><th>{{tr('状态')}}</th><th>{{tr('今日领取')}}</th><th>{{tr('失败')}}</th><th>{{tr('最近使用')}}</th><th>{{tr('操作')}}</th></tr></thead>
+              <thead><tr><th>{{tr('名称')}}</th><th>{{tr('来源')}}</th><th>AK</th><th>{{tr('凭据有效期')}}</th><th>{{tr('额度与用量')}}</th><th>{{tr('状态')}}</th><th>{{tr('今日领取')}}</th><th>{{tr('失败')}}</th><th>{{tr('最近使用')}}</th><th>{{tr('操作')}}</th></tr></thead>
               <tbody id="accounts"></tbody>
             </table>
           </div>

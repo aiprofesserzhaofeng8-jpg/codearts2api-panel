@@ -202,7 +202,7 @@ export function renderAccounts(d) {
             cell(fmtTime(a.last_used), "muted nowrap"), ops
         ]);
         r.dataset.state = accountState(a);
-        var labels = [tr("账号"), tr("来源"), "AK", tr("凭据有效期"), tr("积分额度"), tr("状态"), tr("今日领取"), tr("失败次数"), tr("最近使用"), tr("操作")];
+        var labels = [tr("账号"), tr("来源"), "AK", tr("凭据有效期"), tr("额度与用量"), tr("状态"), tr("今日领取"), tr("失败次数"), tr("最近使用"), tr("操作")];
         Array.from(r.children).forEach(function (td, i) { td.dataset.label = labels[i]; });
         if (a.last_err)
             r.title = a.last_err;

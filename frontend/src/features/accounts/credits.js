@@ -1,4 +1,5 @@
 import { t as tr } from '../../i18n';
+import { appendQuota } from './quota';
 import { cleanup } from '../../shared/lifecycle';
 import { btn, cell, mk, on, pill } from '../../components/controls';
 import { serverState } from '../../shared/read-model';
@@ -55,9 +56,11 @@ export function creditCell(a) {
         var bad = mk("span", "muted", tr("查询失败"));
         bad.title = st.error || "";
         c.appendChild(bad);
+        if (st.error) c.appendChild(mk("span", "sub quota-query-error", st.error));
         return c;
     }
     var info = st.credit || {};
+    if (appendQuota(c, info)) return c;
     if (!info.available) {
         var accessDenied = a.status === "error" && String(a.last_err || "").indexOf("TM.00001005") >= 0;
         var none = mk("span", "muted", accessDenied ? tr("需开通码道权限") : (info.is_token_package ? tr("Token 套餐") : tr("额度未返回")));

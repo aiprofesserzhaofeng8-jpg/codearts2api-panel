@@ -59,7 +59,7 @@ curl -fsS http://127.0.0.1:10087/v1/chat/completions \
 - Codex 不支持本适配器的 `temperature` / `top_p`；明确返回 400。`stop`、`seed`、惩罚项、logprobs 和 `n != 1` 同样拒绝，不静默假装生效。
 - 不支持音视频、电脑操作、上游内置搜索/代码执行工具、托管会话或 `previous_response_id` 连续状态；客户端应发送完整对话。本适配器不运行 Codex CLI 或本地工具。
 - Claude 原生 signed thinking 不会映射成 Codex 思考。对跨平台统一名称使用原生 Claude 思考时，候选会限定到 Claude。
-- 积分/余额和独立搜索尚未接入，额度显示未知。用量使用上游回执，USD 按管理员配置的参考价计算，不是 OpenAI 账单查询。
+- OAuth 已接入使用窗口、重置时间及上游返回的额外 Credits 余额；API Key 显示不支持订阅窗口查询。独立搜索未接入。用量使用上游回执，USD 按管理员参考价计算，不是 OpenAI 账单查询。见 [账号额度](ACCOUNT-QUOTAS.md)。
 
 ## 实现与参考
 

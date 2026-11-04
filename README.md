@@ -17,7 +17,7 @@
 
 > 当前版本支持码道、WorkBuddy 和 Trae CN/SOLO；三平台已有真实账号调用验收，Trae 国际版尚未接入。原码道基线保留在 [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0)。接入见 [多上游说明](docs/MULTI-PROVIDER.md)，实测范围见 [三平台验收记录](docs/acceptance/PARALLEL-MAINTENANCE-2026-10-30.md)。
 
-源码版新增 [Qoder 国内/国际适配](docs/QODER.md)：浏览器授权、续期、动态模型目录、统一模型映射与三个客户端接口。已通过隔离回归，真实账号尚未验收；积分查询、每日奖励与独立搜索尚未接入。
+源码版新增 [Qoder 国内/国际适配](docs/QODER.md)：浏览器授权、续期、动态模型目录、统一模型映射与三个客户端接口。已通过隔离回归，真实账号尚未验收；每日奖励与独立搜索尚未接入。额度查询现支持套餐/附加/组织共享 Credits，见 [账号额度与用量](docs/ACCOUNT-QUOTAS.md)。
 
 源码版新增 [ChatGPT / Codex 与 OpenAI API](docs/CHATGPT.md)、[Claude / Anthropic](docs/CLAUDE.md) 原生反代：浏览器 OAuth、官方 API Key 导入、自动续期、动态模型、统一映射及三个外部接口。隔离回归已通过，真实上游尚未验收。
 

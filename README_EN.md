@@ -17,7 +17,7 @@ Access CodeArts, WorkBuddy, and Trae CN/SOLO accounts through Chat Completions, 
 
 > The current version supports CodeArts, WorkBuddy, and Trae CN/SOLO, with real-account inference checks completed across all three providers. Trae international accounts are not supported. The original CodeArts baseline remains at [v0.1.0](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.1.0). See [multi-provider setup](docs/MULTI-PROVIDER.md) and the [three-provider acceptance report](docs/acceptance/PARALLEL-MAINTENANCE-2026-10-30.md) for the tested scope.
 
-The source tree also includes an initial [Qoder CN/global adapter](docs/QODER.md): browser authorization, token refresh, dynamic models, group model mappings, and all three client protocols. Isolated regression checks pass; real-account validation is pending. Quota queries, daily rewards, and standalone search are not implemented.
+The source tree also includes an initial [Qoder CN/global adapter](docs/QODER.md): browser authorization, token refresh, dynamic models, group model mappings, and all three client protocols. Isolated regression checks pass; real-account validation is pending. Quota queries now expose plan, add-on and available organization Credits; see [account quotas](docs/ACCOUNT-QUOTAS.md). Daily rewards and standalone search are not implemented.
 
 Source adapters for [ChatGPT / Codex and OpenAI API](docs/CHATGPT.md) and [Claude / Anthropic](docs/CLAUDE.md) add browser OAuth, official API key import, refresh, dynamic models, existing group mappings and three client protocols. Isolated regression checks pass; real-upstream validation is pending.
 

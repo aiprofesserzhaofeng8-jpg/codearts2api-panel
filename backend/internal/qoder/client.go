@@ -192,9 +192,3 @@ func (c *Client) authRequest(ctx context.Context, scope, path, method, token str
 	}
 	return c.do(req)
 }
-
-// Credit deliberately reports unknown until a verified quota contract is added.
-// Unknown quota must not be represented as zero usage or free inference.
-func (*Client) Credit(context.Context, json.RawMessage) (json.RawMessage, error) {
-	return json.RawMessage(`{"available":false,"reason":"Qoder 积分查询尚未接入；以官方账号页面为准"}`), nil
-}

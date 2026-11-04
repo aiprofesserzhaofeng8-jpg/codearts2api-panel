@@ -14,6 +14,13 @@ type CreditCategory struct {
 type CreditInfo struct {
 	Available bool   `json:"available"`
 	Reason    string `json:"reason,omitempty"`
+	// Kind distinguishes finite credits, subscription windows and unsupported
+	// queries. Legacy providers can omit it and keep their existing fields.
+	Kind      string        `json:"kind,omitempty"`
+	Unit      string        `json:"unit,omitempty"`
+	UpdatedAt int64         `json:"updated_at,omitempty"`
+	Windows   []QuotaWindow `json:"windows,omitempty"`
+	Balance   *QuotaBalance `json:"balance,omitempty"`
 
 	// Total / Used / Remaining 是积分数量；Percent 是上游给的百分比（0–100）。
 	Total     float64 `json:"total"`

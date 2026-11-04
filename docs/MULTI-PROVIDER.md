@@ -75,3 +75,5 @@ Trae CN/SOLO 实现 Adapter、BrowserLogin 和 CallbackLogin，通过粘贴带 t
 提示词、指纹清洗与各平台搜索入口的配置和维护方式见 [平台能力](PROVIDER-FEATURES.md)。CodeArts/Trae 搜索使用独立 SearXNG，需先配置服务；WorkBuddy 继续走原生搜索。
 
 ChatGPT 和 Claude 的认证、模型来源及参数边界分别见 [CHATGPT.md](CHATGPT.md) 与 [CLAUDE.md](CLAUDE.md)。两个平台各自使用官方端点，不将订阅和 API Key 计费混为一谈；未实现余额查询时显示未知。
+
+各平台按实际单位显示积分余额或订阅使用窗口，见 [账号额度与用量](ACCOUNT-QUOTAS.md)。

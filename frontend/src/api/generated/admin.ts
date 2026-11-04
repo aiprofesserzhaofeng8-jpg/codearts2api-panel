@@ -1386,6 +1386,50 @@ export interface components {
             authenticated: boolean;
             user?: components["schemas"]["User"];
         };
+        QuotaWindow: {
+            id: string;
+            name: string;
+            unit?: string;
+            used?: number;
+            total?: number;
+            remaining?: number;
+            utilization?: number;
+            /** Format: int64 */
+            resets_at?: number;
+            /** Format: int64 */
+            expires_at?: number;
+            /** Format: int64 */
+            window_seconds?: number;
+            unlimited?: boolean;
+        };
+        QuotaBalance: {
+            /** @description Exact upstream decimal balance; absent is unknown. */
+            amount?: string;
+            unit: string;
+            unlimited?: boolean;
+        };
+        AccountQuota: {
+            available: boolean;
+            reason?: string;
+            kind?: string;
+            unit?: string;
+            package_name?: string;
+            reset_date?: string;
+            status?: string;
+            /** Format: int64 */
+            updated_at?: number;
+            windows?: components["schemas"]["QuotaWindow"][];
+            balance?: components["schemas"]["QuotaBalance"];
+            total?: number;
+            used?: number;
+            remaining?: number;
+            percent?: number;
+            expiring?: number;
+            is_token_package?: boolean;
+            is_credit_package?: boolean;
+        } & {
+            [key: string]: unknown;
+        };
     };
     responses: never;
     parameters: never;
@@ -2414,7 +2458,10 @@ export interface operations {
     };
     get__admin_api_credits: {
         parameters: {
-            query?: never;
+            query?: {
+                fresh?: "1";
+                id?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2428,7 +2475,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        ok?: boolean;
+                        accounts?: {
+                            id: string;
+                            name?: string;
+                            ok: boolean;
+                            error?: string;
+                            credit?: components["schemas"]["AccountQuota"];
+                        }[];
                     };
                 };
             };

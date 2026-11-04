@@ -1290,8 +1290,38 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {},
-                  "additionalProperties": true
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "ok"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "ok": {
+                            "type": "boolean"
+                          },
+                          "error": {
+                            "type": "string"
+                          },
+                          "credit": {
+                            "$ref": "#/components/schemas/AccountQuota"
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -1313,6 +1343,25 @@
           },
           {
             "localPanelSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fresh",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            }
           }
         ]
       }
@@ -5083,6 +5132,133 @@
           "authenticated"
         ],
         "additionalProperties": false
+      },
+      "QuotaWindow": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "used": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "utilization": {
+            "type": "number"
+          },
+          "resets_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expires_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "window_seconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unlimited": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuotaBalance": {
+        "type": "object",
+        "required": [
+          "unit"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Exact upstream decimal balance; absent is unknown."
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unlimited": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AccountQuota": {
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "package_name": {
+            "type": "string"
+          },
+          "reset_date": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "windows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotaWindow"
+            }
+          },
+          "balance": {
+            "$ref": "#/components/schemas/QuotaBalance"
+          },
+          "total": {
+            "type": "number"
+          },
+          "used": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "percent": {
+            "type": "number"
+          },
+          "expiring": {
+            "type": "number"
+          },
+          "is_token_package": {
+            "type": "boolean"
+          },
+          "is_credit_package": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
       }
     },
     "securitySchemes": {

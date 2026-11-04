@@ -37,11 +37,12 @@ type Credentials struct {
 type Client struct {
 	HTTP                *http.Client
 	API, Backend, Token string
+	UsageURL            string
 	Login               *providerhttp.PKCE
 }
 
 func New() *Client {
-	return &Client{HTTP: providerhttp.New(), API: "https://api.openai.com/v1", Backend: "https://chatgpt.com/backend-api/codex", Token: "https://auth.openai.com/oauth/token", Login: &providerhttp.PKCE{Config: providerhttp.OAuthConfig{Name: "ChatGPT", Authorize: "https://auth.openai.com/oauth/authorize", Redirect: redirectURI, ClientID: clientID, Scopes: "openid profile email offline_access", Extra: url.Values{"id_token_add_organizations": {"true"}, "codex_cli_simplified_flow": {"true"}}}}}
+	return &Client{HTTP: providerhttp.New(), UsageURL: "https://chatgpt.com/backend-api/wham/usage", API: "https://api.openai.com/v1", Backend: "https://chatgpt.com/backend-api/codex", Token: "https://auth.openai.com/oauth/token", Login: &providerhttp.PKCE{Config: providerhttp.OAuthConfig{Name: "ChatGPT", Authorize: "https://auth.openai.com/oauth/authorize", Redirect: redirectURI, ClientID: clientID, Scopes: "openid profile email offline_access", Extra: url.Values{"id_token_add_organizations": {"true"}, "codex_cli_simplified_flow": {"true"}}}}}
 }
 func (*Client) Describe() provider.Descriptor {
 	return provider.Descriptor{ID: provider.ChatGPT, Name: "ChatGPT / Codex", Available: true, Scopes: []string{"global"}, Login: true}
@@ -299,9 +300,7 @@ func (c *Client) Verify(ctx context.Context, raw json.RawMessage) (provider.Iden
 	}
 	return identity(a), e
 }
-func (*Client) Credit(context.Context, json.RawMessage) (json.RawMessage, error) {
-	return json.RawMessage(`{"available":false,"reason":"ChatGPT / OpenAI 配额以官方账号页面为准"}`), nil
-}
+
 func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Request, emit func([]byte) error) error {
 	a, e := decode(raw)
 	if e != nil {
