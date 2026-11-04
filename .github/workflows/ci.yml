@@ -12,6 +12,7 @@ permissions:
 jobs:
   test:
     name: test (linux)
+    timeout-minutes: 30
     # Pin a Playwright-supported distribution instead of a moving runner image.
     runs-on: ubuntu-24.04
     steps:
@@ -63,7 +64,9 @@ jobs:
 
       - name: go test -race
         working-directory: backend
-        run: go test -race ./...
+        # The complete server suite can exceed Go's default 10m package limit
+        # under race instrumentation on hosted runners.
+        run: go test -race -timeout=20m ./...
 
       - name: 控制台 JS/CSS 检查
         run: python tools/check_html_js.py
