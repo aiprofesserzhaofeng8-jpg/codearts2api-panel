@@ -37,10 +37,14 @@ func (s *Server) refreshModelsIfStale(maxAge time.Duration) {
 
 // handleModels 实现 GET /v1/models。
 func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
 	s.refreshModelsIfStale(10 * time.Minute)
 
-	settings := s.Store.Settings()
-	models, err := s.visibleModels(r.Context())
+	models, err := s.Routing.ClientModels(groupKey(r.Context()), s.ModelPolicies)
 	if err != nil {
 		writeErr(w, 403, err.Error(), "permission_error")
 		return
@@ -48,15 +52,14 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().Unix()
 
 	data := make([]map[string]any, 0, len(models))
-	for _, m := range models {
+	for _, entry := range models {
+		m := entry.Model
 		var recommendation map[string]any
 		resolved := m
-		if m.Source != "mapping" {
-			resolved, _ = s.Reg.Resolve(m.ID, settings.ModelAliases)
-		}
-		if p, ok := s.requestModelPolicy(r, resolved); ok {
-			recommendation = profileFromPolicy(resolved.ID, p)
+		if entry.Policy != nil {
+			recommendation = profileFromPolicy(resolved.ID, *entry.Policy)
 			addImageCapability(recommendation, resolved)
+			addUnifiedProfile(recommendation, &groupModelPlan{Selection: entry.Selection})
 		}
 		row := map[string]any{
 			"client_profile": recommendation,
@@ -77,6 +80,9 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 				"credit":      m.Credit,
 				"description": m.Desc,
 			},
+		}
+		if recommendation == nil {
+			row["client_profile_error"] = map[string]any{"code": "client_profile_missing", "message": "该模型缺少可验证的客户端推荐参数"}
 		}
 		addImageCapability(row, resolved)
 		data = append(data, row)

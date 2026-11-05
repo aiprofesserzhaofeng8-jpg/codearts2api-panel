@@ -17,6 +17,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 )
 
@@ -54,6 +55,19 @@ type Error struct {
 	Anthropic string
 }
 
+// Reason identifies gateway model errors without relabeling upstream failures.
+func Reason(err error) string {
+	var model *config.ModelError
+	if errors.As(err, &model) {
+		return model.Reason
+	}
+	var missing *provider.ModelNotFound
+	if errors.As(err, &missing) {
+		return "model_not_found"
+	}
+	return ""
+}
+
 // From 把内部错误映射为对外表述。
 //
 // 映射表（与 README「错误语义」一节一一对应）：
@@ -72,6 +86,24 @@ type Error struct {
 func From(err error) Error {
 	if err == nil {
 		return Error{Status: http.StatusOK}
+	}
+	var model *config.ModelError
+	if errors.As(err, &model) {
+		kind := "invalid_request_error"
+		anthropic := kind
+		if model.Status >= 500 {
+			kind = "server_error"
+			anthropic = "api_error"
+		}
+		if model.Status == 403 {
+			kind = "permission_error"
+			anthropic = kind
+		}
+		if model.Status == 503 {
+			kind = "server_error"
+			anthropic = "overloaded_error"
+		}
+		return Error{Status: model.Status, OpenAI: kind, Anthropic: anthropic}
 	}
 	var unavailable interface{ ServiceUnavailable() bool }
 	if errors.As(err, &unavailable) && unavailable.ServiceUnavailable() {

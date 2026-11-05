@@ -16,11 +16,10 @@ import { mountKeys } from '../features/keys/controller';
 import { mountLogs } from '../features/logs/controller';
 import { mountVersion } from '../features/settings/version';
 import { mountSettings } from '../features/settings/controller';
-import { mountGroups } from '../features/groups/controller';
 import { mountRoutes } from './routes';
 export function startConsole(): () => void {
   beginLifetime(); registerRefresh(refresh);
   [mountDom, mountAccounts, mountProviders, mountCodearts, mountCredits, mountWelfare, mountUsage, mountModels, mountPricing,
-    mountPolicies, mountKeys, mountLogs, mountSettings, mountVersion, mountGroups, mountSession, mountRoutes].forEach(mount => mount());
+    mountPolicies, mountKeys, mountLogs, mountSettings, mountVersion, mountSession, mountRoutes].forEach(mount => mount());
   return () => { registerRefresh(); endLifetime(); disposeToast(); };
 }

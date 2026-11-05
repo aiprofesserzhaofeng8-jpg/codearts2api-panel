@@ -2,6 +2,8 @@
 
 日期：2026-11-02。状态：**M1–M7 已完成，M7 范围为单实例多用户**。
 
+后续功能计划：[全局统一模型实施计划](UNIFIED-MODELS-PLAN.md)（2026-11-05，U1–U6 已完成，WorkBuddy/Trae 已完成首批真实验证，未发布/部署；仅参考 LiteLLM 的公开模型名与多个部署设计）。
+
 本文描述目标结构及实施进度。Go 工程已整体迁入 `backend/`，入口为 `backend/cmd/panel`，现有业务包和嵌入页面位于 `backend/internal/`。独立前端和准入/存储边界已完成；M6 已增加公共提示词继承和分组产品规则；M7 已增加单实例普通用户、分组授权和共享预算，多实例运行需要另行设计。当前功能说明继续以仓库 README 和使用文档为准。
 
 已建立 `AGENTS.md` 和 `deploy/` 补充示例；独立 `frontend/` 与 `backend/internal/webui` 已接通，见 [M4 验收](../acceptance/STRUCTURE-M4-COMPLETE-2026-11-02.md)。迁移前基线为 `74a2a9a`，标签 `baseline/pre-structure-20261101`，见 [基线记录](../acceptance/STRUCTURE-BASELINE-2026-11-01.md)。
@@ -167,6 +169,8 @@ flowchart LR
 ```
 
 图中的框是同一进程内的职责，不是多个网络服务。准入协调器属于 `gateway`；`scheduler` 只做选择算法。它们共享一次原子准入操作，不能拆成各自独立加锁后拼接的检查。
+
+全局统一模型 U1–U6 已完成；[U4 验收](../acceptance/UNIFIED-MODELS-U4-2026-11-05.md) 覆盖列表、推荐参数及严格版本化 HTTP 接口，[U5 验收](../acceptance/UNIFIED-MODELS-U5-2026-11-05.md) 覆盖模型页、分组授权和版本化编辑器。[U6 验收](../acceptance/UNIFIED-MODELS-U6-2026-11-05.md) 覆盖 Pi、完整回归、本地包及隔离升级恢复；阶段源码尚未部署；[后续真实验证](../acceptance/UNIFIED-MODELS-LIVE-2026-11-05.md) 已覆盖 WorkBuddy/Trae 的 deepseek-v4.1-flash 文本与工具，其他平台/型号未验证。
 
 ## 扩展的边界
 

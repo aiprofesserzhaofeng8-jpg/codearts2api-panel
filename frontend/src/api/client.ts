@@ -3,7 +3,7 @@ import { readonly, ref } from 'vue';
 const writes = ref(0);
 export const pendingWrites = readonly(writes);
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; }
+  constructor(message: string, readonly status: number, readonly reason?: string) { super(message); this.name = 'ApiError'; }
 }
 export interface RequestOptions { method?: string; body?: unknown; signal?: AbortSignal }
 type JSONResponse<T> = T extends { responses: { 200: { content: { 'application/json': infer R } } } } ? R : unknown;
@@ -48,7 +48,8 @@ export async function api(path: string, options: RequestOptions = {}): Promise<u
     if (!response.ok) {
       if (response.status === 401 && (path.startsWith('/admin/api/') || path.startsWith('/user/api/'))) expired?.();
       const message = (data as { error?: { message?: unknown } } | null)?.error?.message;
-      throw new ApiError(message ? String(message) : text || `HTTP ${response.status}`, response.status);
+      const reason = (data as { error?: { reason?: unknown } } | null)?.error?.reason;
+      throw new ApiError(message ? String(message) : text || `HTTP ${response.status}`, response.status, typeof reason === 'string' ? reason : undefined);
     }
     return data;
   } finally { if (writing) writes.value--; if (controller) reads.delete(controller); if (controller && queries.get(key) === controller) queries.delete(key); }

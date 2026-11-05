@@ -34,13 +34,15 @@ def build(version, arch, output, go):
         subprocess.run([go, 'build', '-trimpath', '-ldflags', f'-s -w -X main.version={version}',
                         '-o', str(staging / 'codearts2api-panel'), './cmd/panel'], cwd=ROOT / 'backend',
                        env={**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'linux', 'GOARCH': arch}, check=True)
-        for name in ('panelctl.py', 'install.sh', 'healthcheck.sh', 'Caddyfile', 'compose.production.yml', '.env.example', 'README.md'):
+        for name in ('panelctl.py', 'install.sh', 'healthcheck.sh', 'Caddyfile', 'compose.production.yml', '.env.example', 'README.md', 'UNIFIED-MODELS.md'):
             (staging / name).write_bytes((ROOT / 'deploy' / name).read_bytes())
         for name in ('LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
             (staging / name).write_bytes((ROOT / name).read_bytes())
         files = inventory(staging)
         meta = {'format': 1, 'kind': 'release', 'version': version, 'os': 'linux', 'arch': arch,
                 'schema': schema, 'files': files}
+        if schema == 11:
+            meta['state_migrations'] = [{'from': 10, 'to': 11}]
         packed, summed = Path(temp) / 'package.tar.gz', Path(temp) / 'package.sha256'
         with packed.open('xb') as stream:
             with tarfile.open(fileobj=stream, mode='w:gz') as tar:

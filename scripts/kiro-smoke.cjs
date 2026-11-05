@@ -35,6 +35,7 @@ const fs = require('node:fs');
         filters.push(url.searchParams.get('provider'));
         out = {page:1,pages:1,total:0,retained:0,retention_limit:100000,stats:{},logs:[]};
       }
+      if (url.pathname.endsWith('/settings') && req.method() === 'GET') out=settings;
       if (url.pathname.endsWith('/settings') && req.method() === 'POST') savedSettings = req.postDataJSON();
       return route.fulfill({json:out});
     });

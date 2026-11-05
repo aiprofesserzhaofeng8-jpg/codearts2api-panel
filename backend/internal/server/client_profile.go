@@ -6,7 +6,6 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
@@ -16,6 +15,9 @@ func addImageCapability(out map[string]any, model provider.Model) {
 	if input := model.InputModalities(); input != nil {
 		out["input_modalities"] = input
 		out["supports_images"] = model.ImageInput == "supported"
+	}
+	if model.ToolCalling == "supported" || model.ToolCalling == "unsupported" {
+		out["supports_tools"] = model.ToolCalling == "supported"
 	}
 }
 
@@ -47,47 +49,46 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 405, "仅支持 GET", "invalid_request_error")
 		return
 	}
-	requested := r.URL.Query().Get("model")
-	if requested == "" {
-		requested = s.Routing.ClientDefault(groupKey(r.Context()))
-	}
-	model, err := s.resolveModelForRequest(r, s.Store.Settings(), requested)
-	if err != nil {
-		writeErr(w, apierr.From(err).Status, err.Error(), "invalid_request_error")
-		return
-	}
-	p, ok := s.requestModelPolicy(r, model)
-	if !ok {
-		writeErr(w, 422, "该模型暂无客户端推荐参数，请在模型页配置并验证", "invalid_request_error")
-		return
-	}
 	w.Header().Set("Cache-Control", "no-store")
+	model, plan, p, err := s.Routing.Profile(groupKey(r.Context()), r.URL.Query().Get("model"), s.ModelPolicies)
+	if err != nil {
+		writeErr(w, apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
+		return
+	}
 	profile := profileFromPolicy(model.ID, p)
 	addImageCapability(profile, model)
+	addUnifiedProfile(profile, plan)
 	writeJSON(w, 200, profile)
 }
+
+func addUnifiedProfile(profile map[string]any, plan *groupModelPlan) {
+	if plan == nil || plan.Selection.ID == "" {
+		return
+	}
+	profile["model_id"] = plan.Selection.ID
+	profile["model_revision"] = plan.Selection.Revision
+	profile["routing_revision"] = plan.Selection.RoutingRevision
+	profile["upstream_protocol"] = "routed"
+}
 func (s *Server) handleAdminModelPolicies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, 200, map[string]any{"policies": s.ModelPolicies.All(), "capabilities": gatewayCapabilities()})
+		writeJSON(w, 200, map[string]any{"policies": s.ModelPolicies.All(), "capabilities": gatewayCapabilities(), "routing_revision": s.Store.UnifiedSnapshot().Revision})
 	case http.MethodPost:
 		var body struct {
-			Model  string             `json:"model"`
-			Policy config.ModelPolicy `json:"policy"`
+			Model                   string             `json:"model"`
+			Policy                  config.ModelPolicy `json:"policy"`
+			ExpectedRoutingRevision uint64             `json:"expected_routing_revision"`
 		}
-		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&body) != nil {
-			writeErr(w, 400, "配置格式无效", "invalid_request_error")
+		if _, ok := decodeModelObject(w, r, 8192, &body, "model", "policy"); !ok {
 			return
 		}
-		if err := s.Configuration.SaveModelPolicy(body.Model, body.Policy); err != nil {
-			if errors.Is(err, config.ErrModelPolicySave) {
-				writeErr(w, 500, "保存模型策略失败", "server_error")
-			} else {
-				writeErr(w, 400, err.Error(), "invalid_request_error")
-			}
+		if err := s.Configuration.SaveModelPolicyChecked(body.Model, body.Policy, body.ExpectedRoutingRevision, s.ModelPolicies.All()); err != nil {
+			writeModelError(w, err, 400)
 			return
 		}
-		writeJSON(w, 200, map[string]any{"ok": true, "policies": s.ModelPolicies.All()})
+		writeJSON(w, 200, map[string]any{"ok": true, "policies": s.ModelPolicies.All(), "routing_revision": s.Store.UnifiedSnapshot().Revision})
 	default:
 		writeErr(w, 405, "仅支持 GET/POST", "invalid_request_error")
 	}
@@ -107,7 +108,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 	}
 	caps := gatewayCapabilities()
 	caps["providers"] = s.providerDescriptors()
-	caps["model_routing"] = "配置统一模型的分组按公开名称跨平台选号；其他分组保持原有路由。完整平台型号可在分组权限内直接调用。"
+	caps["model_routing"] = "全局统一模型按公开名称跨平台选号；分组进一步限制账号、模型及来源。不分组密钥可识别全局定义。完整平台型号仍按独立权限调用。"
 	writeJSON(w, 200, caps)
 }
 func unsupportedCapability(w http.ResponseWriter, r *http.Request) {

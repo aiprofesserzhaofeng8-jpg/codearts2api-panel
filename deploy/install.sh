@@ -375,6 +375,7 @@ def main():
     p.add_argument('--name', default='managed')
     p.add_argument('--port', type=int, help=message('监听端口（默认 10087）', 'Listen port (default: 10087)'))
     p.add_argument('--system', action='store_true', help=message('安装系统级服务；无参数时默认启用', 'Install a system service (default without a command)'))
+    p.add_argument('--migrate-schema', action='store_true', help=message('仅 upgrade：显式启用发布包声明支持的状态迁移', 'Upgrade only: explicitly allow the state migration declared by the release'))
     p.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], help=message('监听地址（默认 127.0.0.1）', 'Listen address (default: 127.0.0.1)'))
     p.add_argument('--lang', choices=['auto', 'zh', 'en'], help=message('安装器语言（默认跟随系统）', 'Installer language (default: system)'))
     mode = p.add_mutually_exclusive_group()
@@ -384,6 +385,7 @@ def main():
     LANGUAGE = args.lang if args.lang in ('zh', 'en') else system_language()
     args.system = args.system or args.command is None or (args.command in ('install', 'upgrade') and args.root is None and os.geteuid() == 0)
     args.command = args.command or 'install'
+    require(not args.migrate_schema or args.command == 'upgrade', message('--migrate-schema 仅用于 upgrade', '--migrate-schema is only supported for upgrade'))
     require(not args.interactive or args.command == 'install', message('--interactive 仅用于 install', '--interactive is only supported for install'))
     if args.command == 'install' and args.port is not None:
         require(1 <= args.port <= 65535, message('端口必须是 1-65535 之间的整数', 'Port must be between 1 and 65535'))
@@ -437,6 +439,8 @@ def main():
             emit(message('已校验并下载至：', 'Verified download saved to: ') + str(args.output))
             return
         command = [sys.executable, str(work / 'panelctl.py'), args.command, '--root', str(args.root), '--archive', str(work / name), '--sha256', expected[name]]
+        if args.command == 'upgrade' and args.migrate_schema:
+            command += ['--migrate-schema']
         if args.command == 'install':
             command += ['--name', args.name, '--port', str(args.port)]
             if args.system:

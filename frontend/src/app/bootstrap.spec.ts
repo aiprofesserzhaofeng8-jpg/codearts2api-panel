@@ -28,6 +28,12 @@ it('ignores an obsolete usage query after the app is removed',async()=>{
  let resolve!: (response:Response)=>void;vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(done=>{resolve=done;})));
  const { refreshUsageLogs }=await import('../features/usage/controller');const pending=refreshUsageLogs();wrapper.unmount();resolve(new Response('{}'));await expect(pending).resolves.toBeUndefined();
 });
+it('clears a password draft when the administrator explicitly reloads settings',async()=>{
+ vi.stubGlobal('confirm',vi.fn(()=>true));const wrapper=mount(App,{attachTo:document.body});await flushPromises();
+ const password=document.querySelector<HTMLInputElement>('#sPw')!;password.value='discarded-fixture-password';password.dispatchEvent(new Event('input',{bubbles:true}));
+ document.querySelector<HTMLButtonElement>('#reloadSettings')!.click();await flushPromises();
+ expect(password.value).toBe('');expect(document.querySelector('#settingsDirty')!.classList.contains('hidden')).toBe(true);wrapper.unmount();
+});
 
 it('loads login options without cancelling the child request or exposing an internal lifecycle error',async()=>{
  vi.stubGlobal('fetch',vi.fn((path:string)=>Promise.resolve(new Response(JSON.stringify(path==='/auth/session'?{authenticated:false}:{email:true,github:false,linuxdo:false})))));

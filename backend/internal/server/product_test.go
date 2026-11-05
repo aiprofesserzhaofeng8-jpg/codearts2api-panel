@@ -72,7 +72,7 @@ func TestProductPresetsPartialGroupUpdateAndClientPreference(t *testing.T) {
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"version":1`) || !reflect.DeepEqual(original, s.Store.Groups()) {
 		t.Fatal(w.Code, w.Body.String())
 	}
-	body := map[string]any{"id": g.ID, "name": "updated", "account_ids": g.AccountIDs, "model_ids": g.ModelIDs, "allowlist_enabled": g.AllowlistEnabled}
+	body := map[string]any{"id": g.ID, "name": "updated", "account_ids": g.AccountIDs, "model_ids": g.ModelIDs, "allowlist_enabled": g.AllowlistEnabled, "expected_revision": s.Store.CanonicalGroups()[0].Revision}
 	w = adminProbeRequest(t, s, "POST", "/admin/api/groups", string(mustJSON(body)))
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
@@ -100,6 +100,7 @@ func TestProductPresetsPartialGroupUpdateAndClientPreference(t *testing.T) {
 	body["default_model"] = ""
 	body["client_default_model"] = ""
 	body["model_rules"] = []any{}
+	body["expected_revision"] = s.Store.CanonicalGroups()[0].Revision
 	w = adminProbeRequest(t, s, "POST", "/admin/api/groups", string(mustJSON(body)))
 	if w.Code != 200 || len(s.Store.Groups()[0].ModelRules) != 0 || s.Store.Groups()[0].DefaultModel != "" {
 		t.Fatal(w.Code, w.Body.String())

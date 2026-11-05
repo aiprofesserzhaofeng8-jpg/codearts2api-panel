@@ -12,7 +12,7 @@ import time
 import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ("providers-smoke", "qoder-smoke", "kiro-smoke", "subscriptions-smoke", "teleagent-smoke", "teleagent-rewards-smoke", "teleagent-login-smoke", "teleagent-connector-smoke", "teleagent-helper-cdp-smoke", "teleagent-helper-process-smoke", "quota-smoke", "trae-smoke", "trae-device-smoke", "groups-smoke", "account-create-smoke", "growth-multi-smoke", "growth-tasks-smoke", "growth-actions-smoke", "growth-buddy-smoke", "frontend-smoke", "product-settings-smoke", "users-smoke", "consumer-entitlements-smoke", "unified-console-smoke", "user-style-smoke", "i18n-smoke")
-def run(binary, output):
+def run(binary, output, cases=CASES):
     output.mkdir(parents=True, exist_ok=True)
     results=[]
     with tempfile.TemporaryDirectory(prefix="panel-e2e-") as folder:
@@ -30,7 +30,7 @@ def run(binary, output):
                         time.sleep(.1)
                 else: raise RuntimeError("test binary not ready")
                 env={**os.environ,"CODEARTS_TEST_BASE":base,"CODEARTS_TEST_ADMIN_PASSWORD":password,"NODE_PATH":str(ROOT/"frontend/node_modules")+os.pathsep+os.environ.get("NODE_PATH", "")}
-                for name in CASES:
+                for name in cases:
                     result=subprocess.run(["node",str(ROOT/"scripts"/(name+".cjs"))],cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=120)
                     (output/(name+".log")).write_text(result.stdout)
                     results.append({"case":name,"passed":result.returncode==0});print(name, "PASS" if result.returncode==0 else "FAIL",flush=True)
@@ -39,4 +39,4 @@ def run(binary, output):
     (output/"browser-results.json").write_text(json.dumps(results,indent=2)+"\n")
     if not all(result["passed"] for result in results): raise SystemExit(1)
 if __name__ == "__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("--binary",type=Path,required=True);parser.add_argument("--output",type=Path,default=ROOT/"artifacts/frontend-e2e");args=parser.parse_args();run(args.binary.resolve(),args.output)
+    parser=argparse.ArgumentParser();parser.add_argument("--binary",type=Path,required=True);parser.add_argument("--output",type=Path,default=ROOT/"artifacts/frontend-e2e");parser.add_argument('--cases',nargs='+',choices=CASES);args=parser.parse_args();run(args.binary.resolve(),args.output,args.cases or CASES)

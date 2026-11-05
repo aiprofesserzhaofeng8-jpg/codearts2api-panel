@@ -10,6 +10,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 )
@@ -20,13 +21,18 @@ var waitRetry = gateway.WaitRetry
 // withAccountRetry keeps the existing handler entry point. The gateway owns
 // control flow; this driver retains atomic Store admission and platform policy.
 func (s *Server) withAccountRetry(ctx context.Context, timeout time.Duration, fn func(context.Context, *accounts.Account) error) (*accounts.Account, error) {
-	if len(s.Store.Accounts()) == 0 {
+	plan := mappedPlan(ctx)
+	if len(s.Store.Accounts()) == 0 && (plan == nil || plan.Selection.ID == "") {
 		return nil, apierr.NoAccount
 	}
 	attempts := s.Store.Settings().MaxRetries
 	session, _ := ctx.Value(routingSessionKey{}).(string)
 	model, _ := ctx.Value(routingModelKey{}).(string)
-	return gateway.RunAccountRetry(ctx, gateway.RetryOptions{Attempts: attempts, Timeout: timeout, Unavailable: apierr.NoAccount, Wait: waitRetry}, &accountRetryDriver{s: s, fn: fn, session: session, model: model, plan: mappedPlan(ctx)})
+	unavailable := apierr.NoAccount
+	if plan != nil && plan.Selection.ID != "" {
+		unavailable = config.ModelFailure(503, "model_sources_unavailable", "此统一模型暂无可调度账号，请检查来源与账号状态")
+	}
+	return gateway.RunAccountRetry(ctx, gateway.RetryOptions{Attempts: attempts, Timeout: timeout, Unavailable: unavailable, Wait: waitRetry}, &accountRetryDriver{s: s, fn: fn, session: session, model: model, plan: plan})
 }
 
 type accountRetryDriver struct {
@@ -39,6 +45,7 @@ type accountRetryDriver struct {
 func (d *accountRetryDriver) Acquire(ctx context.Context, tried map[string]bool) (gateway.RetryAttempt, error) {
 	request := gateway.AdmissionRequest{Session: d.session, Model: d.model, Key: groupKey(ctx), Exclude: tried}
 	if d.plan != nil {
+		request.Unified = d.plan.Selection
 		request.Mapped = true
 		request.Public = d.plan.Public
 		request.Sources = d.plan.IDs
@@ -47,6 +54,10 @@ func (d *accountRetryDriver) Acquire(ctx context.Context, tried map[string]bool)
 	if err != nil {
 		var denied *gateway.AdmissionDenied
 		if errors.As(err, &denied) {
+			var modelError *config.ModelError
+			if errors.As(err, &modelError) {
+				return gateway.RetryAttempt{}, modelError
+			}
 			return gateway.RetryAttempt{}, groupDenied()
 		}
 		return gateway.RetryAttempt{}, err
@@ -96,7 +107,7 @@ func (d *accountRetryDriver) Failed(a gateway.RetryAttempt, err error) gateway.R
 		// Connectivity is not an account failure or upstream rate limit. Release
 		// already ran; allow the next request to try normally without clearing
 		// health or restarting the process. Bound retries by the existing budget.
-		return gateway.RetryDecision{Backoff: true}
+		return gateway.RetryDecision{Backoff: true, Exclude: d.plan != nil && d.plan.Selection.ID != ""}
 	}
 	if codearts.IsTransientUpstream(err) {
 		cooldown := d.s.Store.Settings().Pool.RateCooldownSec

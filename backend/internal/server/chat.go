@@ -41,9 +41,9 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	r = beginInference(w, r, "chat")
 	start := time.Now()
 	var req chatRequest
-	reject := func(status int, message, kind string) {
+	reject := func(status int, message, kind string, reason ...string) {
 		s.recordRejectedInference(r, req.Model, req.Stream, start, status, message)
-		writeErr(w, status, message, kind)
+		writeErr(w, status, message, kind, reason...)
 	}
 
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
@@ -66,7 +66,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
-		reject(apierr.From(err).Status, err.Error(), "invalid_request_error")
+		reject(apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
 		return
 	}
 	req.Model = model.ID
@@ -83,6 +83,10 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := mappedPlan(r.Context()).FilterCapabilities(upBody); err != nil {
+		reject(apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
+		return
+	}
 	key := extractKey(r)
 	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))
 	timeout := time.Duration(settings.RequestTimeout) * time.Second
@@ -122,7 +126,7 @@ func (s *Server) blockingChat(w http.ResponseWriter, r *http.Request, body []byt
 	if err != nil {
 		e := apierr.From(err)
 		s.record(r.Context(), key, acct, model.ID, false, e.Status, start, promptLen, 0, err)
-		writeErr(w, e.Status, err.Error(), e.OpenAI)
+		writeErr(w, e.Status, err.Error(), e.OpenAI, apierr.Reason(err))
 		return
 	}
 
@@ -187,7 +191,7 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, body []byte,
 			msg = err.Error()
 		}
 		s.record(r.Context(), key, acct, model.ID, true, e.Status, start, promptLen, outLen, err)
-		writeErr(w, e.Status, msg, e.OpenAI)
+		writeErr(w, e.Status, msg, e.OpenAI, apierr.Reason(err))
 		return
 	}
 

@@ -29,19 +29,45 @@ var version = "0.3.0-dev"
 
 func main() {
 	var (
-		host       = flag.String("host", envOr("CODEARTS_HOST", "127.0.0.1"), "监听地址")
-		port       = flag.Int("port", envInt("CODEARTS_PORT", 10087), "监听端口")
-		dataPath   = flag.String("data", envOr("CODEARTS_DATA_PATH", ""), "状态文件路径（默认在可执行文件同目录）")
-		userData   = flag.String("user-data", envOr("CODEARTS_USER_DATA", ""), "CodeArts Agent 的 User Data 目录（留空自动探测）")
-		importOnly = flag.Bool("import", false, "仅执行一次桌面端凭据导入后退出")
-		exportPath = flag.String("export-session", "", "把本机登录态导出为 session JSON（路径，或用 - 输出到 stdout）后退出")
-		noImport   = flag.Bool("no-import", false, "启动时不自动导入桌面端登录态")
-		noRefresh  = flag.Bool("no-refresh", false, "禁止网关自行续期（只读 IDE 会话）")
-		adminPw    = flag.String("admin-password", envOr("CODEARTS_ADMIN_PASSWORD", ""), "管理密码（非空时覆盖状态文件中的设置）")
-		anon       = flag.Bool("allow-anonymous", envBool("CODEARTS_ALLOW_ANONYMOUS"), "未签发密钥时允许非本机来源匿名调用 /v1/*（默认仅本机直连）")
-		showVer    = flag.Bool("version", false, "打印版本后退出")
+		host            = flag.String("host", envOr("CODEARTS_HOST", "127.0.0.1"), "监听地址")
+		port            = flag.Int("port", envInt("CODEARTS_PORT", 10087), "监听端口")
+		dataPath        = flag.String("data", envOr("CODEARTS_DATA_PATH", ""), "状态文件路径（默认在可执行文件同目录）")
+		userData        = flag.String("user-data", envOr("CODEARTS_USER_DATA", ""), "CodeArts Agent 的 User Data 目录（留空自动探测）")
+		importOnly      = flag.Bool("import", false, "仅执行一次桌面端凭据导入后退出")
+		exportPath      = flag.String("export-session", "", "把本机登录态导出为 session JSON（路径，或用 - 输出到 stdout）后退出")
+		noImport        = flag.Bool("no-import", false, "启动时不自动导入桌面端登录态")
+		noRefresh       = flag.Bool("no-refresh", false, "禁止网关自行续期（只读 IDE 会话）")
+		adminPw         = flag.String("admin-password", envOr("CODEARTS_ADMIN_PASSWORD", ""), "管理密码（非空时覆盖状态文件中的设置）")
+		anon            = flag.Bool("allow-anonymous", envBool("CODEARTS_ALLOW_ANONYMOUS"), "未签发密钥时允许非本机来源匿名调用 /v1/*（默认仅本机直连）")
+		showVer         = flag.Bool("version", false, "打印版本后退出")
+		checkMigration  = flag.String("check-state-migration", "", "只读检查状态迁移后退出")
+		migrateDir      = flag.String("migrate-state-dir", "", "离线迁移已停写的数据目录")
+		migrationOutput = flag.String("migration-output-dir", "", "迁移输出目录（须不存在）")
 	)
 	flag.Parse()
+	if *checkMigration != "" || *migrateDir != "" || *migrationOutput != "" {
+		var report storage.ModelMigrationReport
+		var err error
+		if *checkMigration != "" && *migrateDir == "" && *migrationOutput == "" {
+			report, err = storage.CheckStateMigration(*checkMigration)
+		} else if *checkMigration == "" && *migrateDir != "" && *migrationOutput != "" {
+			report, err = storage.MigrateStateDirectory(*migrateDir, *migrationOutput)
+		} else {
+			fmt.Fprintln(os.Stderr, "迁移参数组合无效")
+			os.Exit(1)
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "迁移未完成：", err)
+			os.Exit(1)
+		}
+		if err = json.NewEncoder(os.Stdout).Encode(report); err != nil {
+			os.Exit(1)
+		}
+		if !report.Ready {
+			os.Exit(2)
+		}
+		return
+	}
 
 	if *showVer {
 		fmt.Println("codearts2api", version)

@@ -446,6 +446,7 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 			MaxOutput      int    `json:"maxOutputTokens"`
 			Disabled       bool   `json:"disabled"`
 			SupportsImages *bool  `json:"supportsImages"`
+			SupportsTools  *bool  `json:"supportsToolCall"`
 		} `json:"models"`
 	}
 	if json.Unmarshal(data, &cfg) != nil {
@@ -461,7 +462,14 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 					image = "supported"
 				}
 			}
-			out = append(out, provider.Model{ID: m.ID, UpstreamID: m.ID, Provider: provider.WorkBuddy, Scope: a.Realm, Name: m.Name, Desc: m.Description, Credit: m.Credits, Context: m.MaxInput, MaxOutput: m.MaxOutput, Source: "upstream", StreamOnly: true, ImageInput: image})
+			tools := ""
+			if m.SupportsTools != nil {
+				tools = "unsupported"
+				if *m.SupportsTools {
+					tools = "supported"
+				}
+			}
+			out = append(out, provider.Model{ID: m.ID, UpstreamID: m.ID, Provider: provider.WorkBuddy, Scope: a.Realm, Name: m.Name, Desc: m.Description, Credit: m.Credits, Context: m.MaxInput, MaxOutput: m.MaxOutput, Source: "upstream", StreamOnly: true, ImageInput: image, ToolCalling: tools})
 		}
 	}
 	if len(out) == 0 {

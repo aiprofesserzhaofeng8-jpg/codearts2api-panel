@@ -15,7 +15,8 @@ async function mock(context,{authenticated=true,onRequest}={}){
   if(url.pathname.endsWith('/logs'))data={logs:[]};
   if(url.pathname.endsWith('/audit'))data={total:51,events:[]};
   if(url.pathname.endsWith('/pricing'))data={prices:{}};
-  if(url.pathname.endsWith('/model-policies'))data={policies:{}};
+  if(url.pathname.endsWith('/model-policies'))data={policies:{},routing_revision:1};
+  if(url.pathname.endsWith('/unified-models'))data={models:[],next_after:'',routing_revision:1};
   await route.fulfill({json:data});
  });
  await context.route('**/health',route=>route.fulfill({json:{service:'codearts2api-panel',status:'ok',accounts:1,ready:1,models:1}}));

@@ -125,6 +125,7 @@ export interface paths {
         };
         get: operations["get__admin_api_model_policies"];
         put?: never;
+        /** @description Raw model policies only. Strict 8 KiB JSON. Unified policies must use unified-model CRUD. Revalidates public bounds and atomically increments routing revision. */
         post: operations["post__admin_api_model_policies"];
         delete?: never;
         options?: never;
@@ -317,6 +318,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Model-related fields model_aliases/default_model/force_model require expected_routing_revision (428 absent, 409 stale), strict durable commit and namespace validation. Other fields retain existing save behavior. 1 MiB maximum. */
         post: operations["post__admin_api_settings"];
         delete?: never;
         options?: never;
@@ -998,6 +1000,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/api/unified-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrator only. Writes accept a single strict JSON object up to 32 KiB; all client_policy fields use full replacement; null clears policy. Source identity is never inferred. */
+        get: operations["listUnifiedModels"];
+        put?: never;
+        /** @description Administrator only. Writes accept a single strict JSON object up to 32 KiB; all client_policy fields use full replacement; null clears policy. Source identity is never inferred. */
+        post: operations["createUnifiedModel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/api/unified-models/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrator only. Model names are immutable. Updates require both revision conditions. No-op updates preserve revisions. Sources referenced by grants and models referenced by groups/defaults cannot be deleted. */
+        get: operations["getUnifiedModel"];
+        /** @description Administrator only. Model names are immutable. Updates require both revision conditions. No-op updates preserve revisions. Sources referenced by grants and models referenced by groups/defaults cannot be deleted. */
+        put: operations["updateUnifiedModel"];
+        post?: never;
+        /** @description Administrator only. Model names are immutable. Updates require both revision conditions. No-op updates preserve revisions. Sources referenced by grants and models referenced by groups/defaults cannot be deleted. */
+        delete: operations["deleteUnifiedModel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Authorization projection; lists visible enabled global definitions even with no usable account. Sources covered by visible grants are hidden by default. A missing profile produces a row-level diagnostic, never fails the whole list. */
+        get: operations["listPublicModels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/client-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing metadata 422, disabled sources 503. No silent preference fallback. */
+        get: operations["getClientProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1006,6 +1079,8 @@ export interface components {
             error: {
                 message: string;
                 type: string;
+                code?: number;
+                reason?: string;
             } & {
                 [key: string]: unknown;
             };
@@ -1035,14 +1110,17 @@ export interface components {
             account_ids: string[] | null;
             allowlist_enabled: boolean;
             model_ids: string[] | null;
-            /** @description On update, absent or null preserves mappings; [] clears them. Names include a version. Sources are original platform-qualified IDs. */
-            model_mappings?: components["schemas"]["ModelMapping"][] | null;
             /** @description Only fills omitted/empty request model; does not rescue unknown model names. Empty inherits global default. */
             default_model?: string;
             /** @description Optional visible/callable client preference, separate from inference default. */
             client_default_model?: string;
             /** @description Absent/null preserves existing rules on update; [] clears. Overrides never bypass membership or raw allowlist. */
             model_rules?: components["schemas"]["ModelRule"][] | null;
+            revision: number;
+            unified_models: components["schemas"]["UnifiedGrant"][];
+            /** @enum {unknown} */
+            raw_model_mode: "legacy" | "qualified_only";
+            raw_models_visible_default: boolean;
         } & {
             [key: string]: unknown;
         };
@@ -1123,6 +1201,11 @@ export interface components {
             context: number;
             max_output: number;
             stream_only?: boolean;
+            /**
+             * @description Omitted means unknown; never inferred from model name.
+             * @enum {string}
+             */
+            tool_calling?: "supported" | "unsupported";
         } & {
             [key: string]: unknown;
         };
@@ -1142,6 +1225,8 @@ export interface components {
                 chatgpt?: components["schemas"]["ProviderSettings"];
                 claude?: components["schemas"]["ProviderSettings"];
                 teleagent?: components["schemas"]["ProviderSettings"];
+                /** @description CAS revision captured when the settings editor is populated; do not replace it while a draft is dirty. */
+                model_routing_revision?: number;
             } & {
                 [key: string]: unknown;
             };
@@ -1431,6 +1516,174 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        UnifiedSource: {
+            id: string;
+            enabled: boolean;
+        };
+        UnifiedModel: {
+            id: string;
+            name: string;
+            enabled: boolean;
+            revision: number;
+            sources: components["schemas"]["UnifiedSource"][];
+        };
+        UnifiedGrant: {
+            model_id: string;
+            visible: boolean;
+            callable: boolean;
+            /** @enum {unknown} */
+            source_mode: "all" | "selected";
+            source_ids: string[];
+        };
+        ModelPolicy: {
+            context_window: number;
+            max_output_tokens: number;
+            reserve_tokens: number;
+            keep_recent_tokens: number;
+            trigger_tokens: number;
+            summary_max_tokens: number;
+            summary_enabled: boolean;
+            summary_retry: boolean;
+            disable_summary_thinking: boolean;
+            source: string;
+            summary_fallback_model?: string;
+        };
+        UnifiedReference: {
+            group_id?: string;
+            /** @enum {unknown} */
+            kind: "global_default" | "group_grant" | "group_default" | "client_default";
+            name: string;
+        };
+        UnifiedSourceStatus: {
+            id: string;
+            /** @enum {unknown} */
+            catalog_status: "present" | "missing";
+            enabled: boolean;
+            eligible_account_count: number;
+            last_probe: {
+                /** @enum {unknown} */
+                status: "success" | "failed";
+                /** Format: date-time */
+                checked_at: string;
+                latency_ms: number;
+                message: string;
+            } | null;
+            /** Format: date-time */
+            observed_at: string;
+        };
+        UnifiedDetail: {
+            model: components["schemas"]["UnifiedModel"];
+            client_policy: components["schemas"]["ModelPolicy"] | null;
+            policy_key: string;
+            routing_revision: number;
+            references: components["schemas"]["UnifiedReference"][];
+            source_status: components["schemas"]["UnifiedSourceStatus"][];
+        };
+        UnifiedCreate: {
+            name: string;
+            enabled: boolean;
+            sources: components["schemas"]["UnifiedSource"][];
+            client_policy: components["schemas"]["ModelPolicy"] | null;
+            expected_routing_revision: number;
+        };
+        UnifiedUpdate: {
+            name: string;
+            enabled: boolean;
+            sources: components["schemas"]["UnifiedSource"][];
+            client_policy: components["schemas"]["ModelPolicy"] | null;
+            expected_routing_revision: number;
+            expected_revision: number;
+        };
+        UnifiedDelete: {
+            expected_revision: number;
+            expected_routing_revision: number;
+        };
+        UnifiedList: {
+            models: components["schemas"]["UnifiedModel"][];
+            next_after: string;
+            routing_revision: number;
+        };
+        RoutingWriteResult: {
+            /** @constant */
+            ok: true;
+            routing_revision: number;
+        };
+        /** @description 256 KiB maximum. Existing ID requires expected_revision (428 if absent, 409 if stale). Omitted grants/raw compatibility fields preserve existing values; null rejected. Legacy model_mappings writes rejected. */
+        GroupWrite: {
+            id?: string;
+            name: string;
+            account_ids: string[] | null;
+            allowlist_enabled: boolean;
+            model_ids: string[] | null;
+            /** @description Only fills omitted/empty request model; does not rescue unknown model names. Empty inherits global default. */
+            default_model?: string;
+            /** @description Optional visible/callable client preference, separate from inference default. */
+            client_default_model?: string;
+            /** @description Absent/null preserves existing rules on update; [] clears. Overrides never bypass membership or raw allowlist. */
+            model_rules?: components["schemas"]["ModelRule"][] | null;
+            readonly revision?: number;
+            unified_models?: components["schemas"]["UnifiedGrant"][];
+            /** @enum {unknown} */
+            raw_model_mode?: "legacy" | "qualified_only";
+            raw_models_visible_default?: boolean;
+            expected_revision?: number;
+        };
+        ClientProfile: {
+            /** @constant */
+            version: 1;
+            model: string;
+            model_id?: string;
+            model_revision?: number;
+            routing_revision?: number;
+            context_window: number;
+            max_output_tokens: number;
+            context_basis: string;
+            compaction: {
+                reserve_tokens: number;
+                keep_recent_tokens: number;
+                trigger_tokens: number;
+            };
+            protocols: ("chat_completions" | "responses" | "anthropic_messages")[];
+            supports_images?: boolean;
+            supports_tools?: boolean;
+            input_modalities?: string[];
+            pi_summary_adapter?: boolean;
+            claude_code?: {
+                thinking_control: boolean;
+                effort_control: boolean;
+            };
+            summary?: {
+                [key: string]: unknown;
+            };
+            upstream_protocol?: string;
+            responses_native?: boolean;
+            responses_websocket?: boolean;
+            responses_store?: boolean;
+            responses_compact?: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        PublicModel: {
+            id: string;
+            /** @constant */
+            object: "model";
+            created: number;
+            owned_by: string;
+            provider: string;
+            scope: string;
+            codearts?: {
+                [key: string]: unknown;
+            };
+            client_profile: components["schemas"]["ClientProfile"] | null;
+            client_profile_error?: {
+                code: string;
+                message: string;
+            };
+            supports_images?: boolean;
+            supports_tools?: boolean;
+        } & {
+            [key: string]: unknown;
+        };
     };
     responses: never;
     parameters: never;
@@ -1677,14 +1930,20 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Existing successful response. Business results may still be pending, unknown, or failed. */
+            /** @description Success. Cache-Control: no-store. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        policies: {
+                            [key: string]: components["schemas"]["ModelPolicy"];
+                        };
+                        capabilities: {
+                            [key: string]: unknown;
+                        };
+                        routing_revision: number;
                     };
                 };
             };
@@ -1709,7 +1968,9 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    [key: string]: unknown;
+                    model: string;
+                    policy: components["schemas"]["ModelPolicy"];
+                    expected_routing_revision: number;
                 };
             };
         };
@@ -1881,7 +2142,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Group"];
+                "application/json": components["schemas"]["GroupWrite"];
             };
         };
         responses: {
@@ -1909,7 +2170,10 @@ export interface operations {
     };
     delete__admin_api_groups: {
         parameters: {
-            query?: never;
+            query: {
+                id: string;
+                expected_revision: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2396,6 +2660,7 @@ export interface operations {
                     chatgpt?: components["schemas"]["ProviderSettings"];
                     claude?: components["schemas"]["ProviderSettings"];
                     teleagent?: components["schemas"]["ProviderSettings"];
+                    expected_routing_revision?: number;
                 } & {
                     [key: string]: unknown;
                 };
@@ -4218,6 +4483,237 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listUnifiedModels: {
+        parameters: {
+            query?: {
+                limit?: number;
+                after?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiedList"];
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createUnifiedModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnifiedCreate"];
+            };
+        };
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiedDetail"];
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUnifiedModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiedDetail"];
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateUnifiedModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnifiedUpdate"];
+            };
+        };
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiedDetail"];
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteUnifiedModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnifiedDelete"];
+            };
+        };
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingWriteResult"];
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listPublicModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        object: "list";
+                        data: components["schemas"]["PublicModel"][];
+                        default_model: string;
+                    };
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getClientProfile: {
+        parameters: {
+            query?: {
+                model?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. Cache-Control: no-store. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientProfile"];
+                };
+            };
+            /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };

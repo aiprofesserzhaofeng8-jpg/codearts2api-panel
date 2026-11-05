@@ -66,6 +66,16 @@ class PublicReleaseTest(unittest.TestCase):
             result, _ = module.release(Path(folder), tag)
             self.assertEqual(result, tag)
 
+    def test_schema_migration_upgrade_is_explicit_and_forwarded(self):
+        tag, _, _, fetch = self.fixture()
+        for enabled in (False,True):
+            with tempfile.TemporaryDirectory() as folder, patch.object(module,'fetch',side_effect=fetch),patch.object(module,'public_latest_version',return_value=tag),patch.object(module.platform,'machine',return_value='x86_64'),patch.object(module.sys,'argv',['installer','upgrade','--root',folder]+(['--migrate-schema'] if enabled else [])),patch.object(module.subprocess,'run') as run:
+                module.main()
+                self.assertEqual('--migrate-schema' in run.call_args.args[0],enabled)
+        with patch.object(module.sys,'argv',['installer','check','--migrate-schema']),patch.object(module,'fetch') as fetch:
+            with self.assertRaises(module.InstallError): module.main()
+            fetch.assert_not_called()
+
     def test_not_found_and_authentication_errors_do_not_fallback(self):
         for code in (400, 401, 404, 422):
             _, _, _, fetch = self.fixture(code=code)

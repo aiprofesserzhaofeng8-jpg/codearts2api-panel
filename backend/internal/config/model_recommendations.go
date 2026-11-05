@@ -26,6 +26,12 @@ func (s *ModelPolicies) For(m provider.Model) (ModelPolicy, bool) {
 	if p, ok := s.store.ModelPolicy(m.ID); ok {
 		return p, true
 	}
+	return RecommendModelPolicy(m)
+}
+
+// RecommendModelPolicy derives conservative limits only from directory data.
+// Callers with a configuration snapshot can avoid rereading mutable policies.
+func RecommendModelPolicy(m provider.Model) (ModelPolicy, bool) {
 	if m.Provider == "" || m.Provider == provider.CodeArts || m.Context < 8192 || m.MaxOutput < 256 {
 		return ModelPolicy{}, false
 	}

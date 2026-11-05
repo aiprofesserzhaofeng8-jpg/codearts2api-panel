@@ -20,7 +20,7 @@ import { t as tr } from '../../i18n';
               <h2>{{tr('运行设置')}}</h2>
               <p class="card-sub">{{tr('改动点「保存设置」后生效；保存前刷新页面不会覆盖未保存的编辑')}}</p>
             </div>
-            <span id="settingsDirty" class="badge warn hidden">{{tr('有未保存的改动')}}</span>
+            <div class="actions"><span id="settingsDirty" class="badge warn hidden">{{tr('有未保存的改动')}}</span><button id="reloadSettings" class="btn">{{tr('重新读取')}}</button></div>
           </div>
 
           <div v-once class="settings-group first">

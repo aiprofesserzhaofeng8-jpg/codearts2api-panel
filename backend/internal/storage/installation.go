@@ -22,7 +22,7 @@ func (s *Store) CheckFreshInstallation() error {
 }
 
 func (s *Store) checkFreshInstallationLocked() error {
-	if s.st.Settings.AdminPassword != "" || len(s.st.Accounts)+len(s.st.Keys)+len(s.st.Users)+len(s.st.Groups)+len(s.st.UsageRecords)+len(s.st.Logs) != 0 || s.st.UsageSequence != 0 || s.st.Stats.TotalRequests != 0 {
+	if s.st.Settings.AdminPassword != "" || len(s.st.UnifiedModels)+len(s.st.Accounts)+len(s.st.Keys)+len(s.st.Users)+len(s.st.Groups)+len(s.st.UsageRecords)+len(s.st.Logs) != 0 || s.st.UsageSequence != 0 || s.st.Stats.TotalRequests != 0 {
 		return access.ErrInstallationClosed
 	}
 	return checkInitialFiles(s.path, true)

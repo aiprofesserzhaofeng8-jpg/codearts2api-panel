@@ -16,6 +16,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    }
    if(url.pathname.endsWith('/provider-import')){imports++;const b=request.postDataJSON();assert.ok(['chatgpt','claude'].includes(b.provider));assert.equal(b.credentials.api_key,b.provider==='chatgpt'?'sk-fixture':'sk-ant-fixture');}
    if(url.pathname.endsWith('/usage'))out={page:1,pages:1,total:0,retained:0,retention_limit:100000,stats:{},logs:[]};
+   if(url.pathname.endsWith('/settings')&&request.method()==='GET')out=settings;
    if(url.pathname.endsWith('/settings')&&request.method()==='POST')savedSettings=request.postDataJSON();return route.fulfill({json:out});
   });
   await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));

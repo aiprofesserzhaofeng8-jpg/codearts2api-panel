@@ -24,15 +24,20 @@ type ModelRule struct {
 }
 
 type AccountGroup struct {
-	DefaultModel       string         `json:"default_model,omitempty"`
-	ClientDefaultModel string         `json:"client_default_model,omitempty"`
-	ModelRules         []ModelRule    `json:"model_rules,omitempty"`
-	ModelMappings      []ModelMapping `json:"model_mappings,omitempty"`
-	ID                 string         `json:"id"`
-	Name               string         `json:"name"`
-	AccountIDs         []string       `json:"account_ids"`
-	AllowlistEnabled   bool           `json:"allowlist_enabled"`
-	ModelIDs           []string       `json:"model_ids"`
+	Revision                uint64         `json:"revision"`
+	ExpectedRevision        uint64         `json:"-"`
+	UnifiedModels           []UnifiedGrant `json:"unified_models"`
+	RawModelMode            string         `json:"raw_model_mode"`
+	RawModelsVisibleDefault bool           `json:"raw_models_visible_default"`
+	DefaultModel            string         `json:"default_model,omitempty"`
+	ClientDefaultModel      string         `json:"client_default_model,omitempty"`
+	ModelRules              []ModelRule    `json:"model_rules,omitempty"`
+	ModelMappings           []ModelMapping `json:"model_mappings,omitempty"`
+	ID                      string         `json:"id"`
+	Name                    string         `json:"name"`
+	AccountIDs              []string       `json:"account_ids"`
+	AllowlistEnabled        bool           `json:"allowlist_enabled"`
+	ModelIDs                []string       `json:"model_ids"`
 }
 
 type ModelMapping struct {
@@ -56,14 +61,17 @@ type BudgetUsage struct {
 
 // AccessScope is a read-only permission snapshot, not an admission transaction.
 type AccessScope struct {
-	DefaultModel       string
-	ClientDefaultModel string
-	ModelRules         []ModelRule
-	ModelMappings      []ModelMapping
-	Restricted         bool
-	AccountIDs         map[string]bool
-	AllowlistEnabled   bool
-	ModelIDs           map[string]bool
+	UnifiedModels           []UnifiedGrant
+	RawModelMode            string
+	RawModelsVisibleDefault bool
+	DefaultModel            string
+	ClientDefaultModel      string
+	ModelRules              []ModelRule
+	ModelMappings           []ModelMapping
+	Restricted              bool
+	AccountIDs              map[string]bool
+	AllowlistEnabled        bool
+	ModelIDs                map[string]bool
 }
 
 func (p AccessScope) AllowsModel(id string) bool {

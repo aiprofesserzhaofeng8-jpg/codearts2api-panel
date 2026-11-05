@@ -35,6 +35,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	UnifiedModels       *catalog.Management
 	ReleaseInfo         *releaseinfo.Checker
 	Admission           *gateway.Admission
 	Credits             *accounts.Credits
@@ -72,6 +73,7 @@ type Server struct {
 
 // Dependencies contains upstream services assembled by internal/app.
 type Dependencies struct {
+	UnifiedModels       *catalog.Management
 	Identity            *access.Identity
 	Users               *access.Users
 	Admission           *gateway.Admission
@@ -103,7 +105,7 @@ type Dependencies struct {
 // New constructs HTTP runtime state using the supplied application services.
 func New(st *storage.Store, deps Dependencies) *Server {
 	s := &Server{Admission: deps.Admission, Pricing: deps.Pricing, Welfare: deps.Welfare, Growth: deps.Growth, Credits: deps.Credits, Rewards: deps.Rewards, Catalog: deps.Catalog, Configuration: deps.Configuration, AccessManagement: deps.AccessManagement, AccountManagement: deps.AccountManagement, AccountProbes: deps.AccountProbes, ModelPolicies: deps.ModelPolicies, Routing: deps.Routing, BrowserLogins: deps.BrowserLogins, ProviderLogins: deps.ProviderLogins, ProviderCredentials: deps.ProviderCredentials, Store: st, Up: deps.Up, Cred: deps.Cred, Logins: deps.Logins,
-		Users: deps.Users, Identity: deps.Identity,
+		Users: deps.Users, Identity: deps.Identity, UnifiedModels: deps.UnifiedModels,
 		CodeArts: deps.CodeArts, Completions: deps.Completions,
 		Providers: deps.Providers, Reg: deps.Reg, Search: deps.Search}
 	s.Limits = ratelimit.New(rateLimitConfig(st.Settings()), nil)
@@ -160,6 +162,8 @@ func (s *Server) Handler() http.Handler {
 
 	// 控制台 API（统一走管理鉴权 + 同源校验）
 	mux.HandleFunc("/admin/api/model-policies", s.withAdminAuth(s.handleAdminModelPolicies))
+	mux.HandleFunc("/admin/api/unified-models", s.withAdminAuth(s.handleUnifiedModels))
+	mux.HandleFunc("/admin/api/unified-models/", s.withAdminAuth(s.handleUnifiedModels))
 	mux.HandleFunc("/admin/api/state", s.withAdminAuth(s.handleAdminState))
 	mux.HandleFunc("/admin/api/accounts", s.withAdminAuth(s.handleAdminAccounts))
 	mux.HandleFunc("/admin/api/keys/budget", s.withAdminAuth(s.handleKeyBudget))
@@ -382,10 +386,10 @@ func retryAfterSeconds(d time.Duration) int {
 func writeAPIErr(w http.ResponseWriter, style errStyle, err error) {
 	e := apierr.From(err)
 	if style == errAnthropic {
-		writeAnthropicErr(w, e.Status, e.Anthropic, err.Error())
+		writeAnthropicErr(w, e.Status, e.Anthropic, err.Error(), apierr.Reason(err))
 		return
 	}
-	writeErr(w, e.Status, err.Error(), e.OpenAI)
+	writeErr(w, e.Status, err.Error(), e.OpenAI, apierr.Reason(err))
 }
 
 // rateLimitConfig 把设置转换为限流参数。
@@ -627,9 +631,13 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	}
 }
 
-func writeErr(w http.ResponseWriter, code int, msg, typ string) {
+func writeErr(w http.ResponseWriter, code int, msg, typ string, reason ...string) {
+	err := map[string]any{"message": msg, "type": typ, "code": code}
+	if len(reason) > 0 && reason[0] != "" {
+		err["reason"] = reason[0]
+	}
 	writeJSON(w, code, map[string]any{
-		"error": map[string]any{"message": msg, "type": typ, "code": code},
+		"error": err,
 	})
 }
 

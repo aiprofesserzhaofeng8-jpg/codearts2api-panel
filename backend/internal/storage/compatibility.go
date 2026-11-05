@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"codearts2api/internal/access"
@@ -64,6 +65,17 @@ func DefaultSettings() Settings {
 
 // Open 载入（或初始化）状态文件。
 func Open(path string) (*Store, error) {
+	return openState(path, false)
+}
+func openState(path string, allowMigration bool) (*Store, error) {
+	if !allowMigration {
+		if err := checkManagedModelMigration(path); err != nil {
+			return nil, err
+		}
+		if _, err := os.Lstat(filepath.Join(filepath.Dir(path), migrationPending)); !os.IsNotExist(err) {
+			return nil, fmt.Errorf("目录迁移未完成，拒绝启动")
+		}
+	}
 	s := &Store{path: path, st: &State{Settings: DefaultSettings()}}
 	migrated := false
 	raw, err := os.ReadFile(path)
@@ -91,6 +103,8 @@ func Open(path string) (*Store, error) {
 		_ = os.Chmod(path, 0o600)
 	case errors.Is(err, os.ErrNotExist):
 		s.st.Version = StateVersion
+		s.st.UnifiedModels = []config.UnifiedModel{}
+		s.st.ModelRoutingRevision = 1
 		s.st.Stats.StartedAt = time.Now().Unix()
 	default:
 		return nil, err
@@ -118,6 +132,12 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 10:
+			next, report := convertModelState(s.st)
+			if !report.Ready {
+				return fmt.Errorf("统一模型迁移冲突，请运行 -check-state-migration（%d 项）", len(report.Conflicts))
+			}
+			s.st = next
 		case 9:
 			s.st.Version = 10 // Optional consumer entitlements; legacy users remain unchanged.
 		case 8:
@@ -145,7 +165,7 @@ func (s *Store) migrate() error {
 			return fmt.Errorf("状态文件版本 %d 无法迁移", s.st.Version)
 		}
 	}
-	return nil
+	return validateUnifiedState(s.st)
 }
 
 // applyDefaults 补齐缺失 / 非法字段。

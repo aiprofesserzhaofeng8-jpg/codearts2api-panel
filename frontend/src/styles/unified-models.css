@@ -1,0 +1,22 @@
+.unified-modal{width:min(900px,calc(100vw - 32px));max-height:90vh;padding:0;overflow:auto}
+.unified-fieldset{border:0;padding:0;margin:0;min-width:0}
+.unified-panel .card-head{flex-wrap:wrap}
+.unified-panel .card-sub{margin:5px 0 0}
+.unified-toolbar{display:flex;gap:12px;align-items:center;padding:14px 20px}
+.unified-toolbar input{max-width:360px;min-width:0}
+.unified-source,.unified-issue{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:14px;margin:12px 0;overflow-wrap:anywhere}
+.unified-source>.actions{margin-top:10px;flex-wrap:wrap;gap:12px}
+.unified-source>strong{display:block;margin-bottom:7px;overflow-wrap:anywhere}
+.unified-source details{margin-top:12px}
+.unified-source details>div{margin-top:10px}
+.unified-source label.check{overflow-wrap:anywhere;align-items:flex-start}
+.unified-help{padding:14px 20px;overflow-wrap:anywhere}
+.unified-modal .unified-help{padding:12px 0}
+.unified-panel p.err-text{padding:0 20px}
+.unified-modal .mono,.unified-modal select{max-width:100%;min-width:0;overflow-wrap:anywhere}
+.unified-modal details{margin:14px 0}
+.unified-modal summary,.unified-help summary{cursor:pointer;font-weight:600}
+.unified-modal .check{margin:7px 0}
+.unified-modal input[type=checkbox]{flex-shrink:0}
+.unified-modal .table-wrap select{min-width:90px}
+@media(max-width:600px){.unified-modal{width:calc(100vw - 20px);max-height:94vh}.unified-modal .field-grid{grid-template-columns:1fr}.unified-panel .card-head>.actions{width:100%;justify-content:flex-end}.unified-source{padding:11px}.unified-toolbar{padding:12px 16px}.unified-source .actions .check{width:100%}.unified-help{padding:12px 16px}.unified-modal td.mono{min-width:170px}}

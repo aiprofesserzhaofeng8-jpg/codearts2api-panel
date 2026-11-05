@@ -56,6 +56,16 @@ M7 的 UsersPage 和 `/user` UserConsole 为独立响应式 Vue 树，API 使用
 
 统一 API 生命周期由 `ConsoleApplication` 持有，在身份变化时取消旧查询后再挂载对应页面；子页面不能重复配置或销毁共享 API 客户端，避免取消子组件自己的初始请求。
 
+## 全局统一模型编辑器（U5）
+
+`features/models/UnifiedModelsPanel.vue` 和 `features/groups/GroupsPage.vue` 各自独占响应式页面/弹窗。模型页的原始目录、价格和原始策略卡片仍保留 `v-once`，由原控制器管理；分组原生控制器只保留密钥/目录筛选助手，不能再注册组编辑事件。
+
+`shared/unified-models.ts` 只持有编辑器共用的配置读取快照与分页协调，不参与推理权限。分页发现 routing revision 变化则拒绝发布半份清单。表单在打开时捕获版本并复制草稿，后续目录刷新不覆盖草稿；409/428 保留草稿，重新读取必须明确确认。关闭或切页不取消已提交写操作。成功 HTTP 响应仍须带有效保存回执才能关闭表单。
+
+分组只选择已定义模型及固定/全部来源授权，不编辑平台映射；原始白名单、可见/调用规则和搜索能力保持独立。原始策略及设置表单携带 U4 版本条件，设置草稿为脏时不更新捕获版本。迁移检查报告只在浏览器本地读取，拒绝状态/凭据文件；报告不代表当前实例健康。
+
+验收入口：`CODEARTS_U5_BROWSER=1 GOMAXPROCS=2 GOFLAGS=-p=2 go test ./internal/app -run '^TestUnifiedModelsBrowser$' -v -count=1`（在 `backend` 执行，先构建前端）。该用例使用真实应用装配、认证、存储及模拟平台，浏览器不访问真实上游。既有浏览器回归由 `scripts/frontend_e2e.py` 执行，可用 `--cases` 仅重跑指定用例。
+
 ## 用户工作空间样式
 
 普通用户页面参考 Sub2API 的布局比例与卡片层次，保留本项目浅黄色主色。`src/styles/user.css` 只作用于 `.user-workspace` 和用户专属 `portal-*` 类；管理员页面继续使用原样式和 DOM 控制器。

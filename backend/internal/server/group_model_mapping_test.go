@@ -309,7 +309,7 @@ func TestMappedModelNoFailoverAfterStreamOutput(t *testing.T) {
 		})
 	}
 }
-func TestMappedModelSummaryFallbackKeepsRawPermissions(t *testing.T) {
+func TestMappedModelSummaryCannotEscapeUnifiedSources(t *testing.T) {
 	for _, allowed := range []bool{false, true} {
 		t.Run(fmt.Sprint(allowed), func(t *testing.T) {
 			calls := 0
@@ -343,11 +343,7 @@ func TestMappedModelSummaryFallbackKeepsRawPermissions(t *testing.T) {
 			if strings.Contains(w.Body.String(), "PRIVATE") {
 				t.Fatal("incomplete summary leaked")
 			}
-			if allowed {
-				if w.Code != 200 || calls != 2 || s.Store.Logs(1)[0].Model != "backup-model" {
-					t.Fatal("fallback lost", w.Code, w.Body.String(), calls)
-				}
-			} else if calls != 1 || w.Code != 403 {
+			if calls != 1 || w.Code != 403 {
 				t.Fatal("fallback allowlist bypass", calls, w.Code, w.Body.String())
 			}
 		})

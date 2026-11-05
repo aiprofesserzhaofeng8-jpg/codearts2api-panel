@@ -61,6 +61,19 @@ var aliases = map[string]string{
 	"codearts-pro":      "GLM-5.2",
 }
 
+// ReservedNames is a copy for offline migration and definition validation.
+func ReservedNames() []string {
+	out := make([]string, 0, len(aliases)+len(Fallback))
+	for name := range aliases {
+		out = append(out, name)
+	}
+	for _, m := range Fallback {
+		out = append(out, m.ID)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // Registry 是可热更新的模型清单。
 type Registry struct {
 	mu      sync.RWMutex

@@ -27,9 +27,9 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	r = beginInference(w, r, "responses")
 	start := time.Now()
 	var req apicompat.ResponsesRequest
-	reject := func(status int, message, kind string) {
+	reject := func(status int, message, kind string, reason ...string) {
 		s.recordRejectedInference(r, req.Model, req.Stream, start, status, message)
-		writeErr(w, status, message, kind)
+		writeErr(w, status, message, kind, reason...)
 	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
 	captureConsumerInput(r.Context(), len(body))
@@ -77,7 +77,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, requestedModel)
 	if err != nil {
-		reject(apierr.From(err).Status, err.Error(), "invalid_request_error")
+		reject(apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
 		return
 	}
 	req.Model = model.ID
@@ -104,6 +104,10 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	upBody, err := json.Marshal(chat)
 	if err != nil {
 		reject(400, err.Error(), "invalid_request_error")
+		return
+	}
+	if err := mappedPlan(r.Context()).FilterCapabilities(upBody); err != nil {
+		reject(apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
 		return
 	}
 	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))
@@ -195,7 +199,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		e := apierr.From(err)
 		s.record(r.Context(), key, acct, model.ID, req.Stream, e.Status, start, promptLen, outLen, err)
 		if !started {
-			writeErr(w, e.Status, err.Error(), e.OpenAI)
+			writeErr(w, e.Status, err.Error(), e.OpenAI, apierr.Reason(err))
 			return
 		}
 		// Do not manufacture a successful terminal event or replay partial tool calls.

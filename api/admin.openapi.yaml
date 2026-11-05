@@ -279,13 +279,34 @@
         "operationId": "get__admin_api_model_policies",
         "responses": {
           "200": {
-            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "description": "Success. Cache-Control: no-store.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {},
-                  "additionalProperties": true
+                  "properties": {
+                    "policies": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "$ref": "#/components/schemas/ModelPolicy"
+                      }
+                    },
+                    "capabilities": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "routing_revision": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "policies",
+                    "capabilities",
+                    "routing_revision"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -342,8 +363,25 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "additionalProperties": true
+                "properties": {
+                  "model": {
+                    "type": "string"
+                  },
+                  "policy": {
+                    "$ref": "#/components/schemas/ModelPolicy"
+                  },
+                  "expected_routing_revision": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "model",
+                  "policy",
+                  "expected_routing_revision"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -355,7 +393,8 @@
           {
             "localPanelSession": []
           }
-        ]
+        ],
+        "description": "Raw model policies only. Strict 8 KiB JSON. Unified policies must use unified-model CRUD. Revalidates public bounds and atomically increments routing revision."
       }
     },
     "/admin/api/state": {
@@ -571,7 +610,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Group"
+                "$ref": "#/components/schemas/GroupWrite"
               }
             }
           }
@@ -617,6 +656,26 @@
           },
           {
             "localPanelSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
           }
         ]
       }
@@ -1222,6 +1281,11 @@
                   },
                   "teleagent": {
                     "$ref": "#/components/schemas/ProviderSettings"
+                  },
+                  "expected_routing_revision": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
                   }
                 },
                 "additionalProperties": true
@@ -1236,7 +1300,8 @@
           {
             "localPanelSession": []
           }
-        ]
+        ],
+        "description": "Model-related fields model_aliases/default_model/force_model require expected_routing_revision (428 absent, 409 stale), strict durable commit and namespace validation. Other fields retain existing save behavior. 1 MiB maximum."
       }
     },
     "/admin/api/checkin": {
@@ -3791,6 +3856,349 @@
           }
         }
       }
+    },
+    "/admin/api/unified-models": {
+      "get": {
+        "operationId": "listUnifiedModels",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^um_[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "description": "Administrator only. Writes accept a single strict JSON object up to 32 KiB; all client_policy fields use full replacement; null clears policy. Source identity is never inferred."
+      },
+      "post": {
+        "operationId": "createUnifiedModel",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedDetail"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnifiedCreate"
+              }
+            }
+          }
+        },
+        "description": "Administrator only. Writes accept a single strict JSON object up to 32 KiB; all client_policy fields use full replacement; null clears policy. Source identity is never inferred."
+      }
+    },
+    "/admin/api/unified-models/{id}": {
+      "get": {
+        "operationId": "getUnifiedModel",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedDetail"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^um_[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "description": "Administrator only. Model names are immutable. Updates require both revision conditions. No-op updates preserve revisions. Sources referenced by grants and models referenced by groups/defaults cannot be deleted."
+      },
+      "put": {
+        "operationId": "updateUnifiedModel",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedDetail"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnifiedUpdate"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^um_[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "description": "Administrator only. Model names are immutable. Updates require both revision conditions. No-op updates preserve revisions. Sources referenced by grants and models referenced by groups/defaults cannot be deleted."
+      },
+      "delete": {
+        "operationId": "deleteUnifiedModel",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingWriteResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnifiedDelete"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^um_[0-9a-f]{32}$"
+            }
+          }
+        ],
+        "description": "Administrator only. Model names are immutable. Updates require both revision conditions. No-op updates preserve revisions. Sources referenced by grants and models referenced by groups/defaults cannot be deleted."
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "operationId": "listPublicModels",
+        "security": [
+          {
+            "inferenceBearer": []
+          },
+          {
+            "inferenceAPIKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "object": {
+                      "const": "list"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicModel"
+                      }
+                    },
+                    "default_model": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "object",
+                    "data",
+                    "default_model"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Authorization projection; lists visible enabled global definitions even with no usable account. Sources covered by visible grants are hidden by default. A missing profile produces a row-level diagnostic, never fails the whole list."
+      }
+    },
+    "/v1/client-profile": {
+      "get": {
+        "operationId": "getClientProfile",
+        "security": [
+          {
+            "inferenceBearer": []
+          },
+          {
+            "inferenceAPIKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Cache-Control: no-store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfile"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "model",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "description": "Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing metadata 422, disabled sources 503. No silent preference fallback."
+      }
     }
   },
   "components": {
@@ -3805,6 +4213,12 @@
                 "type": "string"
               },
               "type": {
+                "type": "string"
+              },
+              "code": {
+                "type": "integer"
+              },
+              "reason": {
                 "type": "string"
               }
             },
@@ -3897,16 +4311,6 @@
               "type": "string"
             }
           },
-          "model_mappings": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/ModelMapping"
-            },
-            "description": "On update, absent or null preserves mappings; [] clears them. Names include a version. Sources are original platform-qualified IDs."
-          },
           "default_model": {
             "type": "string",
             "description": "Only fills omitted/empty request model; does not rescue unknown model names. Empty inherits global default."
@@ -3924,6 +4328,27 @@
               "$ref": "#/components/schemas/ModelRule"
             },
             "description": "Absent/null preserves existing rules on update; [] clears. Overrides never bypass membership or raw allowlist."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "unified_models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedGrant"
+            },
+            "maxItems": 128
+          },
+          "raw_model_mode": {
+            "enum": [
+              "legacy",
+              "qualified_only"
+            ]
+          },
+          "raw_models_visible_default": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -3931,7 +4356,11 @@
           "name",
           "account_ids",
           "allowlist_enabled",
-          "model_ids"
+          "model_ids",
+          "revision",
+          "unified_models",
+          "raw_model_mode",
+          "raw_models_visible_default"
         ],
         "additionalProperties": true
       },
@@ -4171,6 +4600,14 @@
           },
           "stream_only": {
             "type": "boolean"
+          },
+          "tool_calling": {
+            "type": "string",
+            "enum": [
+              "supported",
+              "unsupported"
+            ],
+            "description": "Omitted means unknown; never inferred from model name."
           }
         },
         "required": [
@@ -4248,6 +4685,12 @@
               },
               "teleagent": {
                 "$ref": "#/components/schemas/ProviderSettings"
+              },
+              "model_routing_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "CAS revision captured when the settings editor is populated; do not replace it while a draft is dirty."
               }
             },
             "additionalProperties": true
@@ -5270,6 +5713,718 @@
           }
         },
         "additionalProperties": true
+      },
+      "UnifiedSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^um_[0-9a-f]{32}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSource"
+            },
+            "minItems": 1,
+            "maxItems": 16
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "enabled",
+          "revision",
+          "sources"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedGrant": {
+        "type": "object",
+        "properties": {
+          "model_id": {
+            "type": "string",
+            "pattern": "^um_[0-9a-f]{32}$"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "callable": {
+            "type": "boolean"
+          },
+          "source_mode": {
+            "enum": [
+              "all",
+              "selected"
+            ]
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16
+          }
+        },
+        "required": [
+          "model_id",
+          "visible",
+          "callable",
+          "source_mode",
+          "source_ids"
+        ],
+        "additionalProperties": false
+      },
+      "ModelPolicy": {
+        "type": "object",
+        "properties": {
+          "context_window": {
+            "type": "integer"
+          },
+          "max_output_tokens": {
+            "type": "integer"
+          },
+          "reserve_tokens": {
+            "type": "integer"
+          },
+          "keep_recent_tokens": {
+            "type": "integer"
+          },
+          "trigger_tokens": {
+            "type": "integer"
+          },
+          "summary_max_tokens": {
+            "type": "integer"
+          },
+          "summary_enabled": {
+            "type": "boolean"
+          },
+          "summary_retry": {
+            "type": "boolean"
+          },
+          "disable_summary_thinking": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "summary_fallback_model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "context_window",
+          "max_output_tokens",
+          "reserve_tokens",
+          "keep_recent_tokens",
+          "trigger_tokens",
+          "summary_max_tokens",
+          "summary_enabled",
+          "summary_retry",
+          "disable_summary_thinking",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedReference": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "global_default",
+              "group_grant",
+              "group_default",
+              "client_default"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedSourceStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "catalog_status": {
+            "enum": [
+              "present",
+              "missing"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "eligible_account_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "last_probe": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "success",
+                      "failed"
+                    ]
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "latency_ms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "status",
+                  "checked_at",
+                  "latency_ms",
+                  "message"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "catalog_status",
+          "enabled",
+          "eligible_account_count",
+          "last_probe",
+          "observed_at"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedDetail": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "$ref": "#/components/schemas/UnifiedModel"
+          },
+          "client_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_key": {
+            "type": "string"
+          },
+          "routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedReference"
+            }
+          },
+          "source_status": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSourceStatus"
+            }
+          }
+        },
+        "required": [
+          "model",
+          "client_policy",
+          "policy_key",
+          "routing_revision",
+          "references",
+          "source_status"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSource"
+            },
+            "minItems": 1,
+            "maxItems": 16
+          },
+          "client_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "enabled",
+          "sources",
+          "client_policy",
+          "expected_routing_revision"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSource"
+            },
+            "minItems": 1,
+            "maxItems": 16
+          },
+          "client_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "enabled",
+          "sources",
+          "client_policy",
+          "expected_routing_revision",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedDelete": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "expected_routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_routing_revision"
+        ],
+        "additionalProperties": false
+      },
+      "UnifiedList": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedModel"
+            }
+          },
+          "next_after": {
+            "type": "string"
+          },
+          "routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "models",
+          "next_after",
+          "routing_revision"
+        ],
+        "additionalProperties": false
+      },
+      "RoutingWriteResult": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "const": true
+          },
+          "routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "ok",
+          "routing_revision"
+        ],
+        "additionalProperties": false
+      },
+      "GroupWrite": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "account_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowlist_enabled": {
+            "type": "boolean"
+          },
+          "model_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "default_model": {
+            "type": "string",
+            "description": "Only fills omitted/empty request model; does not rescue unknown model names. Empty inherits global default."
+          },
+          "client_default_model": {
+            "type": "string",
+            "description": "Optional visible/callable client preference, separate from inference default."
+          },
+          "model_rules": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ModelRule"
+            },
+            "description": "Absent/null preserves existing rules on update; [] clears. Overrides never bypass membership or raw allowlist."
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "readOnly": true
+          },
+          "unified_models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedGrant"
+            },
+            "maxItems": 128
+          },
+          "raw_model_mode": {
+            "enum": [
+              "legacy",
+              "qualified_only"
+            ]
+          },
+          "raw_models_visible_default": {
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "account_ids",
+          "allowlist_enabled",
+          "model_ids"
+        ],
+        "additionalProperties": false,
+        "description": "256 KiB maximum. Existing ID requires expected_revision (428 if absent, 409 if stale). Omitted grants/raw compatibility fields preserve existing values; null rejected. Legacy model_mappings writes rejected."
+      },
+      "ClientProfile": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "const": 1
+          },
+          "model": {
+            "type": "string"
+          },
+          "model_id": {
+            "type": "string",
+            "pattern": "^um_[0-9a-f]{32}$"
+          },
+          "model_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "routing_revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "context_window": {
+            "type": "integer"
+          },
+          "max_output_tokens": {
+            "type": "integer"
+          },
+          "context_basis": {
+            "type": "string"
+          },
+          "compaction": {
+            "type": "object",
+            "properties": {
+              "reserve_tokens": {
+                "type": "integer"
+              },
+              "keep_recent_tokens": {
+                "type": "integer"
+              },
+              "trigger_tokens": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "reserve_tokens",
+              "keep_recent_tokens",
+              "trigger_tokens"
+            ],
+            "additionalProperties": false
+          },
+          "protocols": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "chat_completions",
+                "responses",
+                "anthropic_messages"
+              ]
+            }
+          },
+          "supports_images": {
+            "type": "boolean"
+          },
+          "supports_tools": {
+            "type": "boolean"
+          },
+          "input_modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pi_summary_adapter": {
+            "type": "boolean"
+          },
+          "claude_code": {
+            "type": "object",
+            "properties": {
+              "thinking_control": {
+                "type": "boolean"
+              },
+              "effort_control": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "thinking_control",
+              "effort_control"
+            ],
+            "additionalProperties": false
+          },
+          "summary": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "upstream_protocol": {
+            "type": "string"
+          },
+          "responses_native": {
+            "type": "boolean"
+          },
+          "responses_websocket": {
+            "type": "boolean"
+          },
+          "responses_store": {
+            "type": "boolean"
+          },
+          "responses_compact": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "model",
+          "context_window",
+          "max_output_tokens",
+          "context_basis",
+          "compaction",
+          "protocols"
+        ],
+        "additionalProperties": true
+      },
+      "PublicModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "const": "model"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "owned_by": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "codearts": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "client_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClientProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "client_profile_error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "supports_images": {
+            "type": "boolean"
+          },
+          "supports_tools": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "created",
+          "owned_by",
+          "provider",
+          "scope",
+          "client_profile"
+        ],
+        "additionalProperties": true
       }
     },
     "securitySchemes": {
@@ -5277,6 +6432,15 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "codearts_session"
+      },
+      "inferenceBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "inferenceAPIKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
       }
     }
   },

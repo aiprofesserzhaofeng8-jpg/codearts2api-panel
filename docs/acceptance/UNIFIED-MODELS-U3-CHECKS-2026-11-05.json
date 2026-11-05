@@ -1,0 +1,60 @@
+{
+  "stage": "U3",
+  "status": "complete",
+  "checked_at": "2026-11-05T10:40:34.034Z",
+  "base_commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "schema": 11,
+  "checks": {
+    "make_check": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-check.log",
+      "sha256": "bdfebc07ad53c61e3871a4212f880b1004c01351c6c3cce46344723357123e55"
+    },
+    "core": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-targeted.log",
+      "sha256": "29f5fb170b3cfd47a019474f943a258ab9e6425165569a9eb6aca06a5b5f245c"
+    },
+    "integration": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-integration.log",
+      "sha256": "61f79c0e88dc5c2af6845a34b9cec05eca4180ef739c294d565f9d9714bf803e"
+    },
+    "unified_http": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-unified-http.log",
+      "sha256": "244f81db22affeeb5db45ccda20c18f4ba5b7c645eef43619af29514773d3937"
+    },
+    "targeted_race": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-race.log",
+      "sha256": "ca6cf06c1958986d7994fb141549f2c6e6cfad4fb189352d29a7d49f6a950da9"
+    },
+    "gateway_apierr_race": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-gateway-race.log",
+      "sha256": "c64d18aeeec2254238993cdee9f3fd3dbb1bde4b53a647f6d9f4d0aec330337e"
+    },
+    "windows_vet": {
+      "status": "passed",
+      "path": "/tmp/codearts-u3-windows.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "binary": {
+    "path": "/tmp/codearts-u3-panel",
+    "sha256": "21b8b696df17c042976ad2a5c52c73f8ccfea1850c39b6e2e4ae3866dc45965c"
+  },
+  "new_top_level_tests": 14,
+  "ungrouped_protocol_stream_cases": 12,
+  "capability_protocol_cases": 3,
+  "real_upstreams_tested": false,
+  "production_service_updated": false,
+  "published": false,
+  "notes": [
+    "Production inference reads the global model definition; listing/profile and HTTP management remain U4.",
+    "Image/tool capability declarations must be explicit; no unknown model is promoted to supported.",
+    "Existing explicit raw summary integrity protection retained; fallback outside unified sources denied."
+  ],
+  "preserved_launcher_sha256": "94ca9a14900792421df6a12f6226b8e8e3a082c0b8dd5370fb3c18c170c11100"
+}

@@ -50,19 +50,21 @@ func Build(st *storage.Store) (*server.Server, error) {
 	credentials.Logf = log.Printf
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
+	modelPolicies := config.NewModelPolicies(st, models)
 	credits := &accounts.Credits{}
 	users := access.NewUsers(st, func() string { return st.Settings().AdminPassword }, func() string { return st.Settings().AdminEmail })
 	return server.New(st, server.Dependencies{
-		Users:     users,
-		Identity:  access.NewIdentity(st, users, &identitytransport.Client{}),
-		Admission: gateway.NewAdmission(st),
-		Pricing:   usage.NewManagement(st),
-		Welfare:   jobs.NewWelfare(st),
-		Growth:    jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
-		Credits:   credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
+		UnifiedModels: catalog.NewManagement(st, models, modelPolicies),
+		Users:         users,
+		Identity:      access.NewIdentity(st, users, &identitytransport.Client{}),
+		Admission:     gateway.NewAdmission(st),
+		Pricing:       usage.NewManagement(st),
+		Welfare:       jobs.NewWelfare(st),
+		Growth:        jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
+		Credits:       credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
 		Catalog:       catalog.NewRuntime(st, models),
 		AccountProbes: accounts.NewProbes(st, models, log.Printf),
-		ModelPolicies: config.NewModelPolicies(st, models),
+		ModelPolicies: modelPolicies,
 		Routing:       catalog.NewRouting(st, models),
 		Configuration: config.NewManagement(st, func(id string) (config.ModelRef, bool) {
 			model, ok := models.Resolve(id, st.Settings().ModelAliases)
@@ -75,6 +77,14 @@ func Build(st *storage.Store) (*server.Server, error) {
 		AccessManagement: access.NewManagement(st, access.ModelResolver{
 			Raw: func(id string) (string, bool) {
 				model, ok := models.ResolveRaw(id)
+				if !ok {
+					// Search keeps its original ACL namespace; it is never a
+					// concrete source in a unified model definition.
+					target, _, err := catalog.ResolveSearchTarget(st.Settings(), id)
+					if err == nil && target.ID == id {
+						return id, true
+					}
+				}
 				return model.ID, ok
 			},
 			Aliased: func(id string) (string, bool) {

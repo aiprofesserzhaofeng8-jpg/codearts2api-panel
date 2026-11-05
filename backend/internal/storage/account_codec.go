@@ -1,7 +1,11 @@
 package storage
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"reflect"
+	"strings"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
@@ -16,6 +20,50 @@ type accountJSON struct {
 }
 
 func (s *State) UnmarshalJSON(raw []byte) error {
+	var header struct {
+		Version int `json:"version"`
+	}
+	if err := json.Unmarshal(raw, &header); err != nil {
+		return err
+	}
+	if header.Version == 10 || header.Version == 11 {
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			return err
+		}
+		known := map[string]bool{}
+		typ := reflect.TypeOf(State{})
+		for i := 0; i < typ.NumField(); i++ {
+			name := strings.Split(typ.Field(i).Tag.Get("json"), ",")[0]
+			if name != "" && name != "-" {
+				known[name] = true
+			}
+		}
+		for name := range fields {
+			if !known[name] {
+				return fmt.Errorf("状态包含未知顶层字段，拒绝丢弃数据")
+			}
+		}
+		if groupData, ok := fields["groups"]; ok {
+			var groups []json.RawMessage
+			if err := json.Unmarshal(groupData, &groups); err != nil {
+				return err
+			}
+			for _, rawGroup := range groups {
+				var group AccountGroup
+				d := json.NewDecoder(bytes.NewReader(rawGroup))
+				d.DisallowUnknownFields()
+				if err := d.Decode(&group); err != nil {
+					return fmt.Errorf("分组状态字段无效，拒绝丢弃权限")
+				}
+			}
+		}
+	}
+	if header.Version == 11 {
+		if err := decodeNewRouting(raw); err != nil {
+			return err
+		}
+	}
 	type stateJSON State
 	wire := struct {
 		*stateJSON

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { t as tr } from '../../i18n';
+import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
 </script>
 <template>
-<section v-once id="tab-models" role="tabpanel" aria-labelledby="nav-models">
+<section id="tab-models" role="tabpanel" aria-labelledby="nav-models">
+        <UnifiedModelsPanel />
         <div v-once class="card">
           <div v-once class="card-head model-catalog-head">
             <div v-once class="model-catalog-title"><h2>{{tr('模型')}}</h2><span class="badge" id="modelsCount">{{tr('0 个')}}</span></div>

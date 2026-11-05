@@ -47,7 +47,7 @@ func TestAdminPasswordEmptyDoesNotClear(t *testing.T) {
 	}
 
 	// 不带该字段（null）也不应改动
-	postSettings(t, s, `{"default_model":"GLM-5.2"}`)
+	postSettings(t, s, `{"max_retries":2}`)
 	if got := s.Store.Settings().AdminPassword; !storage.VerifyAdminPassword(got, "keepme") {
 		t.Errorf("未携带该字段却改动了管理密码: %q", got)
 	}

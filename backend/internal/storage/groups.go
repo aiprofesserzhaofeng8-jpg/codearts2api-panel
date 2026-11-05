@@ -7,6 +7,7 @@ import (
 
 	"codearts2api/internal/access"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 )
 
@@ -15,6 +16,7 @@ type AccountGroup = access.AccountGroup
 type AccessScope = access.AccessScope
 
 func cloneGroup(g AccountGroup) AccountGroup {
+	g.UnifiedModels = access.CloneUnifiedGrants(g.UnifiedModels)
 	g.ModelMappings = cloneMappings(g.ModelMappings)
 	g.ModelRules = access.CloneModelRules(g.ModelRules)
 	g.AccountIDs = append([]string{}, g.AccountIDs...)
@@ -22,6 +24,17 @@ func cloneGroup(g AccountGroup) AccountGroup {
 	return g
 }
 func (s *Store) Groups() []AccountGroup {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]AccountGroup, len(s.st.Groups))
+	for i, g := range s.st.Groups {
+		out[i] = s.projectGroupLocked(g)
+	}
+	return out
+}
+
+// CanonicalGroups returns persisted grants, never the legacy read projection.
+func (s *Store) CanonicalGroups() []AccountGroup {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	out := make([]AccountGroup, len(s.st.Groups))
@@ -57,7 +70,7 @@ func (s *Store) accessScopeLocked(key string) (AccessScope, error) {
 			if g.ID != k.GroupID {
 				continue
 			}
-			p := groupScopeLocked(g)
+			p := groupScopeLocked(s.projectGroupLocked(g))
 			return p, nil
 		}
 		return AccessScope{}, fmt.Errorf("密钥绑定的分组不存在，请联系管理员")
@@ -85,6 +98,14 @@ func uniqueIDs(ids []string) ([]string, error) {
 
 // Group mutations hold both locks until disk commit; failed writes roll back.
 func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
+	return s.saveUnifiedGroup(g, false)
+}
+
+func (s *Store) SaveUnifiedGroup(g AccountGroup, expected uint64) (AccountGroup, error) {
+	g.ExpectedRevision = expected
+	return s.saveUnifiedGroup(g, true)
+}
+func (s *Store) saveUnifiedGroup(g AccountGroup, strict bool) (AccountGroup, error) {
 	g.Name = strings.TrimSpace(g.Name)
 	if g.Name == "" || len([]rune(g.Name)) > 80 {
 		return g, fmt.Errorf("分组名称须为 1–80 个字符")
@@ -103,6 +124,16 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	beforeModels, beforeRoute := s.st.UnifiedModels, s.st.ModelRoutingRevision
+	committed := false
+	defer func() {
+		if !committed {
+			s.st.UnifiedModels, s.st.ModelRoutingRevision = beforeModels, beforeRoute
+		}
+	}()
+	if strict && len(g.ModelMappings) > 0 {
+		return g, config.ModelFailure(400, "legacy_mapping_field", "请使用统一模型授权")
+	}
 	for _, id := range g.AccountIDs {
 		found := false
 		for _, a := range s.st.Accounts {
@@ -143,8 +174,10 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 			}
 		}
 	}
-	if err := validateGroupOptions(g); err != nil {
-		return g, err
+	if !strict {
+		if err := validateGroupOptions(g); err != nil {
+			return g, err
+		}
 	}
 	index := -1
 	if g.ID != "" {
@@ -157,12 +190,51 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 		if index < 0 {
 			return g, fmt.Errorf("分组不存在")
 		}
+		if strict {
+			if err := checkRevision(g.ExpectedRevision, s.st.Groups[index].Revision); err != nil {
+				return g, err
+			}
+		}
+		if g.UnifiedModels == nil {
+			g.UnifiedModels = access.CloneUnifiedGrants(s.st.Groups[index].UnifiedModels)
+		}
+		if g.RawModelMode == "" {
+			g.RawModelMode = s.st.Groups[index].RawModelMode
+			g.RawModelsVisibleDefault = s.st.Groups[index].RawModelsVisibleDefault
+		}
+		var err error
+		g.Revision, err = bumpRevision(s.st.Groups[index].Revision)
+		if err != nil {
+			return g, err
+		}
 	} else {
 		if len(s.st.Groups) >= 128 {
 			return g, fmt.Errorf("分组数量已达上限")
 		}
 		g.ID = codearts.RandomHex(8)
+		g.Revision = 1
+		if g.RawModelMode == "" {
+			g.RawModelMode = "qualified_only"
+			if !strict && len(g.ModelMappings) == 0 {
+				g.RawModelMode = "legacy"
+				g.RawModelsVisibleDefault = true
+			}
+		}
 	}
+	if !strict {
+		var err error
+		g, err = s.importLegacyGroupLocked(g)
+		if err != nil {
+			return g, err
+		}
+	}
+	if g.UnifiedModels == nil {
+		g.UnifiedModels = []access.UnifiedGrant{}
+	}
+	if err := validateUnifiedGroup(g, s.st.UnifiedModels); err != nil {
+		return g, err
+	}
+	g.ExpectedRevision = 0
 	for _, old := range s.st.Groups {
 		if old.ID != g.ID && old.Name == g.Name {
 			return g, fmt.Errorf("分组名称已存在")
@@ -176,9 +248,16 @@ func (s *Store) SaveGroup(g AccountGroup) (AccountGroup, error) {
 	}
 	if err = s.saveGroupStateLocked(); err != nil {
 		s.st.Groups = before
+		if strict {
+			return g, config.ModelFailure(500, "model_save_failed", "分组保存失败")
+		}
 		return g, err
 	}
-	return cloneGroup(g), nil
+	committed = true
+	if strict {
+		return cloneGroup(g), nil
+	}
+	return s.projectGroupLocked(g), nil
 }
 func (s *Store) saveGroupStateLocked() error {
 	if err := s.hashPasswordLocked(); err != nil {
@@ -191,6 +270,12 @@ func (s *Store) saveGroupStateLocked() error {
 	return err
 }
 func (s *Store) DeleteGroup(id string) error {
+	return s.deleteGroup(id, 0, false)
+}
+func (s *Store) DeleteUnifiedGroup(id string, expected uint64) error {
+	return s.deleteGroup(id, expected, true)
+}
+func (s *Store) deleteGroup(id string, expected uint64, strict bool) error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
@@ -207,10 +292,18 @@ func (s *Store) DeleteGroup(id string) error {
 	}
 	for i, g := range s.st.Groups {
 		if g.ID == id {
+			if strict {
+				if err := checkRevision(expected, g.Revision); err != nil {
+					return err
+				}
+			}
 			before := append([]AccountGroup(nil), s.st.Groups...)
 			s.st.Groups = append(s.st.Groups[:i:i], s.st.Groups[i+1:]...)
 			if err := s.saveGroupStateLocked(); err != nil {
 				s.st.Groups = before
+				if strict {
+					return config.ModelFailure(500, "model_save_failed", "分组删除失败")
+				}
 				return err
 			}
 			return nil
@@ -274,6 +367,9 @@ func (s *Store) AddKeyInGroupAndSave(name, group string) (*APIKey, error) {
 // groupScopeLocked projects the same current group for keys and user consoles.
 func groupScopeLocked(g AccountGroup) AccessScope {
 	p := AccessScope{DefaultModel: g.DefaultModel, ClientDefaultModel: g.ClientDefaultModel, ModelRules: access.CloneModelRules(g.ModelRules), ModelMappings: cloneMappings(g.ModelMappings), Restricted: true, AllowlistEnabled: g.AllowlistEnabled, AccountIDs: map[string]bool{}, ModelIDs: map[string]bool{}}
+	p.UnifiedModels = access.CloneUnifiedGrants(g.UnifiedModels)
+	p.RawModelMode = g.RawModelMode
+	p.RawModelsVisibleDefault = g.RawModelsVisibleDefault
 	for _, id := range g.AccountIDs {
 		p.AccountIDs[id] = true
 	}

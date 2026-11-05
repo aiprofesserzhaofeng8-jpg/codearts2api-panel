@@ -1,0 +1,464 @@
+{
+  "kind": "unified_models_first_live_acceptance",
+  "date": "2026-11-05",
+  "recorded_at": "2026-11-05T21:56:22.269998+08:00",
+  "base_commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "worktree_uncommitted": true,
+  "scope": {
+    "providers": [
+      "workbuddy/cn",
+      "trae/cn"
+    ],
+    "upstream_model": "deepseek-v4.1-flash",
+    "equivalence_basis": "both current provider catalogs advertise exact raw ID and corresponding versioned display names; not a response-based identity inference or independent weights verification",
+    "public_text_name": "deepseek-4.1-flash-live-20261105",
+    "real_upstream": true,
+    "actual_new_gateway_implementation": true,
+    "existing_system_service_used_for_inference": false,
+    "input_source_kind": "readable schema-10 local account snapshot; source bytes were checked unchanged",
+    "credential_refresh_attempts": 0,
+    "reward_claims": 0,
+    "ide_writeback_enabled": false,
+    "inference_native_attempts_total": 24,
+    "output_token_cap_per_request": 128,
+    "single_request_timeout_seconds": 35,
+    "automatic_retry_attempts": 0,
+    "temporary_state_and_keys_removed": true
+  },
+  "results": {
+    "models_and_profile": [
+      {
+        "http_status": 200,
+        "name": "/v1/models",
+        "passed": true
+      },
+      {
+        "http_status": 200,
+        "name": "/v1/client-profile?model=deepseek-4.1-flash-live-20261105",
+        "passed": true
+      }
+    ],
+    "text_protocol_checks": [
+      {
+        "actual_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1613,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "workbuddy",
+        "protocol": "/v1/chat/completions",
+        "public_identity": true,
+        "stream": false,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1457,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "workbuddy",
+        "protocol": "/v1/chat/completions",
+        "public_identity": true,
+        "stream": true,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1464,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "workbuddy",
+        "protocol": "/v1/responses",
+        "public_identity": true,
+        "stream": false,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1916,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "workbuddy",
+        "protocol": "/v1/responses",
+        "public_identity": true,
+        "stream": true,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1413,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "workbuddy",
+        "protocol": "/v1/messages",
+        "public_identity": true,
+        "stream": false,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "workbuddy/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1687,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "workbuddy",
+        "protocol": "/v1/messages",
+        "public_identity": true,
+        "stream": true,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "trae/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1161,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "trae",
+        "protocol": "/v1/chat/completions",
+        "public_identity": true,
+        "stream": false,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "trae/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1235,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "trae",
+        "protocol": "/v1/chat/completions",
+        "public_identity": true,
+        "stream": true,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "trae/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 817,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "trae",
+        "protocol": "/v1/responses",
+        "public_identity": true,
+        "stream": false,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "trae/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1167,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "trae",
+        "protocol": "/v1/responses",
+        "public_identity": true,
+        "stream": true,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "trae/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 799,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "trae",
+        "protocol": "/v1/messages",
+        "public_identity": true,
+        "stream": false,
+        "terminal": true,
+        "usage_present": true
+      },
+      {
+        "actual_model": "trae/cn/deepseek-v4.1-flash",
+        "attempts": 1,
+        "elapsed_ms": 1242,
+        "http_status": 200,
+        "marker_returned": true,
+        "name": "text",
+        "passed": true,
+        "platform": "trae",
+        "protocol": "/v1/messages",
+        "public_identity": true,
+        "stream": true,
+        "terminal": true,
+        "usage_present": true
+      }
+    ],
+    "text_passed": 12,
+    "initial_tool_checks": [
+      {
+        "http_status_first": 200,
+        "http_status_second": 200,
+        "marker_returned": true,
+        "mode": "raw",
+        "native_attempts": 2,
+        "passed": true,
+        "platform": "workbuddy",
+        "tool_executed": true
+      },
+      {
+        "http_status_first": 400,
+        "mode": "unified",
+        "native_attempts": 0,
+        "passed": false,
+        "platform": "workbuddy"
+      },
+      {
+        "http_status_first": 200,
+        "http_status_second": 200,
+        "marker_returned": true,
+        "mode": "raw",
+        "native_attempts": 2,
+        "passed": true,
+        "platform": "trae",
+        "tool_executed": true
+      },
+      {
+        "http_status_first": 400,
+        "mode": "unified",
+        "native_attempts": 0,
+        "passed": false,
+        "platform": "trae"
+      }
+    ],
+    "initial_tool_phase_passed": false,
+    "initial_tool_phase_native_attempts": 4,
+    "corrected_tool_checks": [
+      {
+        "http_status_first": 200,
+        "http_status_second": 200,
+        "marker_returned": true,
+        "mode": "raw",
+        "native_attempts": 2,
+        "passed": true,
+        "platform": "workbuddy",
+        "tool_executed": true
+      },
+      {
+        "http_status_first": 200,
+        "http_status_second": 200,
+        "marker_returned": true,
+        "mode": "unified",
+        "native_attempts": 2,
+        "passed": true,
+        "platform": "workbuddy",
+        "tool_executed": true
+      },
+      {
+        "http_status_first": 200,
+        "http_status_second": 200,
+        "marker_returned": true,
+        "mode": "raw",
+        "native_attempts": 2,
+        "passed": true,
+        "platform": "trae",
+        "tool_executed": true
+      },
+      {
+        "http_status_first": 200,
+        "http_status_second": 200,
+        "marker_returned": true,
+        "mode": "unified",
+        "native_attempts": 2,
+        "passed": true,
+        "platform": "trae",
+        "tool_executed": true
+      }
+    ],
+    "corrected_tool_phase_native_attempts": 8,
+    "corrected_tool_roundtrips_passed": 4,
+    "final_scope_status": "passed"
+  },
+  "correction": {
+    "workbuddy": "Preserve upstream supportsToolCall: true/supported, false/unsupported, absent/unknown.",
+    "trae": "Exact deepseek-v4.1-flash config has supported tools based on the real native function-call/result loop. No capability inferred for other IDs or case variants.",
+    "image_or_context_capability_invented": false,
+    "unit_regressions": [
+      "TestModelsRetainExplicitToolCapabilities",
+      "TestModelsToolCapabilityLimitedToVerifiedConfig",
+      "TestLiveReportNeverReplacesSourceOrPriorEvidence"
+    ]
+  },
+  "checks": [
+    {
+      "command": "make frontend",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-frontend.log",
+      "log_sha256": "7b47b9fe9d4036b6beb12b1f58207ba5094a6f24ec801c9a1e41e4b864d526f4"
+    },
+    {
+      "command": "go test ./internal/app -run '^TestUnifiedLiveDiscovery$' -v -count=1 -timeout=3m (opt-in source and private report)",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-discovery.log",
+      "log_sha256": "70969a6910eaf0261034c34fdcd2f85a66c11a749645c758f23839ab0e0d5e96"
+    },
+    {
+      "command": "go test ./internal/app -run '^TestUnifiedLiveProtocols$' -v -count=1 -timeout=8m (explicit inference opt-in)",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-protocols.log",
+      "log_sha256": "7787840a9b3bc22b03909fdbb6ad05325f2930933cfbc440bc82b24f56b2e238"
+    },
+    {
+      "command": "go test ./internal/app -run '^TestUnifiedLiveCatalogMetadata$' -v -count=1 -timeout=3m (opt-in)",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-catalog-fields.log",
+      "log_sha256": "e0140990bd807c66a8022b7cacc731ba951b018a7cea76c3053f69910d9fa8a6"
+    },
+    {
+      "command": "go test ./internal/app -run '^TestUnifiedLiveTools$' -v -count=1 -timeout=5m before correction",
+      "status": "failed_reproduced_metadata_gap",
+      "exit_code": 1,
+      "log_path": "/tmp/codearts-unified-live-tools-before.log",
+      "log_sha256": "fabd0cd2c78ab42fc4f2d0cd69623db4b1ae0da1d00df3b9b729f0e135fd2445"
+    },
+    {
+      "command": "go test ./internal/app -run '^TestUnifiedLiveTools$' -v -count=1 -timeout=5m after correction",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-tools-after.log",
+      "log_sha256": "ce745eccf453888ff5842cab8a2e6c8f71dce079a3c7c25da67f8f659ee5e0ae"
+    },
+    {
+      "command": "go test ./internal/workbuddy ./internal/trae ./internal/catalog ./internal/app -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-regression.log",
+      "log_sha256": "f119c006222aa2c3c5bd1e80439817e252059c55f4133054bb8d920c3231434a"
+    },
+    {
+      "command": "go test -race ./internal/workbuddy ./internal/trae ./internal/catalog ./internal/app -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-race.log",
+      "log_sha256": "aac6407f34adeee0daa01d477c24d57ab052b79634c64e7c406f802ad14a356b"
+    },
+    {
+      "command": "make check GO=<pinned-go>",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-check.log",
+      "log_sha256": "54930a76d919f249cc50e8a1325f9a1548f7f7b586a94ad5001b7ddc0f8d268c"
+    },
+    {
+      "command": "go build -trimpath -ldflags <version=0.4.0-live-validation> -o <ignored-live-artifacts>/codearts2api-panel ./cmd/panel",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-build.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go test ./internal/app -run '^TestUnifiedLiveDiscovery$' after calls",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-unified-live-discovery-after.log",
+      "log_sha256": "b99eebcf21ac78ce640f0d95cfb1e94b7ad96bd9f0cfe2ce9281bc0b07905314"
+    }
+  ],
+  "environment": {
+    "go": "1.27.3",
+    "GOMAXPROCS": "2",
+    "GOFLAGS": "-p=2",
+    "platform": "linux_amd64"
+  },
+  "normal_checks": {
+    "frontend": 52,
+    "deployment": 99,
+    "go_vet_and_full_tests": "passed",
+    "provider_catalog_app_race": "passed",
+    "normal_tests_do_not_access_live_upstreams": true
+  },
+  "source_sha256": {
+    "backend/internal/app/unified_live_test.go": "ad33f38a5d08f51b9d9ba61693d53e3103aff6fc1cca621d476ad9637d3bcf04",
+    "backend/internal/workbuddy/client.go": "e30faba7af2f6e1ad688d7a189d42a0b0e24debd9b0fbd26a14b37b47e8e006f",
+    "backend/internal/workbuddy/client_test.go": "b95500618ac2f1087ba6b41df9df8f4a973c8b4114a79dff8ea9561293c83634",
+    "backend/internal/trae/client.go": "fabcc16aa76105d594e885223cd1f47bbb2c23faaa083842f499db978ffb8368",
+    "backend/internal/trae/client_test.go": "82bb088f0a34a47e6fdb8d632eae02e7638f25e6e21cda8292c825a3e7e59735",
+    "docs/acceptance/UNIFIED-MODELS-LIVE-2026-11-05.md": "384b3b7dc61ffa0a59e72eb1a9f469970a1ab79db605d3a15b40adffd9daa067",
+    "docs/architecture/UNIFIED-MODELS-PLAN.md": "fe76c415cf1845f7302a0ec09e7af699ecc2b93f8869f69812e916d0a48f98b6",
+    "docs/architecture/UNIFIED-MODELS-CONTRACT.md": "902d7da56b66824cac3551cb21fd621ad4547203c79232a0178f4615eb9ee7be",
+    "docs/architecture/UNIFIED-MODELS-MIGRATION.md": "cdc301c342739436c17b1148f3379378ad403d711603a1d39aafe612438b5ec3",
+    "docs/architecture/README.md": "0a05f3e0222cc799670c0ab781abe0c4d1afec79b42e790ed4d03cb7849541a3",
+    "deploy/UNIFIED-MODELS.md": "8114dfce17a07543dc5ddc7dca7f3f8d7f0484f0c8b32fc3fbc8c4899ab184ed"
+  },
+  "isolated_binary": {
+    "path": "artifacts/unified-models-live-2026-11-05/codearts2api-panel",
+    "sha256": "8b0fc2248b7fde2e2c1915ae60787109496daff06901a6da3209533994969e99",
+    "version": "0.4.0-live-validation",
+    "deployed": false
+  },
+  "existing_service_after": {
+    "unit": "codearts2api.service",
+    "address": "127.0.0.1:10087",
+    "pid": 2838,
+    "active": true,
+    "health": "ok",
+    "accounts": 5,
+    "ready": 5,
+    "models": 62,
+    "binary_version_not_read_due_to_system_permissions": true,
+    "restarted": false,
+    "account_key_or_routing_configuration_changed": false
+  },
+  "quota_observation": "Both providers returned available credit metrics. Private before/after observations are retained locally; no zero-cost claim or exclusive attribution is made.",
+  "delivery": {
+    "github_pushed": false,
+    "release_published": false,
+    "running_service_updated": false,
+    "U6_historical_packages_overwritten": false
+  },
+  "not_verified": [
+    "other providers or model IDs",
+    "images/audio",
+    "maximum context capacity",
+    "natural upstream fault-triggered automatic failover",
+    "real upstream Pi session",
+    "current protected system-service account set"
+  ],
+  "private_data_included": false,
+  "real_requests_credentials_account_ids_and_response_bodies_included": false,
+  "report_guard": {
+    "fresh_output_required_before_network": true,
+    "exclusive_creation_preserves_source_and_prior_evidence": true,
+    "verified_by_local_test_without_repeating_paid_requests": true
+  }
+}

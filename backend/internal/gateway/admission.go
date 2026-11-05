@@ -1,7 +1,9 @@
 package gateway
 
 import (
+	"codearts2api/internal/access"
 	"context"
+	"fmt"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/usage"
@@ -28,6 +30,7 @@ type Admission struct{ store AdmissionStore }
 func NewAdmission(store AdmissionStore) *Admission { return &Admission{store: store} }
 
 type AdmissionRequest struct {
+	Unified             access.UnifiedSelection
 	Session, Model, Key string
 	Mapped              bool
 	Public              string
@@ -69,7 +72,15 @@ func (a *Admission) Acquire(ctx context.Context, request AdmissionRequest, check
 func (a *Admission) Lease(request AdmissionRequest) (AdmissionResult, error) {
 	result := AdmissionResult{Model: request.Model}
 	var err error
-	if request.Mapped {
+	if request.Unified.ID != "" {
+		store, ok := a.store.(interface {
+			AcquireUnifiedAccount(string, string, []string, map[string]bool, string, access.UnifiedSelection) (*accounts.Account, string, func(), error)
+		})
+		if !ok {
+			return result, &AdmissionDenied{Cause: fmt.Errorf("统一模型准入不可用")}
+		}
+		result.Account, result.Model, result.Release, err = store.AcquireUnifiedAccount(request.Session, request.Public, request.Sources, request.Exclude, request.Key, request.Unified)
+	} else if request.Mapped {
 		result.Account, result.Model, result.Release, err = a.store.AcquireMappedAccount(request.Session, request.Public, request.Sources, request.Exclude, request.Key)
 	} else {
 		result.Account, result.Release, err = a.store.AcquireAccountForKey(request.Session, request.Model, request.Exclude, request.Key)

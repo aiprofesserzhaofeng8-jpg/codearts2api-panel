@@ -1,0 +1,147 @@
+{
+  "stage": "U4",
+  "status": "complete",
+  "date": "2026-11-05",
+  "recorded_at": "2026-11-05T19:20:17.940278+08:00",
+  "base_commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "prior_U1_U2_U3_dirty_changes_preserved": true,
+  "state_schema": 11,
+  "environment": {
+    "go": "1.27.3",
+    "GOMAXPROCS": "2",
+    "GOFLAGS": "-p=2",
+    "platform": "linux_amd64"
+  },
+  "checks": [
+    {
+      "command": "make check",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-check-final.log",
+      "log_sha256": "8bb7cabab5a0bfa0ffbfef80fbff2a69920fc585119fb6820fb7722f0eb1c8cd"
+    },
+    {
+      "command": "go test ./internal/catalog ./internal/config ./internal/storage ./internal/server -run TestUnified|TestMapped|TestRawSummary|TestClientProfile|TestWorkBuddyImage|TestProduct|TestManagementContract -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-final-targeted.log",
+      "log_sha256": "aad3baccaf1216563183ae7f6d249d0c6b4f0040fb12ff619a8821818099dcdb"
+    },
+    {
+      "command": "go test -race ./internal/storage ./internal/catalog ./internal/server ./internal/config ./internal/access ./internal/apierr -run TestUnified|TestMapped|TestRawSummary|TestProduct|TestModelPolicyAPI -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-race.log",
+      "log_sha256": "8e1d995fa1b38db38b940b003ebc8f06295207947779a813fefc649d5f390cd3"
+    },
+    {
+      "command": "go test -race ./internal/server -run ^TestUnifiedAPIProtocol -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-error-reasons.log",
+      "log_sha256": "dba11c5528578c759f091f8fa7e68e8245dce0960473ea9d586ef8a0145625e7"
+    },
+    {
+      "command": "go test -race ./internal/config ./internal/apierr ./internal/access ./internal/catalog -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-pure-race.log",
+      "log_sha256": "ec22beb5b780e751a1e9d5645d3ea49be6f5c62f6ba70c2ec869442ad4db7726"
+    },
+    {
+      "command": "GOOS=windows GOARCH=amd64 go vet ./...",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-windows.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go build -o /tmp/codearts-u4-panel ./cmd/panel",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u4-build.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "new_tests": {
+    "http_top_level": [
+      "TestUnifiedAPIListProfileAndSixSuccessfulResponses",
+      "TestUnifiedAPIPolicyBoundsAndNamespaceConflicts",
+      "TestUnifiedAPIDiskFailureRollsBackDefinitionAndSettings",
+      "TestUnifiedAPIConsistentListProfileAndNoAccounts",
+      "TestUnifiedAPIStrictCRUDRevisionsReferencesAndPagination",
+      "TestUnifiedAPIRejectsMalformedAndUnauthorizedWrites",
+      "TestUnifiedAPIGroupCASAndUserProjection",
+      "TestUnifiedAPIProfileMissingMetadataAndExactNames",
+      "TestUnifiedAPIRoutingSettingsAndRawPolicyCAS",
+      "TestUnifiedAPISelectedPolicyAndIndependentRawVisibility",
+      "TestUnifiedAPIProtocolReasonsAndUpstreamIsolation"
+    ],
+    "storage_top_level": [
+      "TestUnifiedSourceCountsReflectHealthAndConcurrencyWithoutLeasing"
+    ],
+    "same_fixture_successful_protocol_modes": 6,
+    "no_account_protocol_modes": 6,
+    "frontend_test_count": 45,
+    "deployment_test_count": 91
+  },
+  "http_checks": [
+    "global listing deduplication",
+    "exact profile resolution",
+    "conservative policy bounds",
+    "missing metadata row diagnostic",
+    "selected grant and raw visibility independence",
+    "canonical user listing",
+    "CRUD and stable-ID pagination",
+    "missing/stale revision conditions",
+    "unknown/null/read-only/trailing JSON rejection",
+    "32 KiB bound",
+    "role/CSRF/audit guards",
+    "reference protection",
+    "strict save failure rollback",
+    "upstream credential error remains distinct from gateway model denial"
+  ],
+  "files_sha256": {
+    "backend/internal/catalog/unified_projection.go": "9b89fcd10077655278718cf5dca28cac78fc4fe374baa5fdbb81ec008d9b29f4",
+    "backend/internal/catalog/unified_detail.go": "0d9b818a24b35f59af7725da614e6e497a4c2da0a80c49bc59c052bec9117507",
+    "backend/internal/catalog/unified_routing.go": "2acbcedabbcc9d64ab0fd14603fc02e7a91749fd4717e64cd1a3a8faed09a8b2",
+    "backend/internal/catalog/management.go": "4fba0330ef33bf759d63c9586823ccb459be3861cbbbc605783a7ad5bd571944",
+    "backend/internal/config/management.go": "8aebd7d09c31c9db31ecb8e52f22b848b9896408332a0ac9922865a9db1c30d1",
+    "backend/internal/config/model_management.go": "63a5198cede6bf33da8685bf31335262b7f48c8324baa9233d66419c605ef364",
+    "backend/internal/config/model_recommendations.go": "483338ea86d2db2a6666f4c65c8903c099f7b80cb215b536b8ec576cc82f7426",
+    "backend/internal/config/settings_update.go": "2b14d64dee03615ae28f2c517f1028fcc00b8edd750dc5c19211d4ac6a8f8e38",
+    "backend/internal/access/unified_management.go": "3a103c72245fc6a978c1574f6e77b85c27d48e8208db472abf314553611adcb0",
+    "backend/internal/storage/unified_status.go": "8668c6d98d8d4a1fce62b0faf2748969e29180772cd1116948573b933e77ed0f",
+    "backend/internal/storage/groups.go": "1948e850673ec75d5ba31196902acf32d060683b1c714627600ef1db7561ff5d",
+    "backend/internal/storage/model_policy.go": "2ccea73549fefc64fd9bd841ad34c831d815f7887b6f42d6f0c21047f2dd31e1",
+    "backend/internal/server/unified_models.go": "9ffc333924ddc4b2ad9374276708085e090f2cc348b327da5683950aa3799539",
+    "backend/internal/server/models.go": "cd60d3d41e4890c7e45feacf776cf30d9a8d0b739ba90f63b58f93a9bfdba6bb",
+    "backend/internal/server/client_profile.go": "66800de2840e2f07f2d141e97e7a4bc53333e7be1c3748cab81faa51a2a59f2d",
+    "backend/internal/server/groups.go": "2f25cd123319a26f9a96b09b32c4ea1cedbfba30ad4e7cfff61137b80dacbaad",
+    "backend/internal/server/admin.go": "b4d52a32d0ee08293c3f582436faaeec091c50cd90a2b8a887eddd6ca48c18d0",
+    "backend/internal/apierr/apierr.go": "03eb8d17397c09a9a7dcc9ef780560eae9d59c1dc9bf8d59150cb1f8c18ce69a",
+    "backend/internal/server/unified_api_test.go": "beed5c62b05d88a6f6064de6cc24513cad9ec762821f0a31b8dc86fa13dc1002",
+    "backend/internal/storage/unified_status_test.go": "25d1792d097214569ce2a03e71b7f1916859910657f06369910d7a2c67dd07fa",
+    "api/admin.openapi.yaml": "2c31298a32800c366e5e1ca10b17b48b9a3e3b165bb637cff59e1785ba809679",
+    "frontend/src/api/generated/admin.ts": "bee34c1d3962c7445c6ddb9f5a60bb9467b399668f05b58c1cbb796f0b2a236f"
+  },
+  "binary": {
+    "path": "/tmp/codearts-u4-panel",
+    "sha256": "b7d984f184f5dd1e2e9ef4ec7408ff3cf05cd20e7477a48ccce88017979d4870",
+    "deployed": false
+  },
+  "launcher_sha256_unchanged": "94ca9a14900792421df6a12f6226b8e8e3a082c0b8dd5370fb3c18c170c11100",
+  "real_upstream_tested": false,
+  "system_service_updated": false,
+  "user_client_configuration_changed": false,
+  "published": false,
+  "remaining_stages": [
+    "U5",
+    "U6"
+  ],
+  "limitations": [
+    "U5 editors still send legacy mappings or omit revision conditions; not a complete frontend deployment.",
+    "last_probe is null because existing probes retain no complete structured history.",
+    "Real two-source validation, Pi integration and installer upgrade/recovery acceptance remain U6."
+  ]
+}

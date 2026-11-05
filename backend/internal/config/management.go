@@ -10,7 +10,7 @@ import (
 type ManagementStore interface {
 	Settings() Settings
 	Groups() []access.AccountGroup
-	UpdateSettings(func(*Settings))
+	UpdateSettings(func(*Settings)) error
 	SetModelPolicyAndSave(string, ModelPolicy) error
 	Save() error
 }
@@ -31,7 +31,16 @@ func (m *Management) Settings() Settings { return m.store.Settings() }
 // UpdateSettings retains validation-before-mutation and legacy logged Save failure.
 // HTTP applies the existing identity and limiter effects after this returns.
 func (m *Management) UpdateSettings(body SettingsUpdate) error {
-	if body.ForceModel != nil && *body.ForceModel != "" {
+	return m.updateSettings(body, false)
+}
+
+func (m *Management) UpdateSettingsChecked(body SettingsUpdate) error {
+	return m.updateSettings(body, true)
+}
+
+func (m *Management) updateSettings(body SettingsUpdate, checked bool) error {
+	routing := body.ModelAliases != nil || body.DefaultModel != nil || body.ForceModel != nil
+	if !checked && body.ForceModel != nil && *body.ForceModel != "" {
 		for _, g := range m.store.Groups() {
 			if len(g.ModelMappings) > 0 {
 				return errors.New("分组统一模型启用时不能设置强制模型")
@@ -39,6 +48,22 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 		}
 	}
 	current := m.Settings()
+	if checked && body.ModelAliases != nil {
+		for alias, target := range body.ModelAliases {
+			if strings.TrimSpace(alias) == "" || len(alias) > 200 || strings.TrimSpace(target) != target || target == "" {
+				return ModelFailure(400, "invalid_model_definition", "模型别名无效")
+			}
+			for name := range body.ModelAliases {
+				if strings.EqualFold(name, target) {
+					return ModelFailure(409, "model_name_conflict", "别名不能引用其他别名")
+				}
+			}
+			model, ok := m.resolve(target)
+			if !ok || (model.ID != target && "codearts/"+model.ID != target) {
+				return ModelFailure(409, "model_name_conflict", "别名须直接指向原始型号")
+			}
+		}
+	}
 	common := current.CommonPrompt
 	if len(body.CommonPrompt) > 0 {
 		if string(body.CommonPrompt) == "null" || json.Unmarshal(body.CommonPrompt, &common) != nil {
@@ -102,7 +127,25 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 	if body.AdminPassword != nil && len(*body.AdminPassword) > 4096 {
 		return errors.New("管理员密码不能超过 4096 字节")
 	}
-	m.store.UpdateSettings(func(st *Settings) {
+	if checked {
+		for _, name := range []*string{body.DefaultModel, body.ForceModel} {
+			if name == nil || *name == "" {
+				continue
+			}
+			_, found := m.resolve(*name)
+			if st, ok := m.store.(interface{ UnifiedSnapshot() UnifiedSnapshot }); ok {
+				for _, model := range st.UnifiedSnapshot().Models {
+					if model.Name == *name {
+						found = true
+					}
+				}
+			}
+			if !found {
+				return ModelFailure(404, "model_not_found", "默认或强制型号不存在")
+			}
+		}
+	}
+	update := func(st *Settings) {
 		if len(body.CommonPrompt) > 0 {
 			st.CommonPrompt = common
 		}
@@ -167,7 +210,21 @@ func (m *Management) UpdateSettings(body SettingsUpdate) error {
 				st.AdminPassword = v
 			}
 		}
-	})
+	}
+	var err error
+	if checked && routing {
+		st, ok := m.store.(interface {
+			UpdateSettingsChecked(uint64, func(*Settings)) error
+		})
+		if !ok {
+			return ModelFailure(500, "model_save_failed", "模型设置事务不可用")
+		}
+		return st.UpdateSettingsChecked(body.ExpectedRoutingRevision, update)
+	}
+	err = m.store.UpdateSettings(update)
+	if err != nil {
+		return err
+	}
 	if err := m.store.Save(); err != nil && m.logf != nil {
 		m.logf("保存状态文件失败: %v", err)
 	}

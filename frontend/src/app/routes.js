@@ -12,6 +12,7 @@ import { loadAudit, refreshLogs } from '../features/logs/controller';
 import { refreshUsageLogs } from '../features/usage/controller';
 import { loadPricing } from '../features/models/pricing';
 import { loadModelPolicies } from '../features/models/policies';
+import { loadSettings } from '../features/settings/controller';
 import { loadCredits } from '../features/accounts/credits';
 import { listen } from '../shared/lifecycle';
 import { loadHealth } from './shell';
@@ -79,6 +80,8 @@ export function activateTab(name, updateHash, warm) {
     }
     if (name === "accounts")
         loadCredits(false);
+    if (name === "settings")
+        loadSettings();
 }
 
 routesState.initialTab = location.hash.slice(1);

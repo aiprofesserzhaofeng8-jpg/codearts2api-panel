@@ -36,6 +36,8 @@ start.cmd
 
 若曾使用源码版或直接运行 exe，先停止旧实例并备份，确认状态路径再迁移完整数据目录。一个数据目录只允许一个进程写入。不要只移走状态快照而留下安装标记，也不要手改版本号绕过迁移检查。
 
+schema 11 增加全局统一模型。10→11 升级前先停止程序、备份完整目录，用候选 EXE 的 `-check-state-migration STATE_PATH` 只读检查；冲突须先解决。Windows 不提供 Linux 的离线目录迁移或 systemd 恢复命令；可在已停写的完整副本上以显式 `-data` 启动候选程序，核对迁移、模型授权后再使用该新目录。旧 schema 10 程序会拒绝 schema 11；候选开始处理请求或刷新凭据后，不要用历史备份覆盖最新数据。模型页维护全局来源，分组页只分配权限、来源及默认值。
+
 ## 校验与发布范围
 
 从同一 GitHub Release 下载 `SHA256SUMS`，在 PowerShell 执行下面的命令，将结果与清单中的对应 ZIP 摘要比较：
@@ -55,3 +57,5 @@ Extract the Windows x64 ZIP and double-click **start.cmd** as a regular user. No
 Keep the console window open. Press **Ctrl+C** and wait for the process to exit before backing up the entire `%LOCALAPPDATA%\CodeArts2API` folder or upgrading. Extract the new ZIP and run its `start.cmd` under the same Windows account to reuse existing data. Do not run two copies against the same data. Launching the EXE directly uses a different default data location; use `start.cmd` consistently or pass an explicit `-data` path.
 
 This is a foreground application, not a Windows service. Automatic startup, automatic upgrades, ARM64 packages, and Authenticode signing are not included. Verify the ZIP against `SHA256SUMS` from the same GitHub Release.
+
+Schema 11 introduces global unified models. Stop all writers, back up the whole directory, then run the candidate EXE with `-check-state-migration STATE_PATH`. Resolve conflicts before starting the candidate against a stopped, complete copy using explicit `-data`. Linux offline-directory migration and systemd recovery commands are unavailable on Windows. Older schema-10 binaries reject schema 11; never replace newer credentials or accounting data with an old snapshot after the new instance has served traffic.

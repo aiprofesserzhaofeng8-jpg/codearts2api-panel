@@ -43,7 +43,9 @@ M7 单实例多用户已完成：管理员分配分组和跨密钥共享预算�
 
 用户中心第一批新增跨密钥用户并发上限、昵称/头像和用量仪表盘。本批当时使用 schema 9，旧用户保持原有并发行为。见 [用户指南](docs/USERS.md)、[设计决定](docs/adr/0012-consumer-profile-dashboard-concurrency.md) 与 [验收报告](docs/acceptance/USER-CENTER-1-2026-11-02.md)。
 
-用户中心第二批新增人工额度调整与结算、兑换码、套餐订阅、邮箱验证与密码找回、GitHub/LinuxDO 绑定登录。当前 schema 10，旧用户默认不启用余额和订阅限制。SMTP/OAuth 需管理员配置后启用；未接在线支付、订单、退款和返利。见 [设计决定](docs/adr/0013-consumer-entitlements-identity.md) 和 [验收报告](docs/acceptance/USER-CENTER-2-2026-11-02.md)。
+用户中心第二批新增人工额度调整与结算、兑换码、套餐订阅、邮箱验证与密码找回、GitHub/LinuxDO 绑定登录，当时使用 schema 10，旧用户默认不启用余额和订阅限制。SMTP/OAuth 需管理员配置后启用；未接在线支付、订单、退款和返利。见 [设计决定](docs/adr/0013-consumer-entitlements-identity.md) 和 [验收报告](docs/acceptance/USER-CENTER-2-2026-11-02.md)。
+
+全局统一模型使用 schema 11：在模型页一次配置公开名及多个平台来源，再给分组分配权限；三协议、模型列表和客户端参数使用同一解析。见 [使用说明](docs/GROUP-MODELS.md) 和 [升级与中断恢复](deploy/UNIFIED-MODELS.md)。10→11 受管升级需要候选包声明支持及显式 `--migrate-schema`，旧程序拒绝新状态。
 
 ## 功能特性
 
@@ -100,6 +102,14 @@ sudo systemctl status codearts2api
 # 后续升级（先阅读版本说明）：
 curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/main/deploy/install.sh | sudo bash -s -- upgrade
 ```
+
+从 v0.3.18 升级到 v0.4.0 包含 schema 10→11 迁移，使用固定标签及显式参数：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/v0.4.0/deploy/install.sh | sudo bash -s -- upgrade --version v0.4.0 --migrate-schema
+```
+
+该流程先预检查并完整备份，再迁移和核对实际进程；已安装同版本时明确提示没有更新。详情见 [v0.4.0 发布与升级说明](docs/acceptance/RELEASE-v0.4.0.md)。
 
 重复安装会拒绝覆盖。已有用户级或源码实例继续使用原管理方式，需显式迁移时参考 [部署指南](deploy/README.md)。
 

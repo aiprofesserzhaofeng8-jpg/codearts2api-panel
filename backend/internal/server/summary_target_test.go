@@ -12,10 +12,12 @@ import (
 	"codearts2api/internal/storage"
 )
 
-func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
+func TestRawSummaryReplacementRechecksLivePolicy(t *testing.T) {
 	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/messages"} {
 		for _, stream := range []bool{false, true} {
-			for _, mutation := range []string{"mapping", "allowlist", "accounts", "force", "cooldown", "catalog", "budget"} {
+			// ForceModel + unified definitions is now rejected at configuration
+			// commit (covered by storage's policy-conflict tests).
+			for _, mutation := range []string{"allowlist", "accounts", "cooldown", "catalog", "budget"} {
 				t.Run(fmt.Sprintf("%s/%v/%s", path, stream, mutation), func(t *testing.T) {
 					calls := 0
 					var change func()
@@ -47,17 +49,11 @@ func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
 					status := 403
 					change = func() {
 						switch mutation {
-						case "mapping":
-							group.ModelMappings[0].Name = "renamed-4.1"
 						case "allowlist":
 							group.ModelIDs = mappedSources
 						case "accounts":
 							group.AccountIDs = []string{"wb-cn", "trae-acct"}
 							group.ModelMappings[0].Sources = []string{"workbuddy/cn/shared", "trae/cn/shared"}
-						case "force":
-							status = 422
-							s.Store.UpdateSettings(func(settings *storage.Settings) { settings.ForceModel = "test-model" })
-							return
 						case "cooldown":
 							status = 422
 							s.Store.MarkModelResult("a", "backup-model", false, "fixture", 60)
@@ -74,7 +70,7 @@ func TestSummaryReplacementRechecksLivePolicy(t *testing.T) {
 							t.Error(err)
 						}
 					}
-					r := httptest.NewRequest("POST", path, strings.NewReader(mappedBody(path, stream, mappedPublic)))
+					r := httptest.NewRequest("POST", path, strings.NewReader(mappedBody(path, stream, "codearts/test-model")))
 					r.Header.Set("Authorization", "Bearer "+key)
 					r.Header.Set("X-CodeArts-Request-Kind", "summary")
 					w := httptest.NewRecorder()

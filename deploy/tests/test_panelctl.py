@@ -284,6 +284,15 @@ class UpgradeTest(unittest.TestCase):
             with self.assertRaises(ops.OpsError):
                 ops.upgrade(args)
         self.assertEqual(service.calls, [])
+
+    def test_same_version_reports_no_update_without_outage(self):
+        root,args,service=self.upgrade_fixture(version='v1.0.0')
+        before=(root/'data/state.json').read_bytes()
+        with patch.object(ops,'Service',return_value=service),patch.object(ops,'check_release',side_effect=lambda p:json.loads((p/'manifest.json').read_text())):
+            with self.assertRaisesRegex(ops.OpsError,'发布源没有更新版本'):
+                ops.upgrade(args)
+        self.assertEqual(service.calls,[])
+        self.assertEqual((root/'data/state.json').read_bytes(),before)
         self.assertEqual((root / 'current').resolve().name, 'v1.0.0')
 
     def test_downgrade_rejected_before_outage(self):

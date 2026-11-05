@@ -1,0 +1,156 @@
+{
+  "kind": "U1_source_baseline",
+  "captured_at": "2026-11-05T09:36:19.118Z",
+  "commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "branch": "main",
+  "schema": 10,
+  "go_language": "1.27.0",
+  "go_toolchain": "go1.27.3",
+  "go_require_directives_present": false,
+  "node_observed": "v24.11.0",
+  "package_manager": "pnpm@10.34.9",
+  "worktree_at_entry": {
+    "tracked_modified": [
+      "docs/architecture/README.md",
+      "scripts/connect-client.py"
+    ],
+    "untracked": [
+      "docs/architecture/UNIFIED-MODELS-PLAN.md"
+    ]
+  },
+  "file_sha256": {
+    "backend/go.mod": "0c59e67179d2ef4b8c7a3044d3d05eb5fce782c1fb328592a2fcbb18c3d9fe16",
+    "frontend/package.json": "0f9fe295c6f0b2e4c60da6587cca79b6b3f060277c04061231cab121ef0fb71e",
+    "frontend/pnpm-lock.yaml": "af3d827c0fb58acc247098f38972f763505a60876543a09f7f47c640d3938b60",
+    "tools/check_architecture.py": "30ee9d3328f2fb0270792ec5aea0a20635fa733ea990f1fa2339ce5bc985a6c4",
+    "scripts/connect-client.py": "94ca9a14900792421df6a12f6226b8e8e3a082c0b8dd5370fb3c18c170c11100",
+    "backend/internal/access/models.go": "f5c1a584e705bf5479bde13da86d9d58c2f49428808cb10b3cec610dfeb71475",
+    "backend/internal/access/management.go": "89f6141796f9f21e3ae88128940a554b963299998b02694c087ae48d3d848bd2",
+    "backend/internal/catalog/routing.go": "ae9c9ead1f142c4c06904e2ed02fa9e55c2693ecfe893f5095fd5b87c173a829",
+    "backend/internal/config/model_policy.go": "279f795bffcb1c20bc25be42f31eb07aa6fa9ecaf643e925c7e69ab605d2039c",
+    "backend/internal/config/model_recommendations.go": "cd9d8c5cec843100aacdc3c5519654e0007bbf3b7e9fe83ec4d2e04db2cdbae0",
+    "backend/internal/config/management.go": "325174bcb8584e7881a8ee3db6828c9b114a5c2d28141be9d07fc7622a7f86f5",
+    "backend/internal/registry/registry.go": "783da6d7a485ed00c0f59ef3252750adbec83270c7d4dc074907ce31233ab530",
+    "backend/internal/provider/provider.go": "300f9e45b00ccbfc8e224c20fffc07667901975aa5af7df0de9db47fb1673c50",
+    "backend/internal/storage/store.go": "041a7f018893c4ca961e5f7b858c02d55315c752c9b3f5da74a7a38bbd491b2d",
+    "backend/internal/storage/groups.go": "828fd10985de26541cbbc69290f77c128ba80bb6e239236ae22f4ba7496266d7",
+    "backend/internal/storage/pool.go": "e56d98f0322567239b6d67cb21c5fcbfb1228dcaacd2b5d8438b8d2e1f7e94ff",
+    "backend/internal/storage/model_mapping.go": "7465f1958d264ceb8874eb3eb107ca07f2a533a77c6544741298e9c390a693d7",
+    "backend/internal/storage/model_policy.go": "4c216f29f9a152f7443e8d7fefd9b59340572790f138b27acb5e02f9931eaaab",
+    "backend/internal/storage/pricing.go": "9e61dd94d131821ecbc779e67f17310f647771506d053afb306716bce0572045",
+    "backend/internal/storage/compatibility.go": "bba907a8d6fe191abb85611787ab02ed7646635e9a5993704533efa5439af7d6",
+    "backend/internal/server/group_model_mapping.go": "861eaa6f9127e950e947e9efa87e2cc7224dc1b9583617666f4a1a279fbb20a6",
+    "backend/internal/server/client_profile.go": "79afb47eb6d712ee3f514aee5d4122046c1ee1c59ce403e204bedef53fc0d3a0",
+    "backend/internal/server/models.go": "28ef0ed3e7207b0394565ef6630d2da76bcbd643344e54dc383e6347c4fd96a3",
+    "backend/internal/gateway/admission.go": "99c3ed67b7bed8c4c5a70092854ae05759147f0419de084b4bbe3fa844659374",
+    "backend/internal/gateway/retry.go": "451450e8bdf16ef0030f9f3bace5dd67dc82a53e682d2e241c9aadc1b55268d4",
+    "api/admin.openapi.yaml": "c64bbb89b8e90bf77009b91206cda0370eb4cd0218a730443deca26337177865",
+    "deploy/panelctl.py": "699dd13a38852ae8102cadccfae46ec19e0f89abb54f536eb6894af724797ac9"
+  },
+  "selected_direct_internal_imports": {
+    "backend/internal/access/models.go": [],
+    "backend/internal/access/management.go": [],
+    "backend/internal/catalog/routing.go": [
+      "codearts2api/internal/access",
+      "codearts2api/internal/accounts",
+      "codearts2api/internal/config",
+      "codearts2api/internal/provider"
+    ],
+    "backend/internal/config/model_policy.go": [],
+    "backend/internal/config/model_recommendations.go": [
+      "codearts2api/internal/provider"
+    ],
+    "backend/internal/config/management.go": [
+      "codearts2api/internal/access"
+    ],
+    "backend/internal/registry/registry.go": [
+      "codearts2api/internal/codearts",
+      "codearts2api/internal/provider"
+    ],
+    "backend/internal/provider/provider.go": [],
+    "backend/internal/storage/store.go": [
+      "codearts2api/internal/access",
+      "codearts2api/internal/accounts",
+      "codearts2api/internal/codearts",
+      "codearts2api/internal/config",
+      "codearts2api/internal/scheduler",
+      "codearts2api/internal/usage"
+    ],
+    "backend/internal/storage/groups.go": [
+      "codearts2api/internal/access",
+      "codearts2api/internal/codearts",
+      "codearts2api/internal/provider"
+    ],
+    "backend/internal/storage/pool.go": [
+      "codearts2api/internal/accounts",
+      "codearts2api/internal/config",
+      "codearts2api/internal/provider",
+      "codearts2api/internal/scheduler"
+    ],
+    "backend/internal/storage/model_mapping.go": [
+      "codearts2api/internal/access",
+      "codearts2api/internal/provider"
+    ],
+    "backend/internal/storage/model_policy.go": [
+      "codearts2api/internal/config"
+    ],
+    "backend/internal/storage/pricing.go": [
+      "codearts2api/internal/usage"
+    ],
+    "backend/internal/storage/compatibility.go": [
+      "codearts2api/internal/access",
+      "codearts2api/internal/codearts",
+      "codearts2api/internal/config"
+    ],
+    "backend/internal/server/group_model_mapping.go": [
+      "codearts2api/internal/accounts",
+      "codearts2api/internal/catalog",
+      "codearts2api/internal/protocol",
+      "codearts2api/internal/registry",
+      "codearts2api/internal/storage"
+    ],
+    "backend/internal/server/client_profile.go": [
+      "codearts2api/internal/apierr",
+      "codearts2api/internal/config",
+      "codearts2api/internal/provider",
+      "codearts2api/internal/storage"
+    ],
+    "backend/internal/server/models.go": [
+      "codearts2api/internal/accounts",
+      "codearts2api/internal/catalog",
+      "codearts2api/internal/provider",
+      "codearts2api/internal/registry"
+    ],
+    "backend/internal/gateway/admission.go": [
+      "codearts2api/internal/accounts",
+      "codearts2api/internal/usage"
+    ],
+    "backend/internal/gateway/retry.go": [
+      "codearts2api/internal/accounts"
+    ]
+  },
+  "notes": [
+    "Imports are a source scan of the listed files, not go list or a compiled dependency check.",
+    "No production state, credentials or logs were read.",
+    "No new routing behavior or deployment is certified by this baseline."
+  ],
+  "u1_verification": {
+    "checked_at": "2026-11-05T09:45:48.315Z",
+    "documents": [
+      "docs/adr/0018-global-unified-models.md",
+      "docs/architecture/UNIFIED-MODELS-CONTRACT.md",
+      "docs/architecture/UNIFIED-MODELS-MIGRATION.md",
+      "docs/architecture/UNIFIED-MODELS-PLAN.md",
+      "docs/acceptance/UNIFIED-MODELS-U1-2026-11-05.md"
+    ],
+    "local_links": 38,
+    "json_examples": 3,
+    "permission_cases": 24,
+    "migration_cases": 24,
+    "planned_acceptance_cases": 16,
+    "unchanged_source_files": 27,
+    "whitespace": "passed",
+    "status": "passed",
+    "scope": "Documentation integrity and source baseline only; no new-feature behavior test."
+  }
+}

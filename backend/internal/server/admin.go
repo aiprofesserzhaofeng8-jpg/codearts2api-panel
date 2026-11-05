@@ -1,8 +1,10 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -82,15 +84,17 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 
 	cacheErr := s.Catalog.Error()
 
+	settings := sanitizedSettings(s.Store.Settings())
+	settings["model_routing_revision"] = s.Store.UnifiedSnapshot().Revision
 	writeJSON(w, http.StatusOK, map[string]any{
 		"today":           today,
 		"accounts":        safe,
-		"groups":          s.Store.Groups(),
+		"groups":          s.Store.CanonicalGroups(),
 		"providers":       s.providerDescriptors(),
 		"provider_errors": s.providerModelErrors(),
 		"keys":            safeKeys,
 		"models":          s.Reg.List(s.Store.Settings().ModelAliases),
-		"settings":        sanitizedSettings(s.Store.Settings()),
+		"settings":        settings,
 		"stats":           s.Store.Stats(),
 		"upstream_error":  cacheErr,
 	})
@@ -303,17 +307,49 @@ func (s *Server) handleAdminStats(w http.ResponseWriter, r *http.Request) {
 
 // handleAdminSettings 读取或更新设置。
 func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusOK, sanitizedSettings(s.Store.Settings()))
+		out := sanitizedSettings(s.Store.Settings())
+		out["model_routing_revision"] = s.Store.UnifiedSnapshot().Revision
+		writeJSON(w, http.StatusOK, out)
 		return
 	}
 	var body config.SettingsUpdate
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil {
-		writeErr(w, http.StatusBadRequest, "请求体解析失败", "invalid_request_error")
+	var raw json.RawMessage
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+	if err := decoder.Decode(&raw); err != nil {
+		writeErr(w, 400, "请求体解析失败", "invalid_request_error")
 		return
 	}
-	if err := s.Configuration.UpdateSettings(body); err != nil {
-		writeErr(w, 400, err.Error(), "invalid_request_error")
+	if json.Unmarshal(raw, &body) != nil {
+		writeErr(w, 400, "请求体解析失败", "invalid_request_error")
+		return
+	}
+	var fields map[string]json.RawMessage
+	_ = json.Unmarshal(raw, &fields)
+	_, aliases := fields["model_aliases"]
+	_, defaults := fields["default_model"]
+	_, force := fields["force_model"]
+	if aliases || defaults || force {
+		// Only routing writes tighten the legacy settings decoder contract.
+		rest, err := io.ReadAll(io.LimitReader(io.MultiReader(decoder.Buffered(), r.Body), 1<<20))
+		if err != nil || len(bytes.TrimSpace(rest)) != 0 {
+			writeErr(w, 400, "请求须为单个 JSON 对象", "invalid_request_error", "invalid_model_definition")
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewReader(raw))
+		if _, ok := decodeModelObject(w, r, 1<<20, &body); !ok {
+			return
+		}
+	}
+	for _, field := range []string{"model_aliases", "default_model", "force_model"} {
+		if value, present := fields[field]; present && string(value) == "null" {
+			writeErr(w, 400, "模型设置不能为 null", "invalid_request_error", "invalid_model_definition")
+			return
+		}
+	}
+	if err := s.Configuration.UpdateSettingsChecked(body); err != nil {
+		writeModelError(w, err, 400)
 		return
 	}
 
@@ -321,7 +357,9 @@ func (s *Server) handleAdminSettings(w http.ResponseWriter, r *http.Request) {
 	s.ApplyIdentity()
 	// 限流参数变更后立即生效（不用重启）
 	s.ApplyRateLimit()
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "settings": sanitizedSettings(s.Store.Settings())})
+	out := sanitizedSettings(s.Store.Settings())
+	out["model_routing_revision"] = s.Store.UnifiedSnapshot().Revision
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "settings": out})
 }
 
 // ApplyIdentity 把设置里的身份头同步到上游客户端。

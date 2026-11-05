@@ -103,7 +103,8 @@ func TestRoutingResolutionOrderingAndMissingVisibility(t *testing.T) {
 	}
 	st.scopeError = errors.New("deleted key")
 	_, _, err = r.Resolve("key", settings, "missing")
-	if !errors.As(err, &upstream) || upstream.Status != 403 {
+	var denied *config.ModelError
+	if !errors.As(err, &denied) || denied.Status != 403 {
 		t.Fatal("key authorization was not first", err)
 	}
 	st.scopeError = nil

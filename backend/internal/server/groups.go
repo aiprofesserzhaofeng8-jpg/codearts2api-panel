@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"codearts2api/internal/access"
 	"codearts2api/internal/catalog"
@@ -39,20 +40,42 @@ func (s *Server) checkGroupModel(ctx context.Context, model string) error {
 	})
 }
 func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, 200, map[string]any{"groups": s.AccessManagement.Groups()})
+		writeJSON(w, 200, map[string]any{"groups": s.AccessManagement.CanonicalGroups()})
 	case http.MethodPost:
-		var g access.AccountGroup
-		var raw json.RawMessage
-		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 256<<10)).Decode(&raw) != nil || json.Unmarshal(raw, &g) != nil {
-			writeErr(w, 400, "分组格式无效", "invalid_request_error")
+		var body struct {
+			access.AccountGroup
+			ExpectedRevision uint64 `json:"expected_revision"`
+		}
+		fields, ok := decodeModelObject(w, r, 256<<10, &body)
+		if !ok {
 			return
 		}
-		var fields map[string]json.RawMessage
-		_ = json.Unmarshal(raw, &fields)
-		for _, old := range s.AccessManagement.Groups() {
+		if _, legacy := fields["model_mappings"]; legacy {
+			writeErr(w, 400, "旧模型映射写入已移除，请使用统一模型授权", "invalid_request_error", "legacy_mapping_field")
+			return
+		}
+		for _, field := range []string{"unified_models", "raw_model_mode", "raw_models_visible_default", "expected_revision"} {
+			if value, present := fields[field]; present && string(value) == "null" {
+				writeErr(w, 400, "分组授权字段不能为 null", "invalid_request_error", "invalid_model_definition")
+				return
+			}
+		}
+		g := body.AccountGroup
+		if _, present := fields["raw_model_mode"]; present && g.RawModelMode != "legacy" && g.RawModelMode != "qualified_only" {
+			writeErr(w, 400, "原始模型模式无效", "invalid_request_error", "invalid_model_definition")
+			return
+		}
+		for _, old := range s.AccessManagement.CanonicalGroups() {
 			if old.ID == g.ID {
+				if _, ok := fields["raw_model_mode"]; !ok {
+					g.RawModelMode = old.RawModelMode
+				}
+				if _, ok := fields["raw_models_visible_default"]; !ok {
+					g.RawModelsVisibleDefault = old.RawModelsVisibleDefault
+				}
 				if _, ok := fields["default_model"]; !ok {
 					g.DefaultModel = old.DefaultModel
 				}
@@ -61,9 +84,9 @@ func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		saved, err := s.AccessManagement.SaveGroup(g)
+		saved, err := s.AccessManagement.SaveUnifiedGroup(g, body.ExpectedRevision)
 		if err != nil {
-			writeErr(w, 400, err.Error(), "invalid_request_error")
+			writeModelError(w, err, 400)
 			return
 		}
 		writeJSON(w, 200, map[string]any{"ok": true, "group": saved})
@@ -73,8 +96,17 @@ func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 400, "缺少分组标识", "invalid_request_error")
 			return
 		}
-		if err := s.AccessManagement.DeleteGroup(id); err != nil {
-			writeErr(w, 409, err.Error(), "invalid_request_error")
+		expected, err := strconv.ParseUint(r.URL.Query().Get("expected_revision"), 10, 64)
+		if r.URL.Query().Get("expected_revision") == "" {
+			writeErr(w, 428, "缺少分组版本条件", "invalid_request_error", "revision_required")
+			return
+		}
+		if err != nil {
+			writeErr(w, 400, "分组版本无效", "invalid_request_error")
+			return
+		}
+		if err := s.AccessManagement.DeleteUnifiedGroup(id, expected); err != nil {
+			writeModelError(w, err, 409)
 			return
 		}
 		writeJSON(w, 200, map[string]any{"ok": true})

@@ -136,6 +136,7 @@ def main():
     parser.add_argument('client', choices=['pi', 'codex', 'claude'])
     parser.add_argument('--url', default=os.environ.get('CODEARTS_BASE_URL', 'http://127.0.0.1:10087'))
     parser.add_argument('--model', default='', help='Explicit model; otherwise use the group client preference or request default')
+    parser.add_argument('--list-models', action='store_true', help='List models visible to this API key without launching the client')
     parser.add_argument('--config-dir', type=Path)
     parser.add_argument('--check-sandbox', action='store_true', help='Also validate the native Codex sandbox without a model request')
     parser.add_argument('--check', action='store_true', help='Validate connectivity and write client profile without launching a model request')
@@ -150,11 +151,28 @@ def main():
     if not key:
         raise ValueError('An API key is required')
     env['CODEARTS_API_KEY'] = key
+    if args.list_models:
+        request = urllib.request.Request(base + '/v1/models', headers={'Authorization': 'Bearer ' + key})
+        try:
+            with urllib.request.build_opener(NoRedirect()).open(request, timeout=20) as response:
+                models = json.load(response)
+        except urllib.error.HTTPError as exc:
+            raise ValueError('Gateway model list request failed (HTTP %d)' % exc.code) from None
+        for entry in models.get('data', []):
+            model_id = entry.get('id')
+            if isinstance(model_id, str):
+                print(json.dumps(model_id, ensure_ascii=False))
+        return 0
     request = urllib.request.Request(base + '/v1/client-profile?' + urllib.parse.urlencode({'model': args.model}), headers={'Authorization': 'Bearer ' + key})
     try:
         with urllib.request.build_opener(NoRedirect()).open(request, timeout=20) as response:
             profile = json.load(response)
     except urllib.error.HTTPError as exc:
+        if exc.code == 422:
+            raise ValueError('Gateway has no client profile for the selected/default model (HTTP 422). '
+                             'Set --model to an available model with a configured client policy, '
+                             'or configure its context/output limits in the panel Models page. '
+                             'For DeepSeek, try --model deepseek-v4.1-flash; the key must allow this model.') from None
         raise ValueError('Gateway profile request failed (HTTP %d); verify gateway version, model and key' % exc.code) from None
     if profile.get('version') != 1 or profile.get('context_window', 0) <= 0:
         raise ValueError('Unsupported client profile')

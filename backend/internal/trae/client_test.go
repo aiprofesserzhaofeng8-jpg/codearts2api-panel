@@ -235,6 +235,21 @@ func TestModelsAndCreditFailClosed(t *testing.T) {
 	}
 }
 
+func TestModelsToolCapabilityLimitedToVerifiedConfig(t *testing.T) {
+	c := fixtureClient(t, func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"config_info_list":[{"config_name":"deepseek-v4.1-flash"},{"config_name":"custom_model_no-fc"},{"config_name":"DeepSeek-V4.1-Flash"}]}`)
+	})
+	models, err := c.Models(context.Background(), fixtureCredentials())
+	if err != nil || len(models) != 3 {
+		t.Fatal(err)
+	}
+	for i, want := range []string{"supported", "", ""} {
+		if models[i].ToolCalling != want || models[i].Context != 0 || models[i].ImageInput != "" {
+			t.Fatal("unverified capability inferred", i)
+		}
+	}
+}
+
 func TestUnknownCreditAndCanceledStream(t *testing.T) {
 	c := fixtureClient(t, func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, `{"user_entitlement_pack_list":[{"entitlement_base_info":{"quota":{"credits_limit":0}},"usage":{"credits_amount":0}}]}`)

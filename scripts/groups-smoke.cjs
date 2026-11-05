@@ -20,6 +20,7 @@ const assert=require('node:assert/strict');
   await ctx.route('**/admin/api/**',route=>{
    const req=route.request(),u=new URL(req.url());let out={ok:true};
    if(u.pathname.endsWith('/state'))out=data;
+   if(u.pathname.endsWith('/unified-models'))out={models:[],next_after:'',routing_revision:1};
    if(u.pathname.endsWith('/credits'))out={accounts:[]};
    if(u.pathname.endsWith('/models/refresh')){modelRefreshes++;out={models:data.models};}
    if(u.pathname.endsWith('/models/probe')){
@@ -29,7 +30,7 @@ const assert=require('node:assert/strict');
    if(u.pathname.endsWith('/groups')){
     if(req.method()==='POST'){
      saves++;if(failSave)return route.fulfill({status:500,json:{error:{message:'fixture save failed'}}});
-     const body=req.postDataJSON(),g={...body,id:body.id||'group-fixture'};
+     const body=req.postDataJSON(),g={...body,id:body.id||'group-fixture',revision:(body.expected_revision||0)+1};
      data.groups=data.groups.filter(x=>x.id!==g.id).concat(g);out={ok:true,group:g};
     }else if(req.method()==='DELETE')data.groups=data.groups.filter(g=>g.id!==u.searchParams.get('id'));
     else out={groups:data.groups};
@@ -69,7 +70,7 @@ const assert=require('node:assert/strict');
   await page.locator('#groupAccounts input[value="trae"]').uncheck();
   assert.equal(await page.locator('#groupModels option[value="trae/cn/web-search"]').count(),0);
   assert.equal(await page.locator('#groupModels').isDisabled(),true);
-  await page.locator('#groupAllowlist').check();await page.locator('#groupModels').selectOption(['workbuddy/cn/shared']);
+  await page.locator('#groupRawAccess summary').click();await page.locator('#groupAllowlist').check();await page.locator('#groupModels').selectOption(['workbuddy/cn/shared']);
   await page.locator('#groupSave').click();await page.waitForFunction(()=>document.querySelector('#groupError').textContent.includes('fixture save failed'));
   assert.equal(await page.locator('#groupName').inputValue(),'WB only');assert.equal(data.groups.length,0);
   failSave=false;await page.locator('#groupSave').click();await page.locator('#groupDialog').waitFor({state:'hidden'});
@@ -146,7 +147,7 @@ const assert=require('node:assert/strict');
   await page.setViewportSize({width:1440,height:1000});
   await page.locator('#modelsGroupFilter').selectOption('group-fixture');
   await page.locator('#nav-groups').click();await page.locator('#groups tr').getByRole('button',{name:'编辑',exact:true}).click();
-  assert.equal(await page.locator('#groupAllowlist').isChecked(),true);assert.deepEqual(await page.locator('#groupModels').evaluate(e=>Array.from(e.selectedOptions).map(o=>o.value)),['workbuddy/cn/shared']);
+  if(await page.locator('#groupRawAccess').getAttribute('open')===null)await page.locator('#groupRawAccess summary').click();assert.equal(await page.locator('#groupAllowlist').isChecked(),true);assert.deepEqual(await page.locator('#groupModels').evaluate(e=>Array.from(e.selectedOptions).map(o=>o.value)),['workbuddy/cn/shared']);
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'artifacts/groups-mobile.png'});
@@ -163,30 +164,7 @@ const assert=require('node:assert/strict');
   await page.waitForFunction(()=>document.querySelector('#groups').textContent.includes('尚未创建分组'));
   assert.equal(data.groups.length,0);
   await page.setViewportSize({width:1440,height:1000});
-  await page.locator('#addGroup').click();await page.locator('#groupName').fill('统一 DeepSeek');
-  await page.locator('#groupAccounts input[value="wb"]').check();await page.locator('#groupAccounts input[value="trae"]').check();
-  await page.locator('#addGroupMapping').click();
-  const mapping=page.locator('.group-mapping-row');
-  await mapping.locator('input').fill('deepseek');await mapping.locator('select').selectOption(['workbuddy/cn/shared','trae/cn/shared']);
-  const beforeInvalid=saves;await page.locator('#groupSave').click();assert.equal(saves,beforeInvalid);assert.match(await page.locator('#groupError').textContent(),/版本号/);
-  await mapping.locator('input').fill('deepseek-4.1-flash');
-  // Changing the allowed range retains previously chosen sources for explicit correction.
-  await page.locator('#groupAccounts input[value="trae"]').uncheck();
-  assert.match(await mapping.locator('option[value="trae/cn/shared"]').textContent(),/范围外/);
-  assert.deepEqual(await mapping.locator('select').evaluate(e=>Array.from(e.selectedOptions).map(o=>o.value)),['workbuddy/cn/shared','trae/cn/shared']);
-  await page.locator('#groupAccounts input[value="trae"]').check();
-  await page.screenshot({path:'artifacts/group-model-mapping-desktop.png'});
-  await page.setViewportSize({width:390,height:844});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  await page.screenshot({path:'artifacts/group-model-mapping-mobile.png'});
-  await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:'artifacts/group-model-mapping-mobile-dark.png'});await page.evaluate(()=>document.documentElement.dataset.theme='light');
-  await page.locator('#groupSave').click();await page.locator('#groupDialog').waitFor({state:'hidden'});
-  assert.deepEqual(data.groups[0].model_mappings,[{name:'deepseek-4.1-flash',sources:['workbuddy/cn/shared','trae/cn/shared']}]);
-  await page.locator('#groups tr').getByRole('button',{name:'编辑',exact:true}).click();
-  assert.equal(await mapping.locator('input').inputValue(),'deepseek-4.1-flash');
-  assert.deepEqual(await mapping.locator('select').evaluate(e=>Array.from(e.selectedOptions).map(o=>o.value)),['workbuddy/cn/shared','trae/cn/shared']);
-  await page.locator('#addGroupMapping').click();assert.equal(await mapping.count(),2);await mapping.nth(1).getByRole('button',{name:'移除'}).click();assert.equal(await mapping.count(),1);
-  await page.locator('#groupCancel').click();assert.deepEqual(errors,[]);
+  assert.equal(await page.locator('#addGroupMapping').count(),0);assert.equal(await page.locator('#applyGroupPresets').count(),0);assert.deepEqual(errors,[]);
   console.log('PASS: groups/key creation, binding guards, model search/group filters/counts/refresh, filtered batch probe payload, empty lists and desktop/mobile themes.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

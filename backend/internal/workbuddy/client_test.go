@@ -94,6 +94,24 @@ func TestCredentialRedirectIsNotFollowed(t *testing.T) {
 		t.Fatal("credential-bearing redirect followed")
 	}
 }
+
+func TestModelsRetainExplicitToolCapabilities(t *testing.T) {
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"code":0,"data":{"models":[{"id":"tools-1","supportsToolCall":true},{"id":"text-1","supportsToolCall":false},{"id":"unknown-1"}]}}`)
+	}))
+	defer up.Close()
+	c := New()
+	c.CNBase = up.URL
+	models, err := c.Models(context.Background(), fixtureAuth("cn"))
+	if err != nil || len(models) != 3 {
+		t.Fatal("catalog failed", err)
+	}
+	for i, want := range []string{"supported", "unsupported", ""} {
+		if models[i].ToolCalling != want {
+			t.Fatal("tool capability changed", i, models[i].ToolCalling)
+		}
+	}
+}
 func TestRefreshOnlySendsRefreshCredentialToRefreshPath(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v2/plugin/auth/token/refresh" || r.Header.Get("X-Refresh-Token") != "fixture-refresh" || r.Header.Get("Authorization") != "" {

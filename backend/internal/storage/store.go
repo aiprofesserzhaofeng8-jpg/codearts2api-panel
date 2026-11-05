@@ -32,12 +32,14 @@ type Stats = usage.Stats
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 10
+const StateVersion = 11
 
 // State 是全部持久化状态。
 type State struct {
-	Consumer access.ConsumerState `json:"consumer"`
-	Users    []access.User        `json:"users,omitempty"`
+	UnifiedModels        []config.UnifiedModel `json:"unified_models"`
+	ModelRoutingRevision uint64                `json:"model_routing_revision"`
+	Consumer             access.ConsumerState  `json:"consumer"`
+	Users                []access.User         `json:"users,omitempty"`
 	// UsageSequence is the journal checkpoint included in this snapshot.
 	UsageSequence           uint64                            `json:"usage_sequence,omitempty"`
 	Groups                  []AccountGroup                    `json:"groups,omitempty"`
@@ -341,10 +343,24 @@ func (s *Store) RequiresAPIKey() bool {
 // --- 设置 / 统计 / 日志 ---
 
 // UpdateSettings 局部更新设置。
-func (s *Store) UpdateSettings(fn func(*Settings)) {
+func (s *Store) UpdateSettings(fn func(*Settings)) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	fn(&s.st.Settings)
+	next := s.st.Settings
+	next.ModelAliases = copyAliases(next.ModelAliases)
+	fn(&next)
+	if err := validateRoutingSettings(s.st, next); err != nil {
+		return err
+	}
+	if routingSettingsChanged(s.st.Settings, next) {
+		revision, err := bumpRevision(s.st.ModelRoutingRevision)
+		if err != nil {
+			return err
+		}
+		s.st.ModelRoutingRevision = revision
+	}
+	s.st.Settings = next
+	return nil
 }
 
 // recordPreparedLocked applies one priced settlement. Recovery uses the stored

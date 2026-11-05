@@ -34,9 +34,9 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	r = beginInference(w, r, "messages")
 	start := time.Now()
 	var req protocol.Request
-	reject := func(status int, kind, message string) {
+	reject := func(status int, kind, message string, reason ...string) {
 		s.recordRejectedInference(r, req.Model, req.Stream, start, status, message)
-		writeAnthropicErr(w, status, kind, message)
+		writeAnthropicErr(w, status, kind, message, reason...)
 	}
 
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 32<<20))
@@ -58,7 +58,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, req.Model)
 	if err != nil {
-		reject(apierr.From(err).Status, "invalid_request_error", err.Error())
+		reject(apierr.From(err).Status, apierr.From(err).Anthropic, err.Error(), apierr.Reason(err))
 		return
 	}
 	req.Model = model.ID
@@ -72,7 +72,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	nativeMessages := model.Provider == provider.Claude
 	if model.Source == "mapping" && protocol.RequiresNativeMessages(&req) {
 		if err := mappedPlan(r.Context()).FilterProvider(provider.Claude); err != nil {
-			reject(400, "invalid_request_error", err.Error())
+			reject(400, "invalid_request_error", err.Error(), apierr.Reason(err))
 			return
 		}
 		nativeMessages = true
@@ -86,7 +86,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := filterMappedMessages(r.Context(), upReq["thinking"] != nil); err != nil {
-		reject(400, "invalid_request_error", err.Error())
+		reject(400, "invalid_request_error", err.Error(), apierr.Reason(err))
 		return
 	}
 	if model.Provider == provider.Trae && upReq["thinking"] != nil {
@@ -99,6 +99,10 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if err := mappedPlan(r.Context()).FilterCapabilities(upBody); err != nil {
+		reject(apierr.From(err).Status, apierr.From(err).Anthropic, err.Error(), apierr.Reason(err))
+		return
+	}
 	key := extractKey(r)
 	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))
 	timeout := time.Duration(settings.RequestTimeout) * time.Second
@@ -134,7 +138,7 @@ func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body 
 	if err != nil {
 		e := apierr.From(err)
 		s.record(r.Context(), key, acct, model.ID, false, e.Status, start, promptLen, 0, err)
-		writeAnthropicErr(w, e.Status, e.Anthropic, err.Error())
+		writeAnthropicErr(w, e.Status, e.Anthropic, err.Error(), apierr.Reason(err))
 		return
 	}
 
@@ -199,7 +203,7 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 			msg = err.Error()
 		}
 		s.record(r.Context(), key, acct, model.ID, true, e.Status, start, promptLen, outLen, err)
-		writeAnthropicErr(w, e.Status, e.Anthropic, msg)
+		writeAnthropicErr(w, e.Status, e.Anthropic, msg, apierr.Reason(err))
 		return
 	}
 	if streamErr != nil {
@@ -479,9 +483,13 @@ func writeSSE(w http.ResponseWriter, f http.Flusher, event string, payload map[s
 }
 
 // writeAnthropicErr 按 Anthropic 的错误结构返回。
-func writeAnthropicErr(w http.ResponseWriter, code int, typ, msg string) {
+func writeAnthropicErr(w http.ResponseWriter, code int, typ, msg string, reason ...string) {
+	err := map[string]any{"type": typ, "message": msg}
+	if len(reason) > 0 && reason[0] != "" {
+		err["reason"], err["code"] = reason[0], code
+	}
 	writeJSON(w, code, map[string]any{
 		"type":  "error",
-		"error": map[string]any{"type": typ, "message": msg},
+		"error": err,
 	})
 }

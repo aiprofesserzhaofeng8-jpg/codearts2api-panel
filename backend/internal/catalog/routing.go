@@ -37,9 +37,10 @@ func NewRouting(st RoutingStore, directory RoutingDirectory) *Routing {
 // ModelPlan belongs to one request. Only its candidate IDs may be narrowed for
 // protocol capability checks; atomic selection and reauthorization stay in Store.
 type ModelPlan struct {
-	Public string
-	Models map[string]provider.Model
-	IDs    []string
+	Selection access.UnifiedSelection
+	Public    string
+	Models    map[string]provider.Model
+	IDs       []string
 }
 
 func ModelProvider(m provider.Model) string {
@@ -49,7 +50,7 @@ func ModelProvider(m provider.Model) string {
 	return m.Provider
 }
 func GroupDenied() error {
-	return &provider.Error{Status: 403, Message: "当前 API Key 的分组不允许调用此模型或没有对应账号"}
+	return config.ModelFailure(403, "model_permission_denied", "当前 API Key 的分组不允许调用此模型或没有对应账号")
 }
 func ScopeAllows(scope access.AccessScope, list []*accounts.Account, model provider.Model) bool {
 	if !scope.Restricted {
@@ -71,6 +72,21 @@ func PublicMappingModel(name string) provider.Model {
 
 func (p *ModelPlan) PublicModel() provider.Model {
 	m := PublicMappingModel(p.Public)
+	if p.Selection.ID != "" {
+		m.Provider = "unified"
+	}
+	if len(p.IDs) > 0 {
+		m.ToolCalling = "supported"
+		for _, id := range p.IDs {
+			if p.Models[id].ToolCalling == "unsupported" {
+				m.ToolCalling = "unsupported"
+				break
+			}
+			if p.Models[id].ToolCalling != "supported" {
+				m.ToolCalling = ""
+			}
+		}
+	}
 	if len(p.IDs) == 0 {
 		return m
 	}
@@ -176,6 +192,9 @@ func (s *Routing) VisibleModels(key string) ([]provider.Model, error) {
 // ModelsForScope renders an already-authorized scope without acquiring a lease
 // or minting an internal key. It is also used by the authenticated user console.
 func (s *Routing) ModelsForScope(scope access.AccessScope) []provider.Model {
+	if st, ok := s.store.(UnifiedRoutingStore); ok {
+		return s.unifiedModelsForScope(st.UnifiedSnapshot(), scope)
+	}
 	settings := s.store.Settings()
 	list := s.store.Accounts()
 	out := []provider.Model{}
@@ -209,6 +228,9 @@ func (s *Routing) Resolve(key string, settings config.Settings, requested string
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
 		return provider.Model{}, nil, GroupDenied()
+	}
+	if st, ok := s.store.(UnifiedRoutingStore); ok {
+		return s.resolveUnified(st.UnifiedSnapshot(), scope, settings, requested)
 	}
 	if len(scope.ModelMappings) > 0 {
 		return s.ResolveMapped(settings, scope, requested)
@@ -245,6 +267,9 @@ func (s *Routing) Check(key, model string, search bool, plan *ModelPlan, fallbac
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
 		return GroupDenied()
+	}
+	if plan != nil && plan.Selection.ID != "" && !search {
+		return s.checkUnified(scope, model, plan)
 	}
 	if !scope.Restricted {
 		return nil
@@ -293,6 +318,9 @@ func (p *ModelPlan) FilterMessages(thinking bool) error {
 	}
 	p.IDs = ids
 	if len(ids) == 0 {
+		if p.Selection.ID != "" {
+			return config.ModelFailure(400, "model_capability_unavailable", "此统一模型没有支持 Messages thinking 控制的来源")
+		}
 		return &provider.Error{Status: 400, Message: "此统一模型没有支持 Messages thinking 控制的来源"}
 	}
 	return nil
@@ -312,12 +340,22 @@ func (p *ModelPlan) FilterProvider(platform string) error {
 		}
 	}
 	if len(ids) == 0 {
+		if p.Selection.ID != "" {
+			return config.ModelFailure(400, "model_capability_unavailable", "此统一模型没有支持原生 Messages 思考与签名的来源")
+		}
 		return &provider.Error{Status: 400, Message: "此统一模型没有支持原生 Messages 思考与签名的来源"}
 	}
 	p.IDs = ids
 	return nil
 }
 func (s *Routing) ModelPolicy(key string, model provider.Model, policies *config.ModelPolicies) (config.ModelPolicy, bool) {
+	if st, ok := s.store.(UnifiedRoutingStore); ok && model.Source == "mapping" {
+		scope, err := s.store.AccessScope(key)
+		if err != nil {
+			return config.ModelPolicy{}, false
+		}
+		return s.unifiedPolicy(st.UnifiedSnapshot(), scope, model.ID, policies)
+	}
 	if model.Source != "mapping" {
 		return policies.For(model)
 	}

@@ -33,7 +33,8 @@ type Model struct {
 	Scope      string `json:"scope,omitempty"`
 	UpstreamID string `json:"upstream_id,omitempty"`
 	// Empty means unknown; never infer image support from a model's name.
-	ImageInput string `json:"image_input,omitempty"`
+	ImageInput  string `json:"image_input,omitempty"`
+	ToolCalling string `json:"tool_calling,omitempty"`
 }
 
 func (m Model) InputModalities() []string {

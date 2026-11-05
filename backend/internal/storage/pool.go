@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"codearts2api/internal/access"
 	"fmt"
 	"sync"
 	"time"
@@ -71,7 +72,11 @@ func (s *Store) AcquireAccountForKey(session, model string, exclude map[string]b
 func (s *Store) AcquireMappedAccount(session, public string, models []string, exclude map[string]bool, key string) (*accounts.Account, string, func(), error) {
 	return s.acquireAccountForModels(session, models, exclude, key, public)
 }
-func (s *Store) acquireAccountForModels(session string, models []string, exclude map[string]bool, key, public string) (*accounts.Account, string, func(), error) {
+func (s *Store) AcquireUnifiedAccount(session, public string, models []string, exclude map[string]bool, key string, selection access.UnifiedSelection) (*accounts.Account, string, func(), error) {
+	return s.acquireAccountForModels(session, models, exclude, key, public, selection)
+}
+
+func (s *Store) acquireAccountForModels(session string, models []string, exclude map[string]bool, key, public string, selections ...access.UnifiedSelection) (*accounts.Account, string, func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	access, err := s.accessScopeLocked(key)
@@ -79,6 +84,13 @@ func (s *Store) acquireAccountForModels(session string, models []string, exclude
 		return nil, "", func() {}, err
 	}
 	allowedSources, mapped := access.Mapping(public)
+	if len(selections) > 0 {
+		allowedSources, err = s.unifiedSourcesLocked(access, public, models, selections[0])
+		if err != nil {
+			return nil, "", func() {}, err
+		}
+		mapped = true
+	}
 	if public != "" && (!mapped || !access.Callable(public)) {
 		return nil, "", func() {}, fmt.Errorf("分组统一模型已删除")
 	}

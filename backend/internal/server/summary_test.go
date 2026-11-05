@@ -173,7 +173,7 @@ func TestModelPolicyAPIChangesClientProfile(t *testing.T) {
 	s.Reg.Replace([]registry.Model{{ID: "deepseek-v4.1-flash"}})
 	p, _ := s.Store.ModelPolicy("deepseek-v4.1-flash")
 	p.KeepRecentTokens = 8192
-	r := httptest.NewRequest("POST", "/admin/api/model-policies", strings.NewReader(string(mustJSON(map[string]any{"model": "deepseek-v4.1-flash", "policy": p}))))
+	r := httptest.NewRequest("POST", "/admin/api/model-policies", strings.NewReader(string(mustJSON(map[string]any{"model": "deepseek-v4.1-flash", "policy": p, "expected_routing_revision": s.Store.UnifiedSnapshot().Revision}))))
 	w := httptest.NewRecorder()
 	s.handleAdminModelPolicies(w, r)
 	if w.Code != 200 {

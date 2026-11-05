@@ -317,7 +317,7 @@ func (s *Store) UserScope(id string) (AccessScope, string, error) {
 		if g.ID != u.GroupID {
 			continue
 		}
-		p := groupScopeLocked(g)
+		p := groupScopeLocked(s.projectGroupLocked(g))
 		return p, g.Name, nil
 	}
 	return AccessScope{}, "", fmt.Errorf("用户绑定分组不存在")

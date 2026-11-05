@@ -1,0 +1,63 @@
+{
+  "stage": "U2",
+  "status": "complete",
+  "checked_at": "2026-11-05T10:22:26.555Z",
+  "base_commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "state_schema": 11,
+  "checks": {
+    "make_check": {
+      "path": "/tmp/codearts-u2-check-final.log",
+      "sha256": "002787b6b523afb2612de53719e1eb8656776a9d6c963e585a59f388a82f8447",
+      "status": "passed"
+    },
+    "full_affected_race": {
+      "path": "/tmp/codearts-u2-race.log",
+      "sha256": "339ea8105ce97732994454e024d0e73df5b191437262a352362d600077923655",
+      "status": "passed"
+    },
+    "final_u2_race": {
+      "path": "/tmp/codearts-u2-final-race.log",
+      "sha256": "61e0f3455a176173ee52f0a5d18b6015f481d3f8c6cb140370375205f64a295d",
+      "status": "passed"
+    },
+    "windows_vet": {
+      "path": "/tmp/codearts-u2-windows-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed"
+    },
+    "final_targeted": {
+      "path": "/tmp/codearts-u2-final-targeted.log",
+      "sha256": "a5e67feb29dd769fe629841ec84e42c8a35edb96260baa65bf450d1d64d37b7c",
+      "status": "passed"
+    },
+    "deploy_migration": {
+      "path": "/tmp/codearts-u2-deploy.log",
+      "sha256": "59be3e8fd5d0c173f0a7e03043a6735a5adb2643a8a6bc2248ac2cdbd2cceb4d",
+      "status": "passed"
+    }
+  },
+  "cli": {
+    "status": "passed",
+    "checks": [
+      "precheck_read_only",
+      "offline_copy_permissions_and_schema",
+      "schema11_precheck_idempotent",
+      "existing_output_rejected",
+      "conflict_exit_code_2",
+      "active_writer_rejected",
+      "old_binary_rejects_schema11"
+    ],
+    "binary_sha256": "2eb7a65ff090f0049840f0d55954b9d703225a96aeec3e2c3fb1493dd5ca2a9d",
+    "scope": "Synthetic state only; no production data or upstream requests."
+  },
+  "production_state_migrated": false,
+  "service_restarted": false,
+  "published": false,
+  "known_limits": [
+    "Routing cutover U3 and new HTTP/UI contracts U4/U5 remain pending.",
+    "Old group API is a temporary single-store compatibility adapter; CAS enforced by new internal interfaces.",
+    "Offline active-writer detection is Linux-only.",
+    "Real systemd upgrade and crash-point qualification remain U6."
+  ],
+  "existing_launcher_sha256": "94ca9a14900792421df6a12f6226b8e8e3a082c0b8dd5370fb3c18c170c11100"
+}

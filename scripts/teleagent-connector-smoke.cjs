@@ -9,13 +9,20 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  let bridge;
  const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});
  try{for(const [locale,visit] of [['zh-CN',base],['en-US',base],['en-US','https://panel.fixture.invalid']]){
- bridge=await startBridge({origin:new URL(visit).origin,secret,login:async(task,signal)=>{
+ bridge=await startBridge({origin:new URL(visit).origin,secret,port:0,login:async(task,signal)=>{
   captures++;
   if(pendingMode)await new Promise((ok,fail)=>signal.addEventListener('abort',()=>{canceled++;fail(new Error('Fixture canceled'));},{once:true}));
   return {token,api_key:'sk-connector-fixture',device_id:'fixture-device',install_id:'fixture-install',app_version:'3.0.0'};
  }});
 
   pendingMode=false;const ctx=await browser.newContext({locale,viewport:{width:1280,height:900}}),page=await ctx.newPage();let downloaded=0,checks=0,saves=0,starts=0,accounts=[],errors=[];
+  // Leave any real local connector alone. Only this test browser forwards its
+  // fixed client URL to the ephemeral synthetic connector.
+  await ctx.route('http://127.0.0.1:18765/**',async route=>{
+    const request=route.request();
+    const response=await route.fetch({url:'http://127.0.0.1:'+bridge.port+new URL(request.url()).pathname,headers:{...request.headers(),host:'127.0.0.1:'+bridge.port}});
+    await route.fulfill({response});
+  });
   if(visit!==base){
     await ctx.route(visit+'/**',async r=>{const response=await fetch(base+new URL(r.request().url()).pathname);await r.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())});});
     await ctx.grantPermissions(['local-network-access'],{origin:visit});

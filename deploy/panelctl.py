@@ -67,6 +67,13 @@ def private_json(path, value):
         os.fsync(stream.fileno())
 
 
+def replace_private_json(path, value):
+    candidate = path.with_name(path.name + f'.{time.time_ns()}.tmp')
+    private_json(candidate, value)
+    os.replace(candidate, path)
+    sync_dir(path.parent)
+
+
 def sync_dir(path):
     fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
     try:
@@ -560,8 +567,35 @@ def install(args):
     print(f'服务状态：{"sudo systemctl" if system else "systemctl --user"} status {unit}')
 
 
+def model_migration_precheck(binary, state, source_schema=10):
+    result = subprocess.run([str(binary), '-check-state-migration', str(state)],
+                            capture_output=True, text=True, timeout=120)
+    require(result.returncode in (0, 2), '候选程序状态预检查失败；未修改数据')
+    try:
+        report = json.loads(result.stdout)
+    except ValueError:
+        raise OpsError('迁移预检查返回格式无效') from None
+    require(report.get('from_schema') == source_schema and report.get('to_schema') == 11,
+            '候选程序迁移范围不匹配')
+    require(result.returncode == 0 and report.get('ready') is True and report.get('conflicts') == [],
+            '统一模型迁移存在冲突；请先运行候选程序 -check-state-migration 查看报告')
+    return report
+
+
+def model_migration_copy(binary, source, target):
+    result = subprocess.run([str(binary), '-migrate-state-dir', str(source),
+                             '-migration-output-dir', str(target)],
+                            capture_output=True, text=True, timeout=300)
+    require(result.returncode == 0, '隔离数据迁移失败；保留原数据和候选目录')
+    require(state_schema(target / 'state.json') == 11 and
+            not (target / '.model-migration.pending.json').exists(), '迁移未完整提交')
+
+
 def upgrade(args):
     root = Path(args.root).absolute()
+    migration_marker = root / 'schema-migration.json'
+    require(not migration_marker.exists() and not migration_marker.is_symlink(),
+            '上次 schema 迁移尚未完成；保留数据，请按迁移记录恢复后再升级')
     config = json.loads((root / 'installation.json').read_text())
     require(config.get('scope', 'user') in ('user', 'system'), '安装记录的服务 scope 无效')
     system = config.get('scope', 'user') == 'system'
@@ -578,8 +612,15 @@ def upgrade(args):
         if system:
             account = service_account(config['unit'].removesuffix('.service'), root)
             system_release(candidate, account.pw_gid)
+        require(release_version(meta['version']) != release_version(previous['version']),
+                f'当前已安装 {previous["version"]}，发布源没有更新版本；未停止服务或修改数据')
         require(release_version(meta['version']) > release_version(previous['version']), '只允许升级到更高版本；不自动降级')
-        require(meta['schema'] == previous['schema'], '跨 schema 升级需单独迁移验收；本工具拒绝自动切换')
+        migrating = meta['schema'] != previous['schema']
+        if migrating:
+            require(getattr(args, 'migrate_schema', False) and previous['schema'] == 10 and meta['schema'] == 11
+                    and {'from': 10, 'to': 11} in meta.get('state_migrations', []),
+                    '跨 schema 升级需受支持的迁移包及显式 --migrate-schema；未停止服务')
+            model_migration_precheck(candidate / 'codearts2api-panel', root / 'data/state.json')
         dest = root / 'releases' / meta['version']
         require(not dest.exists() and not dest.is_symlink(), '候选版本目录已存在，请先排查上次升级结果')
         link = root / 'current.next'
@@ -587,29 +628,172 @@ def upgrade(args):
         verify_process(config['unit'], old / 'codearts2api-panel', system=system)
         # Preflight before outage; recheck the actual state after stopping.
         switched = False
+        data_moved = False
+        migration_output = root / f'data-schema11-{time.time_ns()}'
+        original_data = root / f'data-before-schema11-{time.time_ns()}'
         try:
             service.stop()
             no_writer(root / 'data')
-            require(state_schema(root / 'data/state.json') == meta['schema'], '实际状态 schema 不兼容，拒绝升级')
+            require(state_schema(root / 'data/state.json') == previous['schema'], '实际状态 schema 不兼容，拒绝升级')
+            if migrating:
+                model_migration_precheck(candidate / 'codearts2api-panel', root / 'data/state.json')
             archive = root / 'backups' / f'before-{meta["version"]}-{time.time_ns()}.tar.gz'
             backup(root / 'data', archive)
+            if migrating:
+                model_migration_copy(candidate / 'codearts2api-panel', root / 'data', migration_output)
+                if system:
+                    for entry in [migration_output, *migration_output.rglob('*')]:
+                        require(not entry.is_symlink(), '迁移输出不能包含链接')
+                        os.chown(entry, account.pw_uid, account.pw_gid)
+                private_json(migration_marker, {'from': 10, 'to': 11, 'phase': 'prepared',
+                             'old_release': str(old), 'new_release': str(dest),
+                             'original_data': str(original_data), 'candidate_data': str(migration_output),
+                             'backup': str(archive)})
+                sync_dir(root)
             publish_directory(candidate, dest)
             sync_dir(dest.parent)
             require(not link.exists() and not link.is_symlink(), '存在未处理的版本切换文件')
             link.symlink_to(dest.relative_to(root))
+            if migrating:
+                # These renames are separate crash points. The marker guards all
+                # future tool operations until successful startup is confirmed.
+                (root / 'data').rename(original_data)
+                data_moved = True
+                migration_output.rename(root / 'data')
+                sync_dir(root)
             os.replace(link, root / 'current')
             switched = True
             sync_dir(root)
+            if migrating:
+                record = json.loads(migration_marker.read_text())
+                record['phase'] = 'starting'
+                replace_private_json(migration_marker, record)
+                if system:
+                    os.chown(migration_marker, 0, account.pw_gid)
+                    os.chmod(migration_marker, 0o640)
             service.start()
             wait_health(f'http://127.0.0.1:{config["port"]}')
             verify_process(config['unit'], dest / 'codearts2api-panel', system=system)
+            if migrating:
+                require(state_schema(root / 'data/state.json') == 11, '启动后的状态版本不匹配')
+                migration_marker.rename(root / f'schema-migration-complete-{time.time_ns()}.json')
+                sync_dir(root)
         except Exception:
-            if switched:
+            if switched or data_moved:
                 service.stop()  # preserve newest credentials/ledger; never restore backup automatically
             else:
+                if migration_marker.exists():
+                    migration_marker.rename(root / f'schema-migration-aborted-{time.time_ns()}.json')
                 service.start()
             raise
     print('升级完成；保留旧程序和升级前备份，未覆盖旧凭据或账本。')
+
+
+def recover_schema(args):
+    """Resume the recorded 10->11 transition; never restore older state."""
+    root = Path(args.root).absolute()
+    require(root == root.resolve(), '恢复路径不能包含符号链接')
+    marker = root / 'schema-migration.json'
+    if not marker.exists():
+        require(not marker.is_symlink(), '迁移标记无效')
+        print('没有待处理的 schema 迁移；未修改文件或服务。')
+        return
+    require(marker.is_file() and not marker.is_symlink(), '迁移标记无效')
+    record = json.loads(marker.read_text())
+    require(record.get('from') == 10 and record.get('to') == 11 and record.get('phase') in ('prepared', 'starting'),
+            '不支持或无法识别的迁移阶段；未修改数据')
+    paths = {}
+    for key, parent, pattern in (
+            ('old_release', root / 'releases', r'v?\d+\.\d+\.\d+'),
+            ('new_release', root / 'releases', r'v?\d+\.\d+\.\d+'),
+            ('original_data', root, r'data-before-schema11-\d+'),
+            ('candidate_data', root, r'data-schema11-\d+')):
+        path = Path(record[key])
+        require(path.is_absolute() and path.parent == parent and re.fullmatch(pattern, path.name)
+                and path.resolve() == path and not path.is_symlink(), '迁移记录的路径无效')
+        paths[key] = path
+    old, dest = paths['old_release'], paths['new_release']
+    original, candidate = paths['original_data'], paths['candidate_data']
+    data = root / 'data'
+    require(old != dest and (root / 'current').is_symlink()
+            and (root / 'current').resolve() in (old, dest), '当前版本不属于此迁移，拒绝猜测恢复')
+    require(not data.is_symlink(), '数据目录不能是符号链接')
+    config = json.loads((root / 'installation.json').read_text())
+    require(config.get('scope', 'user') in ('user', 'system'), '安装记录的服务 scope 无效')
+    system = config.get('scope', 'user') == 'system'
+    if system:
+        system_root(root)
+    print(json.dumps({'phase': record['phase'], 'from': 10, 'to': 11,
+                      'old_version': old.name, 'new_version': dest.name,
+                      'data_schema': state_schema(data / 'state.json') if data.exists() else None,
+                      'action': 'forward_only'}, ensure_ascii=False))
+    if not args.apply:
+        return
+    # The exact archive is needed only if interruption preceded release publication.
+    if not dest.exists():
+        require(args.archive and args.sha256, '候选版本尚未发布；请提供原候选 --archive 和 --sha256')
+        with tempfile.TemporaryDirectory(dir=root / 'releases') as temp:
+            staging = Path(temp) / 'candidate'
+            unpack(args.archive, staging, 'release', args.sha256)
+            meta = check_release(staging)
+            require(meta['version'] == dest.name and meta['schema'] == 11
+                    and {'from': 10, 'to': 11} in meta.get('state_migrations', []), '恢复包与记录不匹配')
+            if system:
+                account = service_account(config['unit'].removesuffix('.service'), root)
+                system_release(staging, account.pw_gid)
+            publish_directory(staging, dest)
+            sync_dir(dest.parent)
+    require(check_release(dest)['schema'] == 11 and check_release(old)['schema'] == 10,
+            '恢复版本的 schema 不匹配')
+    link = root / 'current.next'
+    require(not link.exists() and not link.is_symlink() or link.is_symlink() and link.resolve() == dest,
+            '存在不属于此迁移的版本切换文件')
+    service = Service(unit=config['unit'], system=system)
+    if service.running():
+        verify_process(config['unit'], (root / 'current').resolve() / 'codearts2api-panel', system=system)
+    service.stop()
+    try:
+        for directory in (data, original, candidate):
+            if directory.exists():
+                no_writer(directory)
+                inventory(directory, digest=False)
+        if data.exists() and state_schema(data / 'state.json') == 10:
+            require(not original.exists() and candidate.is_dir(), '升级前数据位置有歧义')
+            model_migration_precheck(dest / 'codearts2api-panel', candidate / 'state.json', source_schema=11)
+            require(state_schema(candidate / 'state.json') == 11
+                    and not (candidate / '.model-migration.pending.json').exists(), '候选数据迁移不完整')
+            publish_directory(data, original)
+            sync_dir(root)
+        if not data.exists():
+            require(original.is_dir() and state_schema(original / 'state.json') == 10
+                    and candidate.is_dir() and state_schema(candidate / 'state.json') == 11
+                    and not (candidate / '.model-migration.pending.json').exists(), '迁移数据位置有歧义或不完整')
+            model_migration_precheck(dest / 'codearts2api-panel', candidate / 'state.json', source_schema=11)
+            publish_directory(candidate, data)
+            sync_dir(root)
+        require(state_schema(data / 'state.json') == 11 and original.is_dir() and not candidate.exists()
+                and not (data / '.model-migration.pending.json').exists(), '当前数据不是完整的新版本；未覆盖任何数据')
+        model_migration_precheck(dest / 'codearts2api-panel', data / 'state.json', source_schema=11)
+        if not link.is_symlink():
+            link.symlink_to(dest.relative_to(root))
+        os.replace(link, root / 'current')
+        sync_dir(root)
+        record['phase'] = 'starting'
+        replace_private_json(marker, record)
+        if system:
+            account = service_account(config['unit'].removesuffix('.service'), root)
+            os.chown(marker, 0, account.pw_gid)
+            os.chmod(marker, 0o640)
+        service.start()
+        wait_health(f'http://127.0.0.1:{config["port"]}')
+        verify_process(config['unit'], dest / 'codearts2api-panel', system=system)
+        require(state_schema(data / 'state.json') == 11, '启动后状态版本不匹配')
+        marker.rename(root / f'schema-migration-complete-{time.time_ns()}.json')
+        sync_dir(root)
+    except Exception:
+        service.stop()
+        raise
+    print('已继续完成 schema 迁移；保留最新数据与原目录，未恢复旧凭据或账本。')
 
 
 def source_process(args):
@@ -714,6 +898,11 @@ def parser():
     h = sub.add_parser('health')
     h.add_argument('--url', default='http://127.0.0.1:10087')
     h.add_argument('--ready', action='store_true', help='初始化等待也返回非零，供流量就绪检查')
+    recovery = sub.add_parser('recover-schema', help='检查或向前继续未完成的 10→11 迁移')
+    recovery.add_argument('--root', required=True)
+    recovery.add_argument('--apply', action='store_true', help='显式停写并向前恢复；默认只检查')
+    recovery.add_argument('--archive')
+    recovery.add_argument('--sha256')
     for name in ('install', 'upgrade', 'migrate'):
         cmd = sub.add_parser(name)
         cmd.add_argument('--archive', required=True)
@@ -727,6 +916,8 @@ def parser():
         if name == 'install':
             cmd.add_argument('--system', action='store_true', help='安装系统级服务，需要 root')
             cmd.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], default='127.0.0.1')
+        if name == 'upgrade':
+            cmd.add_argument('--migrate-schema', action='store_true', help='显式启用发布包声明支持的 10→11 迁移')
         if name == 'migrate':
             cmd.add_argument('--source-unit', required=True)
             cmd.add_argument('--source-binary', required=True)
@@ -738,6 +929,12 @@ def main():
     os.umask(0o077)
     args = parser().parse_args()
     try:
+        if args.command == 'recover-schema':
+            root = Path(args.root).absolute()
+            require(root.is_dir() and root == root.resolve() and not (root / 'data').is_symlink(),
+                    '恢复需要已存在的真实安装目录，数据不能是符号链接')
+            if not args.apply:
+                return dispatch(args)  # Inspection must not even create operation-lock files.
         if args.command == 'install' and args.system:
             system_root(Path(args.root).absolute())
         with ExitStack() as locks:
@@ -745,11 +942,11 @@ def main():
                 locks.enter_context(operation_lock(args.data_dir))
             elif args.command == 'restore':
                 locks.enter_context(operation_lock(args.target))
-            elif args.command in ('install', 'upgrade', 'migrate'):
+            elif args.command in ('install', 'upgrade', 'migrate', 'recover-schema'):
                 locks.enter_context(operation_lock(args.root))
                 if args.command == 'migrate':
                     locks.enter_context(operation_lock(args.data_dir))
-                if args.command == 'upgrade':
+                if args.command in ('upgrade', 'recover-schema'):
                     locks.enter_context(operation_lock(Path(args.root) / 'data'))
             return dispatch(args)
     except (OpsError, OSError, ValueError, KeyError, TypeError, tarfile.TarError, subprocess.TimeoutExpired) as error:
@@ -778,6 +975,8 @@ def dispatch(args):
         install(args)
     elif args.command == 'upgrade':
         upgrade(args)
+    elif args.command == 'recover-schema':
+        recover_schema(args)
     elif args.command == 'migrate':
         migrate(args)
     return 0

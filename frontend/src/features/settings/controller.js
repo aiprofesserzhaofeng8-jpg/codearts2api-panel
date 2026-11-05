@@ -31,6 +31,7 @@ export function renderSettings(s) {
     domState.$("#sPw").placeholder = s.admin_password_set ? tr("已设置，留空则不修改") : tr("未设置");
     if (settingsState.settingsDirty)
         return;
+    settingsState.routingRevision = s.model_routing_revision;
     const common=s.common_prompt || {prompt_mode:'passthrough',prompt_text:'',prompt_fallback:true,sanitize:true};
     Object.entries(promptFields).forEach(([suffix,key])=>{const el=document.getElementById('sCommon'+suffix);if(el.type==='checkbox')el.checked=common[key];else el.value=common[key] || '';});
     settingsState.providerPolicyFields.forEach(function (def) {
@@ -95,7 +96,21 @@ export function clearSettingsDirty() {
     domState.$("#settingsDirty").classList.add("hidden");
 }
 
+export function loadSettings() {
+    return api('/admin/api/settings').then(renderSettings).catch(function(e){if(!isAbortError(e))toast(tr('加载失败：')+e.message,'err');});
+}
+function lockSettings(busy) {
+    if(!document.querySelector('#tab-settings'))return;
+    document.querySelectorAll('#tab-settings input,#tab-settings select,#tab-settings textarea,#tab-settings button').forEach(el=>el.disabled=busy);
+    if(!busy)settingsState.providerPolicyFields.forEach(def=>applyInheritedPrompt(def.prefix));
+}
+
 export function mountSettings() {
+on('#reloadSettings',function(){
+    if(settingsState.settingsDirty&&!confirm(tr('重新读取将丢弃当前草稿，是否继续？')))return;
+    lockSettings(true);
+    return api('/admin/api/settings').then(function(s){clearSettingsDirty();domState.$('#sPw').value='';renderSettings(s);}).catch(function(e){if(!isAbortError(e))toast(tr('加载失败：')+e.message,'err');}).finally(()=>lockSettings(false));
+});
 settingsState.providerPolicyFields.forEach(def=>Object.keys(promptFields).forEach(suffix=>listen(document.getElementById(def.prefix+suffix+'Inherit'),'change',()=>applyInheritedPrompt(def.prefix))));
 Object.keys(promptFields).forEach(suffix=>listen(document.getElementById('sCommon'+suffix),'input',()=>settingsState.providerPolicyFields.forEach(def=>applyInheritedPrompt(def.prefix))));
 on("#saveSettings", function () {
@@ -108,6 +123,7 @@ on("#saveSettings", function () {
         return;
     }
     var body = {
+        expected_routing_revision: settingsState.routingRevision,
         common_prompt:readPrompt("sCommon"),
         codearts: readProviderPolicy("codearts"), workbuddy: readProviderPolicy("workbuddy"), trae: readProviderPolicy("trae"), qoder: readProviderPolicy("qoder"), kiro: readProviderPolicy("kiro"), chatgpt: readProviderPolicy("chatgpt"), claude: readProviderPolicy("claude"), teleagent: readProviderPolicy("teleagent"),
         pool: {
@@ -147,6 +163,7 @@ on("#saveSettings", function () {
     var np = domState.$("#sPw").value;
     if (np !== "")
         body.admin_password = np;
+    lockSettings(true);
     return api("/admin/api/settings", { method: "POST", body: body }).then(function (r) {
         domState.$("#sPw").value = "";
         toast(tr("设置已保存"), "ok");
@@ -155,7 +172,7 @@ on("#saveSettings", function () {
         if (np !== "")
             return adminLogin(np.trim()).then(refresh);
         return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("保存失败：") + e.message, "err"); });
+    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("保存失败：") + e.message + (e.status===409||e.status===428 ? ' · '+tr('草稿已保留，请重新读取后核对；不会自动覆盖新配置。') : ''), "err"); }).finally(()=>lockSettings(false));
 });
 // 设置表单一旦被编辑就标记为脏，refresh() 不再覆盖它。
 ["input", "change"].forEach(function (evt) {

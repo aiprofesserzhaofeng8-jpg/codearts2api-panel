@@ -12,17 +12,19 @@ policiesState.modelPolicies = {};
 policiesState.editingPolicy = null;
 
 policiesState.savingPolicy = false;
+policiesState.routingRevision = 0;
+policiesState.editingRevision = 0;
 
 policiesState.policyFields = { context_window: "#policyContext", max_output_tokens: "#policyOutput", reserve_tokens: "#policyReserve", keep_recent_tokens: "#policyKeep", trigger_tokens: "#policyTrigger", summary_max_tokens: "#policySummaryMax" };
 
 export function loadModelPolicies() {
     if (!serverState.data)
         return Promise.resolve();
-    return api("/admin/api/model-policies").then(function (d) { policiesState.modelPolicies = d.policies || {}; renderModelPolicies(); }).catch(function (e) { if (isAbortError(e)) return; toast(tr("策略加载失败：") + e.message, "err"); });
+    return api("/admin/api/model-policies").then(function (d) { policiesState.modelPolicies = d.policies || {}; policiesState.routingRevision=d.routing_revision; renderModelPolicies(); }).catch(function (e) { if (isAbortError(e)) return; toast(tr("策略加载失败：") + e.message, "err"); });
 }
 
 export function renderModelPolicies() {
-    var ids = Object.keys(policiesState.modelPolicies);
+    var ids = Object.keys(policiesState.modelPolicies).filter(id=>!id.startsWith('unified/'));
     ((serverState.data || {}).models || []).forEach(function (m) { if (m.source !== "alias" && ids.indexOf(m.id) < 0)
         ids.push(m.id); });
     var tb = domState.$("#modelPolicies");
@@ -43,6 +45,7 @@ export function openModelPolicy(id) {
     if (policiesState.savingPolicy)
         return;
     policiesState.editingPolicy = id;
+    policiesState.editingRevision = policiesState.routingRevision;
     domState.$("#policyModel").textContent = id;
     domState.$("#policyError").textContent = "";
     var p = policiesState.modelPolicies[id] || {};
@@ -72,7 +75,7 @@ export function closeModelPolicy() { if (!policiesState.savingPolicy) {
 export function saveModelPolicy() {
     if (policiesState.savingPolicy || !policiesState.editingPolicy)
         return;
-    var policy = { summary_enabled: domState.$("#policySummary").checked, summary_retry: domState.$("#policyRetry").checked, disable_summary_thinking: domState.$("#policyThinking").checked };
+    var policy = { source: (policiesState.modelPolicies[policiesState.editingPolicy]||{}).source || tr('管理员配置，非上游能力声明'), summary_enabled: domState.$("#policySummary").checked, summary_retry: domState.$("#policyRetry").checked, disable_summary_thinking: domState.$("#policyThinking").checked };
     for (var k in policiesState.policyFields) {
         var input = domState.$(policiesState.policyFields[k]);
         if (!input.checkValidity() || input.value.trim() === "") {
@@ -85,7 +88,8 @@ export function saveModelPolicy() {
     policy.summary_fallback_model = domState.$("#policyFallback").value;
     policiesState.savingPolicy = true;
     domState.$("#policyError").textContent = "";
-    return api("/admin/api/model-policies", { method: "POST", body: { model: policiesState.editingPolicy, policy: policy } }).then(function (d) { policiesState.modelPolicies = d.policies; renderModelPolicies(); domState.$("#policyDialog").close(); policiesState.editingPolicy = null; toast(tr("策略已保存；重新运行客户端启动器获取更新"), "ok"); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#policyError").textContent = e.message; }).finally(function () { policiesState.savingPolicy = false; });
+    domState.$('#policyDialog').querySelectorAll('input,select,button').forEach(el=>el.disabled=true);
+    return api("/admin/api/model-policies", { method: "POST", body: { model: policiesState.editingPolicy, policy: policy, expected_routing_revision:policiesState.editingRevision } }).then(function (d) { policiesState.modelPolicies = d.policies; policiesState.routingRevision=d.routing_revision; renderModelPolicies(); domState.$("#policyDialog").close(); policiesState.editingPolicy = null; toast(tr("策略已保存；重新运行客户端启动器获取更新"), "ok"); }).catch(function (e) { if (isAbortError(e)) return; domState.$("#policyError").textContent = e.message + (e.status===409||e.status===428 ? ' · '+tr('草稿已保留，请关闭后重新读取策略再编辑。') : ''); }).finally(function () { policiesState.savingPolicy = false; domState.$('#policyDialog').querySelectorAll('input,select,button').forEach(el=>el.disabled=false); });
 }
 
 export function mountPolicies() {

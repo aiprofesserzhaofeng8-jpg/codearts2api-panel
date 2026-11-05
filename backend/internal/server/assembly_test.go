@@ -147,4 +147,7 @@ func attachModelPolicies(s *Server) {
 	if s.ModelPolicies == nil && s.Reg != nil {
 		s.ModelPolicies = config.NewModelPolicies(s.Store, s.Reg)
 	}
+	if s.UnifiedModels == nil && s.Reg != nil {
+		s.UnifiedModels = catalog.NewManagement(s.Store, s.Reg, s.ModelPolicies)
+	}
 }

@@ -148,7 +148,7 @@ func TestManagementContractMatchesHandlers(t *testing.T) {
 	}
 	paths := spec["paths"].(map[string]any)
 	for _, match := range regexp.MustCompile(`mux.HandleFunc\("(/(?:admin|user)/[^\"]+)"`).FindAllStringSubmatch(string(source), -1) {
-		if paths[match[1]] == nil {
+		if paths[match[1]] == nil && !(strings.HasSuffix(match[1], "/") && paths[match[1]+"{id}"] != nil) {
 			t.Error("undocumented management route", match[1])
 		}
 	}

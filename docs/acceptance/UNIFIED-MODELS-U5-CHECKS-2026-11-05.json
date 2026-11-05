@@ -1,0 +1,389 @@
+{
+  "stage": "U5",
+  "status": "complete",
+  "date": "2026-11-05",
+  "recorded_at": "2026-11-05T20:45:42.084513+08:00",
+  "base_commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "prior_U1_U2_U3_U4_dirty_changes_preserved": true,
+  "state_schema": 11,
+  "environment": {
+    "go": "1.27.3",
+    "GOMAXPROCS": "2",
+    "GOFLAGS": "-p=2",
+    "platform": "linux_amd64"
+  },
+  "checks": [
+    {
+      "command": "make check GO=/home/white/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.3.linux-amd64/bin/go",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u5-check-final.log",
+      "log_sha256": "456ca0aa9dd121480364327f47d1fa3a211beba8ed7445b54971b5df2f42b81d"
+    },
+    {
+      "command": "./scripts/frontend.sh check",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u5-frontend-check.log",
+      "log_sha256": "d02c7bec5816394c8103af9552de9dea9b2acb11076608f065879d21098b032f"
+    },
+    {
+      "command": "CODEARTS_U5_BROWSER=1 go test ./internal/app -run '^TestUnifiedModelsBrowser$' -v -count=1 -timeout=4m",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u5-browser-final.log",
+      "log_sha256": "686b6681e2aa62ed5a45b7ab7e9092808f9876663eff7cb0313306f0b1d3af6f"
+    },
+    {
+      "command": "go test -race ./internal/app -run 'TestUnifiedManagement|TestUnifiedGroups' -count=1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u5-race.log",
+      "log_sha256": "fb9ee8b31f19710b2063731181c47f549ba7cc6cbb057ec8627ae6e733dceaba"
+    },
+    {
+      "command": "GOOS=windows GOARCH=amd64 go vet ./...",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u5-windows.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go build -o /tmp/codearts-u5-panel ./cmd/panel",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u5-build.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "test_counts": {
+    "frontend": 52,
+    "deployment": 91,
+    "existing_browser_regressions": 26,
+    "new_feature_frontend_cases": 6,
+    "new_settings_reload_regression": 1
+  },
+  "browser": {
+    "primary_result_path": "artifacts/unified-models-u5/browser-results.json",
+    "primary_result_sha256": "a9f5bce2f6313dc2a2420a894c33c0387ae664c9f7b3b7012235065662db9589",
+    "primary_result": {
+      "passed": true,
+      "real_management_api": true,
+      "real_upstream": false,
+      "checks": [
+        "create two sources",
+        "probe text only",
+        "grant selected sources",
+        "client default",
+        "disable source",
+        "refresh persistence",
+        "model and group CAS conflict with retained drafts",
+        "missing catalog retained",
+        "403 retained draft",
+        "desktop/mobile/theme",
+        "raw policy CAS",
+        "settings CAS",
+        "empty source catalog",
+        "local migration report safe text"
+      ],
+      "writes": [
+        {
+          "path": "/admin/api/unified-models",
+          "method": "POST",
+          "has_revision": false,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/models/probe",
+          "method": "POST",
+          "has_revision": false,
+          "has_routing_revision": false
+        },
+        {
+          "path": "/admin/api/groups",
+          "method": "POST",
+          "has_revision": false,
+          "has_routing_revision": false
+        },
+        {
+          "path": "/admin/api/unified-models/um_21f5e583de393d5f3b62c678b10dec35",
+          "method": "PUT",
+          "has_revision": true,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/unified-models/um_21f5e583de393d5f3b62c678b10dec35",
+          "method": "PUT",
+          "has_revision": true,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/unified-models/um_21f5e583de393d5f3b62c678b10dec35",
+          "method": "PUT",
+          "has_revision": true,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/unified-models/um_21f5e583de393d5f3b62c678b10dec35",
+          "method": "PUT",
+          "has_revision": true,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/unified-models/um_21f5e583de393d5f3b62c678b10dec35",
+          "method": "PUT",
+          "has_revision": true,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/groups",
+          "method": "POST",
+          "has_revision": true,
+          "has_routing_revision": false
+        },
+        {
+          "path": "/admin/api/model-policies",
+          "method": "POST",
+          "has_revision": false,
+          "has_routing_revision": true
+        },
+        {
+          "path": "/admin/api/settings",
+          "method": "POST",
+          "has_revision": false,
+          "has_routing_revision": true
+        }
+      ]
+    },
+    "existing_regression_runs": [
+      {
+        "name": "regression",
+        "results_path": "artifacts/unified-models-u5/regression/browser-results.json",
+        "sha256": "697be0e2d3cfd0cadb32524625d4a3689c10d7cb6d27ae2e34020456724cc794",
+        "passed": 23,
+        "total": 26
+      },
+      {
+        "name": "regression-retry",
+        "results_path": "artifacts/unified-models-u5/regression-retry/browser-results.json",
+        "sha256": "b2c0b9dc9827b060c310484b12efe1170d0d01f27108096b52c35f25212ba170",
+        "passed": 3,
+        "total": 3
+      },
+      {
+        "name": "regression-final",
+        "results_path": "artifacts/unified-models-u5/regression-final/browser-results.json",
+        "sha256": "a14c8d015b84a2237cfc6dda620ecb70bf6c92c53ab182fc3d2f42a90df9b78f",
+        "passed": 4,
+        "total": 4
+      }
+    ],
+    "merged_latest_results": [
+      {
+        "case": "account-create-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "consumer-entitlements-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "frontend-smoke",
+        "passed": true,
+        "latest_run": "regression-final"
+      },
+      {
+        "case": "groups-smoke",
+        "passed": true,
+        "latest_run": "regression-final"
+      },
+      {
+        "case": "growth-actions-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "growth-buddy-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "growth-multi-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "growth-tasks-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "i18n-smoke",
+        "passed": true,
+        "latest_run": "regression-final"
+      },
+      {
+        "case": "kiro-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "product-settings-smoke",
+        "passed": true,
+        "latest_run": "regression-final"
+      },
+      {
+        "case": "providers-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "qoder-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "quota-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "subscriptions-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "teleagent-connector-smoke",
+        "passed": true,
+        "latest_run": "regression-retry"
+      },
+      {
+        "case": "teleagent-helper-cdp-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "teleagent-helper-process-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "teleagent-login-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "teleagent-rewards-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "teleagent-smoke",
+        "passed": true,
+        "latest_run": "regression-retry"
+      },
+      {
+        "case": "trae-device-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "trae-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "unified-console-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "user-style-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      },
+      {
+        "case": "users-smoke",
+        "passed": true,
+        "latest_run": "regression"
+      }
+    ],
+    "regression_note": "First run passed 23 of 26. Corrected fixture settings reads, group accordion assumptions and fixed test-port collision; all 3 retried cases passed. Four relevant cases then passed once more. Test-only browser forwarding uses an ephemeral mock bridge and leaves the live TeleAgent connector untouched.",
+    "persistent_state_reopened_after_browser": true
+  },
+  "source_sha256": {
+    "api/admin.openapi.yaml": "20d2065460ecb54986aa0ba633bbe22f700e545ec7b1293a76514a50e9b07fb3",
+    "frontend/src/api/generated/admin.ts": "3912a0bbc20ee433ab6adef028d1700df126c968113449a23a7ff53f3e741ce5",
+    "frontend/src/api/client.ts": "c339a428c6c95b1a002ff5a5fc85152c4e95504691f870c2b5a0550fe28bfcb9",
+    "frontend/src/features/models/ModelsPage.vue": "b6c6e9e7e31aa5d7767c1e71f85b3cf29962d011ee5b3b36767fc11328ee1e29",
+    "frontend/src/features/models/UnifiedModelsPanel.vue": "96d93f2bde9e0d6c9475c759bba32613f16ed0e3fdf1dbbcfdde89bee6a507a9",
+    "frontend/src/features/models/policies.js": "8f2a8ba051e8390f3e3898ae9a843eb3be270fa5c53f0aa4b00bd78ba716417b",
+    "frontend/src/features/groups/GroupsPage.vue": "1d1e05b4a9d683fdafdc4abaf9ac935752e8658cc32d8db52689ed8195fe16fe",
+    "frontend/src/features/groups/controller.js": "a194fc4a4817f59c2c02e3a8c18c5b1e7ed1c18ad8d8212d177f1bfccdf30b6d",
+    "frontend/src/features/settings/SettingsPage.vue": "9a0d44156d919bf2dd4a116874a9c704b5baa91fc0fbb10e85fdc778e7096477",
+    "frontend/src/features/settings/controller.js": "95449cfb8c36299900acbf54ab22d3310142a50a5e52d4c118c4211093d38a57",
+    "frontend/src/shared/unified-models.ts": "7627ed3964d030a97a9e6542c603da96d0d1bdb9477316ec7ddc88895f39fd01",
+    "frontend/src/shared/read-model.ts": "beaabfe691e73151b40ed036689f988f6faf74304233ee73b326a4b7023874d7",
+    "frontend/src/styles/unified-models.css": "8f0d6506a79fcc13daf8d2260b9693dc965e1b47dd9ce84ce80a85aa02f1fc22",
+    "frontend/src/main.ts": "1415f8e18f5da78cb2c87fdac49204d41d39b98910c41ccd52e8b8c4feeb556a",
+    "frontend/src/app/bootstrap.ts": "2a443f79eade8ed88cb0f9a8e3f4599f155624d816498e072c18bcdaab1790d5",
+    "frontend/src/app/bootstrap.spec.ts": "aec040d20bd64b479a502cdbe10a76c0ec875b30dfa3105b33ae511e4532bf4e",
+    "frontend/src/app/routes.js": "fbaee69aa85a31ccd54e578d5a1b1ae875fcdde7fb7f681e15b66d75c2f0bfcd",
+    "frontend/src/i18n/locales/en.json": "836ec7b79db150dbf9415fe4b4d858cf68dd3bc3cc0e2c2766f02df6d65b277e",
+    "frontend/src/tests/unified-models.spec.ts": "07d7f07dc3849d8319ef944c3627478e71f9c57bbb901aac1f02a317d4a91bdc",
+    "backend/internal/app/app.go": "1c4ff0b1e5cca9f8ec1c1fa71ddb77029bf4557765ddaef362c762c8839efe7c",
+    "backend/internal/app/unified_models_test.go": "02f515b310b6bd83ee3fc798000c96dd17b97875e76588a93f75dbda759a4ab9",
+    "backend/internal/app/unified_ui_test.go": "7aebeb752a2025fd4bcdccb8b6cb74805b662491f895559159c80304dbff7112",
+    "backend/internal/server/admin.go": "8fc8e0bcfff18c558163f3854c7185192d9ddccda8088df80c2f73e979c99963",
+    "scripts/unified-models-smoke.cjs": "c4189464026b04983ec4df002f110f8181b2d1ae484e84a7b08c8fc6adf12a8c",
+    "scripts/frontend_e2e.py": "11b15027b516d53890c6a8bffa0d6b065ca99917c43e86adf2c6cbcb3f3037ad",
+    "scripts/frontend-fixture.cjs": "1357f28361a18e9dd39ff1f2a2a10dc4fcaac9cf778953a963ca3e6766274a71",
+    "scripts/groups-smoke.cjs": "ebc66edb2ba9070f40639119b82b81d292b021f382b52a4f0d48e60771e22b05",
+    "scripts/product-settings-smoke.cjs": "11f26a30c2715642ce77b24ef96ac9d07dac15c92e3f6d1f0d77315eb95a7e4f",
+    "scripts/qoder-smoke.cjs": "5161b5b4e7c7b9c0a760133f56eae649574e273127dbe0af3640445e5831d261",
+    "scripts/kiro-smoke.cjs": "e167d517b5614aedb97e94d4e6eef1e3495110c511117477c34000f03eb97d98",
+    "scripts/subscriptions-smoke.cjs": "8a7ec40b49441a6d797663b417d941460e3e0f79511788c7d43da5959407191a",
+    "scripts/teleagent-smoke.cjs": "a3efdb852168f152a84596ee376dee39dcd31a921a8054d71865f1a909943936",
+    "scripts/teleagent-connector-smoke.cjs": "4c324a3c8e5a0b0d836341f2cd6a29b12d20d1b165db44c37541a648d0d858b8",
+    "frontend/README.md": "be70d677dc3212302aa2346929d629a848581cacb0b31c5e669fe886c10fcc37",
+    "docs/architecture/README.md": "81586d1264d1679f3ee6b23f992d1c81978f59d502b72dcbcd69f80936a788c0",
+    "docs/architecture/UNIFIED-MODELS-PLAN.md": "88302d76b157bf83cdc2a532a8962b8441fc863dc8af99a66e9bb0277b69cbdc",
+    "docs/architecture/UNIFIED-MODELS-CONTRACT.md": "d3f457f1e53ced184630706e062fa95f179196f41a440667ed70d3825a627bdc",
+    "docs/acceptance/UNIFIED-MODELS-U5-2026-11-05.md": "908f7c6a32389ddfc6baabf845b431c82bbe68e20732f9dfa846a5699f1c8cbf"
+  },
+  "screenshots": {
+    "artifacts/unified-models-u5/groups-desktop-light.png": "0874d0f5f8b81ece95bc77241949d8222376474c6f76774eecfffdf64e7cfe58",
+    "artifacts/unified-models-u5/groups-mobile-dark.png": "c8cdd69cc82b41a94ea00340bcd3eab35d79dfcbec4048ba96fd60b60fa7e98b",
+    "artifacts/unified-models-u5/models-320.png": "4452e0ef6bc38ea0a89615f565ed7003e87fd0e52f3f8b96e8de26a0be869b81",
+    "artifacts/unified-models-u5/models-390.png": "5692077308da901d79cba8f1cdd53308f81a32ff4054e4686c9babb304167f77",
+    "artifacts/unified-models-u5/models-desktop-light.png": "b6cdc1069207030f3ef14742ecbe19e9245c480a5e84b318dd3135027638cd42"
+  },
+  "isolated_binary": {
+    "path": "/tmp/codearts-u5-panel",
+    "sha256": "f1916858b68d0a5c68e3d18a8675585d408541421f9c6f135bdc9df64300245a",
+    "deployed": false
+  },
+  "launcher": {
+    "path": "scripts/connect-client.py",
+    "sha256": "94ca9a14900792421df6a12f6226b8e8e3a082c0b8dd5370fb3c18c170c11100",
+    "unchanged_during_U5": true
+  },
+  "real_management_api": true,
+  "real_upstream": false,
+  "real_account_quota_consumed": false,
+  "system_service_updated": false,
+  "published": false,
+  "pushed": false,
+  "user_client_configuration_changed": false,
+  "production_state_changed": false,
+  "limitations": [
+    "Source probes use in-process mock providers; no live cross-provider inference proof.",
+    "The existing probe API has no persistent structured history; last_probe remains null and the UI labels local text results explicitly.",
+    "Comprehensive protocol/accounting/recovery, isolated Pi client tool loop, package and upgrade recovery remain U6."
+  ],
+  "remaining_stages": [
+    "U6"
+  ]
+}

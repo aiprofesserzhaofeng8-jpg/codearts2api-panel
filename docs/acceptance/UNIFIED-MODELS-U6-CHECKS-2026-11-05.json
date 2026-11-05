@@ -1,0 +1,554 @@
+{
+  "stage": "U6",
+  "status": "complete",
+  "all_stages_complete": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5",
+    "U6"
+  ],
+  "date": "2026-11-05",
+  "recorded_at": "2026-11-05T21:24:14.569161+08:00",
+  "base_commit": "6e8a6cdfa182cf697c915fb05a41e46ae6900cee",
+  "uncommitted_worktree": true,
+  "prior_U1_U5_work_preserved": true,
+  "schema": 11,
+  "environment": {
+    "go": "1.27.3",
+    "GOMAXPROCS": "2",
+    "GOFLAGS": "-p=2",
+    "node": "v24.11.0",
+    "pi": "1.4.0",
+    "platform": "linux_amd64"
+  },
+  "checks": [
+    {
+      "command": "GOMAXPROCS=2 GOFLAGS=-p=2 make check GO=<pinned-go>",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-check.log",
+      "log_sha256": "2251b8561a53030f4da400143ffd069ef74680c120a5918a114729c1fe8af6da"
+    },
+    {
+      "command": "GOMAXPROCS=2 GOFLAGS=-p=2 make race GO=<pinned-go>",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-race.log",
+      "log_sha256": "067d70f745b66433e0a79ae86066fe4e92afe7a1331b4cb3804b270f200b583b"
+    },
+    {
+      "command": "GOMAXPROCS=2 GOFLAGS=-p=2 make e2e GO=<pinned-go> BIN=/tmp/codearts-u6-panel",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-e2e.log",
+      "log_sha256": "27b59e240e03741f3d5d1a9a25e703cdcf16d052e484e8d3b36e5377d1bda869"
+    },
+    {
+      "command": "CODEARTS_U6_PI=1 go test -race ./internal/server -run '^TestUnified(PiClient|Delivery)' -v -count=1 -timeout=90s",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-client.log",
+      "log_sha256": "35691ac05c504802ab83d3ae0f9908787bbf828e591061d10090e56cf42d0925"
+    },
+    {
+      "command": "CODEARTS_U5_BROWSER=1 go test ./internal/app -run '^TestUnifiedModelsBrowser$' -v -count=1 -timeout=3m",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-browser.log",
+      "log_sha256": "e2fbcd4d090d362c13e31a25e928f59a1ebd0c832d13f288469648fbb7c78d39"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p test_connect_client.py",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-launcher.log",
+      "log_sha256": "38eeff1237d74275801617a271eced659e08b1cad8069897d18e659ae40641d8"
+    },
+    {
+      "command": "node scripts/pi/codearts-compaction.test.mjs",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-compaction.log",
+      "log_sha256": "c54e76e7080514c07c3de37da4c14dbff11e425a2b730362ca64ce50860c0a33"
+    },
+    {
+      "command": "GOOS=windows GOARCH=amd64 go vet ./...",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-windows.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go test ./internal/storage -run '^$' -bench 'Benchmark(UnifiedAdmission|ModelSelection|AdmissionSelection)' -benchmem -benchtime=250ms -count=3",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-bench.log",
+      "log_sha256": "a90680199398e75dc3cf4db54fbbbd869ed6e59afbeda5af5c90f21769de6c2f"
+    },
+    {
+      "command": "python3 deploy/package_release.py --version v0.4.0 --arch <amd64,arm64> --output artifacts/unified-models-u6/final-release; python3 deploy/package_windows.py --version v0.4.0 --output artifacts/unified-models-u6/final-release",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-packages.log",
+      "log_sha256": "0129a8f3c5f091874a65d31cdd06d2e87944d2fe7ef82e62e73ff48f340e61f8"
+    },
+    {
+      "command": "python3 scripts/unified-delivery.py --archive <final-amd64-package> --sha256 <recorded-digest> --old-binary artifacts/unified-models-u6/schema10-baseline --output artifacts/unified-models-u6",
+      "status": "passed",
+      "exit_code": 0,
+      "log_path": "/tmp/codearts-u6-package.log",
+      "log_sha256": "bb7305d2cb393346d8b81aa8d42d06f3c0c65a4e71aef8200f6523bfda49f313"
+    }
+  ],
+  "test_counts": {
+    "frontend": 52,
+    "deployment": 99,
+    "launcher": 10,
+    "existing_browser": 26,
+    "new_go_top_level": 4,
+    "new_deployment_top_level": 8
+  },
+  "full_race_note": "Full suite passed with server 559.268s. Later test-only source-model assertions were verified again by the U6 targeted race run; no backend production changes followed.",
+  "acceptance_matrix": {
+    "T01": [
+      "TestUnifiedUngroupedAllProtocols",
+      "TestUnifiedDeliveryFailoverAccounting"
+    ],
+    "T02": [
+      "TestUnifiedAPIConsistentListProfileAndNoAccounts",
+      "TestUnifiedPiClient"
+    ],
+    "T03": [
+      "TestUnifiedAtomicRevisionAndPermissions",
+      "TestMappedModelCatalogExplicitCallsAndPermissions"
+    ],
+    "T04": [
+      "TestUnifiedPermissionsReferencesAndEmptySelection",
+      "TestUnifiedAtomicNeverAddsNewGrantCandidates"
+    ],
+    "T05": [
+      "TestUnifiedAPISelectedPolicyAndIndependentRawVisibility",
+      "TestUnifiedAPIGroupCASAndUserProjection"
+    ],
+    "T06": [
+      "TestModelMigrationConflictCases",
+      "TestUnifiedAPIPolicyBoundsAndNamespaceConflicts"
+    ],
+    "T07": [
+      "TestUnifiedPermissionsReferencesAndEmptySelection",
+      "TestUnifiedAPIGroupCASAndUserProjection"
+    ],
+    "T08": [
+      "TestUnifiedHTTPMissingAccountsAndUnknownTools",
+      "TestUnifiedSourceCountsReflectHealthAndConcurrencyWithoutLeasing"
+    ],
+    "T09": [
+      "TestUnifiedCapabilityRoutingPreservesImagesAndToolSchema",
+      "TestUnifiedCapabilityFiltersDoNotModifyRequest"
+    ],
+    "T10": [
+      "TestUnifiedAPIProfileMissingMetadataAndExactNames",
+      "TestUnifiedAPIPolicyBoundsAndNamespaceConflicts"
+    ],
+    "T11": [
+      "TestUnifiedUngroupedAllProtocols",
+      "TestMappedResponsePreservesOpaqueData",
+      "TestUnifiedPiClient"
+    ],
+    "T12": [
+      "TestUnifiedDeliveryRetryRechecksGroupAndBudget",
+      "TestUnifiedRevisionStopsRetryBeforeSecondUpstream",
+      "TestUnifiedAtomicRevisionAndPermissions"
+    ],
+    "T13": [
+      "TestUnifiedDeliveryConcurrentLimitsAndCancellation",
+      "TestUnifiedDeliveryFailoverAccounting",
+      "TestMappedModelNoFailoverAfterStreamOutput",
+      "TestUnifiedRetriesBoundedAndAuthFailureStops"
+    ],
+    "T14": [
+      "TestModelMigrationReplaysJournalExactlyOnce",
+      "TestModelMigrationOfflineCopyAndGuards",
+      "TestUnifiedFailureRollsBackAllFields",
+      "scripts/unified-delivery.py"
+    ],
+    "T15": [
+      "TestUnifiedAPIPolicyBoundsAndNamespaceConflicts",
+      "TestMappedModelCatalogExplicitCallsAndPermissions"
+    ],
+    "T16": [
+      "TestUnifiedConcurrentEditsHaveOneWinner",
+      "TestUnifiedAPIStrictCRUDRevisionsReferencesAndPagination",
+      "TestUnifiedModelsBrowser"
+    ]
+  },
+  "pi": {
+    "real_executable": true,
+    "real_gateway": true,
+    "real_native_provider_adapter": true,
+    "upstream": "local mock",
+    "profile_public_name": true,
+    "default_without_explicit_model": true,
+    "text_request": true,
+    "actual_read_tool_loop": true,
+    "inference_request_count": 3,
+    "temporary_client_configuration": true,
+    "user_client_configuration_changed": false
+  },
+  "package_acceptance": {
+    "kind": "U6_isolated_package_acceptance",
+    "real_systemd": false,
+    "real_process": true,
+    "real_upstream": false,
+    "checks": [
+      "package digest and executable version",
+      "read-only migration precheck",
+      "conflict exit 2",
+      "incomplete argument exit 1 with diagnostic",
+      "actual schema 10 to 11 managed upgrade",
+      "key budget preserved",
+      "fixed group grants preserved",
+      "real process identity and schema 11 health",
+      "restart retains definition identity",
+      "actual old binary rejects schema 11 unchanged",
+      "7 crash boundaries recovered forward using real binary",
+      "repeated recovery is a no-op",
+      "pre-upgrade snapshot preserved",
+      "offline backup restore to new directory"
+    ],
+    "passed": true,
+    "package_version": "v0.4.0",
+    "schema": 11,
+    "package_sha256": "23c756af52e085cc994c1bc910b6815a61a2876e6af6357739fbab5f099b32a4",
+    "old_binary_sha256": "652b45259489e1021e68955a5d554ff688057872b4b88228198914fca526152e",
+    "process_flags": [
+      "loopback",
+      "temporary state",
+      "no-import",
+      "no-refresh"
+    ],
+    "deployed_to_existing_service": false
+  },
+  "packages": [
+    {
+      "filename": "codearts2api-panel-v0.4.0-linux-amd64.tar.gz",
+      "path": "artifacts/unified-models-u6/final-release/codearts2api-panel-v0.4.0-linux-amd64.tar.gz",
+      "sha256": "23c756af52e085cc994c1bc910b6815a61a2876e6af6357739fbab5f099b32a4",
+      "version": "v0.4.0",
+      "schema": 11,
+      "os": "linux",
+      "arch": "amd64",
+      "inventory_verified": true,
+      "native_execution_verified": true
+    },
+    {
+      "filename": "codearts2api-panel-v0.4.0-linux-arm64.tar.gz",
+      "path": "artifacts/unified-models-u6/final-release/codearts2api-panel-v0.4.0-linux-arm64.tar.gz",
+      "sha256": "dcdc8ba3950581206f39d5b4f87fe76bcb96d25bc967962174362ac584b67d1e",
+      "version": "v0.4.0",
+      "schema": 11,
+      "os": "linux",
+      "arch": "arm64",
+      "inventory_verified": true,
+      "native_execution_verified": false
+    },
+    {
+      "filename": "codearts2api-panel-v0.4.0-windows-amd64.zip",
+      "path": "artifacts/unified-models-u6/final-release/codearts2api-panel-v0.4.0-windows-amd64.zip",
+      "sha256": "29403720ca65885a3218d3b301f4fed5ef381389a15596eb60d16a21d9cd44f7",
+      "version": "v0.4.0",
+      "schema": 11,
+      "os": "windows",
+      "arch": "amd64",
+      "inventory_verified": true,
+      "native_execution_verified": false
+    }
+  ],
+  "browser_regressions": [
+    {
+      "case": "providers-smoke",
+      "passed": true
+    },
+    {
+      "case": "qoder-smoke",
+      "passed": true
+    },
+    {
+      "case": "kiro-smoke",
+      "passed": true
+    },
+    {
+      "case": "subscriptions-smoke",
+      "passed": true
+    },
+    {
+      "case": "teleagent-smoke",
+      "passed": true
+    },
+    {
+      "case": "teleagent-rewards-smoke",
+      "passed": true
+    },
+    {
+      "case": "teleagent-login-smoke",
+      "passed": true
+    },
+    {
+      "case": "teleagent-connector-smoke",
+      "passed": true
+    },
+    {
+      "case": "teleagent-helper-cdp-smoke",
+      "passed": true
+    },
+    {
+      "case": "teleagent-helper-process-smoke",
+      "passed": true
+    },
+    {
+      "case": "quota-smoke",
+      "passed": true
+    },
+    {
+      "case": "trae-smoke",
+      "passed": true
+    },
+    {
+      "case": "trae-device-smoke",
+      "passed": true
+    },
+    {
+      "case": "groups-smoke",
+      "passed": true
+    },
+    {
+      "case": "account-create-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-multi-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-tasks-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-actions-smoke",
+      "passed": true
+    },
+    {
+      "case": "growth-buddy-smoke",
+      "passed": true
+    },
+    {
+      "case": "frontend-smoke",
+      "passed": true
+    },
+    {
+      "case": "product-settings-smoke",
+      "passed": true
+    },
+    {
+      "case": "users-smoke",
+      "passed": true
+    },
+    {
+      "case": "consumer-entitlements-smoke",
+      "passed": true
+    },
+    {
+      "case": "unified-console-smoke",
+      "passed": true
+    },
+    {
+      "case": "user-style-smoke",
+      "passed": true
+    },
+    {
+      "case": "i18n-smoke",
+      "passed": true
+    }
+  ],
+  "benchmark": {
+    "command": "go test ./internal/storage -run '^$' -bench 'Benchmark(UnifiedAdmission|ModelSelection|AdmissionSelection)' -benchmem -benchtime=250ms -count=3",
+    "results": {
+      "13": {
+        "mapped_compat": {
+          "samples": [
+            {
+              "ns_per_op": 1768.0,
+              "bytes_per_op": 1784,
+              "allocs_per_op": 20
+            },
+            {
+              "ns_per_op": 1836.0,
+              "bytes_per_op": 1784,
+              "allocs_per_op": 20
+            },
+            {
+              "ns_per_op": 1796.0,
+              "bytes_per_op": 1784,
+              "allocs_per_op": 20
+            }
+          ],
+          "median_ns_per_op": 1796.0,
+          "bytes_per_op": 1784,
+          "allocs_per_op": 20
+        },
+        "unified": {
+          "samples": [
+            {
+              "ns_per_op": 1836.0,
+              "bytes_per_op": 1816,
+              "allocs_per_op": 21
+            },
+            {
+              "ns_per_op": 1846.0,
+              "bytes_per_op": 1816,
+              "allocs_per_op": 21
+            },
+            {
+              "ns_per_op": 1853.0,
+              "bytes_per_op": 1816,
+              "allocs_per_op": 21
+            }
+          ],
+          "median_ns_per_op": 1846.0,
+          "bytes_per_op": 1816,
+          "allocs_per_op": 21
+        },
+        "delta_ns_per_op": 50.0,
+        "relative_change_percent": 2.7839643652561197
+      },
+      "128": {
+        "mapped_compat": {
+          "samples": [
+            {
+              "ns_per_op": 12695.0,
+              "bytes_per_op": 16680,
+              "allocs_per_op": 28
+            },
+            {
+              "ns_per_op": 12921.0,
+              "bytes_per_op": 16680,
+              "allocs_per_op": 28
+            },
+            {
+              "ns_per_op": 12989.0,
+              "bytes_per_op": 16680,
+              "allocs_per_op": 28
+            }
+          ],
+          "median_ns_per_op": 12921.0,
+          "bytes_per_op": 16680,
+          "allocs_per_op": 28
+        },
+        "unified": {
+          "samples": [
+            {
+              "ns_per_op": 12899.0,
+              "bytes_per_op": 16712,
+              "allocs_per_op": 29
+            },
+            {
+              "ns_per_op": 13261.0,
+              "bytes_per_op": 16712,
+              "allocs_per_op": 29
+            },
+            {
+              "ns_per_op": 13210.0,
+              "bytes_per_op": 16712,
+              "allocs_per_op": 29
+            }
+          ],
+          "median_ns_per_op": 13210.0,
+          "bytes_per_op": 16712,
+          "allocs_per_op": 29
+        },
+        "delta_ns_per_op": 289.0,
+        "relative_change_percent": 2.2366689884683932
+      }
+    },
+    "comparison": "same current source, two native sources, identical restricted group and scheduler; mapped compatibility versus revision-checked unified admission",
+    "limit": "admission only; not network throughput or a before/after U1 benchmark",
+    "extra_allocation": "32 B and 1 alloc for two allowed source strings in atomic revalidation"
+  },
+  "hot_path_review": {
+    "listing_and_resolution_network_calls_added": false,
+    "credential_decoding_added": false,
+    "per_sse_state_writes_added": false,
+    "retry_layer_added": false,
+    "authorization_cache_added": false,
+    "config_snapshot_owns_no_credentials": true,
+    "evidence": [
+      "catalog/unified_projection.go",
+      "catalog/unified_routing.go",
+      "storage/unified_models.go",
+      "storage/unified_admission.go",
+      "gateway/retry.go",
+      "server/account_retry.go"
+    ]
+  },
+  "source_sha256": {
+    "README.md": "6bea3968562f90233bd6cc2722b724b9e4825227cff0ebd79549b9a80ff5037d",
+    "deploy/panelctl.py": "b947e55cd1647937798eab2ca3f03a82d7aca07e0d5ec7ec3270f3f4263a3a57",
+    "deploy/install.sh": "21ebaeeb195e5730a7f3995d5dfed3800be3c1121daa056d2d3e3e8f1b55d6c3",
+    "deploy/package_release.py": "ec849b4f15bc6c9b59723f13ce1fc8fc15517a1edf95723e70028b1c9c0c7a7c",
+    "deploy/package_windows.py": "52affee330206e29df80c719f185f64f0c41c1c00744150b770ffb380bff4d29",
+    "deploy/UNIFIED-MODELS.md": "766a22efe760c172a35d535ad4b0243d2939a648ff63b1e7e49987fccb13ff22",
+    "deploy/README.md": "20ae8831e6c8f67a3173cfa2ce426d5abf281ab7b325f58c2bf95b8cf9244ac8",
+    "deploy/windows/README.md": "fbdcbbf4785d6d189903150471dc34880bf20b4f119a7e6d54c555661a1c853a",
+    "deploy/tests/test_schema_recovery.py": "aaa6cf98c5c83288c83fdfbe81f85a279ce0aba29bcac27b5363a86e9b68fd9f",
+    "deploy/tests/test_installer_public_release.py": "8afbaf8daf4ccb88d8feaa3d6f5fa91d9469480093c9f14a99bc670ffa7fec64",
+    "backend/internal/server/unified_delivery_test.go": "ff6da3267865b421b80c2451a4b91bfbb340d3c9fbcc3205c11b28da45f17fac",
+    "backend/internal/server/client_profile.go": "2f2274050ca1deeba3dde46038b5e5b3dcc2e4db21f1b6478f9b234b59c249f6",
+    "backend/internal/storage/admission_benchmark_test.go": "ab3ea68714d8dbb09e41263e0bde46b02ce2e66c4374bc983e5743b44dcef727",
+    "backend/internal/catalog/unified_routing.go": "2acbcedabbcc9d64ab0fd14603fc02e7a91749fd4717e64cd1a3a8faed09a8b2",
+    "backend/internal/catalog/unified_projection.go": "9b89fcd10077655278718cf5dca28cac78fc4fe374baa5fdbb81ec008d9b29f4",
+    "backend/internal/storage/unified_admission.go": "03c5bfe478ddcc1203c0c47e62578296590db3e2fe3b4aaa840e92675a0d7c77",
+    "backend/internal/storage/unified_models.go": "baca6f5baf86d511250329d860f7695b5d6b00933ef905685e25b0f7e3bf21f8",
+    "backend/internal/server/account_retry.go": "ce14551b927cfe192ff3f31ef389ba2c1ddf62af397c43c86334506835e801d9",
+    "backend/internal/gateway/retry.go": "451450e8bdf16ef0030f9f3bace5dd67dc82a53e682d2e241c9aadc1b55268d4",
+    "backend/internal/gateway/admission.go": "9938ec0a94039e177c4dc0becc1a4630dff19d18b54e0b85be9a7bf9f4cd6f39",
+    "scripts/unified-delivery.py": "1809b39c1f0571fa8ef5e7144f7e12d7b1a152113719ec538972f88049fe1df2",
+    "docs/GROUP-MODELS.md": "4bb9b58a1e906cd29922c96314a7017e2390b8a9aed0f38fbb487268dc6e6842",
+    "docs/architecture/UNIFIED-MODELS-PLAN.md": "f738d0cd6513ee1586c05d6449f55aee5863b06247921875a96e9d1c56af026d",
+    "docs/architecture/UNIFIED-MODELS-CONTRACT.md": "fc938bc5451f749707915096642d6e6084a14755b7854278106d7e5a0e6baee5",
+    "docs/architecture/UNIFIED-MODELS-MIGRATION.md": "bc68b275eab8fa7a0fdea34801edd36905f6d75d5ea3f0ce0046dbab6a497156",
+    "docs/architecture/README.md": "b2330181b297316f23c2dc9c766d7be07bbb346b081b54551ea4e17065e2b5ec",
+    "docs/acceptance/UNIFIED-MODELS-U6-2026-11-05.md": "f9a5cae599ae3be559527d5be4581492ebfb1037c3a0d137c43b8f703852ef9c"
+  },
+  "launcher_sha256": "94ca9a14900792421df6a12f6226b8e8e3a082c0b8dd5370fb3c18c170c11100",
+  "launcher_unchanged": true,
+  "baseline_binary": {
+    "path": "artifacts/unified-models-u6/schema10-baseline",
+    "sha256": "652b45259489e1021e68955a5d554ff688057872b4b88228198914fca526152e",
+    "source": "git archive HEAD backend at base_commit",
+    "version_injected": "v0.3.18",
+    "schema": 10,
+    "frontend": "current identical embedded assets; backend version/schema behavior is baseline"
+  },
+  "artifact_sha256": {
+    "package-results.json": "745aadc4fdd2e630dc3e8e8b900639b0e9fb1965c9361133d040d9ef35e7f1e9",
+    "package-inventories.json": "9dc93dd243ff4d76e6a1f72c2aeeb90a59d3dc6b63bb65a9feeac820f2223ed3",
+    "benchmark-results.json": "4965ce3d6c79a00c21da2cf359a665240c370e82fb8f895437247c51dcecddd4",
+    "regression/browser-results.json": "4a02846770b6c08d7ebbf7ac7c787134586e1441dfeb0b2a4942b29fad6063bd"
+  },
+  "delivery": {
+    "code_checks": "passed",
+    "real_cross_platform_upstream": "not_verified",
+    "native_linux_amd64_package": "passed",
+    "linux_arm64_package": "cross_built_inventory_verified_not_natively_executed",
+    "windows_amd64_package": "cross_built_inventory_verified_not_natively_executed",
+    "real_systemd_installation_exercised": false,
+    "actual_existing_service_updated": false,
+    "github_pushed": false,
+    "github_release_published": false,
+    "production_state_changed": false
+  },
+  "real_upstream_note": "No two same-version live sources and quota were verified; no real account credentials, token refresh or reward claim used. Mock success is not proof of model equivalence.",
+  "remaining_plan_tasks": []
+}

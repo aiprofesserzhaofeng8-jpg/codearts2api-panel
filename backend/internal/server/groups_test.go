@@ -127,7 +127,7 @@ func TestGroupAdminBindingAndBoundDeletion(t *testing.T) {
 	if w.Code != 200 || s.Store.Keys()[0].GroupID != result.Group.ID {
 		t.Fatal("key group binding failed")
 	}
-	w = adminProbeRequest(t, s, "DELETE", "/admin/api/groups?id="+result.Group.ID, "")
+	w = adminProbeRequest(t, s, "DELETE", "/admin/api/groups?id="+result.Group.ID+"&expected_revision=1", "")
 	if w.Code != 409 {
 		t.Fatal("bound group deleted")
 	}

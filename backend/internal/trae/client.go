@@ -421,7 +421,14 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 		if name == "" {
 			name = m.ID
 		}
-		out = append(out, provider.Model{ID: m.ID, UpstreamID: m.ID, Provider: provider.Trae, Scope: "cn", Name: name, Source: "upstream", StreamOnly: true, Desc: "Trae CN / SOLO 原生通道；上下文上限未验证"})
+		tools := ""
+		// SOLO does not publish a tool flag in get_detail_param. This exact
+		// config completed a real function-call/result roundtrip on 2026-11-05;
+		// see UNIFIED-MODELS-LIVE-2026-11-05.md. Other IDs remain unknown.
+		if m.ID == "deepseek-v4.1-flash" {
+			tools = "supported"
+		}
+		out = append(out, provider.Model{ID: m.ID, UpstreamID: m.ID, Provider: provider.Trae, Scope: "cn", Name: name, Source: "upstream", StreamOnly: true, ToolCalling: tools, Desc: "Trae CN / SOLO 原生通道；上下文上限未验证"})
 	}
 	if len(out) == 0 {
 		return nil, fmt.Errorf("Trae 未返回可用模型配置，请核对账号权益")

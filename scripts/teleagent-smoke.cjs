@@ -10,6 +10,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   if(path.endsWith('/provider-import')){imports++;const b=req.postDataJSON();assert.equal(b.provider,'teleagent');assert.equal(b.credentials.device_id,'fixture-device');assert.equal(b.credentials.api_key,'sk-authorized-fixture');if(fail){fail=false;return r.fulfill({status:400,json:{error:{message:'TeleAgent identity fixture denied'}}});}accounts=[{id:'teleagent-fixture',name:'TeleAgent fixture',provider:'teleagent',scope:'cn',enabled:true,status:'ok',source:'session',expires_at:2000000000}];}
   if(path.endsWith('/credits'))out={accounts:accounts.map(a=>({id:a.id,ok:true,credit:{kind:'credits',available:true,unit:'credits',windows:[{id:'balance',name:'积分余额',unit:'credits',remaining:73.25}]}}))};
   if(path.endsWith('/usage'))out={page:1,pages:1,total:0,retained:0,retention_limit:100000,stats:{},logs:[]};
+  if(path.endsWith('/settings')&&req.method()==='GET')out=settings;
   if(path.endsWith('/settings')&&req.method()==='POST')saved=req.postDataJSON();return r.fulfill({json:out});
  });
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:5}}));
