@@ -158,7 +158,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		if req.Context().Err() != nil {
 			return nil, req.Context().Err()
 		}
-		return nil, &provider.Error{Status: 502, Message: "Qoder 上游连接失败"}
+		return nil, provider.NewTransportError("Qoder", err)
 	}
 	return resp, nil
 }
@@ -169,7 +169,10 @@ func readJSON(resp *http.Response) ([]byte, error) {
 		return nil, failure(resp.StatusCode)
 	}
 	b, err := io.ReadAll(io.LimitReader(resp.Body, (4<<20)+1))
-	if err != nil || len(b) > 4<<20 || !json.Valid(b) {
+	if err != nil {
+		return nil, provider.NewTransportError("Qoder", err)
+	}
+	if len(b) > 4<<20 || !json.Valid(b) {
 		return nil, &provider.Error{Status: 502, Message: "Qoder 返回了无效或过大的 JSON 响应"}
 	}
 	return b, nil

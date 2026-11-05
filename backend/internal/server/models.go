@@ -56,8 +56,9 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 		}
 		if p, ok := s.requestModelPolicy(r, resolved); ok {
 			recommendation = profileFromPolicy(resolved.ID, p)
+			addImageCapability(recommendation, resolved)
 		}
-		data = append(data, map[string]any{
+		row := map[string]any{
 			"client_profile": recommendation,
 			"id":             m.ID,
 			"object":         "model",
@@ -76,7 +77,9 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 				"credit":      m.Credit,
 				"description": m.Desc,
 			},
-		})
+		}
+		addImageCapability(row, resolved)
+		data = append(data, row)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"object": "list", "data": data, "default_model": s.Routing.ClientDefault(groupKey(r.Context()))})
 }

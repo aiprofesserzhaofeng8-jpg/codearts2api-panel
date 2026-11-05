@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"errors"
+	"io"
+	"net"
 	"time"
 
 	"codearts2api/internal/accounts"
@@ -88,6 +90,14 @@ func (d *accountRetryDriver) Failed(a gateway.RetryAttempt, err error) gateway.R
 		return gateway.RetryDecision{Exclude: true}
 	}
 	d.s.Store.ForgetSession(d.session, a.Account.ID)
+	var transport *provider.TransportError
+	var network net.Error
+	if errors.As(err, &transport) || errors.As(err, &network) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) {
+		// Connectivity is not an account failure or upstream rate limit. Release
+		// already ran; allow the next request to try normally without clearing
+		// health or restarting the process. Bound retries by the existing budget.
+		return gateway.RetryDecision{Backoff: true}
+	}
 	if codearts.IsTransientUpstream(err) {
 		cooldown := d.s.Store.Settings().Pool.RateCooldownSec
 		if apierr.From(err).Status >= 500 {

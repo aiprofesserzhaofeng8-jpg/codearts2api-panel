@@ -54,3 +54,7 @@ tools/
 frontend/node_modules/
 frontend/dist/
 backend/internal/webui/dist/
+
+# Local login artifacts must never enter the image build context.
+teleagent-login-result*.json
+teleagent-login-task-*.json

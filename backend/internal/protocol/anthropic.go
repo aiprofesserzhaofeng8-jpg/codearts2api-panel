@@ -119,6 +119,9 @@ func toOpenAI(req *Request, model string, native bool) (map[string]any, error) {
 	}
 
 	msgs := make([]map[string]any, 0, len(req.Messages)+1)
+	if err := validateSystemContent(req.System); err != nil {
+		return nil, err
+	}
 	if sys := SystemText(req.System); sys != "" {
 		msgs = append(msgs, map[string]any{"role": "system", "content": sys})
 	}
@@ -129,7 +132,7 @@ func toOpenAI(req *Request, model string, native bool) (map[string]any, error) {
 		}
 		msgs = append(msgs, converted...)
 	}
-	out["messages"] = msgs
+	out["messages"] = contiguousToolResults(msgs)
 
 	if len(req.Tools) > 0 {
 		tools := make([]map[string]any, 0, len(req.Tools))
@@ -179,6 +182,9 @@ func ToolChoice(raw json.RawMessage) any {
 // tool_use 会变成 assistant.tool_calls，tool_result 会变成独立的 role=tool 消息。
 func MessageToOpenAI(m Message) ([]map[string]any, error) { return messageToOpenAI(m, false) }
 func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
+	if m.Role != "user" && m.Role != "assistant" {
+		return nil, fmt.Errorf("Messages 消息角色须为 user 或 assistant")
+	}
 	var text string
 	if err := json.Unmarshal(m.Content, &text); err == nil {
 		return []map[string]any{{"role": m.Role, "content": text}}, nil
@@ -197,18 +203,27 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 		toolCalls      []any
 		toolMsgs       []map[string]any
 		thinkingBlocks []any
+		toolImages     []any
 	)
 
 	for _, b := range blocks {
 		switch b["type"] {
 		case "text":
-			if t, ok := b["text"].(string); ok && t != "" {
+			t, ok := b["text"].(string)
+			if !ok {
+				return nil, fmt.Errorf("text 内容须为字符串")
+			}
+			if t != "" {
 				parts = append(parts, map[string]any{"type": "text", "text": t})
 			}
 		case "image":
 			if u := ImageURL(b); u != "" {
 				parts = append(parts, map[string]any{"type": "image_url", "image_url": map[string]any{"url": u}})
+			} else {
+				return nil, fmt.Errorf("image 内容缺少有效的图片 source，未丢弃图片")
 			}
+		case "document", "audio", "video", "input_audio", "file":
+			return nil, fmt.Errorf("当前 Messages 转换尚不支持 %s 内容，请转换为文本或图片后提交", Str(b["type"]))
 		case "tool_use":
 			args, _ := json.Marshal(b["input"])
 			toolCalls = append(toolCalls, map[string]any{
@@ -220,10 +235,18 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 				},
 			})
 		case "tool_result":
+			text, images, err := toolResultContent(b)
+			if err != nil {
+				return nil, err
+			}
+			if len(images) > 0 {
+				toolImages = append(toolImages, map[string]any{"type": "text", "text": "Images returned by tool " + Str(b["tool_use_id"]) + ":"})
+				toolImages = append(toolImages, images...)
+			}
 			toolMsgs = append(toolMsgs, map[string]any{
 				"role":         "tool",
 				"tool_call_id": Str(b["tool_use_id"]),
-				"content":      ToolResultText(b),
+				"content":      text,
 			})
 		case "thinking", "redacted_thinking":
 			if native {
@@ -232,6 +255,8 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 				}
 				thinkingBlocks = append(thinkingBlocks, b)
 			}
+		default:
+			return nil, fmt.Errorf("当前 Messages 转换不支持内容块 %q，未静默删除", Str(b["type"]))
 		}
 	}
 
@@ -255,11 +280,95 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 	if len(toolCalls) > 0 {
 		msg["tool_calls"] = toolCalls
 	}
+	if role == "user" && len(toolMsgs) > 0 {
+		out = append(out, toolMsgs...)
+		toolMsgs = nil
+	}
 	if len(parts) > 0 || len(toolCalls) > 0 || len(thinkingBlocks) > 0 {
 		out = append(out, msg)
 	}
 	out = append(out, toolMsgs...)
+	// Chat Completions tool messages accept text, not image blocks. Complete
+	// the tool-result group first, then preserve images as a user media message.
+	if len(toolImages) > 0 {
+		out = append(out, map[string]any{"role": "user", "content": toolImages})
+	}
 	return out, nil
+}
+
+func validateSystemContent(raw json.RawMessage) error {
+	if len(raw) == 0 || string(bytes.TrimSpace(raw)) == "null" {
+		return nil
+	}
+	var text string
+	if json.Unmarshal(raw, &text) == nil {
+		return nil
+	}
+	var blocks []map[string]json.RawMessage
+	if json.Unmarshal(raw, &blocks) != nil {
+		return fmt.Errorf("system 须为字符串或文本块数组")
+	}
+	for _, b := range blocks {
+		var typ string
+		if json.Unmarshal(b["type"], &typ) != nil || typ != "text" || json.Unmarshal(b["text"], &text) != nil {
+			return fmt.Errorf("system 仅支持文本块，未静默删除其他内容")
+		}
+	}
+	return nil
+}
+
+// Parallel tool results may span several consecutive user messages. Keep the
+// outputs contiguous before lifting associated media or user text after them.
+func contiguousToolResults(messages []map[string]any) []map[string]any {
+	out := make([]map[string]any, 0, len(messages))
+	for i := 0; i < len(messages); {
+		if messages[i]["role"] != "tool" {
+			out = append(out, messages[i])
+			i++
+			continue
+		}
+		var outputs, following []map[string]any
+		for i < len(messages) && (messages[i]["role"] == "tool" || messages[i]["role"] == "user") {
+			if messages[i]["role"] == "tool" {
+				outputs = append(outputs, messages[i])
+			} else {
+				following = append(following, messages[i])
+			}
+			i++
+		}
+		out = append(out, outputs...)
+		out = append(out, following...)
+	}
+	return out
+}
+
+func toolResultContent(block map[string]any) (string, []any, error) {
+	content, ok := block["content"].([]any)
+	if !ok {
+		return ToolResultText(block), nil, nil
+	}
+	textBlocks := make([]any, 0, len(content))
+	var images []any
+	for _, item := range content {
+		part, ok := item.(map[string]any)
+		if !ok {
+			textBlocks = append(textBlocks, item)
+			continue
+		}
+		switch part["type"] {
+		case "image":
+			url := ImageURL(part)
+			if url == "" {
+				return "", nil, fmt.Errorf("工具结果图片缺少有效的 source，未丢弃图片")
+			}
+			images = append(images, map[string]any{"type": "image_url", "image_url": map[string]any{"url": url}})
+		case "document", "audio", "video", "file":
+			return "", nil, fmt.Errorf("当前 Messages 转换尚不支持工具结果中的 %s 内容", Str(part["type"]))
+		default:
+			textBlocks = append(textBlocks, item)
+		}
+	}
+	return ToolResultText(map[string]any{"content": textBlocks}), images, nil
 }
 
 // SystemText 提取 system 字段（字符串或文本块数组）。
@@ -371,7 +480,9 @@ func FromOpenAI(raw []byte, model string) Reply {
 			} `json:"prompt_tokens_details"`
 		} `json:"usage"`
 	}
-	_ = json.Unmarshal(raw, &resp)
+	if json.Unmarshal(raw, &resp) != nil || len(resp.Choices) == 0 {
+		return Reply{}
+	}
 
 	content := make([]map[string]any, 0, 3)
 	stopReason := "end_turn"
@@ -385,6 +496,8 @@ func FromOpenAI(raw []byte, model string) Reply {
 				var block map[string]any
 				if json.Unmarshal(raw, &block) == nil {
 					content = append(content, block)
+				} else {
+					return Reply{}
 				}
 			}
 		} else if thinking != "" {
@@ -403,8 +516,8 @@ func FromOpenAI(raw []byte, model string) Reply {
 		}
 		for _, tc := range ch.Message.ToolCalls {
 			input := json.RawMessage(tc.Function.Arguments)
-			if !json.Valid(input) {
-				input = json.RawMessage(`{}`)
+			if !json.Valid(input) || tc.Function.Name == "" {
+				return Reply{}
 			}
 			id := tc.ID
 			if id == "" {

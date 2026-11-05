@@ -1493,6 +1493,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Optional TeleAgent local helper task binding. Not a public callback credential or an account save authorization. */
+                        helper_challenge?: string;
+                    } & {
                         [key: string]: unknown;
                     };
                 };

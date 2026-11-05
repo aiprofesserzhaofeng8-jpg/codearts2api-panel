@@ -21,12 +21,7 @@ func (c *Client) Credit(ctx context.Context, raw json.RawMessage) (json.RawMessa
 	if a.OperationToken != "" {
 		path = PortalPath
 		key = "pointsBalance"
-		h = http.Header{"X-Token": {a.OperationToken}, "Userid": {a.AccountID}, "Accept": {"application/json"}}
-		cookie := "operationToken=" + a.OperationToken
-		if a.OperToken != "" {
-			cookie += "; operToken=" + a.OperToken
-		}
-		h.Set("Cookie", cookie)
+		h = portalHeaders(a)
 	}
 	resp, e := providerhttp.Do(ctx, c.HTTP, "TeleAgent", http.MethodGet, c.Origin+path, h, nil)
 	if e != nil {

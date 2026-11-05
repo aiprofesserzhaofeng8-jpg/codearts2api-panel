@@ -63,8 +63,8 @@ func TestNormalizeBoundCredentialsAndNoFakeRefresh(t *testing.T) {
 	if _, e = c.Refresh(context.Background(), b); e == nil {
 		t.Fatal("pretended to refresh")
 	}
-	if c.Describe().Login {
-		t.Fatal("advertised unavailable browser login")
+	if !c.Describe().Login {
+		t.Fatal("local browser helper login is unavailable")
 	}
 }
 func TestReadOnlyIdentityModelsAndCredits(t *testing.T) {

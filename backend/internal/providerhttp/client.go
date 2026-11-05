@@ -57,7 +57,7 @@ func Do(ctx context.Context, client *http.Client, name, method, endpoint string,
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, &provider.Error{Status: 502, Message: name + " 上游连接失败"}
+		return nil, provider.NewTransportError(name, err)
 	}
 	return resp, nil
 }
@@ -68,7 +68,10 @@ func JSON(resp *http.Response, name string) (map[string]json.RawMessage, error) 
 	}
 	b, e := io.ReadAll(io.LimitReader(resp.Body, (4<<20)+1))
 	var o map[string]json.RawMessage
-	if e != nil || len(b) > 4<<20 || json.Unmarshal(b, &o) != nil || o == nil || (len(o["error"]) > 0 && string(o["error"]) != "null") {
+	if e != nil {
+		return nil, provider.NewTransportError(name, e)
+	}
+	if len(b) > 4<<20 || json.Unmarshal(b, &o) != nil || o == nil || (len(o["error"]) > 0 && string(o["error"]) != "null") {
 		return nil, Broken(name)
 	}
 	return o, nil
@@ -157,11 +160,14 @@ func SSE(ctx context.Context, r io.Reader, name string, consume func(string, []b
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	if scanner.Err() != nil || len(data) > 0 {
-		return Broken(name)
+	if scanner.Err() != nil {
+		if errors.Is(scanner.Err(), bufio.ErrTooLong) {
+			return Broken(name)
+		}
+		return provider.NewTransportError(name, scanner.Err())
 	}
 	// EOF alone is never an authoritative successful completion.
-	return Broken(name)
+	return provider.NewTransportError(name, io.ErrUnexpectedEOF)
 }
 
 type Chunks struct {

@@ -142,7 +142,7 @@ import { t as tr } from '../../i18n';
             <h3>{{tr('活动福利自动领取')}}</h3>
             <label class="check" for="sAutoClaim">
               <input type="checkbox" id="sAutoClaim">
-              <span>{{tr('每天自动领取码道福利及 WorkBuddy / Trae 每日签到')}}</span>
+              <span>{{tr('每天自动领取码道福利及 WorkBuddy / Trae / TeleAgent 每日积分')}}</span>
             </label>
             <div v-once class="row mt-12">
               <span class="field-label">{{tr('每日领取时刻')}}</span>
@@ -150,7 +150,7 @@ import { t as tr } from '../../i18n';
               <span class="sep muted">:</span>
               <input class="w-hour" id="sClaimMinute" type="number" min="0" max="59" :aria-label="tr('领取分钟')">
             </div>
-            <p class="hint">{{tr(' 运营活动的权益按自然日刷新，所以默认 00:05 领。WorkBuddy / Trae 按 UTC+8 日期去重，失败后等待 30 分钟再试；本地记录和上游复查共同避免重复提交。')}}<br>{{tr(' 仅接入每日签到及码道已支持的活动；邀请、成长任务与学生认证须满足真实条件，不代为伪造任务。 ')}}</p>
+            <p class="hint">{{tr(' 运营活动的权益按自然日刷新，所以默认 00:05 领。WorkBuddy / Trae / TeleAgent 按 UTC+8 日期去重，失败后等待 30 分钟再试；本地记录和上游复查共同避免重复提交。')}}<br>{{tr(' 仅接入每日签到及码道已支持的活动；邀请、成长任务与学生认证须满足真实条件，不代为伪造任务。 ')}}</p>
           </div>
 
           <div v-once class="settings-group">

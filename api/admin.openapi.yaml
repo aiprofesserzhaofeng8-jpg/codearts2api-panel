@@ -53,7 +53,12 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {},
+                  "properties": {
+                    "helper_challenge": {
+                      "type": "string",
+                      "description": "Optional TeleAgent local helper task binding. Not a public callback credential or an account save authorization."
+                    }
+                  },
                   "additionalProperties": true
                 }
               }

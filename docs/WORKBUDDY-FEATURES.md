@@ -2,6 +2,8 @@
 
 这三项只作用于 WorkBuddy，参考本机 `workbuddy2api-panel` 的搜索协议、提示词替换和指纹清洗实现；来源许可为 MIT，见 `LICENSE.workbuddy`。码道与 Trae 的请求不应用这组设置；它们有自己的提示词/清洗配置及独立搜索后端，见 [平台能力与维护边界](PROVIDER-FEATURES.md)。
 
+图片转发、客户端能力声明与网络恢复见 [专项说明](WORKBUDDY-MULTIMODAL.md)。
+
 ## 配置
 
 面板「配置 → WorkBuddy」保存后对新请求生效，也可通过管理接口更新 `workbuddy` 对象：

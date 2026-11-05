@@ -15,6 +15,13 @@ class ClientSetupTests(unittest.TestCase):
         self.profile = {'model':'deepseek-v4.1-flash','context_window':65536,'max_output_tokens':8192,
                         'compaction':{'reserve_tokens':16384,'keep_recent_tokens':12000,'trigger_tokens':45000}}
 
+    def test_pi_preserves_declared_image_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            profile = {**self.profile, 'input_modalities': ['text', 'image']}
+            connect.build_launch('pi', 'http://127.0.0.1:10087', profile, Path(tmp), {'CODEARTS_API_KEY':'fixture'})
+            data = json.loads((Path(tmp)/'pi/models.json').read_text())
+            self.assertEqual(data['providers']['codearts']['models'][0]['input'], ['text', 'image'])
+
     def test_pi_config_contains_no_literal_key(self):
         with tempfile.TemporaryDirectory() as tmp:
             env={'CODEARTS_API_KEY':'private-canary'}

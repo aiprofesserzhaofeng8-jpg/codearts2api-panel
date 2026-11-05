@@ -60,7 +60,7 @@ export function renderWelfare(campaigns) {
         var reward = c.benefit_amount ? (c.benefit_amount + " " + (c.benefit_unit || "")) : "—";
         var period = c.type === "daily_checkin" ? tr("每日（UTC+8）") : (c.start_time || "").slice(0, 10) + " ~ " + (c.end_time || "").slice(0, 10);
         tb.appendChild(row([
-            cell(c.title), cell(c.type === "daily_checkin" ? tr("签到") : c.type, "mono"), cell(reward, "mono"),
+            cell(c.title), cell(c.type === "daily_checkin" ? tr("签到") : c.type === "activity_notice" ? tr("活动提示") : c.type, "mono"), cell(reward, "mono"),
             stCell, autoCell, cell(c.trigger_event || c.trigger_mode || "—", "mono"),
             cell(period, "muted")
         ]));

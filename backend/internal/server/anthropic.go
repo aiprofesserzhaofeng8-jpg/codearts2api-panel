@@ -117,7 +117,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 // blockingAnthropic 收集完整回复后按 Anthropic message 结构返回。
 func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body []byte, model registry.Model, key string, timeout time.Duration, start time.Time, promptLen int) {
 	var (
-		raw    []byte
+		out    protocol.Reply
 		outLen int
 	)
 	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
@@ -125,7 +125,10 @@ func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body 
 		if err != nil {
 			return err
 		}
-		raw = res
+		out = protocol.FromOpenAI(res, model.ID)
+		if out.Payload == nil {
+			return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游回复或工具参数无效，未替换为空参数"}
+		}
 		return nil
 	})
 	if err != nil {
@@ -135,7 +138,6 @@ func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body 
 		return
 	}
 
-	out := protocol.FromOpenAI(raw, model.ID)
 	outLen = len([]rune(out.Text)) + len([]rune(out.Thinking))
 	s.record(r.Context(), key, acct, model.ID, false, http.StatusOK, start, promptLen, outLen, nil)
 	writeJSON(w, http.StatusOK, out.Payload)

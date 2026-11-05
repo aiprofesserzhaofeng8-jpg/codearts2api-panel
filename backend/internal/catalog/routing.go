@@ -68,6 +68,27 @@ func ScopeAllows(scope access.AccessScope, list []*accounts.Account, model provi
 func PublicMappingModel(name string) provider.Model {
 	return provider.Model{ID: name, Name: name, Provider: "group", Source: "mapping"}
 }
+
+func (p *ModelPlan) PublicModel() provider.Model {
+	m := PublicMappingModel(p.Public)
+	if len(p.IDs) == 0 {
+		return m
+	}
+	all := true
+	for _, id := range p.IDs {
+		if p.Models[id].ImageInput == "unsupported" {
+			m.ImageInput = "unsupported"
+			return m
+		}
+		if p.Models[id].ImageInput != "supported" {
+			all = false
+		}
+	}
+	if all {
+		m.ImageInput = "supported"
+	}
+	return m
+}
 func (s *Routing) MappingPlan(scope access.AccessScope, name string) *ModelPlan {
 	sources, found := scope.Mapping(name)
 	if !found {
@@ -142,7 +163,7 @@ func (s *Routing) ResolveMapped(settings config.Settings, scope access.AccessSco
 	if len(plan.IDs) == 0 {
 		return provider.Model{}, nil, fmt.Errorf("%w：统一模型没有可用来源", accounts.ErrNoAccount)
 	}
-	return PublicMappingModel(name), plan, nil
+	return plan.PublicModel(), plan, nil
 }
 func (s *Routing) VisibleModels(key string) ([]provider.Model, error) {
 	scope, err := s.store.AccessScope(key)
@@ -167,7 +188,7 @@ func (s *Routing) ModelsForScope(scope access.AccessScope) []provider.Model {
 			}
 			plan := s.MappingPlan(listingScope, mapping.Name)
 			if len(plan.IDs) > 0 {
-				out = append(out, PublicMappingModel(mapping.Name))
+				out = append(out, plan.PublicModel())
 			}
 		}
 	}

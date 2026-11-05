@@ -136,6 +136,14 @@ func TestAnthropicToOpenAIImageAndToolChoice(t *testing.T) {
 	}
 }
 
+func TestAnthropicInvalidMediaIsNotSilentlyDropped(t *testing.T) {
+	for _, content := range []string{`[{"type":"image"}]`, `[{"type":"document","source":{"type":"base64","data":"ABC"}}]`, `[{"type":"tool_result","tool_use_id":"a","content":[{"type":"image"}]}]`} {
+		if _, err := ToOpenAI(&Request{Messages: []Message{{Role: "user", Content: json.RawMessage(content)}}}, "m"); err == nil {
+			t.Fatal("unsupported or invalid media silently removed")
+		}
+	}
+}
+
 // TestAnthropicToolChoiceMapping 固化四种 tool_choice 的映射。
 func TestAnthropicToolChoiceMapping(t *testing.T) {
 	cases := []struct {

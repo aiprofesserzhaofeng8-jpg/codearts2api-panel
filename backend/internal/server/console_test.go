@@ -32,7 +32,7 @@ func TestConsoleProductionAssetsAndStrictCSP(t *testing.T) {
 			if w.Code != 200 || w.Body.Len() == 0 {
 				t.Fatal(w.Code, "empty production asset")
 			}
-			for _, directive := range []string{"default-src 'none'", "script-src 'self'", "style-src 'self'", "connect-src 'self'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'"} {
+			for _, directive := range []string{"default-src 'none'", "script-src 'self'", "style-src 'self'", "connect-src 'self' http://127.0.0.1:18765;", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'"} {
 				if !strings.Contains(w.Header().Get("Content-Security-Policy"), directive) {
 					t.Fatal("missing CSP", directive)
 				}

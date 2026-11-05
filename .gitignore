@@ -49,3 +49,7 @@ __pycache__/
 /backend/internal/webui/dist/
 /frontend/.vite/
 /frontend/coverage/
+
+# Local TeleAgent authorization artifacts (never commit credentials).
+teleagent-login-result*.json
+teleagent-login-task-*.json

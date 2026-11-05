@@ -19,6 +19,96 @@ import (
 func teleagentFixture() map[string]any {
 	return map[string]any{"token": "fixture:" + base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`)) + "." + base64.RawURLEncoding.EncodeToString([]byte(`{"accountId":"teleagent-fixture","exp":2000000000}`)) + ".signature", "api_key": "sk-teleagent-fixture", "device_id": "device-fixture", "install_id": "install-fixture", "app_version": "2.7.1"}
 }
+
+func TestTeleagentHelperHTTPPreviewConfirmReplaceAndCancel(t *testing.T) {
+	verifications := 0
+	s, consumer, g, _ := subscriptionServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != teleagent.UserPath {
+			t.Error("unexpected login request")
+			return
+		}
+		verifications++
+		io.WriteString(w, `{"code":0,"data":{"accountId":"teleagent-fixture","accountName":"Browser verified"}}`)
+	})
+	c := teleagent.New()
+	c.Origin = strings.TrimSuffix(g.API, "/openai/v1")
+	_ = s.Providers.Register(c)
+	call := func(body any) (int, map[string]json.RawMessage, string) {
+		r := httptest.NewRequest("POST", "/admin/api/provider-login", strings.NewReader(string(mustJSON(body))))
+		r.AddCookie(adminTestCookie(s, "admin-fixture"))
+		w := httptest.NewRecorder()
+		s.Handler().ServeHTTP(w, r)
+		var out map[string]json.RawMessage
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		return w.Code, out, w.Body.String()
+	}
+	str := func(o map[string]json.RawMessage, key string) string {
+		var v string
+		_ = json.Unmarshal(o[key], &v)
+		return v
+	}
+	start := map[string]any{"action": "start", "provider": "teleagent", "scope": "cn"}
+	if w := responseRequest(s, consumer, "/admin/api/provider-login", string(mustJSON(start))); w.Code != 401 {
+		t.Fatal("consumer started login")
+	}
+	status, flow, body := call(start)
+	if status != 200 || str(flow, "url") != teleagent.LoginURL || len(str(flow, "helper_challenge")) != 43 {
+		t.Fatal(status, body)
+	}
+	sid, challenge := str(flow, "session_id"), str(flow, "helper_challenge")
+	result := func(ch string) string {
+		return string(mustJSON(map[string]any{"version": 1, "provider": "teleagent", "challenge": ch, "credentials": teleagentFixture()}))
+	}
+	count := len(s.Store.Accounts())
+	status, _, _ = call(map[string]any{"action": "check", "session_id": sid, "input": result("wrong")})
+	if status == 200 || verifications != 0 || len(s.Store.Accounts()) != count {
+		t.Fatal("wrong task accepted")
+	}
+	status, preview, body := call(map[string]any{"action": "check", "session_id": sid, "input": result(challenge)})
+	if status != 200 || str(preview, "preview_id") == "" || str(preview, "name") != "Browser verified" || len(s.Store.Accounts()) != count || verifications != 1 {
+		t.Fatal("preview saved or unverified", status, body)
+	}
+	for _, secret := range []string{challenge, "sk-teleagent-fixture", "device-fixture", ".signature"} {
+		if strings.Contains(body, secret) {
+			t.Fatal("preview leaked secret")
+		}
+	}
+	status, _, _ = call(map[string]any{"action": "complete", "session_id": sid, "preview_id": "wrong"})
+	if status != 409 || len(s.Store.Accounts()) != count {
+		t.Fatal("unconfirmed save")
+	}
+	status, saved, body := call(map[string]any{"action": "complete", "session_id": sid, "preview_id": str(preview, "preview_id")})
+	id := str(saved, "account_id")
+	if status != 200 || id == "" || len(s.Store.Accounts()) != count+1 {
+		t.Fatal("save failed", status, body)
+	}
+	a := s.Store.Account(id)
+	if a.Source != "browser" || a.Provider != "teleagent" || a.Name != "Browser verified" {
+		t.Fatal("browser identity lost")
+	}
+	status, again, _ := call(map[string]any{"action": "complete", "session_id": sid, "preview_id": str(preview, "preview_id")})
+	if status != 200 || str(again, "account_id") != id {
+		t.Fatal("save not idempotent")
+	}
+	// A second verified login cannot overwrite the existing account implicitly.
+	_, other, _ := call(start)
+	otherSID := str(other, "session_id")
+	_, otherPreview, _ := call(map[string]any{"action": "check", "session_id": otherSID, "input": result(str(other, "helper_challenge"))})
+	status, _, _ = call(map[string]any{"action": "complete", "session_id": otherSID, "preview_id": str(otherPreview, "preview_id")})
+	if status != 409 {
+		t.Fatal("implicit replacement")
+	}
+	status, _, _ = call(map[string]any{"action": "complete", "session_id": otherSID, "preview_id": str(otherPreview, "preview_id"), "replace_existing": true})
+	if status != 200 || len(s.Store.Accounts()) != count+1 {
+		t.Fatal("explicit replacement failed")
+	}
+	_, canceled, _ := call(start)
+	call(map[string]any{"action": "cancel", "session_id": str(canceled, "session_id")})
+	status, _, _ = call(map[string]any{"action": "check", "session_id": str(canceled, "session_id"), "input": result(str(canceled, "helper_challenge"))})
+	if status != 410 {
+		t.Fatal("canceled result accepted")
+	}
+}
 func teleagentAccount(t *testing.T, s *Server, c *teleagent.Client) {
 	t.Helper()
 	raw, id, e := c.Normalize(mustJSON(teleagentFixture()))

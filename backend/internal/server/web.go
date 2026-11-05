@@ -13,14 +13,15 @@ var frontendBuildID = webui.BuildID()
 // consoleCSP 是控制台页面与静态资源共用的 CSP。
 //
 // default-src 'none' 阻止一切外部加载；脚本与样式只允许同源；
-// connect-src 'self' 限定 fetch 目标；form-action / base-uri /
+// connect-src permits same-origin and the authenticated loopback login connector;
+// form-action / base-uri /
 // frame-ancestors 分别阻断表单外发、<base> 劫持与点击劫持 ——
 // 即使将来引入注入点，数据也运不出去、脚本也执行不了。
 const consoleCSP = "default-src 'none'; " +
 	"script-src 'self'; " +
 	"style-src 'self'; " +
 	"img-src 'self' data:; " +
-	"connect-src 'self'; " +
+	"connect-src 'self' http://127.0.0.1:18765; " +
 	"base-uri 'none'; " +
 	"form-action 'none'; " +
 	"frame-ancestors 'none'"

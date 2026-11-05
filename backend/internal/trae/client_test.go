@@ -51,7 +51,7 @@ func TestPayloadPreservesToolProtocolAndCallerLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if body["max_tokens"] != float64(12) || body["config_name"] != "model-a" || body["function"] != "solo_work_lite" || body["tool_choice"] != "read" {
+	if body["max_tokens"] != json.Number("12") || body["config_name"] != "model-a" || body["function"] != "solo_work_lite" || body["tool_choice"] != "read" {
 		t.Fatal("request contract changed")
 	}
 	messages := body["messages"].([]any)

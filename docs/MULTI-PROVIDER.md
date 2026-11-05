@@ -32,7 +32,7 @@
 | `kiro/eu-central-1/<modelId>` | Kiro 欧洲地区账号 |
 | `chatgpt/global/<model-id>` | ChatGPT / Codex 或官方 OpenAI API Key |
 | `claude/global/<model-id>` | Claude OAuth 或官方 Anthropic API Key |
-| `teleagent/cn/<model-id>` | 电信 TeleAgent；[完整凭据导入与范围](TELEAGENT.md) |
+| `teleagent/cn/<model-id>` | 电信 TeleAgent；[本机浏览器登录、凭据导入与范围](TELEAGENT.md) |
 | `trae/global/...` | 国际版尚未接入，拒绝调用 |
 
 WorkBuddy 模型来自该地区的上游目录，不在没有账号时虚构可用模型。保存账号后面板会刷新目录，也可手动刷新。各上游刷新结果独立保留；一个目录更新不会覆盖另一个上游或地区。

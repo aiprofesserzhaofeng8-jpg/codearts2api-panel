@@ -45,6 +45,15 @@ func routingFixture() (*Routing, *routingState) {
 	return NewRouting(st, directory), st
 }
 
+func TestMappingImageCapabilityRequiresAllSources(t *testing.T) {
+	for _, tc := range []struct{ a, b, want string }{{"supported", "supported", "supported"}, {"supported", "unsupported", "unsupported"}, {"supported", "", ""}, {"", "", ""}} {
+		p := &ModelPlan{Public: "vision-1.0", IDs: []string{"a", "b"}, Models: map[string]provider.Model{"a": {ImageInput: tc.a}, "b": {ImageInput: tc.b}}}
+		if m := p.PublicModel(); m.ImageInput != tc.want {
+			t.Fatal("mapping overstated capabilities", m)
+		}
+	}
+}
+
 func TestRoutingMappedVisibilitySelectionAndReauthorization(t *testing.T) {
 	r, st := routingFixture()
 	list, err := r.VisibleModels("key")

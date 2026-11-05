@@ -3,6 +3,7 @@ package server
 import (
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/config"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,13 @@ import (
 )
 
 type summaryIntentKey struct{}
+
+func addImageCapability(out map[string]any, model provider.Model) {
+	if input := model.InputModalities(); input != nil {
+		out["input_modalities"] = input
+		out["supports_images"] = model.ImageInput == "supported"
+	}
+}
 
 func profileFromPolicy(model string, p storage.ModelPolicy) map[string]any {
 	return map[string]any{"version": 1, "model": model, "context_window": p.ContextWindow, "max_output_tokens": p.MaxOutputTokens,
@@ -54,7 +62,9 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, 200, profileFromPolicy(model.ID, p))
+	profile := profileFromPolicy(model.ID, p)
+	addImageCapability(profile, model)
+	writeJSON(w, 200, profile)
 }
 func (s *Server) handleAdminModelPolicies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {

@@ -48,6 +48,21 @@ func TestClientProfileRequiresKey(t *testing.T) {
 	}
 }
 
+func TestWorkBuddyImageCapabilityExposedToClients(t *testing.T) {
+	s := poolServer(t, 0)
+	s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "vision", Context: 65536, MaxOutput: 4096, ImageInput: "supported"}, {ID: "unknown", Context: 65536, MaxOutput: 4096}})
+	key := s.Store.AddKey("images").Key
+	for _, path := range []string{"/v1/models", "/v1/client-profile?model=workbuddy/cn/vision"} {
+		r := httptest.NewRequest("GET", path, nil)
+		r.Header.Set("Authorization", "Bearer "+key)
+		w := httptest.NewRecorder()
+		s.Handler().ServeHTTP(w, r)
+		if w.Code != 200 || !strings.Contains(w.Body.String(), `"input_modalities":["text","image"]`) || !strings.Contains(w.Body.String(), `"supports_images":true`) {
+			t.Fatal("client capability lost", w.Code, w.Body.String())
+		}
+	}
+}
+
 func TestTraeClientProfileAvailableWithoutManualPolicy(t *testing.T) {
 	s := poolServer(t, 0)
 	known, unknown := "trae/cn/deepseek-v4.1-flash", "trae/cn/unknown"

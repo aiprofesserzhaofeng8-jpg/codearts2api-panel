@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -20,11 +21,23 @@ func invalid(message string) error {
 // Translate the native structured protocol, keeping tool execution with the caller.
 func prepareBody(raw []byte, model string) (map[string]any, error) {
 	var obj map[string]any
-	if json.Unmarshal(raw, &obj) != nil || obj == nil {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if decoder.Decode(&obj) != nil || obj == nil || decoder.Decode(new(any)) != io.EOF {
 		return nil, invalid("需要 JSON 对象")
 	}
-	if n, ok := obj["n"].(float64); ok && n != 1 {
-		return nil, invalid("当前仅支持 n=1")
+	integer := func(v any) (int64, bool) {
+		n, ok := v.(json.Number)
+		if !ok {
+			return 0, false
+		}
+		i, err := n.Int64()
+		return i, err == nil
+	}
+	if value, exists := obj["n"]; exists {
+		if n, ok := integer(value); !ok || n != 1 {
+			return nil, invalid("当前仅支持 n=1")
+		}
 	}
 	if _, ok := obj["functions"]; ok {
 		return nil, invalid("请使用 tools 字段代替 legacy functions")
@@ -89,20 +102,24 @@ func prepareBody(raw []byte, model string) (map[string]any, error) {
 	obj["stream"] = true
 	if alias, exists := obj["max_completion_tokens"]; exists {
 		if current, ok := obj["max_tokens"]; ok {
-			a, aok := alias.(float64)
-			b, bok := current.(float64)
+			a, aok := integer(alias)
+			b, bok := integer(current)
 			if !aok || !bok {
 				return nil, invalid("输出预算必须为数字")
 			}
-			obj["max_tokens"] = min(a, b)
+			if a < b {
+				obj["max_tokens"] = alias
+			} else {
+				obj["max_tokens"] = current
+			}
 		} else {
 			obj["max_tokens"] = alias
 		}
 		delete(obj, "max_completion_tokens")
 	}
 	if limit, exists := obj["max_tokens"]; exists {
-		n, ok := limit.(float64)
-		if !ok || n < 1 || n != float64(int64(n)) {
+		n, ok := integer(limit)
+		if !ok || n < 1 {
 			return nil, invalid("输出预算必须为正整数")
 		}
 	}
@@ -482,13 +499,16 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, input provider
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("Trae 事件流读取失败")
+		if errors.Is(err, bufio.ErrTooLong) {
+			return &provider.Error{Status: 502, Message: "Trae 事件行超过上限"}
+		}
+		return provider.NewTransportError("Trae", err)
 	}
 	if err := emit(); err != nil {
 		return err
 	}
 	if !st.done {
-		return fmt.Errorf("Trae 响应在完成前中断，缺少 done 事件")
+		return provider.NewTransportError("Trae", io.ErrUnexpectedEOF)
 	}
 	return nil
 }

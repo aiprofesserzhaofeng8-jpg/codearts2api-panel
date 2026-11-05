@@ -11,6 +11,7 @@ COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN npm install --global pnpm@10.34.9 && pnpm install --frozen-lockfile
 COPY frontend ./
 COPY api /src/api
+COPY scripts/teleagent-login.mjs /src/scripts/teleagent-login.mjs
 RUN pnpm typecheck && pnpm test && pnpm build
 
 FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS build

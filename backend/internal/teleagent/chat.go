@@ -88,7 +88,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		return &provider.Error{Status: 502, Message: "TeleAgent 上游连接失败"}
+		return provider.NewTransportError("TeleAgent", e)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {

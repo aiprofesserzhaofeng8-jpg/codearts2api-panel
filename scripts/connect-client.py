@@ -47,13 +47,15 @@ def build_launch(client, base, profile, config_dir, env):
     context = profile['context_window']
     output = profile['max_output_tokens']
     compact = profile['compaction']
+    modalities = profile.get('input_modalities')
+    model_input = ['text', 'image'] if isinstance(modalities, list) and 'image' in modalities else ['text']
     if client == 'pi':
         agent_dir = config_dir / 'pi'
         private_json(agent_dir / 'models.json', {'providers': {'codearts': {
             'name': 'CodeArts gateway', 'api': 'openai-completions',
             'baseUrl': base + '/v1', 'apiKey': '${CODEARTS_API_KEY}', 'authHeader': True,
             'compat': {'maxTokensField': 'max_tokens', 'supportsDeveloperRole': False, 'supportsStore': False},
-            'models': [{'id': model, 'name': model, 'input': ['text'], 'contextWindow': context, 'maxTokens': output}]
+            'models': [{'id': model, 'name': model, 'input': model_input, 'contextWindow': context, 'maxTokens': output}]
         }}})
         adapter_target = agent_dir / 'extensions' / 'codearts-compaction.ts'
         if profile.get('pi_summary_adapter', True):

@@ -45,10 +45,11 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 
 	for _, raw := range chunks {
 		var c struct {
-			ID      string `json:"id"`
-			Object  string `json:"object"`
-			Created int64  `json:"created"`
-			Model   string `json:"model"`
+			Error   json.RawMessage `json:"error"`
+			ID      string          `json:"id"`
+			Object  string          `json:"object"`
+			Created int64           `json:"created"`
+			Model   string          `json:"model"`
 			Choices []struct {
 				Index int `json:"index"`
 				Delta struct {
@@ -72,7 +73,10 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 			Usage json.RawMessage `json:"usage"`
 		}
 		if err := json.Unmarshal(raw, &c); err != nil {
-			continue
+			return nil, fmt.Errorf("上游流包含无效 JSON 分片，无法生成完整回复")
+		}
+		if len(c.Error) > 0 && string(c.Error) != "null" {
+			return nil, fmt.Errorf("上游流包含错误，无法生成成功回复")
 		}
 		if id == "" {
 			id = c.ID
@@ -126,6 +130,9 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 	}
 
 	sort.Ints(choiceOrder)
+	if len(choiceOrder) == 0 {
+		return nil, fmt.Errorf("上游没有返回有效候选回复")
+	}
 	outputChoices := make([]any, 0, len(choiceOrder))
 	for _, index := range choiceOrder {
 		state := choices[index]

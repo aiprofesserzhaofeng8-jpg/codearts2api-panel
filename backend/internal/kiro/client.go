@@ -229,7 +229,7 @@ func (c *Client) request(ctx context.Context, method, url string, a Credentials,
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, &provider.Error{Status: 502, Message: "Kiro 上游连接失败"}
+		return nil, provider.NewTransportError("Kiro", e)
 	}
 	return resp, nil
 }
@@ -240,7 +240,10 @@ func readJSON(resp *http.Response) (map[string]json.RawMessage, error) {
 	}
 	b, e := io.ReadAll(io.LimitReader(resp.Body, (4<<20)+1))
 	var o map[string]json.RawMessage
-	if e != nil || len(b) > 4<<20 || json.Unmarshal(b, &o) != nil || o == nil {
+	if e != nil {
+		return nil, provider.NewTransportError("Kiro", e)
+	}
+	if len(b) > 4<<20 || json.Unmarshal(b, &o) != nil || o == nil {
 		return nil, broken()
 	}
 	return o, nil

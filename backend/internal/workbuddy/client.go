@@ -11,6 +11,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -260,7 +261,7 @@ func (c *Client) doJSON(ctx context.Context, a Credentials, method, endpoint str
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	if err != nil {
-		return nil, err
+		return nil, provider.NewTransportError("WorkBuddy", err)
 	}
 	if err = upstreamError(resp.StatusCode, raw); err != nil {
 		return nil, err
@@ -406,17 +407,23 @@ func (c *Client) Stream(ctx context.Context, credentials json.RawMessage, input 
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return err
+		if errors.Is(err, bufio.ErrTooLong) {
+			return &provider.Error{Status: 502, Message: "WorkBuddy 事件行超过上限"}
+		}
+		return provider.NewTransportError("WorkBuddy", err)
 	}
 	if err := emit(); err != nil {
 		return err
 	}
 	if len(seen) == 0 {
+		if !done {
+			return provider.NewTransportError("WorkBuddy", io.ErrUnexpectedEOF)
+		}
 		return fmt.Errorf("WorkBuddy 返回空响应")
 	}
 	for i := range seen {
 		if !finished[i] {
-			return fmt.Errorf("WorkBuddy 响应在完成前中断")
+			return provider.NewTransportError("WorkBuddy", io.ErrUnexpectedEOF)
 		}
 	}
 	return nil
@@ -432,12 +439,13 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 	}
 	var cfg struct {
 		Models []struct {
-			ID, Name    string
-			Description string `json:"descriptionZh"`
-			Credits     string `json:"credits"`
-			MaxInput    int    `json:"maxInputTokens"`
-			MaxOutput   int    `json:"maxOutputTokens"`
-			Disabled    bool   `json:"disabled"`
+			ID, Name       string
+			Description    string `json:"descriptionZh"`
+			Credits        string `json:"credits"`
+			MaxInput       int    `json:"maxInputTokens"`
+			MaxOutput      int    `json:"maxOutputTokens"`
+			Disabled       bool   `json:"disabled"`
+			SupportsImages *bool  `json:"supportsImages"`
 		} `json:"models"`
 	}
 	if json.Unmarshal(data, &cfg) != nil {
@@ -446,7 +454,14 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 	var out []provider.Model
 	for _, m := range cfg.Models {
 		if m.ID != "" && !m.Disabled {
-			out = append(out, provider.Model{ID: m.ID, UpstreamID: m.ID, Provider: provider.WorkBuddy, Scope: a.Realm, Name: m.Name, Desc: m.Description, Credit: m.Credits, Context: m.MaxInput, MaxOutput: m.MaxOutput, Source: "upstream", StreamOnly: true})
+			image := ""
+			if m.SupportsImages != nil {
+				image = "unsupported"
+				if *m.SupportsImages {
+					image = "supported"
+				}
+			}
+			out = append(out, provider.Model{ID: m.ID, UpstreamID: m.ID, Provider: provider.WorkBuddy, Scope: a.Realm, Name: m.Name, Desc: m.Description, Credit: m.Credits, Context: m.MaxInput, MaxOutput: m.MaxOutput, Source: "upstream", StreamOnly: true, ImageInput: image})
 		}
 	}
 	if len(out) == 0 {

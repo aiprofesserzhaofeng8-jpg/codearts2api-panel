@@ -67,7 +67,11 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	switch result.State {
 	case accounts.LoginStarted:
-		writeJSON(w, 200, map[string]any{"session_id": result.SessionID, "url": result.URL, "provider": result.Provider, "scope": result.Scope, "expires_at": result.ExpiresAt})
+		body := map[string]any{"session_id": result.SessionID, "url": result.URL, "provider": result.Provider, "scope": result.Scope, "expires_at": result.ExpiresAt}
+		if result.HelperChallenge != "" {
+			body["helper_challenge"] = result.HelperChallenge
+		}
+		writeJSON(w, 200, body)
 	case accounts.LoginPending:
 		writeJSON(w, 200, map[string]any{"ready": false, "message": "尚未完成授权；Trae 请在浏览器授权后粘贴完整回调地址，WorkBuddy / Qoder / Kiro 可直接检查"})
 	case accounts.LoginPreview:

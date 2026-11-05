@@ -23,7 +23,7 @@ func readFrame(r io.Reader) (map[string]string, []byte, error) {
 		return nil, nil, io.EOF
 	}
 	if e != nil {
-		return nil, nil, broken()
+		return nil, nil, provider.NewTransportError("Kiro", e)
 	}
 	total, hlen := binary.BigEndian.Uint32(pre[:4]), binary.BigEndian.Uint32(pre[4:8])
 	if crc32.ChecksumIEEE(pre[:8]) != binary.BigEndian.Uint32(pre[8:]) || total < 16 || total > 8<<20 || hlen > 128<<10 || hlen > total-16 {
@@ -31,7 +31,7 @@ func readFrame(r io.Reader) (map[string]string, []byte, error) {
 	}
 	data := make([]byte, total-12)
 	if _, e = io.ReadFull(r, data); e != nil {
-		return nil, nil, broken()
+		return nil, nil, provider.NewTransportError("Kiro", e)
 	}
 	hash := crc32.NewIEEE()
 	_, _ = hash.Write(pre[:])

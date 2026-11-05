@@ -72,7 +72,9 @@ jobs:
         run: python tools/check_html_js.py
 
       - name: 客户端启动器测试
-        run: python3 -m unittest discover -s scripts -p test_connect_client.py
+        run: |
+          python3 -m unittest discover -s scripts -p test_connect_client.py
+          node --test scripts/teleagent-login.test.mjs
 
       - name: 部署工具与数据恢复测试
         run: python3 -m unittest discover -s deploy/tests -v
@@ -114,6 +116,8 @@ jobs:
           pnpm --dir frontend install --frozen-lockfile
           pnpm --dir frontend typecheck
           pnpm --dir frontend build
+      - name: Local login helper tests
+        run: node --test scripts/teleagent-login.test.mjs
       # Windows 专属代码（DPAPI / 定长回写）只在 build tag 为 windows 时编译，
       # 因此必须单独跑一遍，避免 linux 任务漏掉编译错误。
       - name: build

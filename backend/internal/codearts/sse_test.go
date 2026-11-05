@@ -116,17 +116,13 @@ func TestAggregateSSEEmpty(t *testing.T) {
 	}
 }
 
-func TestAggregateSSESkipsGarbage(t *testing.T) {
+func TestAggregateSSERejectsGarbage(t *testing.T) {
 	chunks := [][]byte{
 		[]byte(`not json`),
 		[]byte(`{"id":"as-3","created":1,"model":"m","choices":[{"index":0,"delta":{"content":"ok"},"finish_reason":"stop"}]}`),
 	}
-	raw, err := AggregateSSE(chunks)
-	if err != nil {
-		t.Fatalf("AggregateSSE: %v", err)
-	}
-	if !strings.Contains(string(raw), `"content":"ok"`) {
-		t.Errorf("应跳过坏分片并保留好分片: %s", raw)
+	if raw, err := AggregateSSE(chunks); err == nil || raw != nil {
+		t.Fatalf("坏分片不能静默删除后生成成功回复: %s %v", raw, err)
 	}
 }
 

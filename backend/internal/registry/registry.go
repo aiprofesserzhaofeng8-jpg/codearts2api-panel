@@ -231,12 +231,17 @@ func FromBuiltin(models []codearts.BuiltinModel) []Model {
 		if m.ModelDesc != "" {
 			desc = m.ModelDesc
 		}
+		image := ""
+		if m.SupportsImages {
+			image = "supported"
+		}
 		out = append(out, Model{
-			ID:     m.ModelID,
-			Name:   m.ModelName,
-			Desc:   desc,
-			Source: "upstream",
-			Credit: m.CreditRatio(),
+			ID:         m.ModelID,
+			Name:       m.ModelName,
+			Desc:       desc,
+			Source:     "upstream",
+			Credit:     m.CreditRatio(),
+			ImageInput: image,
 		})
 	}
 	return out

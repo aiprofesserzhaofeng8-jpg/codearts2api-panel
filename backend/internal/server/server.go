@@ -355,7 +355,15 @@ func (s *Server) withRateLimit(style errStyle, next http.HandlerFunc) http.Handl
 			return
 		}
 		defer release()
-		next(w, r)
+		ctx, cancel := context.WithCancel(r.Context())
+		defer cancel()
+		writer, finish := boundResponseConnection(w, cancel, 30*time.Second)
+		defer finish()
+		r = r.WithContext(ctx)
+		if r.Body != nil {
+			r.Body = &connectionBody{ReadCloser: r.Body, controller: http.NewResponseController(w), cancel: cancel, deadline: 30 * time.Second}
+		}
+		next(writer, r)
 	}
 }
 

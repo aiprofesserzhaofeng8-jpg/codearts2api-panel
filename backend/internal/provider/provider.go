@@ -32,7 +32,20 @@ type Model struct {
 	Provider   string `json:"provider,omitempty"`
 	Scope      string `json:"scope,omitempty"`
 	UpstreamID string `json:"upstream_id,omitempty"`
+	// Empty means unknown; never infer image support from a model's name.
+	ImageInput string `json:"image_input,omitempty"`
 }
+
+func (m Model) InputModalities() []string {
+	if m.ImageInput == "supported" {
+		return []string{"text", "image"}
+	}
+	if m.ImageInput == "unsupported" {
+		return []string{"text"}
+	}
+	return nil
+}
+
 type Identity struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
@@ -59,6 +72,9 @@ type Request struct {
 type Login struct {
 	State string
 	URL   string
+	// HelperChallenge binds a local browser helper result to this staged login.
+	// It never authorizes a public callback or an account save.
+	HelperChallenge string
 }
 type Adapter interface {
 	Describe() Descriptor
@@ -160,6 +176,13 @@ type RewardResult struct {
 	State   string   `json:"state"` // claimable, claimed, already_claimed, unavailable, unknown
 	Message string   `json:"message"`
 	Credits *float64 `json:"credits,omitempty"`
+	// Notices are upstream-advertised activities, not claim permissions.
+	Notices []RewardNotice `json:"notices,omitempty"`
+}
+
+type RewardNotice struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 func (r RewardResult) Confirmed() bool { return r.State == "claimed" || r.State == "already_claimed" }

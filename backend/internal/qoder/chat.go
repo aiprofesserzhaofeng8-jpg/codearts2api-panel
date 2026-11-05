@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -169,7 +171,10 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, request provid
 		return ctx.Err()
 	}
 	if scanner.Err() != nil {
-		return &provider.Error{Status: 502, Message: "Qoder 流式响应读取失败"}
+		if errors.Is(scanner.Err(), bufio.ErrTooLong) {
+			return failure(502)
+		}
+		return provider.NewTransportError("Qoder", scanner.Err())
 	}
 	if len(data) > 0 || event != "" {
 		if err := flush(); err != nil {
@@ -177,7 +182,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, request provid
 		}
 	}
 	if !finished {
-		return &provider.Error{Status: 502, Message: "Qoder 响应提前结束，未收到完成事件"}
+		return provider.NewTransportError("Qoder", io.ErrUnexpectedEOF)
 	}
 	return nil
 }

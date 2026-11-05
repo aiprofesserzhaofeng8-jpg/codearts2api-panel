@@ -56,6 +56,7 @@ type ProviderLoginResult struct {
 	SessionID, URL, Provider, Scope string
 	PreviewID, AccountID            string
 	ExpiresAt                       int64
+	HelperChallenge                 string
 	Identity                        provider.Identity
 	Existing                        bool
 }
@@ -197,7 +198,7 @@ func (s *ProviderLogins) start(ctx context.Context, body ProviderLoginRequest, a
 	}
 	f.state = upstream.State
 	f.url = upstream.URL
-	return ProviderLoginResult{State: LoginStarted, SessionID: id, URL: f.url, Provider: f.provider, Scope: f.scope, ExpiresAt: f.created.Add(10 * time.Minute).Unix()}, nil
+	return ProviderLoginResult{State: LoginStarted, SessionID: id, URL: f.url, Provider: f.provider, Scope: f.scope, HelperChallenge: upstream.HelperChallenge, ExpiresAt: f.created.Add(10 * time.Minute).Unix()}, nil
 }
 
 // The caller holds f.mu throughout check/complete, including native exchange

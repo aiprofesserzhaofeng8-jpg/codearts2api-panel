@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"codearts2api/internal/provider"
 	"codearts2api/internal/providerhttp"
@@ -37,13 +38,15 @@ type Credentials struct {
 	OperToken      string `json:"oper_token,omitempty"`
 }
 type Client struct {
-	HTTP   *http.Client
-	Origin string
+	HTTP    *http.Client
+	Origin  string
+	loginMu sync.Mutex
+	logins  map[string]*loginPending
 }
 
 func New() *Client { return &Client{HTTP: providerhttp.New(), Origin: "https://agent.teleai.com.cn"} }
 func (*Client) Describe() provider.Descriptor {
-	return provider.Descriptor{ID: provider.TeleAgent, Name: "TeleAgent", Available: true, Scopes: []string{"cn"}, Login: false}
+	return provider.Descriptor{ID: provider.TeleAgent, Name: "TeleAgent", Available: true, Scopes: []string{"cn"}, Login: true}
 }
 
 var identifier = regexp.MustCompile(`^[A-Za-z0-9_.:-]{1,256}$`)
