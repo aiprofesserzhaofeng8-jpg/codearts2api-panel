@@ -74,8 +74,8 @@ func TestTraeClientProfileAvailableWithoutManualPolicy(t *testing.T) {
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, r)
 		if model == unknown {
-			if w.Code != 422 {
-				t.Fatal("unconfigured model gained guessed capabilities")
+			if w.Code != 200 || !strings.Contains(w.Body.String(), `"client_profile_status":"missing_limits"`) || strings.Contains(w.Body.String(), `"context_window"`) {
+				t.Fatal("missing limits must retain independent capabilities without guessing", w.Body.String())
 			}
 			continue
 		}

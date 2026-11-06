@@ -1,8 +1,6 @@
 package catalog
 
 import (
-	"strings"
-
 	"codearts2api/internal/config"
 )
 
@@ -36,14 +34,6 @@ func (m *Management) Save(model config.UnifiedModel, p *config.ModelPolicy, revi
 		}
 	}
 	model = config.CloneUnifiedModel(model)
-	for _, raw := range m.directory.List(m.store.Settings().ModelAliases) {
-		if model.ID != "" {
-			break
-		} // existing public meaning survives new catalog collisions
-		if !strings.Contains(raw.ID, "/") && strings.EqualFold(raw.ID, model.Name) {
-			return model, config.ModelFailure(409, "model_name_conflict", "公开名称与原始型号或别名冲突")
-		}
-	}
 	policies := map[string]config.ModelPolicy{}
 	for i, src := range model.Sources {
 		raw, ok := m.directory.ResolveRaw(src.ID)

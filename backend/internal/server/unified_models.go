@@ -135,7 +135,7 @@ func (s *Server) handleUnifiedModels(w http.ResponseWriter, r *http.Request) {
 				models = append(models, model)
 			}
 		}
-		writeJSON(w, 200, map[string]any{"models": models, "next_after": next, "routing_revision": snapshot.Revision})
+		writeJSON(w, 200, map[string]any{"models": models, "next_after": next, "routing_revision": snapshot.Revision, "compatibility_aliases": s.UnifiedModels.CompatibilityAliases(snapshot)})
 	case http.MethodPost, http.MethodPut:
 		if (r.Method == http.MethodPost && id != "") || (r.Method == http.MethodPut && id == "") {
 			writeErr(w, 405, "此路径不支持该方法", "invalid_request_error")

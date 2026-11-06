@@ -101,11 +101,17 @@ func TestUnifiedModelsBrowser(t *testing.T) {
 		t.Fatal(err)
 	}
 	snapshot := reopened.UnifiedSnapshot()
-	if len(snapshot.Models) != 1 || len(snapshot.Models[0].Sources) != 2 || snapshot.Models[0].Sources[1].Enabled {
-		t.Fatal("browser edits not durably retained", snapshot.Models)
+	var edited config.UnifiedModel
+	for _, m := range snapshot.Models {
+		if m.Name == "shared-public-1" {
+			edited = m
+		}
+	}
+	if len(snapshot.Models) < 2 || len(edited.Sources) != 2 || edited.Sources[1].Enabled {
+		t.Fatal("browser edits/defaults not durably retained", snapshot.Models)
 	}
 	groups := reopened.CanonicalGroups()
-	if len(groups) != 1 || len(groups[0].UnifiedModels) != 1 || groups[0].ClientDefaultModel != snapshot.Models[0].Name {
+	if len(groups) != 1 || len(groups[0].UnifiedModels) != 1 || groups[0].ClientDefaultModel != edited.Name {
 		t.Fatal("browser group authorization not durable", groups)
 	}
 }

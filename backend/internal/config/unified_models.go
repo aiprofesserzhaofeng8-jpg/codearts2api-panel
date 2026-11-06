@@ -47,8 +47,8 @@ func ValidUnifiedID(id string) bool     { return unifiedID.MatchString(id) }
 func UnifiedPolicyKey(id string) string { return "unified/" + id }
 func ValidModelRevision(v uint64) bool  { return v > 0 && v <= MaxModelRevision }
 func ValidateUnifiedName(name string) error {
-	if name == "" || len(name) > 200 || strings.Contains(name, "/") || !strings.ContainsAny(name, "0123456789") || strings.IndexFunc(name, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
-		return ModelFailure(400, "invalid_model_definition", "统一模型名称须带版本号且不含空白或斜线")
+	if name == "" || len(name) > 200 || strings.Contains(name, "/") || strings.IndexFunc(name, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
+		return ModelFailure(400, "invalid_model_definition", "统一模型名称不能为空，且不能包含空白或斜线")
 	}
 	return nil
 }

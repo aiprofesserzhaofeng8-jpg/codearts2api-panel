@@ -11,6 +11,7 @@ import (
 // Listing is an authorization projection, never an availability/lease check.
 func (s *Routing) unifiedModelsForScope(snapshot config.UnifiedSnapshot, scope access.AccessScope) []provider.Model {
 	out := []provider.Model{}
+	compatibility := compatibilityModelTargets(snapshot)
 	covered, names, seen := map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for _, m := range snapshot.Models {
 		names[strings.ToLower(m.Name)] = true
@@ -33,8 +34,22 @@ func (s *Routing) unifiedModelsForScope(snapshot config.UnifiedSnapshot, scope a
 				plan.Models[raw.ID] = raw
 			}
 		}
-		out = append(out, plan.PublicModel())
-		seen[m.Name] = true
+		hideCompatibility := false
+		if target, exists := compatibility[m.ID]; exists {
+			if targetGrant, visible := scope.UnifiedGrant(target.ID); visible && targetGrant.Visible && (!grant.Callable || targetGrant.Callable) {
+				hideCompatibility = true
+				for _, source := range m.Sources {
+					if grant.AllowsSource(source.ID) && !targetGrant.AllowsSource(source.ID) {
+						hideCompatibility = false
+						break
+					}
+				}
+			}
+		}
+		if !hideCompatibility {
+			out = append(out, plan.PublicModel())
+			seen[m.Name] = true
+		}
 	}
 	listingScope := scope
 	listingScope.ModelRules = nil // callable must not determine visibility

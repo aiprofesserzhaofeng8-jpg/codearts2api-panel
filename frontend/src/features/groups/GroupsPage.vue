@@ -4,10 +4,11 @@ import { api, isAbortError } from '../../api/client';
 import { serverState } from '../../shared/read-model';
 import { refresh } from '../../shared/refresh';
 import { t as tr } from '../../i18n';
-import { canonicalSource, rawSource, editError, reloadUnifiedModels, unifiedModels, type Group, type Grant } from '../../shared/unified-models';
+import { canonicalSource, compatibilityAliases, rawSource, editError, reloadUnifiedModels, unifiedModels, type Group, type Grant } from '../../shared/unified-models';
 import { groupModelAllowed } from './controller';
 const dialog = ref<HTMLDialogElement>(), draft = ref<Group>(), busy = ref(false), opening = ref(false), error = ref(''), listError = ref('');
 const groups = computed(() => serverState.data?.groups ?? []), accounts = computed(() => serverState.data?.accounts ?? []);
+const selectableModels = computed(() => unifiedModels.value.filter(m => !compatibilityAliases.value[m.id] || draft.value?.unified_models.some(g => g.model_id === m.id)));
 const rawModels = computed(() => (serverState.data?.models ?? []).filter(m => m.source !== 'alias'));
 const rawChoices = computed(() => {
     const group = draft.value;
@@ -194,7 +195,7 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
             <h3 class="mt-14">{{tr('统一模型授权')}}</h3>
             <p class="hint">{{tr('只选择已有统一模型；名称与平台对应关系在模型页维护。')}}</p>
             <div id="groupUnifiedGrants">
-              <div v-for="model in unifiedModels" :key="model.id" class="unified-source">
+              <div v-for="model in selectableModels" :key="model.id" class="unified-source">
                 <label class="check">
                   <input type="checkbox" :checked="!!grant(model.id)" :aria-label="tr('授权')+' '+model.name" @change="selectModel(model.id,($event.target as HTMLInputElement).checked)">
                   <strong>{{model.name}}</strong>

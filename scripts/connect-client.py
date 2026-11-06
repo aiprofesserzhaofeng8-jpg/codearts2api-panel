@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Launch Pi/Codex/Claude Code with gateway-provided, conservative model settings.
-Only CODEARTS_API_KEY is read; no upstream/account/admin credentials are needed.
+Uses a gateway key from the environment or, for Pi sync, its existing provider configuration. No upstream/account/admin credentials are needed.
 """
 import argparse
 import getpass
@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -128,6 +129,72 @@ def check_codex_sandbox():
                          'python3 scripts/install-codex-sandbox.py; an administrator can apply it. '
                          'Sandbox permissions were not relaxed.')
 
+def sync_pi_models(base, model_file, key_override=None):
+    """Refresh the active Pi provider in-place; never invent missing limits."""
+    original = model_file.read_bytes()
+    document = json.loads(original)
+    providers = document.get('providers', {})
+    provider = providers.get('codearts-local')
+    if not isinstance(provider, dict) or normalize_url(provider.get('baseUrl', '')) != base:
+        raise ValueError('codearts-local must already point at this gateway; existing credentials were not sent')
+    key = key_override or provider.get('apiKey', '')
+    if not isinstance(key, str) or key.startswith('!'):
+        raise ValueError('Command credentials are not executed; supply CODEARTS_API_KEY')
+    if key.startswith('${') and key.endswith('}'):
+        key = os.environ.get(key[2:-1], '')
+    else:
+        key = os.environ.get(key, key)
+    if not key:
+        raise ValueError('No existing gateway credential; supply CODEARTS_API_KEY')
+    request = urllib.request.Request(base + '/v1/models', headers={'Authorization': 'Bearer ' + key})
+    try:
+        with urllib.request.build_opener(NoRedirect()).open(request, timeout=45) as response:
+            data = json.load(response)
+    except urllib.error.HTTPError as error:
+        raise ValueError('Gateway model sync failed (HTTP %d)' % error.code) from None
+    rows = data.get('data')
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('Gateway returned no model catalog; configuration was preserved')
+    existing = {m['id']: dict(m) for m in provider.get('models', [])}
+    skipped, retained, unknown = [], [], []
+    for row in rows:
+        model_id = row.get('id')
+        if not isinstance(model_id, str) or not model_id:
+            raise ValueError('Invalid model catalog')
+        profile = row.get('client_profile') or {}
+        limits = all(isinstance(profile.get(k), int) and profile[k] > 0 for k in ('context_window', 'max_output_tokens'))
+        model = existing.get(model_id)
+        if model is None and not limits:
+            skipped.append(model_id)
+            continue
+        if model is None:
+            model = {'id': model_id}
+        model['name'] = model_id if row.get('provider') == 'unified' else model.get('name', model_id)
+        if limits:
+            model['contextWindow'] = profile['context_window']
+            model['maxTokens'] = profile['max_output_tokens']
+        else:
+            retained.append(model_id)
+        modalities = row.get('input_modalities', profile.get('input_modalities'))
+        if isinstance(modalities, list) and 'text' in modalities:
+            model['input'] = ['text', 'image'] if 'image' in modalities else ['text']
+        else:
+            unknown.append(model_id)
+            # Unknown is not an affirmative image guarantee. Report it explicitly.
+            model['input'] = ['text']
+        existing[model_id] = model
+    provider['models'] = list(existing.values())
+    if model_file.read_bytes() != original:
+        raise ValueError('Pi configuration changed during sync; retry without overwriting it')
+    backup = model_file.with_name(model_file.name + '.before-sync-' + str(time.time_ns()) + '.bak')
+    fd = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'wb') as stream:
+        stream.write(original)
+    private_json(model_file, document)
+    return {'config': str(model_file), 'backup': str(backup), 'models': len(existing),
+            'retained_existing_limits': retained, 'skipped_missing_limits': skipped,
+            'unknown_image_capability': unknown}
+
 def main():
     argv = sys.argv[1:]
     split = argv.index('--') if '--' in argv else len(argv)
@@ -138,11 +205,17 @@ def main():
     parser.add_argument('--model', default='', help='Explicit model; otherwise use the group client preference or request default')
     parser.add_argument('--list-models', action='store_true', help='List models visible to this API key without launching the client')
     parser.add_argument('--config-dir', type=Path)
+    parser.add_argument('--sync-models', action='store_true', help='Pi: back up and update the active codearts-local catalog without launching')
+    parser.add_argument('--pi-models-file', type=Path, default=Path.home()/'.pi/agent/models.json')
     parser.add_argument('--check-sandbox', action='store_true', help='Also validate the native Codex sandbox without a model request')
     parser.add_argument('--check', action='store_true', help='Validate connectivity and write client profile without launching a model request')
     args = parser.parse_args(argv[:split])
     base = normalize_url(args.url)
     env = os.environ.copy()
+    if args.sync_models:
+        if args.client != 'pi': raise ValueError('--sync-models is only for Pi')
+        print(json.dumps(sync_pi_models(base, args.pi_models_file.expanduser(), env.get('CODEARTS_API_KEY')), ensure_ascii=False, indent=2))
+        return 0
     key = env.get('CODEARTS_API_KEY')
     if not key:
         if not sys.stdin.isatty():
@@ -174,6 +247,8 @@ def main():
                              'or configure its context/output limits in the panel Models page. '
                              'For DeepSeek, try --model deepseek-v4.1-flash; the key must allow this model.') from None
         raise ValueError('Gateway profile request failed (HTTP %d); verify gateway version, model and key' % exc.code) from None
+    if profile.get('client_profile_status') == 'missing_limits':
+        raise ValueError('Model capabilities are available but context/output limits are unverified. For existing Pi configuration use pi --sync-models; existing limits will be preserved and reported.')
     if profile.get('version') != 1 or profile.get('context_window', 0) <= 0:
         raise ValueError('Unsupported client profile')
     suffix = hashlib.sha256(base.encode()).hexdigest()[:12]

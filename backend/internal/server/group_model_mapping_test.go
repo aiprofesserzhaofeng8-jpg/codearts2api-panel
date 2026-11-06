@@ -281,7 +281,7 @@ func TestMappedModelProfileDoesNotResolveNameCollision(t *testing.T) {
 		s.Handler().ServeHTTP(w, r)
 		return w
 	}
-	if w := request(); w.Code != 422 {
+	if w := request(); w.Code != 200 || !strings.Contains(w.Body.String(), `"client_profile_status":"missing_limits"`) || strings.Contains(w.Body.String(), `"context_window"`) {
 		t.Fatal("borrowed profile from unrelated model", w.Code, w.Body.String())
 	}
 	if err := s.Store.SetModelPolicyAndSave("test-model", p); err != nil {

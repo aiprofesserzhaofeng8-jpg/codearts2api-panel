@@ -96,3 +96,26 @@ class ClientSetupTests(unittest.TestCase):
         self.assertIsNone(connect.NoRedirect().redirect_request(None,None,302,'',{},'https://elsewhere.example'))
 
 if __name__=='__main__': unittest.main()
+
+class PiSyncTests(unittest.TestCase):
+    def test_sync_updates_images_preserves_limits_secrets_other_providers_and_backup(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'models.json'
+            original={'providers':{'other':{'apiKey':'other-canary'},'codearts-local':{'baseUrl':'http://127.0.0.1:10087/v1','apiKey':'local-canary','models':[{'id':'shared-v1','name':'old','input':['text'],'contextWindow':32768,'maxTokens':4096}]}}}
+            path.write_text(json.dumps(original));before=path.read_bytes()
+            rows={'data':[{'id':'shared-v1','provider':'unified','input_modalities':['text','image'],'client_profile':None},{'id':'unknown-v1','client_profile':None}]}
+            response=mock.MagicMock();response.__enter__.return_value.read.return_value=json.dumps(rows).encode()
+            with mock.patch.object(connect.urllib.request,'build_opener') as opener:
+                opener.return_value.open.return_value=response
+                result=connect.sync_pi_models('http://127.0.0.1:10087',path)
+            saved=json.loads(path.read_text());model=saved['providers']['codearts-local']['models'][0]
+            self.assertEqual(model['input'],['text','image']);self.assertEqual(model['contextWindow'],32768)
+            self.assertEqual(saved['providers']['other'],original['providers']['other'])
+            self.assertEqual(saved['providers']['codearts-local']['apiKey'],'local-canary')
+            self.assertEqual(Path(result['backup']).read_bytes(),before)
+            self.assertEqual(result['skipped_missing_limits'],['unknown-v1'])
+            self.assertNotIn('canary',json.dumps(result))
+    def test_sync_rejects_different_gateway_before_sending_credentials(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'models.json';path.write_text(json.dumps({'providers':{'codearts-local':{'baseUrl':'http://127.0.0.1:10087/v1','apiKey':'secret'}}}))
+            with self.assertRaises(ValueError):connect.sync_pi_models('https://other.example',path)

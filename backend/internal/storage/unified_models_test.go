@@ -170,7 +170,7 @@ func TestUnifiedPermissionsReferencesAndEmptySelection(t *testing.T) {
 func TestUnifiedValidationAndPolicyBounds(t *testing.T) {
 	s := testPool(t, 0)
 	m := unifiedFixture()
-	for _, name := range []string{"deepseek", "deepseek/v4", "deepseek 4", "glm-5.3", "gpt-5"} {
+	for _, name := range []string{"", "deepseek/v4", "deepseek 4"} {
 		m.Name = name
 		if _, err := s.SaveUnifiedModel(m, nil, 0, s.UnifiedSnapshot().Revision, nil); err == nil {
 			t.Fatal("invalid/conflicting name", name)

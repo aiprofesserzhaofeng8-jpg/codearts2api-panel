@@ -162,6 +162,7 @@ func (s *Server) Handler() http.Handler {
 
 	// 控制台 API（统一走管理鉴权 + 同源校验）
 	mux.HandleFunc("/admin/api/model-policies", s.withAdminAuth(s.handleAdminModelPolicies))
+	mux.HandleFunc("/admin/api/model-defaults", s.withAdminAuth(s.handleDefaultModels))
 	mux.HandleFunc("/admin/api/unified-models", s.withAdminAuth(s.handleUnifiedModels))
 	mux.HandleFunc("/admin/api/unified-models/", s.withAdminAuth(s.handleUnifiedModels))
 	mux.HandleFunc("/admin/api/state", s.withAdminAuth(s.handleAdminState))

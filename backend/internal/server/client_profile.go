@@ -2,16 +2,32 @@ package server
 
 import (
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
 type summaryIntentKey struct{}
 
 func addImageCapability(out map[string]any, model provider.Model) {
+	basis := "provider_catalog"
+	contract := model.NativeModel
+	if model.Provider == "unified" || model.Provider == "group" {
+		basis = "authorized_sources"
+		if contract != nil {
+			basis = "native_and_authorized_sources"
+		}
+	} else {
+		contract = catalog.NativeModelContract(model)
+	}
+	out["capability_basis"] = basis
+	if contract != nil {
+		out["native_model"] = contract
+	}
 	if input := model.InputModalities(); input != nil {
 		out["input_modalities"] = input
 		out["supports_images"] = model.ImageInput == "supported"
@@ -52,10 +68,19 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	model, plan, p, err := s.Routing.Profile(groupKey(r.Context()), r.URL.Query().Get("model"), s.ModelPolicies)
 	if err != nil {
+		var problem *config.ModelError
+		if errors.As(err, &problem) && problem.Reason == "client_profile_missing" && model.ID != "" {
+			profile := map[string]any{"version": 1, "model": model.ID, "client_profile_status": "missing_limits", "client_profile_error": map[string]string{"code": problem.Reason, "message": problem.Message}, "protocols": []string{"chat_completions", "responses", "anthropic_messages"}}
+			addImageCapability(profile, model)
+			addUnifiedProfile(profile, plan)
+			writeJSON(w, 200, profile)
+			return
+		}
 		writeErr(w, apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
 		return
 	}
 	profile := profileFromPolicy(model.ID, p)
+	profile["client_profile_status"] = "ready"
 	addImageCapability(profile, model)
 	addUnifiedProfile(profile, plan)
 	writeJSON(w, 200, profile)

@@ -11,7 +11,7 @@ import (
 
 // Inspect content fields, not schemas or argument values; never rewrite input.
 func (p *ModelPlan) FilterCapabilities(body []byte) error {
-	if p == nil || p.Selection.ID == "" {
+	if p == nil || (p.Selection.ID == "" && p.nativeContract() == nil) {
 		return nil
 	}
 	var request struct {
@@ -39,13 +39,19 @@ func (p *ModelPlan) FilterCapabilities(body []byte) error {
 			}
 		}
 	}
+	if contract := p.nativeContract(); contract != nil && ((image && contract.ImageInput == "unsupported") || (tool && contract.ToolCalling == "unsupported")) {
+		return config.ModelFailure(400, "native_model_capability_unsupported", "此原生型号不支持请求的图片或工具能力；请选择原生支持该能力的独立型号")
+	}
+	if p.Selection.ID == "" {
+		return nil // Preserve legacy source filtering; the native upper bound applies.
+	}
 	limit, _ := request.MaxTokens.Int64()
 	if x, err := request.MaxCompletionTokens.Int64(); err == nil && x > limit {
 		limit = x
 	}
 	ids := make([]string, 0, len(p.IDs))
 	for _, id := range p.IDs {
-		m := p.Models[id]
+		m := p.sourceCapabilities(p.Models[id])
 		if image && m.ImageInput != "supported" {
 			continue
 		}
@@ -135,6 +141,12 @@ func (s *Routing) resolveUnifiedMode(snapshot config.UnifiedSnapshot, scope acce
 	if !strings.Contains(name, "/") {
 		for _, m := range snapshot.Models {
 			if m.Name == name {
+				if _, granted := scope.UnifiedGrant(m.ID); !granted && scope.RawModelMode == "legacy" {
+					// Existing legacy groups keep their raw-name route until explicitly granted.
+					if _, raw := s.directory.Resolve(name, settings.ModelAliases); raw {
+						break
+					}
+				}
 				plan, err := s.buildUnifiedPlan(snapshot, scope, m, profile)
 				if err != nil {
 					return provider.Model{}, nil, err
@@ -144,6 +156,11 @@ func (s *Routing) resolveUnifiedMode(snapshot config.UnifiedSnapshot, scope acce
 		}
 		for _, m := range snapshot.Models {
 			if strings.EqualFold(m.Name, name) {
+				if _, granted := scope.UnifiedGrant(m.ID); !granted && scope.RawModelMode == "legacy" {
+					if _, raw := s.directory.Resolve(name, settings.ModelAliases); raw {
+						break
+					}
+				}
 				return provider.Model{}, nil, &provider.ModelNotFound{Name: name}
 			}
 		}

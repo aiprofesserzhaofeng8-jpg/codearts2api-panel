@@ -20,3 +20,11 @@
 .unified-modal input[type=checkbox]{flex-shrink:0}
 .unified-modal .table-wrap select{min-width:90px}
 @media(max-width:600px){.unified-modal{width:calc(100vw - 20px);max-height:94vh}.unified-modal .field-grid{grid-template-columns:1fr}.unified-panel .card-head>.actions{width:100%;justify-content:flex-end}.unified-source{padding:11px}.unified-toolbar{padding:12px 16px}.unified-source .actions .check{width:100%}.unified-help{padding:12px 16px}.unified-modal td.mono{min-width:170px}}
+.default-models-table{max-height:48vh;overflow:auto;margin-top:14px}
+.default-models-table td{vertical-align:top;overflow-wrap:anywhere}
+.default-models-table .mono{font-size:12px}
+
+.default-models-head{margin:0;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;border-bottom:1px solid var(--line)}
+.default-models-head h2{margin:0;font-size:18px}
+.default-models-head .btn{flex-shrink:0}
+@media(max-width:600px){.default-models-head{padding:16px}.default-models-head h2{font-size:16px}}

@@ -1061,10 +1061,27 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing metadata 422, disabled sources 503. No silent preference fallback. */
+        /** @description Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing context/output metadata returns capability-only HTTP 200 with client_profile_status=missing_limits and omitted numeric limits, disabled sources 503. No silent preference fallback. */
         get: operations["getClientProfile"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/api/model-defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["previewDefaultModels"];
+        put?: never;
+        /** @description Explicit versioned default catalog application. One atomic write; stale preview rejected. Optional group grants add only previously ungranted models within existing account/model ACLs. */
+        post: operations["applyDefaultModels"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1602,6 +1619,10 @@ export interface components {
             models: components["schemas"]["UnifiedModel"][];
             next_after: string;
             routing_revision: number;
+            /** @description Generated old provider-prefixed entries covered by canonical public models; still callable for compatibility. */
+            compatibility_aliases?: {
+                [key: string]: string;
+            };
         };
         RoutingWriteResult: {
             /** @constant */
@@ -1660,6 +1681,11 @@ export interface components {
             responses_websocket?: boolean;
             responses_store?: boolean;
             responses_compact?: boolean;
+            /** @enum {string} */
+            client_profile_status?: "ready";
+            /** @enum {string} */
+            capability_basis?: "provider_catalog" | "authorized_sources" | "native_and_authorized_sources";
+            native_model?: components["schemas"]["NativeModelContract"];
         } & {
             [key: string]: unknown;
         };
@@ -1681,8 +1707,60 @@ export interface components {
             };
             supports_images?: boolean;
             supports_tools?: boolean;
+            /** @enum {string} */
+            capability_basis?: "provider_catalog" | "authorized_sources" | "native_and_authorized_sources";
+            native_model?: components["schemas"]["NativeModelContract"];
         } & {
             [key: string]: unknown;
+        };
+        DefaultModelEntry: {
+            name: string;
+            sources: components["schemas"]["UnifiedSource"][];
+            /** @enum {string} */
+            status: "create" | "update" | "unchanged" | "conflict";
+            message: string;
+            existing_id: string;
+        };
+        DefaultModelsPreview: {
+            version: number;
+            catalog_revision: string;
+            routing_revision: number;
+            providers: string[];
+            models: components["schemas"]["DefaultModelEntry"][];
+        };
+        DefaultModelsApply: {
+            version: number;
+            catalog_revision: string;
+            expected_routing_revision: number;
+            names: string[];
+            group_id: string;
+            expected_group_revision: number;
+        };
+        PartialClientProfile: {
+            version: number;
+            model: string;
+            /** @enum {string} */
+            client_profile_status: "missing_limits";
+            client_profile_error: {
+                code?: string;
+                message?: string;
+            };
+            input_modalities?: string[];
+            supports_images?: boolean;
+            supports_tools?: boolean;
+            /** @enum {string} */
+            capability_basis?: "provider_catalog" | "authorized_sources" | "native_and_authorized_sources";
+            native_model?: components["schemas"]["NativeModelContract"];
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description Reviewed native model upper bound. It does not prove provider identity or adapter support. */
+        NativeModelContract: {
+            id: string;
+            image_input: string;
+            tool_calling: string;
+            reference: string;
+            verified_at: string;
         };
     };
     responses: never;
@@ -4703,10 +4781,75 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClientProfile"];
+                    "application/json": components["schemas"]["ClientProfile"] | components["schemas"]["PartialClientProfile"];
                 };
             };
             /** @description Numeric error.code plus optional error.reason; model errors preserve 400/403/404/409/422/428/503/500. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    previewDefaultModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefaultModelsPreview"];
+                };
+            };
+            /** @description Error; no partial writes */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    applyDefaultModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DefaultModelsApply"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ok: boolean;
+                        routing_revision: number;
+                    };
+                };
+            };
+            /** @description Error; no partial writes */
             default: {
                 headers: {
                     [name: string]: unknown;

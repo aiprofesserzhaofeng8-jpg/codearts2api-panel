@@ -7,7 +7,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
         <UnifiedModelsPanel />
         <div v-once class="card">
           <div v-once class="card-head model-catalog-head">
-            <div v-once class="model-catalog-title"><h2>{{tr('模型')}}</h2><span class="badge" id="modelsCount">{{tr('0 个')}}</span></div>
+            <div v-once class="model-catalog-title"><h2>{{tr('平台原始型号')}}</h2><span class="badge" id="modelsCount">{{tr('0 个')}}</span></div>
             <div v-once class="model-catalog-actions">
               <button class="btn" id="refreshModels" :aria-label="tr('从上游刷新清单')" :title="tr('从上游刷新清单')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5"/></svg><span class="model-refresh-label">{{tr('刷新清单')}}</span></button>
               <button class="btn" id="probeAllModels" :title="tr('测活当前列表中的模型')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>{{tr('批量测活')}}</button>

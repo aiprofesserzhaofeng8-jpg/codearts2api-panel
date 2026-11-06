@@ -4172,7 +4172,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClientProfile"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ClientProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PartialClientProfile"
+                    }
+                  ]
                 }
               }
             }
@@ -4197,7 +4204,93 @@
             }
           }
         ],
-        "description": "Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing metadata 422, disabled sources 503. No silent preference fallback."
+        "description": "Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing context/output metadata returns capability-only HTTP 200 with client_profile_status=missing_limits and omitted numeric limits, disabled sources 503. No silent preference fallback."
+      }
+    },
+    "/admin/api/model-defaults": {
+      "get": {
+        "operationId": "previewDefaultModels",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultModelsPreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error; no partial writes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "applyDefaultModels",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Explicit versioned default catalog application. One atomic write; stale preview rejected. Optional group grants add only previously ungranted models within existing account/model ACLs.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefaultModelsApply"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "routing_revision": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "routing_revision"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error; no partial writes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -6121,6 +6214,13 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
+          },
+          "compatibility_aliases": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Generated old provider-prefixed entries covered by canonical public models; still callable for compatibility."
           }
         },
         "required": [
@@ -6344,6 +6444,23 @@
           },
           "responses_compact": {
             "type": "boolean"
+          },
+          "client_profile_status": {
+            "type": "string",
+            "enum": [
+              "ready"
+            ]
+          },
+          "capability_basis": {
+            "type": "string",
+            "enum": [
+              "provider_catalog",
+              "authorized_sources",
+              "native_and_authorized_sources"
+            ]
+          },
+          "native_model": {
+            "$ref": "#/components/schemas/NativeModelContract"
           }
         },
         "required": [
@@ -6413,6 +6530,17 @@
           },
           "supports_tools": {
             "type": "boolean"
+          },
+          "capability_basis": {
+            "type": "string",
+            "enum": [
+              "provider_catalog",
+              "authorized_sources",
+              "native_and_authorized_sources"
+            ]
+          },
+          "native_model": {
+            "$ref": "#/components/schemas/NativeModelContract"
           }
         },
         "required": [
@@ -6425,6 +6553,203 @@
           "client_profile"
         ],
         "additionalProperties": true
+      },
+      "DefaultModelEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSource"
+            },
+            "minItems": 1,
+            "maxItems": 16
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update",
+              "unchanged",
+              "conflict"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "existing_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "sources",
+          "status",
+          "message",
+          "existing_id"
+        ]
+      },
+      "DefaultModelsPreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "catalog_revision": {
+            "type": "string"
+          },
+          "routing_revision": {
+            "type": "integer"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefaultModelEntry"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "catalog_revision",
+          "routing_revision",
+          "providers",
+          "models"
+        ]
+      },
+      "DefaultModelsApply": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "catalog_revision": {
+            "type": "string"
+          },
+          "expected_routing_revision": {
+            "type": "integer"
+          },
+          "names": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 512,
+            "items": {
+              "type": "string"
+            }
+          },
+          "group_id": {
+            "type": "string"
+          },
+          "expected_group_revision": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "catalog_revision",
+          "expected_routing_revision",
+          "names",
+          "group_id",
+          "expected_group_revision"
+        ]
+      },
+      "PartialClientProfile": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "client_profile_status": {
+            "type": "string",
+            "enum": [
+              "missing_limits"
+            ]
+          },
+          "client_profile_error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          },
+          "input_modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supports_images": {
+            "type": "boolean"
+          },
+          "supports_tools": {
+            "type": "boolean"
+          },
+          "capability_basis": {
+            "type": "string",
+            "enum": [
+              "provider_catalog",
+              "authorized_sources",
+              "native_and_authorized_sources"
+            ]
+          },
+          "native_model": {
+            "$ref": "#/components/schemas/NativeModelContract"
+          }
+        },
+        "required": [
+          "version",
+          "model",
+          "client_profile_status",
+          "client_profile_error"
+        ]
+      },
+      "NativeModelContract": {
+        "type": "object",
+        "description": "Reviewed native model upper bound. It does not prove provider identity or adapter support.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "image_input": {
+            "type": "string"
+          },
+          "tool_calling": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "verified_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "image_input",
+          "tool_calling",
+          "reference",
+          "verified_at"
+        ],
+        "additionalProperties": false
       }
     },
     "securitySchemes": {

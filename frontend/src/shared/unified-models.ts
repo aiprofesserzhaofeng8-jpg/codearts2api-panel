@@ -7,6 +7,7 @@ export type UnifiedDetail = components['schemas']['UnifiedDetail'];
 export type ModelPolicy = components['schemas']['ModelPolicy'];
 export type Group = components['schemas']['Group'];
 export type Grant = components['schemas']['UnifiedGrant'];
+export const compatibilityAliases = ref<Record<string,string>>({});
 export const unifiedModels = ref<UnifiedModel[]>([]);
 export const routingRevision = ref(0);
 let loading: Promise<void> | undefined;
@@ -17,6 +18,7 @@ export function reloadUnifiedModels(): Promise<void> {
     loading = (async () => {
         const models: UnifiedModel[] = [];
         let after = '', revision = 0;
+        let aliases: Record<string,string> = {};
         do {
             const page = await api<components['schemas']['UnifiedList']>('/admin/api/unified-models?limit=200' + (after ? '&after=' + encodeURIComponent(after) : ''));
             if (!Array.isArray(page.models) || !page.routing_revision)
@@ -24,11 +26,13 @@ export function reloadUnifiedModels(): Promise<void> {
             if (revision && revision !== page.routing_revision)
                 throw new ApiError(t('分页期间模型配置已变化，请重新读取'), 409, 'revision_conflict');
             revision = page.routing_revision;
+            aliases = page.compatibility_aliases ?? {};
             models.push(...page.models);
             if (models.length > 16384 || (page.next_after && page.next_after <= after))
                 throw new Error(t('统一模型分页结果无效'));
             after = page.next_after;
         } while (after);
+        compatibilityAliases.value = aliases;
         unifiedModels.value = models;
         routingRevision.value = revision;
     })().finally(() => { loading = undefined; });

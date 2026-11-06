@@ -35,6 +35,16 @@ type Model struct {
 	// Empty means unknown; never infer image support from a model's name.
 	ImageInput  string `json:"image_input,omitempty"`
 	ToolCalling string `json:"tool_calling,omitempty"`
+	// Projection-only native specification; provider observations stay separate.
+	NativeModel *NativeModelContract `json:"native_model,omitempty"`
+}
+
+type NativeModelContract struct {
+	ID          string `json:"id"`
+	ImageInput  string `json:"image_input"`
+	ToolCalling string `json:"tool_calling"`
+	Reference   string `json:"reference"`
+	VerifiedAt  string `json:"verified_at"`
 }
 
 func (m Model) InputModalities() []string {

@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import DefaultModelsPanel from './DefaultModelsPanel.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { api, isAbortError } from '../../api/client';
 import { serverState } from '../../shared/read-model';
 import { refresh } from '../../shared/refresh';
 import { t as tr, dateLocale } from '../../i18n';
-import { canonicalSource, editError, parseMigrationReport, reloadUnifiedModels, routingRevision, unifiedModels, type MigrationReport, type ModelPolicy, type UnifiedDetail, type UnifiedModel } from '../../shared/unified-models';
+import { canonicalSource, compatibilityAliases, editError, parseMigrationReport, reloadUnifiedModels, routingRevision, unifiedModels, type MigrationReport, type ModelPolicy, type UnifiedDetail, type UnifiedModel } from '../../shared/unified-models';
 const dialog = ref<HTMLDialogElement>(), error = ref(''), listError = ref(''), busy = ref(false), loading = ref(false), draft = ref<UnifiedModel>(), detail = ref<UnifiedDetail>();
 const name = ref(''), enabled = ref(true), sources = ref<Array<{
     id: string;
     enabled: boolean;
 }>>([]), policyEnabled = ref(false), policy = ref<Partial<ModelPolicy>>({});
+const showCompatibility = ref(false);
 const expected = ref(0), search = ref(''), testing = ref(''), report = ref<MigrationReport>(), reportError = ref('');
 const probeResults = ref<Record<string, {
     ok: boolean;
@@ -19,7 +21,8 @@ const probeResults = ref<Record<string, {
 let epoch = 0;
 const rawModels = computed(() => (serverState.data?.models ?? []).filter(m => m.source !== 'alias'));
 const available = computed(() => new Map(rawModels.value.map(m => [canonicalSource(m.id), m])));
-const filtered = computed(() => unifiedModels.value.filter(m => m.name.toLowerCase().includes(search.value.toLowerCase())));
+const filtered = computed(() => unifiedModels.value.filter(m => (showCompatibility.value || !compatibilityAliases.value[m.id]) && m.name.toLowerCase().includes(search.value.toLowerCase())));
+const duplicate = computed(() => !draft.value ? unifiedModels.value.find(m => m.name.toLowerCase() === name.value.toLowerCase()) : undefined);
 const fields = [['context_window', '推荐上下文'], ['max_output_tokens', '最大输出'], ['reserve_tokens', '压缩预留'], ['keep_recent_tokens', '保留近期历史'], ['trigger_tokens', '压缩触发值'], ['summary_max_tokens', '摘要输出预算']] as const;
 async function load() { loading.value = true; listError.value = ''; try {
     await reloadUnifiedModels();
@@ -70,10 +73,11 @@ function addSource(id: string) { if (id && !sources.value.some(s => s.id === id)
 async function save() {
     if (busy.value)
         return;
-    if (!name.value || !/\d/.test(name.value) || /[\s/]/.test(name.value) || new TextEncoder().encode(name.value).length > 200 || sources.value.length < 1 || sources.value.length > 16) {
-        error.value = tr('公开名称须带版本号、不含空白或斜线，并选择 1–16 个来源。');
+    if (!name.value || /[\s/]/.test(name.value) || new TextEncoder().encode(name.value).length > 200 || sources.value.length < 1 || sources.value.length > 16) {
+        error.value = tr('公开名称不能为空或包含空白、斜线，并选择 1–16 个来源。');
         return;
     }
+    if (duplicate.value) { error.value = tr('此名称已存在，请编辑已有模型并追加来源。'); return; }
     const partitions = sources.value.map(s => s.id.startsWith('codearts/') ? 'codearts' : s.id.split('/').slice(0, 2).join('/'));
     if (new Set(partitions).size !== partitions.length) {
         error.value = tr('每个平台和地区只能绑定一个来源型号。');
@@ -169,6 +173,7 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
 function observed(value?:string){return value?new Date(value).toLocaleString(dateLocale):'—';}
 </script>
 <template>
+  <DefaultModelsPanel @applied="load" />
   <div class="card unified-panel">
     <div class="card-head">
       <div>
@@ -182,7 +187,8 @@ function observed(value?:string){return value?new Date(value).toLocaleString(dat
     </div>
     <div class="unified-toolbar">
       <input v-model="search" type="search" :placeholder="tr('搜索统一名称')" :aria-label="tr('搜索统一名称')">
-      <span class="hint">{{filtered.length}} / {{unifiedModels.length}}</span>
+      <span class="hint">{{filtered.length}} {{tr('个模型')}}</span>
+      <label class="check"><input v-model="showCompatibility" type="checkbox">{{tr('显示旧名称兼容入口')}}</label>
     </div>
     <p v-if="listError" class="err-text" role="alert">{{listError}}</p>
     <div class="table-wrap">
@@ -197,7 +203,7 @@ function observed(value?:string){return value?new Date(value).toLocaleString(dat
         </thead>
         <tbody id="unifiedModels">
           <tr v-for="model in filtered" :key="model.id">
-            <td class="mono">{{model.name}}</td>
+            <td class="mono">{{model.name}}<small v-if="compatibilityAliases[model.id]" class="hint"> → {{compatibilityAliases[model.id]}}</small></td>
             <td>{{model.sources.length}}<span v-if="model.sources.some(s=>!available.has(s.id))" class="badge warn">{{tr('目录缺失')}}</span>
             </td>
             <td>
@@ -241,7 +247,7 @@ function observed(value?:string){return value?new Date(value).toLocaleString(dat
           <div class="field">
             <label for="unifiedModelName">{{tr('公开名称')}}</label>
             <input id="unifiedModelName" v-model="name" :readonly="!!draft" maxlength="200" required placeholder="deepseek-4.1-flash">
-            <p class="hint">{{tr('名称须带版本号，创建后不可更名；只绑定已确认属于同一型号的来源。')}}</p>
+            <p class="hint">{{tr('名称创建后不可更名；可与原始型号同名，只绑定已确认属于同一型号的来源。')}}</p>
           </div>
           <label class="check">
             <input id="unifiedModelEnabled" v-model="enabled" type="checkbox">{{tr('启用统一模型')}}</label>
@@ -285,6 +291,7 @@ function observed(value?:string){return value?new Date(value).toLocaleString(dat
                   <p v-for="(reference,index) in detail.references" :key="index">{{tr(referenceLabels[reference.kind])}} · {{reference.name}} <small class="muted">{{reference.group_id}}</small></p>
                   <p class="hint">{{tr('引用仍存在时不能删除模型或被固定授权引用的来源；可先禁用来源。')}}</p>
                 </div>
+                <button v-if="duplicate" type="button" class="btn" @click="open(duplicate)">{{tr('编辑已有模型并添加来源')}}</button>
                 <p id="unifiedModelError" class="err-text" role="alert">{{error}}</p>
               </div>
               <div class="modal-actions">

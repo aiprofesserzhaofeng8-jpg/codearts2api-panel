@@ -181,7 +181,7 @@ func TestUnifiedAPIConsistentListProfileAndNoAccounts(t *testing.T) {
 		if row["id"] == detail.Model.Name {
 			count++
 			p := row["client_profile"].(map[string]any)
-			if row["provider"] != "unified" || row["owned_by"] != "unified" || row["scope"] != "" || p["model_id"] != detail.Model.ID || p["context_window"] != float64(32768) || p["max_output_tokens"] != float64(4096) || p["supports_tools"] != true || row["supports_images"] != false {
+			if row["provider"] != "unified" || row["owned_by"] != "unified" || row["scope"] != "" || p["model_id"] != detail.Model.ID || p["context_window"] != float64(32768) || p["max_output_tokens"] != float64(4096) || p["supports_tools"] != true || row["supports_images"] != true {
 				t.Fatal(row)
 			}
 			if strings.Contains(string(mustJSON(row)), "workbuddy/") || strings.Contains(string(mustJSON(row)), "trae/") {
@@ -371,7 +371,10 @@ func TestUnifiedAPIProfileMissingMetadataAndExactNames(t *testing.T) {
 		s.Handler().ServeHTTP(w, r)
 		return w
 	}
-	checkModelError(t, request(m.Name), 422, "client_profile_missing")
+	partial := request(m.Name)
+	if partial.Code != 200 || !strings.Contains(partial.Body.String(), `"client_profile_status":"missing_limits"`) || !strings.Contains(partial.Body.String(), `"supports_images":true`) {
+		t.Fatal(partial.Code, partial.Body.String())
+	}
 	w := scopedModelRequest(s, key)
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"client_profile_error":{"code":"client_profile_missing"`) {
 		t.Fatal(w.Code, w.Body.String())
@@ -382,7 +385,7 @@ func TestUnifiedAPIProfileMissingMetadataAndExactNames(t *testing.T) {
 		t.Fatal(err)
 	}
 	w = request(m.Name)
-	if w.Code != 200 || strings.Contains(w.Body.String(), `"supports_images":true`) {
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"supports_images":true`) {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	// A stale explicit client preference must report its failure, not pick a raw model.

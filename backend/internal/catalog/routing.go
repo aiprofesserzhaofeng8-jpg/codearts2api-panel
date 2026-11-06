@@ -70,19 +70,26 @@ func PublicMappingModel(name string) provider.Model {
 	return provider.Model{ID: name, Name: name, Provider: "group", Source: "mapping"}
 }
 
-func (p *ModelPlan) PublicModel() provider.Model {
-	m := PublicMappingModel(p.Public)
+func (p *ModelPlan) PublicModel() (m provider.Model) {
+	m = PublicMappingModel(p.Public)
+	defer func() {
+		m.NativeModel = p.nativeContract()
+		m = constrainNative(m, m.NativeModel)
+	}()
 	if p.Selection.ID != "" {
 		m.Provider = "unified"
+		m.ImageInput = p.availableCapability(func(model provider.Model) string { return model.ImageInput })
+		m.ToolCalling = p.availableCapability(func(model provider.Model) string { return model.ToolCalling })
+		return m
 	}
 	if len(p.IDs) > 0 {
 		m.ToolCalling = "supported"
 		for _, id := range p.IDs {
-			if p.Models[id].ToolCalling == "unsupported" {
+			if p.sourceCapabilities(p.Models[id]).ToolCalling == "unsupported" {
 				m.ToolCalling = "unsupported"
 				break
 			}
-			if p.Models[id].ToolCalling != "supported" {
+			if p.sourceCapabilities(p.Models[id]).ToolCalling != "supported" {
 				m.ToolCalling = ""
 			}
 		}
@@ -92,11 +99,11 @@ func (p *ModelPlan) PublicModel() provider.Model {
 	}
 	all := true
 	for _, id := range p.IDs {
-		if p.Models[id].ImageInput == "unsupported" {
+		if p.sourceCapabilities(p.Models[id]).ImageInput == "unsupported" {
 			m.ImageInput = "unsupported"
 			return m
 		}
-		if p.Models[id].ImageInput != "supported" {
+		if p.sourceCapabilities(p.Models[id]).ImageInput != "supported" {
 			all = false
 		}
 	}
@@ -105,6 +112,29 @@ func (p *ModelPlan) PublicModel() provider.Model {
 	}
 	return m
 }
+
+// Availability is advertised over authorized configured sources. The request
+// filter still requires one source satisfying every requested capability.
+func (p *ModelPlan) availableCapability(get func(provider.Model) string) string {
+	if len(p.IDs) == 0 {
+		return ""
+	}
+	unknown := false
+	for _, id := range p.IDs {
+		switch get(p.sourceCapabilities(p.Models[id])) {
+		case "supported":
+			return "supported"
+		case "unsupported":
+		default:
+			unknown = true
+		}
+	}
+	if unknown {
+		return ""
+	}
+	return "unsupported"
+}
+
 func (s *Routing) MappingPlan(scope access.AccessScope, name string) *ModelPlan {
 	sources, found := scope.Mapping(name)
 	if !found {

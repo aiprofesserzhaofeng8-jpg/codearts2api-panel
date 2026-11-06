@@ -77,8 +77,23 @@ const path=require('node:path');
   await page.setViewportSize({width:1440,height:1000});await page.locator('#nav-models').click();await page.locator('.unified-help summary').first().click();
   await page.locator('#migrationReport').setInputFiles({name:'migration-report.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({from_schema:10,to_schema:11,ready:false,definitions:1,group_changes:1,conflicts:[{reason:'model_name_conflict',group_ids:['g1'],model_name:'<img src=x onerror=window.injected=true>',field_path:'groups.model_mappings',message:'synthetic duplicate name'}],warnings:[]}))});
   await page.locator('#migrationReportResult').filter({hasText:'model_name_conflict'}).waitFor();assert.equal(await page.locator('#migrationReportResult img').count(),0);
+  // Default catalog uses real management APIs and survives page refresh.
+  await page.locator('#openDefaultModels').click();await page.locator('#defaultModelsDialog').waitFor();
+  await page.getByRole('checkbox',{name:'选择 deepseek-v4.1-flash',exact:true}).waitFor();
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({animations:'disabled',path:path.join(out,'defaults-mobile.png')});
+  await page.setViewportSize({width:1440,height:1000});
+  await page.screenshot({animations:'disabled',path:path.join(out,'defaults-desktop.png')});
+  const defaultWrite=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/api/model-defaults'&&r.request().method()==='POST');
+  await page.locator('#applyDefaultModels').click();assert.equal((await defaultWrite).status(),200);
+  await page.locator('#defaultModelsDialog').waitFor({state:'hidden'});await page.reload();
+  await page.locator('#unifiedModels tr').filter({hasText:'deepseek-v4.1-flash'}).waitFor();
+  await page.locator('#openDefaultModels').click();await page.locator('#defaultModelsDialog').waitFor();
+  assert.ok(await page.locator('#defaultModelsDialog').getByText('已配置',{exact:true}).count()>0);
+  await page.locator('#defaultModelsDialog').getByRole('button',{name:'关闭',exact:true}).click();
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(out,'browser-results.json'),JSON.stringify({passed:true,real_management_api:true,real_upstream:false,checks:['create two sources','probe text only','grant selected sources','client default','disable source','refresh persistence','model and group CAS conflict with retained drafts','missing catalog retained','403 retained draft','desktop/mobile/theme','raw policy CAS','settings CAS','empty source catalog','local migration report safe text'],writes:writes.map(w=>({path:w.path,method:w.method,has_revision:!!w.body?.expected_revision,has_routing_revision:!!w.body?.expected_routing_revision}))},null,2));
+  fs.writeFileSync(path.join(out,'browser-results.json'),JSON.stringify({passed:true,real_management_api:true,real_upstream:false,checks:['default preview all current platforms','default batch application and reload','idempotent default preview','default mobile layout','create two sources','probe text only','grant selected sources','client default','disable source','refresh persistence','model and group CAS conflict with retained drafts','missing catalog retained','403 retained draft','desktop/mobile/theme','raw policy CAS','settings CAS','empty source catalog','local migration report safe text'],writes:writes.map(w=>({path:w.path,method:w.method,has_revision:!!w.body?.expected_revision,has_routing_revision:!!w.body?.expected_routing_revision}))},null,2));
   console.log('PASS U5 real management API browser acceptance');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

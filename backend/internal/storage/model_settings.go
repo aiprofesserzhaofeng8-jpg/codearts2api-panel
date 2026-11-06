@@ -23,7 +23,7 @@ func validateRoutingSettings(st *State, next Settings) error {
 	}
 	for _, m := range st.UnifiedModels {
 		for alias, target := range next.ModelAliases {
-			if strings.EqualFold(alias, m.Name) || target == m.Name {
+			if strings.EqualFold(alias, m.Name) || (target == m.Name && st.Settings.ModelAliases[alias] != target) {
 				return config.ModelFailure(409, "model_name_conflict", "旧别名不能覆盖或引用统一名称")
 			}
 		}

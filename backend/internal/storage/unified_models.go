@@ -50,6 +50,18 @@ func reservedName(st *State, name string) bool {
 	}
 	return false
 }
+
+// Public model definitions may intentionally share a native/built-in name.
+// User-configured aliases still require explicit removal before reassignment.
+func customAliasName(st *State, name string) bool {
+	for alias := range st.Settings.ModelAliases {
+		if strings.EqualFold(alias, name) {
+			return true
+		}
+	}
+	return false
+}
+
 func modelIndex(st *State, id string) int {
 	for i, m := range st.UnifiedModels {
 		if m.ID == id {
@@ -74,6 +86,12 @@ func (s *Store) SaveUnifiedModel(m config.UnifiedModel, p *config.ModelPolicy, e
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.saveUnifiedModelLocked(m, p, expected, route, sourcePolicies, true)
+}
+
+// Caller owns saveMu and mu. Batch application uses the same validation and
+// revision logic, but persists once after all models and grants validate.
+func (s *Store) saveUnifiedModelLocked(m config.UnifiedModel, p *config.ModelPolicy, expected, route uint64, sourcePolicies map[string]config.ModelPolicy, persist bool) (config.UnifiedModel, error) {
 	if err := checkRevision(route, s.st.ModelRoutingRevision); err != nil {
 		return m, err
 	}
@@ -107,7 +125,7 @@ func (s *Store) SaveUnifiedModel(m config.UnifiedModel, p *config.ModelPolicy, e
 	if idx < 0 && len(s.st.UnifiedModels) >= config.MaxUnifiedModels {
 		return m, config.ModelFailure(400, "invalid_model_definition", "统一模型数量已达上限")
 	}
-	if s.st.Settings.ForceModel != "" || reservedName(s.st, m.Name) {
+	if s.st.Settings.ForceModel != "" || customAliasName(s.st, m.Name) {
 		return m, config.ModelFailure(409, "model_name_conflict", "统一名称与旧名称或强制模型冲突")
 	}
 	for _, old := range s.st.UnifiedModels {
@@ -172,9 +190,11 @@ func (s *Store) SaveUnifiedModel(m config.UnifiedModel, p *config.ModelPolicy, e
 		s.st.ModelPolicies[key] = *p
 	}
 	s.st.ModelRoutingRevision = nextRev
-	if err = s.saveGroupStateLocked(); err != nil {
-		s.st.UnifiedModels, s.st.ModelPolicies, s.st.ModelRoutingRevision = before, policies, revision
-		return m, config.ModelFailure(500, "model_save_failed", "统一模型保存失败")
+	if persist {
+		if err = s.saveGroupStateLocked(); err != nil {
+			s.st.UnifiedModels, s.st.ModelPolicies, s.st.ModelRoutingRevision = before, policies, revision
+			return m, config.ModelFailure(500, "model_save_failed", "统一模型保存失败")
+		}
 	}
 	return config.CloneUnifiedModel(m), nil
 }
@@ -299,6 +319,16 @@ func validateUnifiedGroup(g AccountGroup, models []config.UnifiedModel) error {
 			if m.Name != name {
 				continue
 			}
+			hasGrant := false
+			for _, grant := range g.UnifiedModels {
+				if grant.ModelID == m.ID {
+					hasGrant = true
+					break
+				}
+			}
+			if !hasGrant && g.RawModelMode == "legacy" {
+				continue
+			}
 			found = true
 			ok := false
 			for _, a := range g.UnifiedModels {
@@ -352,7 +382,7 @@ func validateUnifiedState(st *State) error {
 			return err
 		}
 		n := strings.ToLower(m.Name)
-		if names[n] || ids[m.ID] || reservedName(st, m.Name) {
+		if names[n] || ids[m.ID] || customAliasName(st, m.Name) {
 			return config.ModelFailure(409, "model_name_conflict", "统一模型名称冲突")
 		}
 		names[n] = true
