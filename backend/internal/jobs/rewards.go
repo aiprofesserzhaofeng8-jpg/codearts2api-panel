@@ -40,6 +40,10 @@ func NewRewards(store RewardStore, invalidateCredit func(string), logf func(stri
 var rewardLocation = time.FixedZone("UTC+8", 8*60*60)
 
 func DateFor(a *accounts.Account, now time.Time) string {
+	if a.ProviderID() == provider.Qoder {
+		// Qoder daily campaign windows turn over at 10:00 UTC+8.
+		return now.In(rewardLocation).Add(-10 * time.Hour).Format("2006-01-02")
+	}
 	if a.ProviderID() != provider.CodeArts {
 		return now.In(rewardLocation).Format("2006-01-02")
 	}

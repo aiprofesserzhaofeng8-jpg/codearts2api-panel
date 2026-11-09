@@ -66,13 +66,16 @@ func (c *Client) daily(ctx context.Context, a Credentials) (dailyReward, error) 
 	if json.Unmarshal(o["daily_task"], &task) != nil || task == nil {
 		return dailyReward{}, providerhttp.Broken("TeleAgent 每日积分状态")
 	}
-	var claimed *bool
-	if json.Unmarshal(task["claimed_today"], &claimed) != nil || claimed == nil {
+	claimed := rewardBool(task["claimed_today"])
+	if claimed == nil {
 		return dailyReward{}, providerhttp.Broken("TeleAgent 每日积分状态")
 	}
 	var visible *bool
-	if b, exists := task["visible"]; exists && json.Unmarshal(b, &visible) != nil {
-		return dailyReward{}, providerhttp.Broken("TeleAgent 每日积分状态")
+	if b, exists := task["visible"]; exists {
+		visible = rewardBool(b)
+		if visible == nil {
+			return dailyReward{}, providerhttp.Broken("TeleAgent 每日积分状态")
+		}
 	}
 	credits, err := accounts.QuotaNumber(task, "daily_claimable_points")
 	if err != nil || credits != nil && *credits < 0 {
@@ -174,3 +177,18 @@ func (c *Client) ClaimDaily(ctx context.Context, raw json.RawMessage) (provider.
 }
 
 var _ provider.DailyRewards = (*Client)(nil)
+
+// The portal serializes flags as booleans, 0/1, or their string equivalents.
+// Missing/unknown flags remain unknown, never an implicit unclaimed status.
+func rewardBool(raw json.RawMessage) *bool {
+	var value bool
+	switch string(raw) {
+	case "true", "1", `"true"`, `"1"`:
+		value = true
+	case "false", "0", `"false"`, `"0"`:
+		value = false
+	default:
+		return nil
+	}
+	return &value
+}

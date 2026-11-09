@@ -37,6 +37,11 @@ func (s *Server) handleProviderWelfare(w http.ResponseWriter, r *http.Request, a
 		item["title"] = "TeleAgent 每日积分"
 		item["auto_claimable"] = result.State == "claimable"
 	}
+	if a.ProviderID() == provider.Qoder {
+		item["title"] = "Qoder 活动积分"
+		item["benefit_unit"] = "Credits"
+		item["auto_claimable"] = result.State == "claimable"
+	}
 	campaigns := []any{item}
 	for _, notice := range result.Notices {
 		campaigns = append(campaigns, map[string]any{"title": notice.Title, "type": "activity_notice", "status": "ENTRY", "claimable": false, "auto_claimable": false, "description": notice.Description, "trigger_event": notice.Description})

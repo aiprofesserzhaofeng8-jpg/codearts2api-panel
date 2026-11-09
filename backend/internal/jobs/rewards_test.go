@@ -197,3 +197,16 @@ func TestRewardDateAndWindowPreserveProviderSemantics(t *testing.T) {
 		t.Fatal("claim window boundary changed")
 	}
 }
+
+func TestQoderTenAMRewardWindow(t *testing.T) {
+	a := &accounts.Account{Provider: provider.Qoder}
+	for _, tc := range []struct {
+		hour, minute int
+		want         string
+	}{{0, 0, "2026-11-07"}, {9, 59, "2026-11-07"}, {10, 0, "2026-11-08"}, {23, 59, "2026-11-08"}} {
+		now := time.Date(2026, 11, 8, tc.hour, tc.minute, 0, 0, rewardLocation)
+		if got := DateFor(a, now); got != tc.want {
+			t.Fatalf("%v: %s", now, got)
+		}
+	}
+}

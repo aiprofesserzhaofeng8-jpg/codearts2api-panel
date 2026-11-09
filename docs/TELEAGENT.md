@@ -109,3 +109,5 @@ TeleAI 模型网关使用两阶段 HMAC-SHA256，签名绑定原账号令牌、�
 平台 HTTP/签名/凭据在 `backend/internal/teleagent/`；装配在 app，中立业务不依赖平台包。新设置为兼容字段，状态 schema 仍为 10；旧程序无法使用新平台，回退前需检查账号/分组配置的兼容性，不能盲目恢复旧凭据。
 
 协议依据：[teleagent-proxy](https://github.com/liao96312/teleagent-proxy/tree/875a2b4080ded5f9eebada6d43c94c77ebddc5a5)、[dsh-connect-teleagent](https://github.com/anbulang/dsh-connect-teleagent/tree/14bb4bb16d6961addff63ced79866f9a74391108)、[dsh-codearts-auth](https://github.com/anye-99/dsh-codearts-auth/tree/686658793c982cd0e1baedbcfa10a396ce5d1a09)。三者协议记录存在版本差异，采用可交叉核对的网关签名事实，不采用伪造本地签名密钥的未验证假设。MIT 许可见根目录 `LICENSE.teleagent`，随 Linux、Windows 与镜像分发。
+
+每日积分状态兼容 JSON 布尔值、0/1 及对应字符串；缺失或无法识别的状态不按未领取处理。积分门户 operation_token 与聊天凭据继续分开使用。新增字段兼容已通过隔离测试；2026-11-09 单账号真实领取与复查通过（100 积分），生产面板端到端流程尚待更新后验收。

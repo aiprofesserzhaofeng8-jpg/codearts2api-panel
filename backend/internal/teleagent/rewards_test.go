@@ -176,3 +176,31 @@ func TestDailyRewardCancellationAndRedirectDoNotReplay(t *testing.T) {
 		t.Fatal("credential redirect followed")
 	}
 }
+
+func TestDailyRewardPortalFlagRepresentations(t *testing.T) {
+	for _, flag := range []string{`true`, `1`, `"1"`, `"true"`, `false`, `0`, `"0"`, `"false"`, `null`, `"unknown"`} {
+		t.Run(flag, func(t *testing.T) {
+			up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintf(w, `{"data":{"daily_task":{"visible":"1","claimed_today":%s,"daily_claimable_points":"100"}}}`, flag)
+			}))
+			defer up.Close()
+			c := New()
+			c.Origin = up.URL
+			r, e := c.DailyStatus(t.Context(), raw(fixture()))
+			switch flag {
+			case `null`, `"unknown"`:
+				if e == nil {
+					t.Fatal("unknown flag accepted", r)
+				}
+			case `true`, `1`, `"1"`, `"true"`:
+				if e != nil || r.State != "already_claimed" {
+					t.Fatal(r, e)
+				}
+			default:
+				if e != nil || r.State != "claimable" {
+					t.Fatal(r, e)
+				}
+			}
+		})
+	}
+}
