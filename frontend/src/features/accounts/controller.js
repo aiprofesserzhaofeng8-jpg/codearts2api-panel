@@ -6,12 +6,38 @@ import { isAbortError } from '../../api/client';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
 import { domState, fmtDur, fmtTime, toast } from '../../shared/dom';
 import { usageSVG } from '../usage/controller';
-import { listen } from '../../shared/lifecycle';
+import { cleanup, listen } from '../../shared/lifecycle';
 import { checkin, claim } from '../jobs/welfare';
-import { creditCell, openGrowth, openGrowthAccounts, invalidateCredit } from './credits';
+import { creditCell, openGrowth, openGrowthAccounts, invalidateCredit, refreshAccountCredit } from './credits';
 import { api } from '../../api/client';
 import { refresh } from '../../shared/refresh';
+import { readPreferences, savePreferences, optionalColumns, sortAccounts, runSelected } from './table';
 export const accountsState = {};
+const preferences = readPreferences();
+const selected = new Set();
+let visibleAccounts = [], bulkBusy = false, bulkPlan = null, mounted = false, lifetime = 0;
+const rewardQueries = new Map();
+function refreshCredentialLabel(a) {
+    if (a.non_expiring || a.permanent) return tr('无需续期');
+    return a.has_refresh === true ? tr('有刷新凭据') : a.has_refresh === false ? tr('无刷新凭据') : tr('刷新凭据未知');
+}
+const columnNames = { credential: tr('凭据'), reward: tr('奖励'), lastUsed: tr('最近使用') };
+function updateSelection() {
+    const all = domState.$('#accountSelectAll');
+    all.checked = visibleAccounts.length > 0 && visibleAccounts.every(a => selected.has(a.id));
+    all.indeterminate = selected.size > 0 && !all.checked;
+    domState.$('#accountSelectionCount').textContent = tr('已选择 ') + selected.size;
+    domState.$('#accountBulkStart').disabled = bulkBusy || selected.size === 0;
+    domState.$('#accountClearSelection').disabled = bulkBusy || selected.size === 0;
+    all.disabled = bulkBusy || !visibleAccounts.length;
+}
+function applyColumns() {
+    document.querySelectorAll('.account-table [data-column]').forEach(el => { el.hidden = preferences.hidden.includes(el.dataset.column); });
+}
+function saveTablePreferences() {
+    if (!savePreferences(preferences)) toast(tr('显示偏好仅在本次页面生效'), 'warn');
+}
+
 accountsState.accountFilter = "all";
 
 accountsState.accountMenuTrigger = null;
@@ -36,7 +62,7 @@ export function accountMenuButton(label, account, items) {
         items.forEach(function (item) {
             var action = btn(item.label, "account-menu-item" + (item.danger ? " danger" : ""), function () {
                 closeAccountMenu(true);
-                return busyable(trigger, item.run)();
+                return busyable(trigger, async () => { try { await item.run(); } catch (e) { if (!isAbortError(e)) toast(tr('失败：') + e.message, 'err'); } })();
             });
             if (item.danger)
                 action.classList.add("account-menu-danger");
@@ -98,36 +124,31 @@ export function renderAccounts(d) {
         return (!domState.$("#accountProvider").value || (a.provider || "codearts") === domState.$("#accountProvider").value) && (accountsState.accountFilter === "all" || accountState(a) === accountsState.accountFilter) &&
             (!query || [a.name, a.source, sourceName(a.source), a.provider, a.scope].join(" ").toLowerCase().indexOf(query) !== -1);
     });
+    visible = sortAccounts(visible, preferences.sort);
+    visibleAccounts = visible;
+    // Filtering drops hidden selections instead of silently operating on hidden accounts.
+    const visibleIDs = new Set(visible.map(a => a.id));
+    selected.forEach(id => { if (!visibleIDs.has(id)) selected.delete(id); });
+    updateSelection();
     domState.$("#accountFilterCount").textContent = visible.length + " / " + accts.length + tr(" 个账号");
     if (!accts.length) {
-        tb.appendChild(emptyRow(10, tr("还没有账号。点击「浏览器登录」，复制链接授权后确认添加。")));
+        tb.appendChild(emptyRow(7, tr("还没有账号。点击「浏览器登录」，复制链接授权后确认添加。")));
         return;
     }
     if (!visible.length) {
-        tb.appendChild(emptyRow(10, tr("没有符合条件的账号，请更换筛选条件。")));
+        tb.appendChild(emptyRow(7, tr("没有符合条件的账号，请更换筛选条件。")));
         return;
     }
     visible.forEach(function (a) {
         var statusCell = cell("");
-        if (a.pool && a.pool.state !== "ready") {
-            var labels = { paused: tr("已暂停选号"), cooling: tr("冷却中"), busy: tr("并发已满"), disabled: tr("已停用") };
-            statusCell.appendChild(pill(labels[a.pool.state] || a.pool.state, "warn"));
-            if (a.pool.cooldown_remaining_sec > 0)
-                statusCell.appendChild(mk("div", "sub", tr("剩余 ") + fmtDur(a.pool.cooldown_remaining_sec)));
-            if (a.cooldown_reason)
-                statusCell.title = a.cooldown_reason;
-        }
-        else if (a.enabled) {
-            var okStatus = a.status === "ok";
-            statusCell.appendChild(pill(okStatus ? tr("可用") : tr("待检查"), okStatus ? "ok" : "err"));
-        }
-        else {
-            statusCell.appendChild(pill(tr("已停用")));
-        }
-        if (a.has_refresh)
-            statusCell.appendChild(document.createTextNode(" "));
-        if (a.has_refresh)
-            statusCell.appendChild(pill(tr("可续期"), "ok"));
+        const state = accountState(a);
+        const labels = { ready: tr('可调度'), paused: tr('已暂停选号'), cooling: tr('冷却中'), busy: tr('并发已满'), disabled: tr('已停用'), unknown: tr('待检查') };
+        statusCell.appendChild(pill(labels[state] || tr('待检查'), state === 'ready' ? 'ok' : 'warn'));
+        if (a.pool?.cooldown_remaining_sec > 0) statusCell.appendChild(mk('div', 'sub', tr('剩余 ') + fmtDur(a.pool.cooldown_remaining_sec)));
+        if (a.last_err) statusCell.appendChild(mk('div', 'sub err-text account-last-error', a.last_err));
+        else if (a.status === 'error') statusCell.appendChild(mk('div', 'sub err-text', tr('最近检查失败')));
+        if (a.failures > 0) statusCell.appendChild(mk('div', 'sub', tr('失败次数：') + a.failures));
+        statusCell.title = tr('调度状态来自账号池，不代表所有模型或额度窗口均可用') + (a.cooldown_reason ? ' · ' + a.cooldown_reason : '');
         if (a.pool)
             statusCell.appendChild(mk("div", "sub", tr("在途 ") + a.pool.in_flight + " / " + a.pool.max_in_flight));
         statusCell.title = (a.max_in_flight > 0 ? tr("独立并发上限：") + a.max_in_flight : tr("并发上限使用全局默认值")) + (statusCell.title ? "；" + statusCell.title : "");
@@ -142,8 +163,8 @@ export function renderAccounts(d) {
             expCell.appendChild(mk("span", "sub", "IAM AK/SK"));
         }
         else if (a.expires_at) {
-            expCell.appendChild(mk("span", "mono", fmtTime(a.expires_at)));
-            var left = mk("span", "sub", fmtDur(a.expires_in));
+            expCell.title = fmtTime(a.expires_at);
+            var left = mk('span', 'mono', a.expires_in <= 0 ? tr('已过期') : fmtDur(a.expires_in) + tr('后到期'));
             if (a.expires_in !== undefined && a.expires_in <= 300)
                 left.classList.add("warn-text");
             expCell.appendChild(left);
@@ -151,33 +172,42 @@ export function renderAccounts(d) {
         else {
             expCell.appendChild(mk("span", "mono", "—"));
         }
-        var claimCell = cell("");
+        expCell.appendChild(mk('span', 'sub', refreshCredentialLabel(a)));
+        var claimCell = cell("", "cell-stack");
+        const queried = rewardQueries.get(a.id);
+        const rewardState = queried && Date.now() - queried.at < 300000 ? queried.state : null;
         if (a.daily_claim_supported === false) {
-            claimCell.appendChild(mk("span", "muted", tr("未接入")));
+            claimCell.appendChild(mk("span", "muted", tr("未提供签到接口")));
         }
-        else if (a.claimed_today) {
+        else if (rewardState === 'claimed' || rewardState === 'already_claimed' || (!rewardState && a.claimed_today)) {
             claimCell.appendChild(pill(tr("已领"), "ok"));
         }
+        else if (rewardState === 'claimable') claimCell.appendChild(pill(tr('可领取'), 'ok'));
         else {
-            claimCell.appendChild(pill(({ unavailable: tr("暂不可领"), unknown: tr("待确认"), failed: tr("领取失败") })[a.last_claim_state] || (a.provider && a.provider !== "codearts" ? tr("待查询") : tr("未领")), "warn"));
+            claimCell.appendChild(pill(({ unavailable: tr("暂不可领"), unknown: tr("待确认"), failed: tr("领取失败") })[rewardState || a.last_claim_state] || tr("待查询"), "warn"));
         }
         if (a.last_claim_msg)
             claimCell.title = a.last_claim_msg;
         if (a.last_claim_err)
             claimCell.title = a.last_claim_err;
+        if (queried && rewardState) claimCell.appendChild(mk('span', 'sub', tr('查询于 ') + fmtTime(queried.at / 1000)));
         var ops = cell("", "actions-cell"), actions = mk("div", "account-actions");
-        actions.appendChild(accountMenuButton(tr("设置"), a, [
-            { label: tr("并发设置"), run: function () { openAccountConcurrency(a); } },
-            { label: tr("模型健康"), run: function () { openModelHealth(a); } }
-        ]));
+        actions.appendChild(btn(tr("详情"), "xs", function () { openAccountDetail(a); }));
         actions.appendChild(btn(tr("探活"), "xs", function () { return checkin(a.id); }));
-        if (a.daily_claim_supported !== false)
-            actions.appendChild(btn(a.provider && a.provider !== "codearts" ? tr("每日签到") : tr("领福利"), "xs", function () { return claim(a.id); }));
+        if (rewardState === 'claimable' && a.daily_claim_supported !== false)
+            actions.appendChild(btn(a.provider && a.provider !== "codearts" ? tr("每日签到") : tr("领福利"), "xs", async function () { rewardQueries.delete(a.id); await claim(a.id); }));
         var more = [
+            { label: tr('并发设置'), run: () => openAccountConcurrency(a) },
+            { label: tr('模型健康'), run: () => openModelHealth(a) },
+            { label: tr('刷新额度'), run: () => refreshAccountCredit(a.id) },
             { label: tr("导出"), run: function () { return exportSession(a.id); } },
             { label: a.enabled ? tr("停用") : tr("启用"), run: function () { return accountOp("toggle", { id: a.id }); } },
             { label: a.paused ? tr("恢复选号") : tr("暂停选号"), run: function () { return accountOp(a.paused ? "resume" : "pause", { id: a.id }); } }
         ];
+        if (a.daily_claim_supported !== false) {
+            more.unshift({ label: tr('查询奖励'), run: () => queryRewards(a) });
+            more.push({ label: tr('领取可领奖励'), run: async () => { rewardQueries.delete(a.id); await claim(a.id); } });
+        }
         if (a.growth_tasks_supported)
             more.unshift({ label: tr("成长任务"), run: function () { return openGrowth(a); } });
         if (a.source === "desktop")
@@ -186,28 +216,34 @@ export function renderAccounts(d) {
             more.push({ label: tr("解除冷却 / 清错"), run: function () { return accountOp("clear-errors", { id: a.id }); } });
         more.push({ label: tr("删除"), danger: true, run: function () { showDeleteAccount(a); } });
         actions.appendChild(accountMenuButton(tr("更多"), a, more));
+        if (bulkBusy) actions.querySelectorAll('button').forEach(b => { b.disabled = true; });
         ops.appendChild(actions);
         var identity = cell("", "account-identity");
         var who = mk("div", "account-who");
+        const select = document.createElement('input'); select.type = 'checkbox'; select.checked = selected.has(a.id); select.disabled = bulkBusy;
+        select.setAttribute('aria-label', tr('选择账号：') + (a.name || a.id));
+        select.onchange = () => { if (select.checked) selected.add(a.id); else selected.delete(a.id); updateSelection(); };
+        who.appendChild(select);
         who.appendChild(mk("span", "account-avatar", Array.from(a.name || tr("码"))[0].toUpperCase()));
         var info = mk("div", "account-name");
         info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
         info.appendChild(pill(a.provider === "teleagent" ? "TeleAgent · " + tr("国内") : a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
-        info.appendChild(mk("span", "account-caption", a.has_refresh ? tr("自动续期已就绪") : tr("临时凭据")));
+        info.appendChild(mk("span", "account-caption", sourceName(a.source)));
         who.appendChild(info);
         identity.appendChild(who);
-        var r = row([
-            identity, cell(sourceName(a.source), "muted"), cell(a.access_key || "—", "mono"),
-            expCell, creditCell(a), statusCell, claimCell, cell(a.failures, "mono"),
-            cell(fmtTime(a.last_used), "muted nowrap"), ops
-        ]);
+        const quota = creditCell(a);
+        quota.appendChild(btn(tr('额度详情'), 'xs ghost', () => openAccountDetail(a)));
+        var r = row([identity, expCell, quota, statusCell, claimCell, cell(fmtTime(a.last_used), 'muted nowrap'), ops]);
         r.dataset.state = accountState(a);
-        var labels = [tr("账号"), tr("来源"), "AK", tr("凭据有效期"), tr("额度与用量"), tr("状态"), tr("今日领取"), tr("失败次数"), tr("最近使用"), tr("操作")];
-        Array.from(r.children).forEach(function (td, i) { td.dataset.label = labels[i]; });
+        r.dataset.accountId = a.id;
+        const columns = ['identity', 'credential', 'quota', 'status', 'reward', 'lastUsed', 'actions'];
+        const labelsForCells = [tr('账号 / 平台'), tr('凭据'), tr('额度与用量'), tr('调度 / 并发'), tr('奖励'), tr('最近使用'), tr('操作')];
+        Array.from(r.children).forEach(function (td, i) { td.dataset.label = labelsForCells[i]; td.dataset.column = columns[i]; });
         if (a.last_err)
             r.title = a.last_err;
         tb.appendChild(r);
     });
+    applyColumns();
 }
 
 export function accountState(a) {
@@ -215,7 +251,7 @@ export function accountState(a) {
         return "disabled";
     if (a.paused)
         return "paused";
-    return a.pool ? a.pool.state : "ready";
+    return a.pool?.state || "unknown";
 }
 
 export function sourceName(source) { return ({ browser: tr("浏览器登录"), desktop: tr("桌面端导入"), manual: tr("手工录入"), session: tr("会话导入") })[source] || source || "—"; }
@@ -288,6 +324,23 @@ export function openModelHealth(a) {
 }
 
 export function mountAccounts() {
+mounted = true; lifetime++;
+cleanup(() => { mounted = false; lifetime++; selected.clear(); rewardQueries.clear(); bulkPlan = null; bulkBusy = false; });
+domState.$('#accountSort').value = preferences.sort;
+listen(domState.$('#accountSort'), 'change', e => { preferences.sort = e.target.value; saveTablePreferences(); if (serverState.data) renderAccounts(serverState.data); });
+const columnOptions = domState.$('#accountColumnOptions'); columnOptions.textContent = '';
+optionalColumns.forEach(key => { const label = mk('label', 'check'); const box = document.createElement('input'); box.type = 'checkbox'; box.checked = !preferences.hidden.includes(key);
+    box.onchange = () => { preferences.hidden = box.checked ? preferences.hidden.filter(x => x !== key) : [...preferences.hidden, key]; saveTablePreferences(); applyColumns(); };
+    label.append(box, document.createTextNode(columnNames[key])); columnOptions.appendChild(label);
+});
+listen(domState.$('#accountSelectAll'), 'change', e => { visibleAccounts.forEach(a => { if (e.target.checked) selected.add(a.id); else selected.delete(a.id); }); if (serverState.data) renderAccounts(serverState.data); });
+on('#accountClearSelection', () => { selected.clear(); if (serverState.data) renderAccounts(serverState.data); });
+on('#accountDetailClose', () => domState.$('#accountDetailDialog').close());
+on('#accountBulkStart', prepareBulk);
+listen(domState.$('#accountBulkConfirm'), 'click', executeBulk);
+on('#accountBulkClose', () => { if (!bulkBusy) domState.$('#accountBulkDialog').close(); });
+listen(domState.$('#accountBulkDialog'), 'cancel', e => { if (bulkBusy) e.preventDefault(); });
+
 listen(domState.$("#accountActionMenu"), "beforetoggle", function (event) {
     if (event.newState === "closed" && accountsState.accountMenuTrigger) {
         accountsState.accountMenuTrigger.classList.remove("account-menu-open");
@@ -391,4 +444,99 @@ on("#closeExport", function () {
     domState.$("#exportJSON").value = "";
     domState.$("#exportPanel").classList.add("hidden");
 });
+}
+
+async function queryRewards(a) {
+    const r = await api('/admin/api/welfare?id=' + encodeURIComponent(a.id));
+    if (r.id !== a.id || !Array.isArray(r.campaigns)) throw new Error(tr('查询结果未确认'));
+    const state = r.daily_status || (r.claimable_count > 0 ? 'claimable' : 'unknown');
+    rewardQueries.set(a.id, { state, at: Date.now() });
+    if (serverState.data) renderAccounts(serverState.data);
+    return { state, message: r.message || tr('奖励查询完成') };
+}
+
+function openAccountDetail(a) {
+    const body = domState.$('#accountDetailBody'); body.textContent = '';
+    body.appendChild(mk('h3', '', a.name || a.id));
+    const fields = [
+        [tr('来源'), sourceName(a.source)], [tr('凭据有效期'), a.expires_at ? fmtTime(a.expires_at) : a.permanent || a.non_expiring ? tr('长期密钥') : tr('未知')],
+        [tr('刷新凭据'), refreshCredentialLabel(a)],
+        [tr('最近使用'), fmtTime(a.last_used)], [tr('失败次数'), a.failures || 0],
+        [tr('最近错误'), a.last_err || '—'], [tr('冷却原因'), a.cooldown_reason || '—'],
+        [tr('最近奖励记录'), a.last_claim_msg || '—'], [tr('奖励记录时间'), fmtTime(a.last_claim_at)], [tr('奖励错误'), a.last_claim_err || '—']
+    ];
+    fields.forEach(([label, value]) => { const p = mk('p', 'account-detail-field'); p.append(mk('strong', '', label + ': '), document.createTextNode(value)); body.appendChild(p); });
+    body.appendChild(mk('p', 'hint', tr('刷新凭据的存在不代表自动续期已启用或续期成功。额度快照不代表所有模型均可调用。')));
+    const quota = mk('div', 'cell-stack'); const rendered = creditCell(a, false); quota.append(...Array.from(rendered.childNodes)); body.appendChild(quota);
+    if (!domState.$('#accountDetailDialog').open) domState.$('#accountDetailDialog').showModal();
+}
+
+function prepareBulk() {
+    if (bulkBusy) return;
+    const targets = visibleAccounts.filter(a => selected.has(a.id)).map(a => ({ ...a }));
+    if (!targets.length) return;
+    const control = domState.$('#accountBulkAction');
+    bulkPlan = { action: control.value, targets };
+    domState.$('#accountBulkSummary').textContent = control.selectedOptions[0].textContent + ' · ' + targets.length + tr(' 个账号');
+    const list = domState.$('#accountBulkTargets'); list.textContent = '';
+    targets.forEach(a => list.appendChild(mk('li', '', (a.name || a.id) + ' · ' + (a.provider || 'codearts'))));
+    domState.$('#accountBulkResults').textContent = '';
+    domState.$('#accountBulkConfirm').disabled = false;
+    domState.$('#accountBulkConfirm').classList.toggle('danger', control.value === 'remove');
+    domState.$('#accountBulkDialog').showModal();
+}
+
+async function executeBulk() {
+    if (bulkBusy || !bulkPlan) return;
+    const { action, targets } = bulkPlan; bulkPlan = null; bulkBusy = true;
+    domState.$('#accountBulkConfirm').disabled = true;
+    domState.$('#accountBulkClose').disabled = true;
+    ['#checkinAll', '#claimAll', '#refreshCredits'].forEach(id => { domState.$(id).disabled = true; });
+    if (serverState.data) renderAccounts(serverState.data);
+    const currentLifetime = lifetime;
+    const active = () => mounted && lifetime === currentLifetime;
+    let completed = 0;
+    try {
+        await runSelected(targets, async a => {
+            // Account disappearance never becomes an unscoped all-account request.
+            if (!a.id || !(serverState.data?.accounts || []).some(current => current.id === a.id)) throw new Error(tr('账号已不存在'));
+            if (action === 'credits') { await refreshAccountCredit(a.id); return tr('额度已刷新'); }
+            if (action === 'rewards' || action === 'claim') {
+                if (a.daily_claim_supported === false) return tr('已跳过：未提供签到接口');
+                const reward = await queryRewards(a);
+                if (action === 'rewards') return reward.message;
+                if (reward.state !== 'claimable') return tr('已跳过：当前未确认可领取') + ' · ' + reward.message;
+            }
+            if (action === 'probe' || action === 'claim') {
+                const r = await api(action === 'probe' ? '/admin/api/checkin' : '/admin/api/claim', { method: 'POST', body: { id: a.id } });
+                const entry = (r.results || []).find(x => x.id === a.id);
+                if (!entry || !entry.ok) throw new Error(entry?.err || entry?.message || tr('操作结果未确认'));
+                if (action === 'claim') { rewardQueries.delete(a.id); invalidateCredit(a.id); }
+                return entry.message || tr('操作成功');
+            }
+            if (!['pause', 'resume', 'clear-errors', 'remove'].includes(action)) throw new Error(tr('未知操作'));
+            const r = await api('/admin/api/accounts', { method: 'POST', body: { action, id: a.id } });
+            if (!r.ok || (action === 'remove' && r.removed_id !== a.id)) throw new Error(tr('操作结果未确认'));
+            if (action === 'remove') { invalidateCredit(a.id); selected.delete(a.id); }
+            return tr('操作成功');
+        }, result => {
+            completed++;
+            if (!active()) return;
+            domState.$('#accountBulkResults').appendChild(mk('p', result.ok ? 'ok-text' : 'err-text', result.name + ': ' + result.message));
+        }, active);
+        if (active()) {
+            domState.$('#accountBulkResults').appendChild(mk('p', 'hint', tr('已处理 ') + completed + ' / ' + targets.length));
+            await refresh();
+        }
+    } catch (e) {
+        if (active()) domState.$('#accountBulkResults').appendChild(mk('p', 'err-text', tr('刷新列表失败：') + e.message));
+    } finally {
+        if (active()) {
+            bulkBusy = false;
+            domState.$('#accountBulkConfirm').disabled = true;
+            domState.$('#accountBulkClose').disabled = false;
+            ['#checkinAll', '#claimAll', '#refreshCredits'].forEach(id => { domState.$(id).disabled = false; });
+            if (serverState.data) renderAccounts(serverState.data);
+        }
+    }
 }

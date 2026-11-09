@@ -65,7 +65,7 @@ function renderWindow(w: Window, now: number): HTMLElement {
 
 // Append nodes inside the legacy controller's owned subtree. No Vue renderer
 // shares these nodes; labels, balances and upstream strings use textContent.
-export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now() / 1000): boolean {
+export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now() / 1000, compact = false): boolean {
   if (info.kind === 'unsupported') {
     parent.append(node('span', 'muted', tr('暂不支持查询')));
     if (info.reason) parent.append(node('span', 'sub quota-query-error', tr(info.reason)));
@@ -81,12 +81,17 @@ export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now(
   if (!windows.length && !info.balance) return false;
   parent.classList.add('account-quota');
   if (info.package_name) parent.append(node('span', 'sub quota-plan-name', info.package_name));
-  windows.forEach(w => parent.append(renderWindow(w, now)));
-  if (info.balance) {
+  // Keep upstream order for the usual two windows; prioritize exhausted windows
+  // when compacting larger sets so a warning cannot be hidden in details.
+  const shown = compact && windows.length > 2 ? [...windows].sort((a, b) => Number((b.utilization ?? 0) >= 100) - Number((a.utilization ?? 0) >= 100)).slice(0, 2) : windows;
+  shown.forEach(w => parent.append(renderWindow(w, now)));
+  if (compact && windows.length > shown.length) parent.append(node('span', 'sub', tr('更多额度窗口：') + (windows.length - shown.length)));
+  if (info.balance && (!compact || windows.length < 2)) {
     const balance = node('div', 'account-quota-window quota-balance'); balance.append(node('span', 'quota-window-name', tr('额外 Credits')));
     const amount = info.balance.unlimited ? tr('额度未设上限') : typeof info.balance.amount === 'string' ? info.balance.amount + ' ' + unitLabel(info.balance.unit) : tr('余额未知');
     balance.append(node('span', 'mono quota-window-value', amount)); parent.append(balance);
   }
+  if (compact && info.balance && windows.length >= 2) parent.append(node('span', 'sub', tr('另有余额，查看详情')));
   if (known(info.updated_at) && info.updated_at > 0) parent.append(node('span', 'sub quota-updated', tr('更新于 ') + timeText(info.updated_at)));
   return true;
 }

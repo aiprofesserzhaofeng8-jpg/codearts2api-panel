@@ -13,7 +13,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    {available:false,kind:'unsupported',reason:'OpenAI API Key 接入未提供订阅窗口查询，请在官方 API 控制台查看用量与账单'},
    {available:true,total:100,used:20,remaining:80}
   ];
-  await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
+  await ctx.route('**/setup/status',r=>r.fulfill({json:{ready:true,needs_setup:false}}));
+ await ctx.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
   await ctx.route('**/admin/api/**',r=>{const path=new URL(r.request().url()).pathname;let value={ok:true};
    if(path.endsWith('/state'))value={accounts,keys:[],models:[],settings:{pool:{}},stats:{}};
    if(path.endsWith('/credits')){requests++;value={accounts:accounts.map((a,i)=>i===6||failed&&i===2?{id:a.id,ok:false,error:i===6?'Kiro HTTP 403 fixture':'ChatGPT HTTP 429 fixture'}:{id:a.id,ok:true,credit:metrics[i]})};}
@@ -25,8 +26,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   assert.ok((await row('Qoder quota fixture').textContent()).includes('47.5'));
   assert.ok((await row('Kiro quota fixture').textContent()).includes('487.5'));assert.ok((await row('Kiro quota fixture').textContent()).includes('KIRO PRO'));
   assert.equal(await row('GPT quota fixture').locator('progress').count(),2);assert.equal(await row('GPT quota fixture').locator('progress').first().getAttribute('value'),'80.25');
-  assert.ok((await row('GPT quota fixture').textContent()).includes('12.345678901234567890'));
-  assert.equal(await row('Claude quota fixture').locator('progress').first().getAttribute('value'),'0');
+  await row('GPT quota fixture').getByRole('button',{name:locale==='zh-CN'?'额度详情':'Quota details',exact:true}).click();assert.ok((await page.locator('#accountDetailBody').textContent()).includes('12.345678901234567890'));await page.locator('#accountDetailClose').click();
+  assert.equal(await row('Claude quota fixture').locator('progress').first().getAttribute('value'),'0');assert.equal(await row('Legacy quota fixture').locator('progress').first().getAttribute('value'),'20');
   assert.ok((await row('Claude quota fixture').textContent()).includes(locale==='zh-CN'?'已到重置时间，请刷新':'Reset time reached'));
   assert.equal(await row('API key fixture').locator('progress').count(),0);assert.ok((await row('API key fixture').textContent()).includes(locale==='zh-CN'?'暂不支持查询':'Query not supported'));
   assert.ok((await row('Failure quota fixture').textContent()).includes('HTTP 403'));assert.ok((await row('Legacy quota fixture').textContent()).includes('80 / 100'));

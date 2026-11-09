@@ -1010,12 +1010,12 @@ code{
 .filter-chip:hover{color:var(--text);background:var(--surface-2)}
 .filter-chip.on{background:var(--accent-soft);color:var(--accent-text);font-weight:600}
 .filter-count{font:11px var(--mono);color:var(--text-3);margin-left:auto}
-.account-table{min-width:1300px}
+.account-table{min-width:1000px}
 .account-table th,.account-table td{padding:13px 12px}
-.account-table td:nth-child(4){min-width:165px}
-.account-table td:nth-child(5){min-width:175px}
-.account-table td:nth-child(6){min-width:150px}
-.account-table td.actions-cell{min-width:250px;white-space:nowrap}
+.account-table td[data-column="credential"]{min-width:130px}
+.account-table td[data-column="quota"]{min-width:210px}
+.account-table td[data-column="status"]{min-width:145px}
+.account-table td.actions-cell{min-width:160px;white-space:nowrap}
 .account-actions{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .account-table td.actions-cell .btn{margin:0;flex:none}
 .account-menu-trigger .ico{width:12px;height:12px}
@@ -1048,13 +1048,6 @@ code{
 .badge{border-radius:5px;font-size:10.5px}
 .settings-group h3{font-size:13px;color:var(--accent-text)}
 @media(min-width:1500px){.kpis{grid-template-columns:repeat(8,minmax(0,1fr))}}
-@media(min-width:601px) and (max-width:1600px){
-  .account-table{min-width:980px}
-  .account-table th:nth-child(2),.account-table td:nth-child(2),
-  .account-table th:nth-child(3),.account-table td:nth-child(3),
-  .account-table th:nth-child(7),.account-table td:nth-child(7),
-  .account-table th:nth-child(9),.account-table td:nth-child(9){display:none}
-}
 @media(max-width:1200px){
   .pool-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
   .pool-stat{border-bottom:1px solid var(--line)}
@@ -1100,8 +1093,7 @@ code{
   .account-table td::before{content:attr(data-label);display:block;font:10px var(--font);color:var(--text-3);margin-bottom:5px}
   .account-table td:first-child{grid-column:1/-1;border-bottom:1px solid var(--line);background:var(--surface-2);padding:12px}
   .account-table td:first-child::before,.account-table td.actions-cell::before{display:none}
-  .account-table td:nth-child(3){display:none!important}
-  .account-table td:nth-child(4){grid-column:1/-1}
+  .account-table td[data-column="quota"]{grid-column:1/-1}
   .account-table td.actions-cell{grid-column:1/-1;border-top:1px solid var(--line);padding:9px}
   .account-table td.empty{grid-column:1/-1;padding:30px 12px;background:transparent}
   .account-table .account-title{max-width:220px}
@@ -1378,3 +1370,23 @@ body.admin-locked .app { visibility: hidden; }
 .quota-plan-name,.quota-updated{font-size:11px}
 
 .cell-stack .quota-query-error,.account-quota .sub{white-space:normal;overflow-wrap:anywhere}
+
+/* Account list preferences apply at every viewport; core status and quota stay visible. */
+.account-table [data-column][hidden]{display:none!important}
+.account-bulk-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line);font-size:12px}
+.account-bulk-bar label{display:flex;align-items:center;gap:6px}
+.account-who input[type="checkbox"]{flex:none;width:15px;height:15px}
+.account-last-error{max-width:230px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.account-columns{position:relative;font-size:12px}
+.account-columns summary{cursor:pointer}
+#accountColumnOptions{position:absolute;z-index:10;right:0;min-width:150px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--pop)}
+#accountColumnOptions label{display:flex;gap:8px;padding:5px;white-space:nowrap}
+#accountBulkTargets{max-height:180px;overflow:auto}
+#accountBulkResults{overflow-wrap:anywhere}
+.account-detail-field{overflow-wrap:anywhere;margin:8px 0}
+#accountDetailBody .account-quota,#accountDetailBody .cell-stack{max-width:none}
+@media(max-width:600px){.account-bulk-bar{gap:8px}.account-last-error{max-width:none}.account-toolbar label{max-width:100%}.account-who{min-width:0}.account-actions{flex-wrap:wrap}}
+.account-bulk-bar select{width:auto;max-width:100%;min-width:150px}
+.account-table input[type="checkbox"],.account-bulk-bar input[type="checkbox"],#accountColumnOptions input[type="checkbox"]{appearance:auto;width:16px;height:16px;min-width:16px;border-radius:3px;background:initial;padding:0;accent-color:var(--accent-solid)}
+.account-table input[type="checkbox"]::after,.account-bulk-bar input[type="checkbox"]::after,#accountColumnOptions input[type="checkbox"]::after{content:none}
+.account-table td[data-column="reward"] .sub{display:block;max-width:135px;white-space:normal}

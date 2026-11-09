@@ -55,11 +55,23 @@ import CredentialImport from './providers/CredentialImport.vue';
               <button class="filter-chip" data-account-filter="paused" aria-pressed="false">{{tr('已暂停')}}</button>
               <button class="filter-chip" data-account-filter="disabled" aria-pressed="false">{{tr('已停用')}}</button>
             </div>
+            <label>{{tr('排序')}} <select id="accountSort"><option value="default">{{tr('默认顺序')}}</option><option value="name">{{tr('账号名称')}}</option><option value="lastUsed">{{tr('最近使用优先')}}</option><option value="expires">{{tr('即将过期优先')}}</option></select></label>
+            <details class="account-columns"><summary>{{tr('显示列')}}</summary><div id="accountColumnOptions"></div></details>
             <span class="filter-count" id="accountFilterCount" aria-live="polite"></span>
+          </div>
+          <div class="account-bulk-bar">
+            <label><input type="checkbox" id="accountSelectAll"> {{tr('选择当前筛选结果')}}</label>
+            <span id="accountSelectionCount" aria-live="polite"></span>
+            <button class="btn xs" id="accountClearSelection">{{tr('清除选择')}}</button>
+            <select id="accountBulkAction" :aria-label="tr('批量操作')">
+              <option value="probe">{{tr('探活')}}</option><option value="credits">{{tr('刷新额度')}}</option><option value="rewards">{{tr('查询奖励')}}</option><option value="claim">{{tr('领取可领奖励')}}</option>
+              <option value="pause">{{tr('暂停选号')}}</option><option value="resume">{{tr('恢复选号')}}</option><option value="clear-errors">{{tr('解除冷却 / 清错')}}</option><option value="remove">{{tr('删除')}}</option>
+            </select>
+            <button class="btn xs" id="accountBulkStart">{{tr('操作所选账号')}}</button>
           </div>
           <div v-once class="table-wrap account-table-wrap">
             <table class="account-table">
-              <thead><tr><th>{{tr('名称')}}</th><th>{{tr('来源')}}</th><th>AK</th><th>{{tr('凭据有效期')}}</th><th>{{tr('额度与用量')}}</th><th>{{tr('状态')}}</th><th>{{tr('今日领取')}}</th><th>{{tr('失败')}}</th><th>{{tr('最近使用')}}</th><th>{{tr('操作')}}</th></tr></thead>
+              <thead><tr><th data-column="identity">{{tr('账号 / 平台')}}</th><th data-column="credential">{{tr('凭据')}}</th><th data-column="quota">{{tr('额度与用量')}}</th><th data-column="status">{{tr('调度 / 并发')}}</th><th data-column="reward">{{tr('奖励')}}</th><th data-column="lastUsed">{{tr('最近使用')}}</th><th data-column="actions">{{tr('操作')}}</th></tr></thead>
               <tbody id="accounts"></tbody>
             </table>
           </div>
@@ -103,6 +115,15 @@ import CredentialImport from './providers/CredentialImport.vue';
         </div>
 
       </section>
+<dialog v-once id="accountDetailDialog" class="modal" aria-labelledby="accountDetailTitle">
+  <div class="modal-head"><h2 id="accountDetailTitle">{{tr('账号详情')}}</h2><button class="btn ghost" id="accountDetailClose">{{tr('关闭')}}</button></div>
+  <div class="modal-body" id="accountDetailBody"></div>
+</dialog>
+<dialog v-once id="accountBulkDialog" class="modal" aria-labelledby="accountBulkTitle">
+  <div class="modal-head"><h2 id="accountBulkTitle">{{tr('批量操作')}}</h2></div>
+  <div class="modal-body"><p id="accountBulkSummary"></p><p class="hint">{{tr('仅处理下面列出的账号，逐个执行。关闭或切页不会撤销已提交的操作；失败项不会自动重试。')}}</p><ul id="accountBulkTargets"></ul><div id="accountBulkResults" role="status" aria-live="polite"></div></div>
+  <div class="modal-actions"><button class="btn" id="accountBulkClose">{{tr('关闭')}}</button><button class="btn primary" id="accountBulkConfirm">{{tr('确认执行')}}</button></div>
+</dialog>
 <dialog v-once id="accountConcurrencyDialog" class="modal modal-small" aria-labelledby="accountConcurrencyTitle">
   <div v-once class="modal-head"><h2 id="accountConcurrencyTitle">{{tr('账号并发设置')}}</h2><button class="btn ghost" id="accountConcurrencyClose">{{tr('关闭')}}</button></div>
   <div v-once class="modal-body">
