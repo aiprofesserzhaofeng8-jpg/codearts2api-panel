@@ -90,6 +90,7 @@ func (s *Routing) buildUnifiedPlan(snapshot config.UnifiedSnapshot, scope access
 	}
 	plan := &ModelPlan{Public: m.Name, Selection: access.UnifiedSelection{ID: m.ID, Revision: m.Revision, RoutingRevision: snapshot.Revision}, Models: map[string]provider.Model{}, IDs: []string{}}
 	authorized := 0
+	identityChanged := false
 	for _, src := range m.Sources {
 		if !grant.AllowsSource(src.ID) || !scope.AllowsModel(config.RawSource(src.ID)) {
 			continue
@@ -99,6 +100,13 @@ func (s *Routing) buildUnifiedPlan(snapshot config.UnifiedSnapshot, scope access
 			continue
 		}
 		raw, ok := s.directory.ResolveRaw(src.ID)
+		if ok && sourceIdentityChanged(m.Name, raw) {
+			identityChanged = true
+			if !profile {
+				continue
+			}
+			ok = false
+		}
 		if !ok {
 			if profile {
 				id := config.RawSource(src.ID)
@@ -113,6 +121,9 @@ func (s *Routing) buildUnifiedPlan(snapshot config.UnifiedSnapshot, scope access
 	}
 	if authorized == 0 {
 		return nil, unifiedDenied()
+	}
+	if m.Enabled && !profile && len(plan.IDs) == 0 && identityChanged {
+		return nil, config.ModelFailure(409, "model_source_identity_changed", "上游槽位的型号名称已变化，请核对统一模型来源；可直接使用平台服务入口")
 	}
 	if !m.Enabled || (!profile && len(plan.IDs) == 0) {
 		return nil, unifiedUnavailable()
@@ -181,7 +192,7 @@ func (s *Routing) resolveUnifiedMode(snapshot config.UnifiedSnapshot, scope acce
 	if !scope.Callable(name) || !ScopeAllows(scope, s.store.Accounts(), raw) {
 		return provider.Model{}, nil, GroupDenied()
 	}
-	return raw, nil, nil
+	return reviewedSourceCapabilities(raw), nil, nil
 }
 
 func (s *Routing) checkUnified(scope access.AccessScope, rawID string, plan *ModelPlan) error {

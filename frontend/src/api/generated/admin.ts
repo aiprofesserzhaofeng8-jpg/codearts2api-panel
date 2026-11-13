@@ -1061,7 +1061,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing context/output metadata returns capability-only HTTP 200 with client_profile_status=missing_limits and omitted numeric limits, disabled sources 503. No silent preference fallback. */
+        /** @description Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; client recommendations work with zero accounts. Unknown name 404, denied 403, existing chat sources with missing numeric fields receive labeled public-reference or compatibility-default recommendations; missing sources or changed reviewed identities return capability-only HTTP 200 with client_profile_status=missing_limits and omitted numeric limits, disabled sources 503. No silent preference fallback. Client compatibility includes purpose, exportability and per-source parameter evidence; unsupported purposes are reported without restricting explicit inference. */
         get: operations["getClientProfile"];
         put?: never;
         post?: never;
@@ -1587,6 +1587,11 @@ export interface components {
             } | null;
             /** Format: date-time */
             observed_at: string;
+            image_input?: string;
+            tool_calling?: string;
+            runtime?: components["schemas"]["SourceRuntimeStatus"];
+            quota?: components["schemas"]["SourceQuota"][];
+            client_compatibility?: components["schemas"]["ClientCompatibility"];
         };
         UnifiedDetail: {
             model: components["schemas"]["UnifiedModel"];
@@ -1686,6 +1691,11 @@ export interface components {
             /** @enum {string} */
             capability_basis?: "provider_catalog" | "authorized_sources" | "native_and_authorized_sources";
             native_model?: components["schemas"]["NativeModelContract"];
+            client_compatibility?: components["schemas"]["ClientCompatibility"];
+            client_profile_error?: {
+                code?: string;
+                message?: string;
+            };
         } & {
             [key: string]: unknown;
         };
@@ -1710,6 +1720,9 @@ export interface components {
             /** @enum {string} */
             capability_basis?: "provider_catalog" | "authorized_sources" | "native_and_authorized_sources";
             native_model?: components["schemas"]["NativeModelContract"];
+            client_compatibility?: components["schemas"]["ClientCompatibility"];
+            /** @enum {string} */
+            client_profile_status?: "ready" | "missing_limits" | "unsupported_purpose";
         } & {
             [key: string]: unknown;
         };
@@ -1740,7 +1753,7 @@ export interface components {
             version: number;
             model: string;
             /** @enum {string} */
-            client_profile_status: "missing_limits";
+            client_profile_status: "missing_limits" | "unsupported_purpose";
             client_profile_error: {
                 code?: string;
                 message?: string;
@@ -1751,6 +1764,7 @@ export interface components {
             /** @enum {string} */
             capability_basis?: "provider_catalog" | "authorized_sources" | "native_and_authorized_sources";
             native_model?: components["schemas"]["NativeModelContract"];
+            client_compatibility?: components["schemas"]["ClientCompatibility"];
         } & {
             [key: string]: unknown;
         };
@@ -1761,6 +1775,54 @@ export interface components {
             tool_calling: string;
             reference: string;
             verified_at: string;
+            /** @description Official notation, not a verified numeric limit of a provider source. */
+            context_label?: string;
+            /** @description Official notation, not a verified numeric limit of a provider source. */
+            max_output_label?: string;
+        };
+        SourceRuntimeStatus: {
+            account_count: number;
+            ready: number;
+            disabled: number;
+            paused: number;
+            cooling: number;
+            busy: number;
+            next_retry_at?: number;
+            last_request: {
+                checked_at: number;
+                status: number;
+                error_kind?: string;
+            } | null;
+        };
+        SourceQuota: {
+            account_id: string;
+            /** Format: date-time */
+            observed_at: string;
+            stale: boolean;
+            available: boolean;
+            snapshot?: components["schemas"]["AccountQuota"];
+        };
+        ClientLimitEvidence: {
+            source: string;
+            basis: string;
+            context_window?: number;
+            max_output_tokens?: number;
+            provider_context?: number;
+            provider_max_output?: number;
+            reference?: string;
+            verified_at?: string;
+            official_context?: string;
+            official_max_output?: string;
+            official_reference?: string;
+        };
+        /** @description Client export advice, independent of model visibility, inference permissions, account health and quota. Explicit upstream bounds take precedence. Tested recommendations, public-registry references and compatibility defaults are labeled separately and are not guaranteed platform maxima. */
+        ClientCompatibility: {
+            purpose: string;
+            exportable: boolean;
+            /** @enum {string} */
+            status: "ready" | "missing_limits" | "unsupported_purpose";
+            reason: string;
+            limits: components["schemas"]["ClientLimitEvidence"][];
         };
     };
     responses: never;
@@ -2022,6 +2084,9 @@ export interface operations {
                             [key: string]: unknown;
                         };
                         routing_revision: number;
+                        client_compatibility?: {
+                            [key: string]: components["schemas"]["ClientCompatibility"];
+                        };
                     };
                 };
             };
@@ -2060,6 +2125,10 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        client_compatibility?: {
+                            [key: string]: components["schemas"]["ClientCompatibility"];
+                        };
+                    } & {
                         [key: string]: unknown;
                     };
                 };
@@ -2808,7 +2877,8 @@ export interface operations {
         parameters: {
             query?: {
                 fresh?: "1";
-                id?: string;
+                /** @description Optional explicit account IDs; repeated id parameters query only these accounts (maximum 100). Omission retains the legacy all-account query. */
+                id?: string[];
             };
             header?: never;
             path?: never;

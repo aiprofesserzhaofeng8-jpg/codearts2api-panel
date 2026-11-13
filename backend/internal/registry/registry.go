@@ -37,28 +37,12 @@ var Fallback = []Model{
 		Desc: "编程性能突出"},
 }
 
-// aliases 是内置别名，指向 CodeArts 上游模型 ID。
-//
-// 2026-10 免费通道下线后，原来的 glm-5.3-flash / deepseek-v4-pro-0813 /
-// deepseek-v4-flash-0731 都不存在了，这里统一重映射到当前可用的积分模型。
+// Only product-level convenience names are implicit. Native vendor model
+// names must resolve to a real catalog entry or an explicit administrator alias.
 var aliases = map[string]string{
-	// 通用档 → glm-5.3
-	"gpt-4o":            "glm-5.3",
-	"gpt-4o-mini":       "glm-5.3",
-	"gpt-4":             "glm-5.3",
-	"gpt-4-turbo":       "glm-5.3",
-	"gpt-3.5-turbo":     "glm-5.3",
-	"claude-3-haiku":    "glm-5.3",
-	"glm-4":             "glm-5.3",
-	"codearts":          "glm-5.3",
-	"codearts-flash":    "glm-5.3",
-	"deepseek-chat":     "deepseek-v4.1-flash",
-	"deepseek-reasoner": "GLM-5.2",
-	// 旗舰档 → GLM-5.2
-	"gpt-5":             "GLM-5.2",
-	"claude-3-5-sonnet": "GLM-5.2",
-	"claude-sonnet-4":   "GLM-5.2",
-	"codearts-pro":      "GLM-5.2",
+	"codearts":       "glm-5.3",
+	"codearts-flash": "glm-5.3",
+	"codearts-pro":   "GLM-5.2",
 }
 
 // ReservedNames is a copy for offline migration and definition validation.
@@ -70,6 +54,13 @@ func ReservedNames() []string {
 	for _, m := range Fallback {
 		out = append(out, m.ID)
 	}
+	// Preserve historical namespace conflicts during offline migration. These
+	// names no longer resolve implicitly at runtime.
+	out = append(out,
+		"gpt-4o", "gpt-4o-mini", "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo",
+		"claude-3-haiku", "glm-4", "deepseek-chat", "deepseek-reasoner",
+		"gpt-5", "claude-3-5-sonnet", "claude-sonnet-4",
+	)
 	sort.Strings(out)
 	return out
 }

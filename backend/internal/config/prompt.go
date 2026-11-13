@@ -24,7 +24,7 @@ type PromptOverrides struct {
 }
 
 func DefaultPromptSettings() PromptSettings {
-	return PromptSettings{Mode: "passthrough", Fallback: true, Sanitize: true}
+	return PromptSettings{Mode: "passthrough"}
 }
 func (p PromptSettings) Validate() error {
 	if p.Mode != "custom" && p.Mode != "passthrough" {

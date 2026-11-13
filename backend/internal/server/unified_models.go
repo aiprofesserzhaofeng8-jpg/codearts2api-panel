@@ -11,7 +11,9 @@ import (
 	"strings"
 
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/config"
+	"codearts2api/internal/provider"
 )
 
 func writeModelError(w http.ResponseWriter, err error, fallback int) {
@@ -103,6 +105,7 @@ func (s *Server) handleUnifiedModels(w http.ResponseWriter, r *http.Request) {
 				writeModelError(w, err, 400)
 				return
 			}
+			s.addSourceQuota(&detail)
 			writeJSON(w, 200, detail)
 			return
 		}
@@ -193,5 +196,27 @@ func (s *Server) handleUnifiedModels(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"ok": true, "routing_revision": s.UnifiedModels.Snapshot().Revision})
 	default:
 		writeErr(w, 405, "不支持的方法", "invalid_request_error")
+	}
+}
+
+// Administrator detail reads quota observations only. Fetching this endpoint
+// must never query an upstream, refresh credentials or consume a generation.
+func (s *Server) addSourceQuota(detail *catalog.UnifiedDetail) {
+	if s.Credits == nil {
+		return
+	}
+	accounts := s.Store.Accounts()
+	for i := range detail.SourceStatus {
+		p, scope, _ := provider.ParseModel(config.RawSource(detail.SourceStatus[i].ID))
+		for _, a := range accounts {
+			if a.ProviderID() != p || p != provider.CodeArts && a.Scope != scope {
+				continue
+			}
+			info, at, stale, available := s.Credits.Snapshot(a.ID)
+			if at.IsZero() {
+				continue
+			}
+			detail.SourceStatus[i].Quota = append(detail.SourceStatus[i].Quota, catalog.SourceQuota{AccountID: a.ID, ObservedAt: at, Stale: stale, Available: available, Snapshot: info})
+		}
 	}
 }

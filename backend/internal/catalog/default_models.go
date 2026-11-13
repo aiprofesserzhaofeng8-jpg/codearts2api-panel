@@ -31,10 +31,12 @@ type qoderModelAlias struct {
 	Basis       string `json:"basis"`
 }
 type defaultCatalogData struct {
-	QoderCNAliases []qoderModelAlias              `json:"qoder_cn_aliases"`
-	Version        uint64                         `json:"version"`
-	Models         []defaultCatalogEntry          `json:"models"`
-	NativeModels   []provider.NativeModelContract `json:"native_models"`
+	ClientMetadata     []sourceClientMetadata         `json:"client_metadata"`
+	SourceCapabilities []sourceCapabilityEvidence     `json:"source_capabilities"`
+	QoderCNAliases     []qoderModelAlias              `json:"qoder_cn_aliases"`
+	Version            uint64                         `json:"version"`
+	Models             []defaultCatalogEntry          `json:"models"`
+	NativeModels       []provider.NativeModelContract `json:"native_models"`
 }
 
 var defaultCatalog = func() defaultCatalogData {
@@ -83,6 +85,14 @@ func qoderCNAlias(id string) (qoderModelAlias, bool) {
 	}
 	return qoderModelAlias{}, false
 }
+
+// A saved native name cannot keep using a reviewed slot after its advertised
+// identity changes. Explicit provider-service names remain available.
+func sourceIdentityChanged(public string, raw provider.Model) bool {
+	alias, ok := qoderCNAlias(raw.ID)
+	return ok && strings.EqualFold(public, alias.Name) && !strings.EqualFold(strings.TrimSpace(raw.Name), alias.DisplayName)
+}
+
 func defaultModelName(raw provider.Model) (string, []string) {
 	if alias, ok := qoderCNAlias(raw.ID); ok && strings.EqualFold(strings.TrimSpace(raw.Name), alias.DisplayName) {
 		return alias.Name, nil
@@ -191,7 +201,16 @@ func (m *Management) defaultModelsPlan() (DefaultModelsPreview, map[string]confi
 	settings := m.store.Settings()
 	rows := m.directory.List(nil)
 	sort.Slice(rows, func(i, j int) bool { return rows[i].ID < rows[j].ID })
-	digestData, _ := json.Marshal(rows)
+	// Reference limits affect the proposed client policies too. Include them in
+	// the preview fingerprint without exposing them in public model JSON.
+	fingerprint := make([]struct {
+		Model     provider.Model
+		Reference *provider.ClientReference
+	}, len(rows))
+	for i, row := range rows {
+		fingerprint[i].Model, fingerprint[i].Reference = row, row.ClientReference
+	}
+	digestData, _ := json.Marshal(fingerprint)
 	digest := sha256.Sum256(digestData)
 	out := DefaultModelsPreview{Version: defaultCatalog.Version, CatalogRevision: hex.EncodeToString(digest[:]), RoutingRevision: snap.Revision,
 		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent}, Models: []DefaultModelEntry{}}

@@ -143,7 +143,7 @@ func (s *Routing) MappingPlan(scope access.AccessScope, name string) *ModelPlan 
 	plan := &ModelPlan{Public: name, Models: map[string]provider.Model{}}
 	list := s.store.Accounts()
 	for _, id := range sources {
-		if m, ok := s.directory.ResolveRaw(id); ok && ScopeAllows(scope, list, m) {
+		if m, ok := s.directory.ResolveRaw(id); ok && !sourceIdentityChanged(name, m) && ScopeAllows(scope, list, m) {
 			plan.Models[m.ID] = m
 			plan.IDs = append(plan.IDs, m.ID)
 		}
@@ -176,7 +176,7 @@ func (s *Routing) ResolveDefault(settings config.Settings, requested string) (pr
 			return provider.Model{}, &provider.Error{Status: 400, Message: "模型别名或强制模型指向其他上游/地区，请检查模型设置"}
 		}
 	}
-	return m, nil
+	return reviewedSourceCapabilities(m), nil
 }
 func (s *Routing) ResolveMapped(settings config.Settings, scope access.AccessScope, requested string) (provider.Model, *ModelPlan, error) {
 	if settings.ForceModel != "" {
@@ -200,7 +200,7 @@ func (s *Routing) ResolveMapped(settings config.Settings, scope access.AccessSco
 		if !ScopeAllows(scope, s.store.Accounts(), m) {
 			return provider.Model{}, nil, GroupDenied()
 		}
-		return m, nil, nil
+		return reviewedSourceCapabilities(m), nil, nil
 	}
 	plan := s.MappingPlan(scope, name)
 	if plan == nil {
@@ -249,7 +249,7 @@ func (s *Routing) ModelsForScope(scope access.AccessScope) []provider.Model {
 				m.ID = "codearts/" + resolved.ID
 				m.Source = resolved.Source
 			}
-			out = append(out, m)
+			out = append(out, reviewedSourceCapabilities(m))
 		}
 	}
 	return out

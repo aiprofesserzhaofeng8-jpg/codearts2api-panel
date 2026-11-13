@@ -26,7 +26,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   assert.ok((await row('Qoder quota fixture').textContent()).includes('47.5'));
   assert.ok((await row('Kiro quota fixture').textContent()).includes('487.5'));assert.ok((await row('Kiro quota fixture').textContent()).includes('KIRO PRO'));
   assert.equal(await row('GPT quota fixture').locator('progress').count(),2);assert.equal(await row('GPT quota fixture').locator('progress').first().getAttribute('value'),'80.25');
-  await row('GPT quota fixture').getByRole('button',{name:locale==='zh-CN'?'额度详情':'Quota details',exact:true}).click();assert.ok((await page.locator('#accountDetailBody').textContent()).includes('12.345678901234567890'));await page.locator('#accountDetailClose').click();
+  assert.ok((await row('GPT quota fixture').textContent()).includes('12.345678901234567890'));assert.equal(await page.locator('#accountDetailDialog').count(),0);
   assert.equal(await row('Claude quota fixture').locator('progress').first().getAttribute('value'),'0');assert.equal(await row('Legacy quota fixture').locator('progress').first().getAttribute('value'),'20');
   assert.ok((await row('Claude quota fixture').textContent()).includes(locale==='zh-CN'?'已到重置时间，请刷新':'Reset time reached'));
   assert.equal(await row('API key fixture').locator('progress').count(),0);assert.ok((await row('API key fixture').textContent()).includes(locale==='zh-CN'?'暂不支持查询':'Query not supported'));

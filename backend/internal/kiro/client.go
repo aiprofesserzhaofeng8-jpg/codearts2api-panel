@@ -286,11 +286,8 @@ func (c *Client) Refresh(ctx context.Context, raw json.RawMessage) (json.RawMess
 }
 func applyToken(a Credentials, o map[string]json.RawMessage) (json.RawMessage, error) {
 	token := field(o, "accessToken")
-	if a.AuthMethod == "idc" {
-		if id := field(o, "idToken"); id != "" {
-			token = id
-		}
-	}
+	// The application bearer is accessToken for both IdC and Social.
+	// idToken identifies the user; it must never replace API authorization.
 	var seconds int64
 	if token == "" || json.Unmarshal(o["expiresIn"], &seconds) != nil || seconds <= 0 || seconds > 365*86400 {
 		return nil, broken()

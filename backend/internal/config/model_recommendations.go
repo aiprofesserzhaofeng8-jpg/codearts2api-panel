@@ -16,17 +16,22 @@ type ModelPolicyDirectory interface {
 type ModelPolicies struct {
 	store     ModelPolicyStore
 	directory ModelPolicyDirectory
+	recommend func(provider.Model) (ModelPolicy, bool)
 }
 
-func NewModelPolicies(store ModelPolicyStore, directory ModelPolicyDirectory) *ModelPolicies {
-	return &ModelPolicies{store: store, directory: directory}
+func NewModelPolicies(store ModelPolicyStore, directory ModelPolicyDirectory, recommend ...func(provider.Model) (ModelPolicy, bool)) *ModelPolicies {
+	fn := RecommendModelPolicy
+	if len(recommend) > 0 && recommend[0] != nil {
+		fn = recommend[0]
+	}
+	return &ModelPolicies{store: store, directory: directory, recommend: fn}
 }
 
 func (s *ModelPolicies) For(m provider.Model) (ModelPolicy, bool) {
 	if p, ok := s.store.ModelPolicy(m.ID); ok {
 		return p, true
 	}
-	return RecommendModelPolicy(m)
+	return s.recommend(m)
 }
 
 // RecommendModelPolicy derives conservative limits only from directory data.

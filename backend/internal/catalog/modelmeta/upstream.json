@@ -1,0 +1,68 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "6b4b37db43443b5e88e424fe3c69602cc3810dfb",
+  "source_path": "backend/internal/service/upstream_models.go",
+  "source_sha256": "3ab072d7daf9aed952390b0b6fd7d04f8093ff29f5018c81ff7b48a27c4adcdb",
+  "extractions": [
+    {
+      "kind": "type",
+      "name": "UpstreamModelMetadata",
+      "sha256": "dc69088893b5584da67c3d9b60ba580ada8802c8cbb602ffbb1687f903d11880"
+    },
+    {
+      "kind": "type",
+      "name": "modelsDevProvider",
+      "sha256": "df05958e53fc76f7189cae55e8954d3ac997cb756413f812dfca81dcb9834473"
+    },
+    {
+      "kind": "type",
+      "name": "modelsDevModel",
+      "sha256": "4980b58ef0644cf2506e4ebf831b253a7bc12dd95d611b3fbc02182886e251a7"
+    },
+    {
+      "kind": "type",
+      "name": "modelsDevReasoningOption",
+      "sha256": "94b92428b1f834b9cc2ed6656d94b5d207cb2752bc327c3c6bce7133f25dfb2a"
+    },
+    {
+      "kind": "type",
+      "name": "modelsDevModalities",
+      "sha256": "41f5cef39d1d0e4fb334f4f220ea8385da091858ae85c07d4e7b853298a8a4a3"
+    },
+    {
+      "kind": "type",
+      "name": "modelsDevLimit",
+      "sha256": "b602b80749e9fa628ac2f138fff8f784073807d0742f74b4387a54a865a56ffd"
+    },
+    {
+      "kind": "func",
+      "name": "mergeUpstreamModelMetadata",
+      "sha256": "f7351edb4183678b9e4c31aaee2b983e22d10609fbcb4b6f3b5fb43d698e2e60"
+    },
+    {
+      "kind": "func",
+      "name": "upstreamMetadataFromModelsDevModel",
+      "sha256": "69734d78a8c949f53938526bc6829cca87932713c9627514810a7ffffe1cc1d1"
+    },
+    {
+      "kind": "func",
+      "name": "reasoningLevelsFromModelsDevOptions",
+      "sha256": "7ffc9ea474ecfd4dcf089e80cb1c4d7765145944b12922a4cc57f0063e68a7e8"
+    },
+    {
+      "kind": "func",
+      "name": "normalizeReasoningLevels",
+      "sha256": "3f9d5c6df5c1e6f582f7e65559aec27ccf87eafcbdf6604b67bba35a6b9a207b"
+    },
+    {
+      "kind": "func",
+      "name": "normalizeReasoningLevel",
+      "sha256": "85aec46b9cc2439411e69a72900417182b3d4c5fa3448d53c5e6ef33566aca0d"
+    },
+    {
+      "kind": "func",
+      "name": "normalizeCodexInputModalities",
+      "sha256": "f36394b804bce665b60885ec433f859b9c8cd121f909f3aad3b453582cda1867"
+    }
+  ]
+}

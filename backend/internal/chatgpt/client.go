@@ -328,7 +328,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return providerhttp.Failure("ChatGPT", resp.StatusCode)
+		return providerhttp.FailureResponse("ChatGPT", resp)
 	}
 	if !strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
 		return providerhttp.Broken("ChatGPT")

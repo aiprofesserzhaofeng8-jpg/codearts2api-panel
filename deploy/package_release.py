@@ -10,6 +10,7 @@ import subprocess
 import tarfile
 import tempfile
 
+from build_source import prepare_source
 from panelctl import inventory, release_version, require, sha256, sync_dir
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,14 +21,12 @@ def build(version, arch, output, go):
     require(arch in ('amd64', 'arm64'), '不支持的发布架构')
     schema_source = (ROOT / 'backend/internal/storage/store.go').read_text()
     schema = int(re.search(r'const StateVersion = (\d+)', schema_source)[1])
-    # Caller (CI/build.sh/make frontend) must build assets from the same commit first.
-    if not (ROOT / 'backend/internal/webui/dist/index.html').is_file():
-        raise RuntimeError('先构建前端：make frontend')
     output.mkdir(parents=True, exist_ok=True)
     archive = output / f'codearts2api-panel-{version}-linux-{arch}.tar.gz'
     checksum = output / (archive.name + '.sha256')
     if any(p.exists() or p.is_symlink() for p in (archive, checksum)):
         raise RuntimeError('发布包已存在，拒绝覆盖')
+    build_source = prepare_source(ROOT, version)
     with tempfile.TemporaryDirectory(prefix='.package-', dir=output) as temp:
         staging = Path(temp) / 'data'
         staging.mkdir()
@@ -36,11 +35,19 @@ def build(version, arch, output, go):
                        env={**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'linux', 'GOARCH': arch}, check=True)
         for name in ('panelctl.py', 'install.sh', 'healthcheck.sh', 'Caddyfile', 'compose.production.yml', '.env.example', 'README.md', 'UNIFIED-MODELS.md'):
             (staging / name).write_bytes((ROOT / 'deploy' / name).read_bytes())
-        for name in ('LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
+        for name in ('LICENSE', 'NOTICE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
             (staging / name).write_bytes((ROOT / name).read_bytes())
+        for name, source in (
+            ('LICENSE.sub2api', 'backend/internal/catalog/modelmeta/LICENSE'),
+            ('COPYING.sub2api', 'backend/internal/catalog/modelmeta/COPYING'),
+            ('SUB2API-METADATA.md', 'backend/internal/catalog/modelmeta/UPSTREAM.md'),
+            ('SUB2API-METADATA.json', 'backend/internal/catalog/modelmeta/upstream.json'),
+            ('SUB2API-PROTOCOL.md', 'backend/internal/responsescompat/UPSTREAM.md'),
+        ):
+            (staging / name).write_bytes((ROOT / source).read_bytes())
         files = inventory(staging)
         meta = {'format': 1, 'kind': 'release', 'version': version, 'os': 'linux', 'arch': arch,
-                'schema': schema, 'files': files}
+                'schema': schema, 'files': files, 'source': build_source}
         if schema == 11:
             meta['state_migrations'] = [{'from': 10, 'to': 11}]
         packed, summed = Path(temp) / 'package.tar.gz', Path(temp) / 'package.sha256'

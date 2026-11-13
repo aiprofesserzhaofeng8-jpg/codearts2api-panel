@@ -153,3 +153,36 @@ func TestCreditRowsBoundConcurrencyAndRetainOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestQuotaSnapshotNeverQueriesAndRetainsStaleness(t *testing.T) {
+	c := &Credits{}
+	if _, at, _, ok := c.Snapshot("missing"); ok || !at.IsZero() {
+		t.Fatal("missing quota fabricated")
+	}
+	c.Store("fixture", &CreditInfo{Available: true, Remaining: 0}, nil)
+	c.creditMu.Lock()
+	e := c.creditCache["fixture"]
+	e.at = time.Now().Add(-2 * time.Minute)
+	c.creditCache["fixture"] = e
+	c.creditMu.Unlock()
+	info, at, stale, ok := c.Snapshot("fixture")
+	if !ok || !stale || at.IsZero() || !info.Available || info.Remaining != 0 {
+		t.Fatal(info, at, stale, ok)
+	}
+	if _, _, fresh := c.Cached("fixture"); fresh {
+		t.Fatal("stale read became fresh")
+	}
+}
+
+func TestCreditRowsCancelledBatchDoesNotQueryUpstream(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	c := &Credits{}
+	rows := c.Rows(ctx, []*Account{{ID: "a"}, {ID: "b"}}, true, CreditOperations{Native: func(context.Context, *Account) (*CreditInfo, error) {
+		t.Error("cancelled query reached upstream")
+		return nil, nil
+	}})
+	if len(rows) != 2 || rows[0]["ok"] != false || rows[1]["ok"] != false {
+		t.Fatal("missing cancelled result", rows)
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/catalog/modelmeta"
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 )
@@ -43,10 +44,19 @@ type Runtime struct {
 	providerErrors map[string]string
 	err            string
 	loadedAt       time.Time
+	// Public numeric references are refreshed under refreshMu only. They do not
+	// carry credentials, availability or a second gateway model directory.
+	loadReferences func(context.Context) ([]byte, error)
+	references     *modelmeta.Registry
+	referenceRetry time.Time
 }
 
-func NewRuntime(store AccountStore, directory Directory) *Runtime {
-	return &Runtime{store: store, directory: directory}
+func NewRuntime(store AccountStore, directory Directory, references ...func(context.Context) ([]byte, error)) *Runtime {
+	r := &Runtime{store: store, directory: directory}
+	if len(references) > 0 {
+		r.loadReferences = references[0]
+	}
+	return r
 }
 func (r *Runtime) LoadedAt() time.Time {
 	r.mu.RLock()

@@ -20,6 +20,7 @@ func fixture(tag string) string {
 }
 func TestVersionsAndIncompleteRelease(t *testing.T) {
 	for _, tc := range []struct{ current, body, state string }{
+		{"v0.4.0-local.20261112", fixture("v0.4.0"), "available"},
 		{"v0.3.0", fixture("v0.4.0"), "available"}, {"v0.4.0", fixture("v0.4.0"), "current"},
 		{"v0.5.0", fixture("v0.4.0"), "ahead"}, {"0.3.0-user-controls", fixture("v0.4.0"), "development"},
 		{"v0.1.0", `{"tag_name":"v0.4.0","assets":[]}`, "incomplete"},

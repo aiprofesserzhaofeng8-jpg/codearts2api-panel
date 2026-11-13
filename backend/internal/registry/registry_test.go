@@ -31,9 +31,9 @@ func TestResolveOnlyKnownModels(t *testing.T) {
 		{"GLM-5.3", "glm-5.3", true}, // 大小写无关
 		{"glm-5.3-flash", "", false}, // 已下线的旧模型名
 		{"deepseek-v4-pro-0813", "", false},
-		{"gpt-4o", "glm-5.3", true}, // 内置别名 → 现存模型
-		{"gpt-5", "GLM-5.2", true},
-		{"deepseek-chat", "deepseek-v4.1-flash", true},
+		{"gpt-4o", "", false}, // 不把其他厂商型号隐式映射到 GLM
+		{"gpt-5", "", false},
+		{"deepseek-chat", "", false},
 		{"disabled-model", "", false}, // 上游标记 disabled 的不暴露
 		{"glm", "", false},            // 不做模糊匹配
 		{"", "glm-5.3", true},         // 未指定模型 → 默认模型
@@ -158,5 +158,22 @@ func TestReplacingOneProviderPreservesOtherCatalogs(t *testing.T) {
 	}
 	if _, ok := r.Resolve("workbuddy/global/same", nil); !ok {
 		t.Fatal("other realm removed")
+	}
+}
+
+func TestNativeNamesNeverImplicitlyBecomeAnotherVendorModel(t *testing.T) {
+	r := New()
+	for _, name := range []string{"gpt-4o", "gpt-4o-mini", "gpt-5", "claude-3-haiku", "claude-sonnet-4", "glm-4", "deepseek-reasoner"} {
+		if m, ok := r.Resolve(name, nil); ok {
+			t.Fatalf("%s silently became %s", name, m.ID)
+		}
+	}
+	// A real upstream catalog entry and a deliberate administrator alias still work.
+	r.Replace([]Model{{ID: "gpt-4o", Name: "real upstream model"}, {ID: "glm-5.3"}})
+	if m, ok := r.Resolve("gpt-4o", nil); !ok || m.ID != "gpt-4o" {
+		t.Fatal(m, ok)
+	}
+	if m, ok := r.Resolve("gpt-5", map[string]string{"gpt-5": "glm-5.3"}); !ok || m.ID != "glm-5.3" {
+		t.Fatal("explicit alias lost", m, ok)
 	}
 }

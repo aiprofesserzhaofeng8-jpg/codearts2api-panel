@@ -42,6 +42,11 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		reject(status, "读取请求体失败: "+err.Error(), "invalid_request_error")
 		return
 	}
+	if err := rejectUnsupportedFiles(body); err != nil {
+		status, reason, message := http.StatusBadRequest, "unsupported_file_input", err.Error()
+		reject(status, message, "invalid_request_error", reason)
+		return
+	}
 	if err := json.Unmarshal(body, &req); err != nil {
 		reject(400, "请求体解析失败: "+err.Error(), "invalid_request_error")
 		return

@@ -24,16 +24,12 @@ type ManagementError struct {
 func (e *ManagementError) Error() string { return e.Message }
 
 // ManagementStore preserves the existing store transactions and lock domain.
-// Save is deliberately separate for legacy operations with logged save failure.
 type ManagementStore interface {
 	Account(string) *Account
-	UpsertAccount(*Account) bool
+	ImportAccountsAndSave([]*Account) ([]bool, error)
+	ChangeAccountAndSave(string, string) (bool, error)
 	SetAccountConcurrencyAndSave(string, int) (bool, error)
 	RemoveAccountAndSave(string) (bool, error)
-	SetAccountEnabled(string, bool) bool
-	SetAccountPaused(string, bool) bool
-	ClearModelHealth(string)
-	ClearAccountErrors(string) bool
 	Save() error
 }
 
@@ -69,28 +65,23 @@ func NewManagement(st ManagementStore, credentials ManagementCredentials, invali
 	return &Management{store: st, credentials: credentials, invalidate: invalidate, logf: logf}
 }
 
-func (s *Management) persist() {
-	if err := s.store.Save(); err != nil && s.logf != nil {
-		s.logf("保存状态文件失败: %v", err)
+func (s *Management) Add(a *Account) (bool, error) {
+	created, err := s.Import([]*Account{a})
+	if err != nil {
+		return false, err
 	}
+	return created[0], nil
 }
 
-// Add and Import retain the old upsert -> invalidate -> logged-save sequence.
-func (s *Management) Add(a *Account) bool {
-	isNew := s.store.UpsertAccount(a)
-	s.invalidate(a.ID)
-	s.persist()
-	return isNew
-}
-
-func (s *Management) Import(list []*Account) []bool {
-	created := make([]bool, 0, len(list))
+func (s *Management) Import(list []*Account) ([]bool, error) {
+	created, err := s.store.ImportAccountsAndSave(list)
+	if err != nil {
+		return nil, &ManagementError{ManagementInternal, "账号未保存，请检查状态文件目录权限后重试"}
+	}
 	for _, a := range list {
-		created = append(created, s.store.UpsertAccount(a))
 		s.invalidate(a.ID)
 	}
-	s.persist()
-	return created
+	return created, nil
 }
 
 func (s *Management) SetConcurrency(id string, limit *int) error {
@@ -122,29 +113,23 @@ func (s *Management) Remove(id string) error {
 	return nil
 }
 
-func (s *Management) Toggle(id string) error {
-	a := s.store.Account(id)
-	if a == nil {
-		return &ManagementError{ManagementInvalid, "账号不存在"}
+func (s *Management) change(id, action string) error {
+	found, err := s.store.ChangeAccountAndSave(id, action)
+	if err != nil {
+		return &ManagementError{ManagementInternal, "账号变更未保存，请检查状态文件目录权限后重试"}
 	}
-	s.store.SetAccountEnabled(a.ID, !a.Enabled)
-	s.persist()
+	if !found {
+		return &ManagementError{ManagementMissing, "账号不存在，请刷新列表"}
+	}
 	return nil
 }
-
-func (s *Management) ClearErrors(id string) {
-	s.store.ClearModelHealth(id)
-	if s.store.ClearAccountErrors(id) {
-		s.persist()
-	}
-}
-
+func (s *Management) Toggle(id string) error      { return s.change(id, "toggle") }
+func (s *Management) ClearErrors(id string) error { return s.change(id, "clear-errors") }
 func (s *Management) SetPaused(id string, paused bool) error {
-	if !s.store.SetAccountPaused(id, paused) {
-		return &ManagementError{ManagementMissing, "账号不存在"}
+	if paused {
+		return s.change(id, "pause")
 	}
-	s.persist()
-	return nil
+	return s.change(id, "resume")
 }
 
 func (s *Management) Export(ctx context.Context, id string) (AccountExport, error) {
@@ -176,6 +161,11 @@ func (s *Management) Reimport(ctx context.Context, id string) error {
 	if err := s.credentials.Reimport(ctx, a); err != nil {
 		return err
 	}
-	s.persist()
+	if err := s.store.Save(); err != nil {
+		if s.logf != nil {
+			s.logf("保存状态文件失败: %v", err)
+		}
+		return &ManagementError{ManagementInternal, "凭据已更新但未保存，请检查状态文件目录权限；新凭据仍保留在内存"}
+	}
 	return nil
 }

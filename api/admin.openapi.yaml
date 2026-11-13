@@ -299,6 +299,12 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991
+                    },
+                    "client_compatibility": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "$ref": "#/components/schemas/ClientCompatibility"
+                      }
                     }
                   },
                   "required": [
@@ -340,7 +346,14 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {},
+                  "properties": {
+                    "client_compatibility": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "$ref": "#/components/schemas/ClientCompatibility"
+                      }
+                    }
+                  },
                   "additionalProperties": true
                 }
               }
@@ -1433,8 +1446,16 @@
             "in": "query",
             "name": "id",
             "schema": {
-              "type": "string"
-            }
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "description": "Optional explicit account IDs; repeated id parameters query only these accounts (maximum 100). Omission retains the legacy all-account query.",
+            "style": "form",
+            "explode": true
           }
         ]
       }
@@ -4204,7 +4225,7 @@
             }
           }
         ],
-        "description": "Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; verified recommendations work with zero accounts. Unknown name 404, denied 403, missing context/output metadata returns capability-only HTTP 200 with client_profile_status=missing_limits and omitted numeric limits, disabled sources 503. No silent preference fallback."
+        "description": "Exact shared model resolution. Omitted model uses explicit group client preference, then inference defaults. No account lease; client recommendations work with zero accounts. Unknown name 404, denied 403, existing chat sources with missing numeric fields receive labeled public-reference or compatibility-default recommendations; missing sources or changed reviewed identities return capability-only HTTP 200 with client_profile_status=missing_limits and omitted numeric limits, disabled sources 503. No silent preference fallback. Client compatibility includes purpose, exportability and per-source parameter evidence; unsupported purposes are reported without restricting explicit inference."
       }
     },
     "/admin/api/model-defaults": {
@@ -6029,6 +6050,24 @@
           "observed_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "image_input": {
+            "type": "string"
+          },
+          "tool_calling": {
+            "type": "string"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/SourceRuntimeStatus"
+          },
+          "quota": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceQuota"
+            }
+          },
+          "client_compatibility": {
+            "$ref": "#/components/schemas/ClientCompatibility"
           }
         },
         "required": [
@@ -6461,6 +6500,20 @@
           },
           "native_model": {
             "$ref": "#/components/schemas/NativeModelContract"
+          },
+          "client_compatibility": {
+            "$ref": "#/components/schemas/ClientCompatibility"
+          },
+          "client_profile_error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
           }
         },
         "required": [
@@ -6541,6 +6594,17 @@
           },
           "native_model": {
             "$ref": "#/components/schemas/NativeModelContract"
+          },
+          "client_compatibility": {
+            "$ref": "#/components/schemas/ClientCompatibility"
+          },
+          "client_profile_status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "missing_limits",
+              "unsupported_purpose"
+            ]
           }
         },
         "required": [
@@ -6677,7 +6741,8 @@
           "client_profile_status": {
             "type": "string",
             "enum": [
-              "missing_limits"
+              "missing_limits",
+              "unsupported_purpose"
             ]
           },
           "client_profile_error": {
@@ -6713,6 +6778,9 @@
           },
           "native_model": {
             "$ref": "#/components/schemas/NativeModelContract"
+          },
+          "client_compatibility": {
+            "$ref": "#/components/schemas/ClientCompatibility"
           }
         },
         "required": [
@@ -6740,6 +6808,14 @@
           },
           "verified_at": {
             "type": "string"
+          },
+          "context_label": {
+            "type": "string",
+            "description": "Official notation, not a verified numeric limit of a provider source."
+          },
+          "max_output_label": {
+            "type": "string",
+            "description": "Official notation, not a verified numeric limit of a provider source."
           }
         },
         "required": [
@@ -6750,6 +6826,181 @@
           "verified_at"
         ],
         "additionalProperties": false
+      },
+      "SourceRuntimeStatus": {
+        "type": "object",
+        "properties": {
+          "account_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ready": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "disabled": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "paused": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cooling": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "busy": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "next_retry_at": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "last_request": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "checked_at": {
+                    "type": "integer"
+                  },
+                  "status": {
+                    "type": "integer"
+                  },
+                  "error_kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "checked_at",
+                  "status"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "account_count",
+          "ready",
+          "disabled",
+          "paused",
+          "cooling",
+          "busy",
+          "last_request"
+        ],
+        "additionalProperties": false
+      },
+      "SourceQuota": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/AccountQuota"
+          }
+        },
+        "required": [
+          "account_id",
+          "observed_at",
+          "stale",
+          "available"
+        ],
+        "additionalProperties": false
+      },
+      "ClientLimitEvidence": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "context_window": {
+            "type": "integer"
+          },
+          "max_output_tokens": {
+            "type": "integer"
+          },
+          "provider_context": {
+            "type": "integer"
+          },
+          "provider_max_output": {
+            "type": "integer"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "verified_at": {
+            "type": "string"
+          },
+          "official_context": {
+            "type": "string"
+          },
+          "official_max_output": {
+            "type": "string"
+          },
+          "official_reference": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "basis"
+        ]
+      },
+      "ClientCompatibility": {
+        "type": "object",
+        "description": "Client export advice, independent of model visibility, inference permissions, account health and quota. Explicit upstream bounds take precedence. Tested recommendations, public-registry references and compatibility defaults are labeled separately and are not guaranteed platform maxima.",
+        "properties": {
+          "purpose": {
+            "type": "string"
+          },
+          "exportable": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "missing_limits",
+              "unsupported_purpose"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientLimitEvidence"
+            }
+          }
+        },
+        "required": [
+          "purpose",
+          "exportable",
+          "status",
+          "reason",
+          "limits"
+        ]
       }
     },
     "securitySchemes": {

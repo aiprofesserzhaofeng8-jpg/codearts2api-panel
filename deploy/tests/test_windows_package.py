@@ -12,6 +12,11 @@ spec.loader.exec_module(packaging)
 
 
 class WindowsPackageTest(unittest.TestCase):
+    def setUp(self):
+        source = patch.object(packaging, 'prepare_source', return_value={'commit': 'fixture', 'dirty': False, 'channel': 'stable'})
+        source.start()
+        self.addCleanup(source.stop)
+
     def fake_build(self, command, **kwargs):
         Path(command[command.index('-o') + 1]).write_bytes(b'MZ-test-exe')
 
@@ -23,6 +28,9 @@ class WindowsPackageTest(unittest.TestCase):
                 manifest = json.loads(package.read('manifest.json'))
                 self.assertEqual(set(package.namelist()), set(manifest['files']) | {'manifest.json'})
                 self.assertEqual(manifest['os'], 'windows')
+                self.assertEqual(manifest['source']['commit'], 'fixture')
+                for name in ('NOTICE', 'LICENSE.sub2api', 'COPYING.sub2api', 'SUB2API-METADATA.md', 'SUB2API-METADATA.json', 'SUB2API-PROTOCOL.md'):
+                    self.assertIn(name, manifest['files'])
                 for name, info in manifest['files'].items():
                     self.assertEqual(packaging.hashlib.sha256(package.read(name)).hexdigest(), info['sha256'])
                 self.assertIn(b'\r\n', package.read('start.cmd'))

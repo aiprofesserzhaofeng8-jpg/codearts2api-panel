@@ -189,3 +189,24 @@ func TestPoolSettingsValidationAndPauseHTTP(t *testing.T) {
 		}
 	}
 }
+
+func TestRoutingSessionRecognizesClientHeaderAliases(t *testing.T) {
+	keyFor := func(header, id, body string) string {
+		r := httptest.NewRequest("POST", "/v1/responses", nil)
+		r.Header.Set("Authorization", "Bearer fixture-key")
+		r.Header.Set(header, id)
+		v, _ := withRoutingSession(r, []byte(body)).Value(routingSessionKey{}).(string)
+		return v
+	}
+	first := `{"model":"m","messages":[{"role":"user","content":"before compaction"}]}`
+	after := `{"model":"m","messages":[{"role":"user","content":"after compaction"}]}`
+	base := keyFor("X-Session-Id", "stable", first)
+	for _, header := range []string{"Session_id", "X-Conversation-Id"} {
+		if got := keyFor(header, "stable", after); got != base {
+			t.Fatal("explicit conversation changed with history", header)
+		}
+	}
+	if base == keyFor("Session_id", "different", after) {
+		t.Fatal("sessions collapsed")
+	}
+}

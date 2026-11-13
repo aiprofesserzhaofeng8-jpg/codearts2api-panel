@@ -23,10 +23,21 @@ This is an independent community project, not a Huawei product.
 Responses compatibility library:
 Derived from Wei-Shaw/sub2api, revision ba81c7fd758e425d67f856d601147ef0c5263d3f.
 Copyright Wei-Shaw and Sub2API contributors.
-The files under internal/responsescompat are licensed under LGPL-3.0.
-License texts: internal/responsescompat/LICENSE and internal/responsescompat/COPYING.
-Selected converter sources are unmodified; helpers.go extracts shared helpers.
+The files under backend/internal/responsescompat are licensed under LGPL-3.0.
+License texts: backend/internal/responsescompat/LICENSE and backend/internal/responsescompat/COPYING.
+Direct Messages message conversion additionally derives from revision
+6b4b37db43443b5e88e424fe3c69602cc3810dfb. Extraction lists and local adaptations
+are recorded in backend/internal/responsescompat/UPSTREAM.md and the source manifests.
 This source tree and build.sh support rebuilding with a modified library.
+
+Model metadata merge and public-registry conversion helpers:
+Derived from Wei-Shaw/sub2api, revision
+6b4b37db43443b5e88e424fe3c69602cc3810dfb.
+Copyright Wei-Shaw and Sub2API contributors.
+The files under backend/internal/catalog/modelmeta are licensed under LGPL-3.0.
+License texts, extraction hashes and local adaptations are recorded there in
+LICENSE, COPYING, upstream.json and UPSTREAM.md. This source tree and build.sh
+support rebuilding with a modified metadata library.
 
 Ubuntu AppArmor profile for local Codex sandbox troubleshooting:
 Unmodified bwrap-userns-restrict from Ubuntu apparmor-profiles, GPL-2.0-or-later.

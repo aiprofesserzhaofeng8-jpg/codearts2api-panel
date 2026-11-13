@@ -17,6 +17,15 @@ class ArchitectureRulesTest(unittest.TestCase):
         self.check_edge("protocol", PREFIX + "accounts", True)
         self.check_edge("protocol/search", PREFIX + "accounts", True)
 
+    def test_protocol_can_reuse_only_pure_conversion_library(self):
+        self.check_edge("protocol", PREFIX + "responsescompat", False)
+        self.check_edge("responsescompat", PREFIX + "protocol", True)
+        result = violations([
+            {"ImportPath": PREFIX + "protocol", "Imports": [PREFIX + "responsescompat"]},
+            {"ImportPath": PREFIX + "responsescompat", "Imports": ["net/http"]},
+        ])
+        self.assertTrue(any("indirect" in error for error in result))
+
     def test_platform_isolation_and_intentional_assembly(self):
         for source in ("codearts", "workbuddy", "trae", "upstream/codearts"):
             for target in ("codearts", "workbuddy", "trae", "upstream/codearts"):

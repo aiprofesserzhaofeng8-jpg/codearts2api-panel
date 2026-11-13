@@ -32,14 +32,14 @@ export function renderSettings(s) {
     if (settingsState.settingsDirty)
         return;
     settingsState.routingRevision = s.model_routing_revision;
-    const common=s.common_prompt || {prompt_mode:'passthrough',prompt_text:'',prompt_fallback:true,sanitize:true};
+    const common=s.common_prompt || {prompt_mode:'passthrough',prompt_text:'',prompt_fallback:false,sanitize:false};
     Object.entries(promptFields).forEach(([suffix,key])=>{const el=document.getElementById('sCommon'+suffix);if(el.type==='checkbox')el.checked=common[key];else el.value=common[key] || '';});
     settingsState.providerPolicyFields.forEach(function (def) {
         var config = s[def.key] || {}, field = function (name) { return document.getElementById(def.prefix + name); };
-        field("PromptMode").value = config.prompt_mode || (def.key === "workbuddy" ? "custom" : "passthrough");
+        field("PromptMode").value = config.prompt_mode || "passthrough";
         field("PromptText").value = config.prompt_text || "";
-        field("PromptFallback").checked = config.prompt_fallback !== false;
-        field("Sanitize").checked = config.sanitize !== false;
+        field("PromptFallback").checked = config.prompt_fallback === true;
+        field("Sanitize").checked = config.sanitize === true;
         const overrides=config.prompt_overrides;
         Object.entries(promptFields).forEach(([suffix,key])=>{const el=field(suffix);field(suffix+'Inherit').checked=overrides!=null && overrides[key]==null;if(overrides?.[key]!=null){if(el.type==='checkbox')el.checked=overrides[key];else el.value=overrides[key];}});
         applyInheritedPrompt(def.prefix);

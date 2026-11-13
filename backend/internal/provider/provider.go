@@ -37,14 +37,26 @@ type Model struct {
 	ToolCalling string `json:"tool_calling,omitempty"`
 	// Projection-only native specification; provider observations stay separate.
 	NativeModel *NativeModelContract `json:"native_model,omitempty"`
+	// Reference limits only supplement client templates, never upstream bounds
+	// or image/tool support. Immutable after publication in the model directory.
+	ClientReference *ClientReference `json:"-"`
+}
+
+type ClientReference struct {
+	ModelID         string
+	ContextWindow   int
+	MaxOutputTokens int
+	Reference       string
 }
 
 type NativeModelContract struct {
-	ID          string `json:"id"`
-	ImageInput  string `json:"image_input"`
-	ToolCalling string `json:"tool_calling"`
-	Reference   string `json:"reference"`
-	VerifiedAt  string `json:"verified_at"`
+	ContextLabel   string `json:"context_label,omitempty"`
+	MaxOutputLabel string `json:"max_output_label,omitempty"`
+	ID             string `json:"id"`
+	ImageInput     string `json:"image_input"`
+	ToolCalling    string `json:"tool_calling"`
+	Reference      string `json:"reference"`
+	VerifiedAt     string `json:"verified_at"`
 }
 
 func (m Model) InputModalities() []string {
@@ -160,6 +172,7 @@ func ModelID(name, scope, id string) string {
 }
 
 type Error struct {
+	RetryAt        int64 // Explicit upstream retry time; zero means unknown, not a quota reset.
 	ContentBlocked bool
 	Pending        bool
 	Status         int

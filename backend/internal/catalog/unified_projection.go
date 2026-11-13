@@ -27,7 +27,7 @@ func (s *Routing) unifiedModelsForScope(snapshot config.UnifiedSnapshot, scope a
 			covered[config.RawSource(src.ID)] = true
 			if src.Enabled && scope.AllowsModel(config.RawSource(src.ID)) {
 				raw, found := s.directory.ResolveRaw(src.ID)
-				if !found {
+				if !found || sourceIdentityChanged(m.Name, raw) {
 					raw = provider.Model{ID: config.RawSource(src.ID)}
 				}
 				plan.IDs = append(plan.IDs, raw.ID)
@@ -69,7 +69,7 @@ func (s *Routing) unifiedModelsForScope(snapshot config.UnifiedSnapshot, scope a
 			row.Source = raw.Source
 		}
 		if !seen[row.ID] {
-			out = append(out, row)
+			out = append(out, reviewedSourceCapabilities(row))
 			seen[row.ID] = true
 		}
 	}
@@ -99,17 +99,15 @@ func (s *Routing) policyForUnified(snapshot config.UnifiedSnapshot, scope access
 	ids := []string{}
 	lookup := func(id string) (config.ModelPolicy, bool) {
 		raw, ok := s.directory.ResolveRaw(id)
+		if ok && sourceIdentityChanged(m.Name, raw) {
+			return config.ModelPolicy{}, false
+		}
 		if !ok {
 			p, region, _ := provider.ParseModel(id)
 			raw = provider.Model{ID: config.RawSource(id), Provider: p, Scope: region}
 		}
-		if p, ok := snapshot.Policies[raw.ID]; ok {
-			return p, true
-		}
-		if p, ok := config.DefaultModelPolicies()[raw.ID]; ok {
-			return p, true
-		}
-		return config.RecommendModelPolicy(raw)
+		p, ok, _ := sourceClientPolicy(raw, snapshot.Policies)
+		return p, ok
 	}
 	for _, src := range m.Sources {
 		if src.Enabled && grant.AllowsSource(src.ID) && scope.AllowsModel(config.RawSource(src.ID)) {
@@ -132,9 +130,10 @@ func (s *Routing) policyForUnified(snapshot config.UnifiedSnapshot, scope access
 }
 
 type ClientModel struct {
-	Model     provider.Model
-	Policy    *config.ModelPolicy
-	Selection access.UnifiedSelection
+	Compatibility ClientCompatibility
+	Model         provider.Model
+	Policy        *config.ModelPolicy
+	Selection     access.UnifiedSelection
 }
 
 // ClientModels uses one configuration/authorization snapshot for the entire
@@ -173,6 +172,24 @@ func (s *Routing) ClientModels(key string, policies *config.ModelPolicies) ([]Cl
 		if ok {
 			row.Policy = &p
 		}
+		sources := []provider.Model{model}
+		if m, found := byName[model.ID]; found && model.Provider == "unified" {
+			sources = nil
+			grant, _ := scope.UnifiedGrant(m.ID)
+			for _, src := range m.Sources {
+				if !src.Enabled || !grant.AllowsSource(src.ID) || !scope.AllowsModel(config.RawSource(src.ID)) {
+					continue
+				}
+				raw, found := s.directory.ResolveRaw(src.ID)
+				if !found || sourceIdentityChanged(m.Name, raw) {
+					raw = provider.Model{ID: config.RawSource(src.ID)}
+				}
+				sources = append(sources, raw)
+			}
+		} else if raw, found := s.directory.Resolve(model.ID, settings.ModelAliases); found {
+			sources = []provider.Model{raw}
+		}
+		row.Compatibility = publicClientCompatibility(model, row.Policy, clientCompatibility(sources, row.Policy, snapshot.Policies))
 		out = append(out, row)
 	}
 	return out, nil

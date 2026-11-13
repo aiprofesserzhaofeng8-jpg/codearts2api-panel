@@ -600,6 +600,8 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 			pendingReasoning = ""
 			lastTurnReasoning = ""
 			continue
+		case "input_file", "document", "file":
+			return nil, nil, fmt.Errorf("file input is not supported by Chat conversion; send text or images directly")
 		case "input_image":
 			content, err := chatContentFromSingleResponsesPart(itemType, item)
 			if err != nil {
@@ -1033,6 +1035,8 @@ func responsesContentPartsToChatContent(rawParts []json.RawMessage, role string)
 		}
 		partType := rawString(part["type"])
 		switch partType {
+		case "input_file", "document", "file":
+			return nil, fmt.Errorf("file input is not supported by Chat conversion; send text or images directly")
 		case "input_text", "output_text", "text", "":
 			text := rawString(part["text"])
 			if text == "" {
@@ -1073,6 +1077,8 @@ func responsesContentPartsToChatContent(rawParts []json.RawMessage, role string)
 
 func chatContentFromSingleResponsesPart(partType string, part map[string]json.RawMessage) (json.RawMessage, error) {
 	switch partType {
+	case "input_file", "document", "file":
+		return nil, fmt.Errorf("file input is not supported by Chat conversion; send text or images directly")
 	case "input_image", "image_url":
 		imageURL := rawString(part["image_url"])
 		if imageURL == "" {

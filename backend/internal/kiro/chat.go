@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"codearts2api/internal/provider"
+	"codearts2api/internal/providerhttp"
 )
 
 type messageContext struct {
@@ -290,10 +291,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return failure(resp.StatusCode)
+		return providerhttp.FailureResponse("Kiro", resp)
 	}
-	if !strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "application/vnd.amazon.eventstream") {
-		return broken()
-	}
-	return convertStream(ctx, resp.Body, provider.ModelID(provider.Kiro, a.Region, r.Model), emit)
+	return convertResponse(ctx, resp.Body, provider.ModelID(provider.Kiro, a.Region, r.Model), emit)
 }

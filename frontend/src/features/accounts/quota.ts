@@ -34,7 +34,7 @@ function resetText(timestamp: number, now: number): string {
   return tr('重置 ') + absolute + ' · ' + duration + (locale === 'en' ? ' ' : '') + tr('后');
 }
 function unitLabel(unit?: string): string { return unit === 'credits' ? 'Credits' : unit === 'usd' ? 'USD' : unit || ''; }
-function renderWindow(w: Window, now: number): HTMLElement {
+function renderWindow(w: Window, now: number, hideUsedDetail: boolean): HTMLElement {
   const row = node('div', 'account-quota-window'); row.dataset.quotaWindow = w.id;
   row.append(node('span', 'quota-window-name', windowName(w)));
   let text: string;
@@ -56,7 +56,7 @@ function renderWindow(w: Window, now: number): HTMLElement {
     bar.append(progress); row.append(bar);
   }
   const details: string[] = [];
-  if (w.unit !== 'percent' && known(w.used) && known(w.remaining)) details.push(tr('已用 ') + amount(w.used));
+  if (!hideUsedDetail && w.unit !== 'percent' && known(w.used) && known(w.remaining)) details.push(tr('已用 ') + amount(w.used));
   if (known(w.resets_at) && w.resets_at > 0) details.push(resetText(w.resets_at, now));
   if (known(w.expires_at) && w.expires_at > 0) details.push(tr('到期 ') + timeText(w.expires_at));
   if (details.length) row.append(node('span', 'sub', details.filter(Boolean).join(' · ')));
@@ -65,7 +65,7 @@ function renderWindow(w: Window, now: number): HTMLElement {
 
 // Append nodes inside the legacy controller's owned subtree. No Vue renderer
 // shares these nodes; labels, balances and upstream strings use textContent.
-export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now() / 1000, compact = false): boolean {
+export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now() / 1000, provider = ''): boolean {
   if (info.kind === 'unsupported') {
     parent.append(node('span', 'muted', tr('暂不支持查询')));
     if (info.reason) parent.append(node('span', 'sub quota-query-error', tr(info.reason)));
@@ -80,18 +80,13 @@ export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now(
   const windows = Array.isArray(info.windows) ? info.windows : [];
   if (!windows.length && !info.balance) return false;
   parent.classList.add('account-quota');
-  if (info.package_name) parent.append(node('span', 'sub quota-plan-name', info.package_name));
-  // Keep upstream order for the usual two windows; prioritize exhausted windows
-  // when compacting larger sets so a warning cannot be hidden in details.
-  const shown = compact && windows.length > 2 ? [...windows].sort((a, b) => Number((b.utilization ?? 0) >= 100) - Number((a.utilization ?? 0) >= 100)).slice(0, 2) : windows;
-  shown.forEach(w => parent.append(renderWindow(w, now)));
-  if (compact && windows.length > shown.length) parent.append(node('span', 'sub', tr('更多额度窗口：') + (windows.length - shown.length)));
-  if (info.balance && (!compact || windows.length < 2)) {
+  if (info.package_name && provider !== 'qoder') parent.append(node('span', 'sub quota-plan-name', info.package_name));
+  windows.forEach(w => parent.append(renderWindow(w, now, provider === 'qoder')));
+  if (info.balance) {
     const balance = node('div', 'account-quota-window quota-balance'); balance.append(node('span', 'quota-window-name', tr('额外 Credits')));
     const amount = info.balance.unlimited ? tr('额度未设上限') : typeof info.balance.amount === 'string' ? info.balance.amount + ' ' + unitLabel(info.balance.unit) : tr('余额未知');
     balance.append(node('span', 'mono quota-window-value', amount)); parent.append(balance);
   }
-  if (compact && info.balance && windows.length >= 2) parent.append(node('span', 'sub', tr('另有余额，查看详情')));
   if (known(info.updated_at) && info.updated_at > 0) parent.append(node('span', 'sub quota-updated', tr('更新于 ') + timeText(info.updated_at)));
   return true;
 }

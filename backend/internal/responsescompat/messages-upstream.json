@@ -1,0 +1,16 @@
+{
+  "revision": "6b4b37db43443b5e88e424fe3c69602cc3810dfb",
+  "source_files": {
+    "chatcompletions_anthropic_bridge.go": "bafd2876e24e0f0782c7afe02eb868014898ad22f08f2d03976918533f143d53",
+    "anthropic_to_responses.go": "49fc37e9f61c558f483c6add8b4eaac9d549c78012a7ecf4037d445fa873403b"
+  },
+  "extracted_functions": [
+    "anthropicMsgToChatMessages",
+    "anthropicUserToChatMessages",
+    "anthropicAssistantToChatMessages",
+    "anthropicThinkingToReasoningContent",
+    "anthropicImageToDataURI",
+    "convertToolResultOutput",
+    "extractAnthropicTextFromBlocks"
+  ]
+}

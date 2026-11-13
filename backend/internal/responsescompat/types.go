@@ -112,6 +112,7 @@ func (b AnthropicContentBlock) MarshalJSON() ([]byte, error) {
 type AnthropicImageSource struct {
 	Type      string `json:"type"` // "base64"
 	MediaType string `json:"media_type"`
+	URL       string `json:"url,omitempty"`
 	Data      string `json:"data"`
 }
 

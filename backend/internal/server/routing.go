@@ -35,6 +35,12 @@ func withRoutingSession(r *http.Request, body []byte) context.Context {
 	}
 	id := r.Header.Get("X-Session-Id")
 	if id == "" {
+		id = r.Header.Get("Session_id")
+	}
+	if id == "" {
+		id = r.Header.Get("X-Conversation-Id")
+	}
+	if id == "" {
 		id = req.ConversationID
 	}
 	var parts []json.RawMessage

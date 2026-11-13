@@ -331,12 +331,12 @@ Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查
 | **OpenAI ChatGPT / Codex** | AI 辅助开发贡献：方案讨论、代码实现、问题排查、测试与文档编写 |
 | [CodeArts2API](https://github.com/2951461586/CodeArts2API) 及其贡献者 | 基础码道协议、签名、登录与服务实现 |
 | [WorkBuddy2API Panel](https://github.com/linguo2625469/workbuddy2api-panel) 及原作者 | 账号管理产品思路和面板视觉参考 |
-| [Sub2API](https://github.com/Wei-Shaw/sub2api) 及其贡献者 | Responses 转换库、管理设计与 README 组织方式参考 |
+| [Sub2API](https://github.com/Wei-Shaw/sub2api) 及其贡献者 | Responses / Messages 转换核心、模型参数合并与公开资料解析复用；见 [协议来源](backend/internal/responsescompat/UPSTREAM.md)与[参数来源](backend/internal/catalog/modelmeta/UPSTREAM.md) |
 
 AI 署名记录使用 OpenAI 工具进行辅助开发的事实，不表示 OpenAI 公司参与维护、官方合作或背书。更多贡献说明见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。
 
 ## 许可证
 
-基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，[Qoder 接入](docs/QODER.md)的协议参考来源保留 [MIT 声明](LICENSE.qoder)，[Kiro 接入](docs/KIRO.md)的协议参考来源保留 [MIT 声明](LICENSE.kiro)，`backend/internal/responsescompat` 中的复用代码采用 [LGPL-3.0](backend/internal/responsescompat/LICENSE)，附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
+基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，[Qoder 接入](docs/QODER.md)的协议参考来源保留 [MIT 声明](LICENSE.qoder)，[Kiro 接入](docs/KIRO.md)的协议参考来源保留 [MIT 声明](LICENSE.kiro)，协议转换库 `backend/internal/responsescompat` 与模型参数库 `backend/internal/catalog/modelmeta` 中的复用代码采用 LGPL-3.0（[协议库许可](backend/internal/responsescompat/LICENSE)、[参数库许可](backend/internal/catalog/modelmeta/LICENSE)），附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
 
 各组件的来源、修改声明和许可证边界见 [NOTICE](NOTICE)。本项目为独立社区项目。

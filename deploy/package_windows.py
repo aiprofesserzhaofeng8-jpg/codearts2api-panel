@@ -9,6 +9,9 @@ import re
 import subprocess
 import tempfile
 import zipfile
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build_source import prepare_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,11 +22,8 @@ def sha256(path):
 
 
 def build(version, output, go):
-    if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', version):
+    if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+(?:-local\.[0-9]{8,14})?', version):
         raise ValueError('Expected a stable version such as v0.3.7')
-    if not (ROOT / 'backend/internal/webui/dist/index.html').is_file():
-        raise RuntimeError('Build the frontend before packaging')
-    output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     archive = output / f'codearts2api-panel-{version}-windows-amd64.zip'
     checksum = output / (archive.name + '.sha256')
@@ -31,6 +31,7 @@ def build(version, output, go):
         raise FileExistsError('Refusing to replace an existing release')
     schema = int(re.search(r'const StateVersion = (\d+)',
                           (ROOT / 'backend/internal/storage/store.go').read_text(encoding='utf-8'))[1])
+    build_source = prepare_source(ROOT, version)
     with tempfile.TemporaryDirectory(prefix='.windows-package-', dir=output) as temp:
         staging = Path(temp) / 'files'
         staging.mkdir()
@@ -39,15 +40,23 @@ def build(version, output, go):
                        cwd=ROOT / 'backend', check=True,
                        env={**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'windows', 'GOARCH': 'amd64'})
         # An explicit allowlist keeps runtime state and credentials out of packages.
-        for name in ('LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
+        for name in ('LICENSE', 'NOTICE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
             (staging / name).write_bytes((ROOT / name).read_bytes())
+        for name, source in (
+            ('LICENSE.sub2api', 'backend/internal/catalog/modelmeta/LICENSE'),
+            ('COPYING.sub2api', 'backend/internal/catalog/modelmeta/COPYING'),
+            ('SUB2API-METADATA.md', 'backend/internal/catalog/modelmeta/UPSTREAM.md'),
+            ('SUB2API-METADATA.json', 'backend/internal/catalog/modelmeta/upstream.json'),
+            ('SUB2API-PROTOCOL.md', 'backend/internal/responsescompat/UPSTREAM.md'),
+        ):
+            (staging / name).write_bytes((ROOT / source).read_bytes())
         for name in ('start.cmd', 'README.md'):
             text = (ROOT / 'deploy/windows' / name).read_text(encoding='utf-8')
             (staging / name).write_bytes(text.replace('\n', '\r\n').encode('utf-8'))
         files = {p.name: {'sha256': sha256(p), 'size': p.stat().st_size}
                  for p in sorted(staging.iterdir())}
         manifest = {'format': 1, 'kind': 'release', 'version': version, 'os': 'windows',
-                    'arch': 'amd64', 'schema': schema, 'files': files}
+                    'arch': 'amd64', 'schema': schema, 'files': files, 'source': build_source}
         packed = Path(temp) / 'package.zip'
         with packed.open('xb') as stream:
             with zipfile.ZipFile(stream, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:

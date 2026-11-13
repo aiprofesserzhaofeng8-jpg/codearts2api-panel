@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { appendQuota } from '../features/accounts/quota';
-import { readPreferences, savePreferences, sortAccounts, runSelected } from '../features/accounts/table';
+import { readPreferences, savePreferences, sortAccounts, paginateAccounts, runSelected } from '../features/accounts/table';
 describe('account quota projection', () => {
-  it('caps list windows, keeps exhausted warnings, and exposes everything in detail', () => {
+  it('shows every quota window inline without a separate detail view', () => {
     const info = { available: true, kind: 'windows', windows: [0, 1, 2, 3].map(i => ({ id: String(i), name: 'window'+i, unit: 'percent', utilization: i === 3 ? 100 : i })) };
-    const list = document.createElement('div'); appendQuota(list, info, 100, true);
-    expect(list.querySelectorAll('progress')).toHaveLength(2);
-    expect(list.querySelector('progress')?.value).toBe(100);
-    const detail = document.createElement('div'); appendQuota(detail, info, 100);
-    expect(detail.querySelectorAll('progress')).toHaveLength(4);
+    const list = document.createElement('div'); appendQuota(list, info, 100);
+    expect(list.querySelectorAll('progress')).toHaveLength(4);
+    expect(list.querySelectorAll('progress')[3].value).toBe(100);
   });
   it('keeps unknown, zero and unlimited distinct; never invents a balance progress bar', () => {
     const el = document.createElement('div');
@@ -21,9 +19,22 @@ describe('account quota projection', () => {
 describe('table preferences and bulk scope', () => {
   beforeEach(() => localStorage.clear());
   it('persists only optional columns and known sort settings', () => {
-    savePreferences({hidden:['credential','quota'],sort:'name'});
-    expect(readPreferences()).toEqual({hidden:['credential'],sort:'name'});
+    savePreferences({hidden:['credential','identity','actions'],sort:'name',pageSize:50});
+    expect(readPreferences()).toEqual({hidden:['credential'],sort:'name',pageSize:50});
+    savePreferences({hidden:[],sort:'default',pageSize:999});
+    expect(readPreferences().pageSize).toBe(20);
     expect(sortAccounts([{name:'b'},{name:'a'}],'name').map(x=>x.name)).toEqual(['a','b']);
+  });
+  it('pages filtered results and clamps a vanished last page after deletion', () => {
+    const accounts = Array.from({length:43}, (_, id) => ({id}));
+    expect(paginateAccounts(accounts,1)).toMatchObject({page:1,pages:3,from:1,to:20,total:43});
+    expect(paginateAccounts(accounts,2).items.map(a=>a.id)).toEqual(Array.from({length:20},(_,i)=>i+20));
+    expect(paginateAccounts(accounts,3).items.map(a=>a.id)).toEqual([40,41,42]);
+    expect(paginateAccounts(accounts.slice(0,20),3)).toMatchObject({page:1,pages:1,from:1,to:20});
+    expect(paginateAccounts([],3)).toMatchObject({page:1,pages:1,from:0,to:0,total:0,items:[]});
+    expect(paginateAccounts(accounts,1,10)).toMatchObject({pages:5,to:10});
+    const links = paginateAccounts(Array.from({length:10000}),250).links;
+    expect(links).toEqual([1,'…',249,250,251,'…',500]);
   });
   it('runs selected accounts serially, reports failures, and never retries them', async () => {
     let active=0;const calls:string[]=[];const results:unknown[]=[];

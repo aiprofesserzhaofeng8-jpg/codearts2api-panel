@@ -7,7 +7,7 @@ import { isAbortError } from '../../api/client';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
 import { api } from '../../api/client';
 import { fmtNum, toast } from '../../shared/dom';
-import { renderAccounts } from './controller';
+import { renderAccounts, currentAccountPage } from './controller';
 import { createGrowth } from '../jobs/growth';
 const creditsState = {};
 creditsState.creditState = {};
@@ -18,25 +18,24 @@ creditsState.creditLoading = null;
 // 默认走服务端 60 秒缓存；force=true 时带 ?fresh=1 强制回源。
 export function loadCredits(force) {
     if (creditsState.creditLoading)
-        return creditsState.creditLoading;
-    var accts = (serverState.data && serverState.data.accounts) || [];
+        return creditsState.creditLoading.then(() => loadCredits(force));
+    var accts = currentAccountPage().filter(a => force || !creditsState.creditState[a.id]?.loadedAt || Date.now() - creditsState.creditState[a.id].loadedAt > 60000);
     if (!accts.length)
         return Promise.resolve();
-    accts.forEach(function (a) { creditsState.creditState[a.id] = { loading: true }; });
-    if (serverState.data)
-        renderAccounts(serverState.data);
-    var url = "/admin/api/credits" + (force ? "?fresh=1" : "");
+    // Keep the last snapshot visible while refreshing; never shrink rows to a loading label.
+    accts.forEach(function (a) { if (!creditsState.creditState[a.id]) creditsState.creditState[a.id] = { loading: true }; });
+    var url = "/admin/api/credits?" + accts.map(a => "id=" + encodeURIComponent(a.id)).join("&") + (force ? "&fresh=1" : "");
     creditsState.creditLoading = api(url).then(function (d) {
         (d.accounts || []).forEach(function (x) {
             creditsState.creditState[x.id] = x.ok
-                ? { loading: false, ok: true, credit: x.credit }
-                : { loading: false, ok: false, error: x.error };
+                ? { loading: false, ok: true, credit: x.credit, loadedAt: Date.now() }
+                : { loading: false, ok: false, error: x.error, loadedAt: Date.now() };
         });
         if (serverState.data)
             renderAccounts(serverState.data);
     }).catch(function (e) { if (isAbortError(e)) return;
         var msg = (e && e.message) || tr("查询失败");
-        accts.forEach(function (a) { creditsState.creditState[a.id] = { loading: false, ok: false, error: msg }; });
+        accts.forEach(function (a) { creditsState.creditState[a.id] = { loading: false, ok: false, error: msg, loadedAt: Date.now() }; });
         if (serverState.data)
             renderAccounts(serverState.data);
         toast(tr("查询积分额度失败：") + msg, "err");
@@ -45,7 +44,7 @@ export function loadCredits(force) {
 }
 
 // creditCell 渲染一个账号的积分额度：剩余/总量 + 进度条 + 重置日期。
-export function creditCell(a, compact = true) {
+export function creditCell(a) {
     var c = cell("", "cell-stack");
     var st = creditsState.creditState[a.id];
     if (!st || st.loading) {
@@ -60,7 +59,7 @@ export function creditCell(a, compact = true) {
         return c;
     }
     var info = st.credit || {};
-    if (appendQuota(c, info, Date.now() / 1000, compact)) return c;
+    if (appendQuota(c, info, Date.now() / 1000, a.provider)) return c;
     if (!info.available) {
         var accessDenied = a.status === "error" && String(a.last_err || "").indexOf("TM.00001005") >= 0;
         var none = mk("span", "muted", accessDenied ? tr("需开通码道权限") : (info.is_token_package ? tr("Token 套餐") : tr("额度未返回")));
@@ -80,7 +79,7 @@ export function creditCell(a, compact = true) {
         if (pct >= 95) bar.classList.add('err'); else if (pct >= 80) bar.classList.add('warn');
         bar.appendChild(fill); c.appendChild(bar);
     }
-    var bits = used === null ? [] : [tr('已用 ') + fmtNum(used) + (pct !== null ? ' · ' + pct.toFixed(1) + '%' : '')];
+    var bits = used === null || a.provider === 'qoder' ? [] : [tr('已用 ') + fmtNum(used) + (pct !== null ? ' · ' + pct.toFixed(1) + '%' : '')];
     if (info.expiring)
         bits.push(tr("即将到期 ") + fmtNum(info.expiring));
     if (info.reset_date)
@@ -88,7 +87,7 @@ export function creditCell(a, compact = true) {
     if (info.status && info.status !== "active" && info.status !== "unknown")
         bits.push(info.status);
     var sub = mk("span", "sub", bits.join(" · "));
-    sub.title = (info.package_name || "") + (info.spec_code ? (" / " + info.spec_code) : "");
+    sub.title = a.provider === "qoder" ? "" : (info.package_name || "") + (info.spec_code ? (" / " + info.spec_code) : "");
     c.appendChild(sub);
     return c;
 }

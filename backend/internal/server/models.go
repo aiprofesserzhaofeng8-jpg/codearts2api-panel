@@ -56,10 +56,11 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 		m := entry.Model
 		var recommendation map[string]any
 		resolved := m
-		if entry.Policy != nil {
+		if entry.Policy != nil && entry.Compatibility.Exportable {
 			recommendation = profileFromPolicy(resolved.ID, *entry.Policy)
 			addImageCapability(recommendation, resolved)
 			addUnifiedProfile(recommendation, &groupModelPlan{Selection: entry.Selection})
+			addClientCompatibility(recommendation, entry.Compatibility)
 		}
 		row := map[string]any{
 			"client_profile": recommendation,
@@ -85,6 +86,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 			row["client_profile_error"] = map[string]any{"code": "client_profile_missing", "message": "该模型缺少可验证的客户端推荐参数"}
 		}
 		addImageCapability(row, resolved)
+		addClientCompatibility(row, entry.Compatibility)
 		data = append(data, row)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"object": "list", "data": data, "default_model": s.Routing.ClientDefault(groupKey(r.Context()))})

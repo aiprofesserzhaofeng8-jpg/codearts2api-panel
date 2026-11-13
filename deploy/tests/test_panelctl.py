@@ -295,6 +295,16 @@ class UpgradeTest(unittest.TestCase):
         self.assertEqual((root/'data/state.json').read_bytes(),before)
         self.assertEqual((root / 'current').resolve().name, 'v1.0.0')
 
+    def test_local_candidate_can_upgrade_to_same_stable_version(self):
+        root, args, service = self.upgrade_fixture(version='v1.0.1')
+        old = (root / 'current').resolve()
+        (old / 'manifest.json').write_text(json.dumps({'version': 'v1.0.1-local.20261112', 'schema': 10}))
+        with patch.object(ops, 'Service', return_value=service), patch.object(ops, 'check_release', side_effect=lambda p: json.loads((p / 'manifest.json').read_text())), patch.object(ops, 'no_writer'), patch.object(ops, 'health', return_value='running'):
+            ops.upgrade(args)
+        self.assertEqual(service.calls, ['stop', 'start'])
+        self.assertEqual((root / 'current').resolve().name, 'v1.0.1')
+        self.assertEqual(json.loads((root / 'data/state.json').read_text())['token'], 'current')
+
     def test_downgrade_rejected_before_outage(self):
         root, args, service = self.upgrade_fixture(version='v0.9.0')
         with patch.object(ops, 'Service', return_value=service), patch.object(ops, 'check_release', side_effect=lambda p: json.loads((p / 'manifest.json').read_text())):

@@ -393,9 +393,15 @@ def doctor(args):
 
 
 def release_version(value):
-    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)', str(value))
-    require(match is not None, '首批部署工具只接受明确的稳定版本号 vX.Y.Z')
-    return tuple(map(int, match.groups()))
+    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)(?:-local\.([0-9]{8,14}))?', str(value))
+    require(match is not None, '版本号须为 vX.Y.Z 或 vX.Y.Z-local.YYYYMMDDHHMMSS')
+    return tuple(map(int, match.groups()[:3]))
+
+
+def release_order(value):
+    base = release_version(value)
+    suffix = str(value).partition('-local.')[2]
+    return (*base, 0 if suffix else 1, int(suffix) if suffix else 0)
 
 
 def check_release(path):
@@ -612,9 +618,9 @@ def upgrade(args):
         if system:
             account = service_account(config['unit'].removesuffix('.service'), root)
             system_release(candidate, account.pw_gid)
-        require(release_version(meta['version']) != release_version(previous['version']),
+        require(release_order(meta['version']) != release_order(previous['version']),
                 f'当前已安装 {previous["version"]}，发布源没有更新版本；未停止服务或修改数据')
-        require(release_version(meta['version']) > release_version(previous['version']), '只允许升级到更高版本；不自动降级')
+        require(release_order(meta['version']) > release_order(previous['version']), '只允许升级到更高版本；不自动降级')
         migrating = meta['schema'] != previous['schema']
         if migrating:
             require(getattr(args, 'migrate_schema', False) and previous['schema'] == 10 and meta['schema'] == 11

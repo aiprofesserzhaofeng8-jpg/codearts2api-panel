@@ -73,17 +73,34 @@ func (s *Server) handleClientProfile(w http.ResponseWriter, r *http.Request) {
 			profile := map[string]any{"version": 1, "model": model.ID, "client_profile_status": "missing_limits", "client_profile_error": map[string]string{"code": problem.Reason, "message": problem.Message}, "protocols": []string{"chat_completions", "responses", "anthropic_messages"}}
 			addImageCapability(profile, model)
 			addUnifiedProfile(profile, plan)
+			addClientCompatibility(profile, s.Routing.ClientCompatibility(model, plan, nil))
 			writeJSON(w, 200, profile)
 			return
 		}
 		writeErr(w, apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
 		return
 	}
+	compatibility := s.Routing.ClientCompatibility(model, plan, &p)
 	profile := profileFromPolicy(model.ID, p)
-	profile["client_profile_status"] = "ready"
+	if !compatibility.Exportable {
+		profile = map[string]any{"version": 1, "model": model.ID, "protocols": []string{"chat_completions", "responses", "anthropic_messages"}}
+	}
 	addImageCapability(profile, model)
 	addUnifiedProfile(profile, plan)
+	addClientCompatibility(profile, compatibility)
 	writeJSON(w, 200, profile)
+}
+
+func addClientCompatibility(out map[string]any, compatibility catalog.ClientCompatibility) {
+	out["client_compatibility"] = compatibility
+	out["client_profile_status"] = compatibility.Status
+	if !compatibility.Exportable {
+		code := "client_profile_missing"
+		if compatibility.Status == "unsupported_purpose" {
+			code = "client_purpose_unsupported"
+		}
+		out["client_profile_error"] = map[string]string{"code": code, "message": compatibility.Reason}
+	}
 }
 
 func addUnifiedProfile(profile map[string]any, plan *groupModelPlan) {
@@ -99,7 +116,18 @@ func (s *Server) handleAdminModelPolicies(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Cache-Control", "no-store")
 	switch r.Method {
 	case http.MethodGet:
-		writeJSON(w, 200, map[string]any{"policies": s.ModelPolicies.All(), "capabilities": gatewayCapabilities(), "routing_revision": s.Store.UnifiedSnapshot().Revision})
+		policies := s.ModelPolicies.All()
+		compatibility := map[string]catalog.ClientCompatibility{}
+		snapshot := s.Store.UnifiedSnapshot()
+		for _, model := range s.Reg.List(nil) {
+			p, ok := policies[model.ID]
+			var policy *config.ModelPolicy
+			if ok {
+				policy = &p
+			}
+			compatibility[model.ID] = catalog.SourceClientCompatibility(model, policy, snapshot.Policies)
+		}
+		writeJSON(w, 200, map[string]any{"policies": policies, "client_compatibility": compatibility, "capabilities": gatewayCapabilities(), "routing_revision": snapshot.Revision})
 	case http.MethodPost:
 		var body struct {
 			Model                   string             `json:"model"`

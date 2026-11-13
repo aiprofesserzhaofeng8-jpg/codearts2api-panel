@@ -130,3 +130,75 @@ func (s *Store) FindProviderAccount(name, scope, id string) *accounts.Account {
 	}
 	return nil
 }
+
+// ImportAccountsAndSave commits the complete import under the existing store locks.
+func (s *Store) ImportAccountsAndSave(list []*accounts.Account) ([]bool, error) {
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	before := cloneAccounts(s.st.Accounts)
+	created := make([]bool, len(list))
+	for i, a := range list {
+		if a == nil {
+			s.st.Accounts = before
+			return nil, errors.New("缺少账号")
+		}
+		created[i] = s.upsertAccountLocked(a)
+	}
+	raw, err := json.MarshalIndent(s.st, "", "  ")
+	if err == nil {
+		err = s.writeState(raw)
+	}
+	if err != nil {
+		s.st.Accounts = before
+		return nil, err
+	}
+	return created, nil
+}
+
+// ChangeAccountAndSave applies admin controls atomically, including model health.
+// No credential refresh is rolled back by this transaction.
+func (s *Store) ChangeAccountAndSave(id, action string) (bool, error) {
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, a := range s.st.Accounts {
+		if a.ID != id {
+			continue
+		}
+		before := *a
+		health, hadHealth := s.st.ModelHealth[id]
+		switch action {
+		case "toggle":
+			a.Enabled = !a.Enabled
+		case "pause":
+			a.Paused = true
+		case "resume":
+			a.Paused = false
+		case "clear-errors":
+			a.Failures = 0
+			a.Status = "ok"
+			a.LastErr = ""
+			a.CooldownUntil = 0
+			a.CooldownReason = ""
+			delete(s.st.ModelHealth, id)
+		default:
+			return false, errors.New("未知账号操作")
+		}
+		raw, err := json.MarshalIndent(s.st, "", "  ")
+		if err == nil {
+			err = s.writeState(raw)
+		}
+		if err != nil {
+			*a = before
+			if hadHealth {
+				s.st.ModelHealth[id] = health
+			}
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}

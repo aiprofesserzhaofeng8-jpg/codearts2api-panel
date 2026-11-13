@@ -75,6 +75,15 @@ func (s *Credits) Cached(id string) (*CreditInfo, error, bool) {
 	return e.info, e.err, true
 }
 
+// Snapshot projects the existing query cache even when stale. It never performs
+// a quota query or refresh and never turns a missing observation into zero.
+func (s *Credits) Snapshot(id string) (*CreditInfo, time.Time, bool, bool) {
+	s.creditMu.Lock()
+	defer s.creditMu.Unlock()
+	e, ok := s.creditCache[id]
+	return e.info, e.at.UTC(), !e.at.IsZero() && time.Since(e.at) > creditCacheTTL, ok && e.err == nil && e.info != nil
+}
+
 func (s *Credits) Store(id string, info *CreditInfo, err error) {
 	s.creditMu.Lock()
 	defer s.creditMu.Unlock()
@@ -92,39 +101,32 @@ func (s *Credits) Invalidate(id string) {
 
 // Rows preserves the original four-account query concurrency and result order.
 func (s *Credits) Rows(ctx context.Context, targets []*Account, fresh bool, ops CreditOperations) []map[string]any {
-	type creditRow struct {
-		idx int
-		row map[string]any
-	}
 	results := make([]map[string]any, len(targets))
-	ch := make(chan creditRow, len(targets))
-	sem := make(chan struct{}, 4)
 	var wg sync.WaitGroup
-	for i, a := range targets {
+	// A fixed worker count bounds goroutines as well as upstream requests.
+	for worker := 0; worker < min(4, len(targets)); worker++ {
 		wg.Add(1)
-		go func(idx int, a *Account) {
+		go func(offset int) {
 			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			row := map[string]any{"id": a.ID, "name": a.DisplayName()}
-			info, err := s.For(ctx, a, fresh, ops)
-			if err != nil {
-				row["ok"] = false
-				row["error"] = err.Error()
-			} else {
-				row["ok"] = true
-				row["credit"] = info
+			for i := offset; i < len(targets); i += 4 {
+				a := targets[i]
+				row := map[string]any{"id": a.ID, "name": a.DisplayName()}
+				var info *CreditInfo
+				err := ctx.Err()
+				if err == nil {
+					info, err = s.For(ctx, a, fresh, ops)
+				}
+				if err != nil {
+					row["ok"] = false
+					row["error"] = err.Error()
+				} else {
+					row["ok"] = true
+					row["credit"] = info
+				}
+				results[i] = row
 			}
-			// 只往 channel 写，切片由主 goroutine 汇总，避免并发写。
-			ch <- creditRow{idx: idx, row: row}
-		}(i, a)
+		}(worker)
 	}
 	wg.Wait()
-	close(ch)
-	for c := range ch {
-		results[c.idx] = c.row
-	}
-
 	return results
 }

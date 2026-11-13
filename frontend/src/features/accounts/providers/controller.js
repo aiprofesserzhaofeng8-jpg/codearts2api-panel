@@ -470,17 +470,6 @@ on("#providerImport", function () { return providerJob(function () { var credent
 catch (e) {
     throw new Error(tr("请粘贴有效的 ") + providerLabel() + tr(" JSON 凭据"));
 } return api("/admin/api/provider-import", { method: "POST", body: { provider: providersState.activeProvider, credentials: credentials, replace_existing: domState.$("#providerImportReplace").checked, name: domState.$("#providerAccountName").value.trim() } }).then(refreshAfterProviderSave); }); });
-document.querySelectorAll("[data-account-filter]").forEach(function (button) {
-    listen(button, "click", function () {
-        accountsState.accountFilter = button.dataset.accountFilter;
-        document.querySelectorAll("[data-account-filter]").forEach(function (b) {
-            b.classList.toggle("on", b === button);
-            b.setAttribute("aria-pressed", String(b === button));
-        });
-        if (serverState.data)
-            renderAccounts(serverState.data);
-    });
-});
 on("#importLocal", function () { return addAccountCredentials("import", {}); });
 // 凭据类型切换：永久 AK/SK 不需要 security_token，隐藏该项并更新提示。
 // 注意 select 用 change 事件，不能复用只绑 onclick 的 on()。

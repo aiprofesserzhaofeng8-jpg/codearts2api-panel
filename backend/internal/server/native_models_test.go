@@ -49,12 +49,12 @@ func TestNativeModelListAndProfilesShareUpperBound(t *testing.T) {
 	if !found {
 		t.Fatal("native name disappeared")
 	}
-	// A missing numeric recommendation cannot restore the provider's image claim.
+	// Default numeric client parameters cannot restore the provider's image claim.
 	s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "verified-v1", ImageInput: "supported", ToolCalling: "supported"}})
 	s.Reg.ReplaceProvider(provider.Trae, "cn", []provider.Model{{ID: "verified-v1", ImageInput: "supported", ToolCalling: "supported"}})
 	w = nativeProfileGET(s, key, "/v1/client-profile?model=glm-5.3")
 	profile = nil
-	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &profile) != nil || profile["client_profile_status"] != "missing_limits" {
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &profile) != nil || profile["client_profile_status"] != "ready" || profile["context_window"] != float64(32768) {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	assert(profile)

@@ -33,7 +33,9 @@ RUN apk add --no-cache ca-certificates tzdata && \
     mkdir -p /data && chown 10001:10001 /data
 COPY --from=build /out/codearts2api /usr/local/bin/codearts2api
 COPY deploy/healthcheck.sh /usr/local/bin/codearts-healthcheck
-COPY LICENSE LICENSE.workbuddy LICENSE.qoder LICENSE.kiro LICENSE.teleagent /usr/share/licenses/codearts2api/
+COPY LICENSE NOTICE LICENSE.workbuddy LICENSE.qoder LICENSE.kiro LICENSE.teleagent /usr/share/licenses/codearts2api/
+COPY backend/internal/catalog/modelmeta/LICENSE backend/internal/catalog/modelmeta/COPYING backend/internal/catalog/modelmeta/UPSTREAM.md backend/internal/catalog/modelmeta/upstream.json /usr/share/licenses/codearts2api/modelmeta/
+COPY backend/internal/responsescompat/LICENSE backend/internal/responsescompat/COPYING backend/internal/responsescompat/UPSTREAM.md /usr/share/licenses/codearts2api/responsescompat/
 USER 10001:10001
 WORKDIR /data
 VOLUME ["/data"]

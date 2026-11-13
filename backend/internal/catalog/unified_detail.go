@@ -4,7 +4,9 @@ import (
 	"time"
 
 	"codearts2api/internal/access"
+	"codearts2api/internal/accounts"
 	"codearts2api/internal/config"
+	"codearts2api/internal/provider"
 )
 
 type ModelReference struct {
@@ -13,12 +15,24 @@ type ModelReference struct {
 	Name    string `json:"name"`
 }
 type SourceStatus struct {
-	ID                   string    `json:"id"`
-	CatalogStatus        string    `json:"catalog_status"`
-	Enabled              bool      `json:"enabled"`
-	EligibleAccountCount int       `json:"eligible_account_count"`
-	LastProbe            any       `json:"last_probe"`
-	ObservedAt           time.Time `json:"observed_at"`
+	ClientCompatibility  *ClientCompatibility        `json:"client_compatibility,omitempty"`
+	Runtime              *config.SourceRuntimeStatus `json:"runtime,omitempty"`
+	ImageInput           string                      `json:"image_input"`
+	ToolCalling          string                      `json:"tool_calling"`
+	Quota                []SourceQuota               `json:"quota"`
+	ID                   string                      `json:"id"`
+	CatalogStatus        string                      `json:"catalog_status"`
+	Enabled              bool                        `json:"enabled"`
+	EligibleAccountCount int                         `json:"eligible_account_count"`
+	LastProbe            any                         `json:"last_probe"`
+	ObservedAt           time.Time                   `json:"observed_at"`
+}
+type SourceQuota struct {
+	AccountID  string               `json:"account_id"`
+	ObservedAt time.Time            `json:"observed_at"`
+	Stale      bool                 `json:"stale"`
+	Available  bool                 `json:"available"`
+	Snapshot   *accounts.CreditInfo `json:"snapshot,omitempty"`
 }
 type UnifiedDetail struct {
 	Model           config.UnifiedModel `json:"model"`
@@ -69,13 +83,34 @@ func (m *Management) Detail(id string) (UnifiedDetail, error) {
 		}
 		for _, src := range model.Sources {
 			status, count := "missing", 0
-			if _, ok := m.directory.ResolveRaw(src.ID); ok {
+			image, tools := "", ""
+			rawModel := provider.Model{ID: config.RawSource(src.ID)}
+			if raw, ok := m.directory.ResolveRaw(src.ID); ok {
+				rawModel = raw
 				status = "present"
+				plan := ModelPlan{Public: model.Name}
+				raw = plan.sourceCapabilities(raw)
+				image, tools = raw.ImageInput, raw.ToolCalling
 				if model.Enabled && src.Enabled {
 					count = counts[src.ID]
 				}
 			}
-			out.SourceStatus = append(out.SourceStatus, SourceStatus{src.ID, status, src.Enabled, count, nil, observed})
+			policy, hasPolicy, _ := sourceClientPolicy(rawModel, snapshot.Policies)
+			var recommendation *config.ModelPolicy
+			if hasPolicy {
+				recommendation = &policy
+			}
+			compatibility := SourceClientCompatibility(rawModel, recommendation, snapshot.Policies)
+			out.SourceStatus = append(out.SourceStatus, SourceStatus{ID: src.ID, CatalogStatus: status, Enabled: src.Enabled, EligibleAccountCount: count, LastProbe: nil, ObservedAt: observed, ImageInput: image, ToolCalling: tools, Quota: []SourceQuota{}, ClientCompatibility: &compatibility})
+		}
+		if st, ok := m.store.(interface {
+			SourceRuntimeStatus([]string) map[string]config.SourceRuntimeStatus
+		}); ok {
+			states := st.SourceRuntimeStatus(ids)
+			for i := range out.SourceStatus {
+				v := states[out.SourceStatus[i].ID]
+				out.SourceStatus[i].Runtime = &v
+			}
 		}
 		return out, nil
 	}

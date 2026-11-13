@@ -16,6 +16,7 @@ var ErrEmptyModelList = errors.New("上游未返回任何可用模型")
 func (s *Runtime) Refresh(ctx context.Context, ops RefreshOperations) error {
 	s.refreshMu.Lock()
 	defer s.refreshMu.Unlock()
+	s.refreshReferences(ctx)
 	failures := s.refreshProviderModels(ctx, ops)
 	err := s.refreshCodeArtsModels(ctx, ops)
 	if err != nil && !errors.Is(err, accounts.ErrNoAccount) {
@@ -53,7 +54,7 @@ func (s *Runtime) refreshCodeArtsModels(ctx context.Context, ops RefreshOperatio
 	if len(models) == 0 {
 		return ErrEmptyModelList
 	}
-	s.directory.ReplaceProvider(provider.CodeArts, "", models)
+	s.directory.ReplaceProvider(provider.CodeArts, "", s.withClientReferences(provider.CodeArts, "", models))
 	return nil
 }
 
@@ -92,7 +93,7 @@ func (s *Runtime) refreshProviderModels(ctx context.Context, ops RefreshOperatio
 			errs[key] = err.Error()
 			continue
 		}
-		s.directory.ReplaceProvider(a.ProviderID(), a.Scope, models)
+		s.directory.ReplaceProvider(a.ProviderID(), a.Scope, s.withClientReferences(a.ProviderID(), a.Scope, models))
 		seen[key] = true
 		delete(errs, key)
 	}

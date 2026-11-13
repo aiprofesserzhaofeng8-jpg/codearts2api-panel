@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/gateway"
@@ -91,7 +92,12 @@ func (s *Server) providerAccountError(ctx context.Context, acct *accounts.Accoun
 		s.Store.CooldownAccount(acct.ID, p.Error(), s.Store.Settings().Pool.BreakerCooldownSec)
 	} else if p.Status == 429 || p.Status >= 500 || p.Status == 404 {
 		cooldown := s.Store.Settings().Pool.RateCooldownSec
-		if acct.ProviderID() == provider.WorkBuddy && workBuddyTransientStatus(p.Status) {
+		now := time.Now().Unix()
+		explicitRetry := p.RetryAt > now
+		if explicitRetry {
+			cooldown = int(min(p.RetryAt-now, 7*86400))
+		}
+		if !explicitRetry && acct.ProviderID() == provider.WorkBuddy && workBuddyTransientStatus(p.Status) {
 			cooldown = min(cooldown, 5)
 		}
 		s.Store.MarkModelResult(acct.ID, model, false, p.Error(), cooldown)

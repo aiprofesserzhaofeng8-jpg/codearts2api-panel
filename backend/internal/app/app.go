@@ -50,7 +50,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 	credentials.Logf = log.Printf
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
-	modelPolicies := config.NewModelPolicies(st, models)
+	modelPolicies := config.NewModelPolicies(st, models, catalog.RecommendClientPolicy)
 	credits := &accounts.Credits{}
 	users := access.NewUsers(st, func() string { return st.Settings().AdminPassword }, func() string { return st.Settings().AdminEmail })
 	return server.New(st, server.Dependencies{
@@ -62,7 +62,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 		Welfare:       jobs.NewWelfare(st),
 		Growth:        jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
 		Credits:       credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
-		Catalog:       catalog.NewRuntime(st, models),
+		Catalog:       catalog.NewRuntime(st, models, server.FetchPublicModelReferences),
 		AccountProbes: accounts.NewProbes(st, models, log.Printf),
 		ModelPolicies: modelPolicies,
 		Routing:       catalog.NewRouting(st, models),

@@ -244,6 +244,49 @@ func TestWorkBuddyPromptFallbackBoundaries(t *testing.T) {
 		})
 	}
 }
+func TestWorkBuddyNewDefaultsPreserveClientAcrossProtocols(t *testing.T) {
+	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/messages"} {
+		for _, blocked := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/blocked=%v", path, blocked), func(t *testing.T) {
+				calls := 0
+				// This prefix exercises the legacy sanitizer as well as system replacement.
+				const rules = "x-anthropic-billing-header: cc_version=1; cc_entrypoint=cli;\nKeep this project context unchanged."
+				s, key, _ := nativeWBServer(t, func(w http.ResponseWriter, r *http.Request) {
+					calls++
+					var req struct {
+						Messages []struct{ Role, Content string }
+					}
+					if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+						t.Error(err)
+					} else if len(req.Messages) != 2 || req.Messages[0].Role != "system" || req.Messages[0].Content != rules || req.Messages[1].Content != "client question" {
+						t.Errorf("default policy changed client context: %+v", req.Messages)
+					}
+					if blocked {
+						w.WriteHeader(400)
+						io.WriteString(w, `{"code":11128,"msg":"blocked by security policy"}`)
+						return
+					}
+					io.WriteString(w, summaryFixture("OK", "stop", 2, 1))
+				})
+				addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
+				req := map[string]any{"model": "workbuddy/cn/shared", "max_tokens": 16, "messages": []any{map[string]string{"role": "system", "content": rules}, map[string]string{"role": "user", "content": "client question"}}}
+				if path == "/v1/messages" {
+					req["system"] = rules
+					req["messages"] = []any{map[string]string{"role": "user", "content": "client question"}}
+				}
+				if path == "/v1/responses" {
+					delete(req, "messages")
+					req["instructions"], req["input"] = rules, "client question"
+				}
+				w := responseRequest(s, key, path, string(mustJSON(req)))
+				if calls != 1 || (!blocked && w.Code != 200) || (blocked && w.Code == 200) {
+					t.Fatal("default policy changed prompt or retried with a fallback", calls, w.Code, w.Body.String())
+				}
+			})
+		}
+	}
+}
+
 func TestWorkBuddyPolicyAcrossProtocols(t *testing.T) {
 	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/messages"} {
 		t.Run(path, func(t *testing.T) {
@@ -255,7 +298,11 @@ func TestWorkBuddyPolicyAcrossProtocols(t *testing.T) {
 				io.WriteString(w, summaryFixture("OK", "stop", 2, 1))
 			})
 			addWB(t, s, "cn", time.Now().Add(time.Hour).Unix())
-			s.Store.UpdateSettings(func(st *storage.Settings) { st.WorkBuddy.PromptText = "CUSTOM" })
+			s.Store.UpdateSettings(func(st *storage.Settings) {
+				st.WorkBuddy.PromptMode = "custom"
+				st.WorkBuddy.PromptText = "CUSTOM"
+				st.WorkBuddy.Sanitize = true
+			})
 			input := "You are Claude Code, Anthropic's official CLI for Claude."
 			req := map[string]any{"model": "workbuddy/cn/shared", "max_tokens": 16, "messages": []any{map[string]any{"role": "system", "content": "CLIENT"}, map[string]any{"role": "user", "content": input}}}
 			if path == "/v1/messages" {
@@ -356,7 +403,7 @@ func TestWorkBuddySettingsValidationAndHotReload(t *testing.T) {
 		}
 	}
 	body := `{"model":"workbuddy/cn/shared","messages":[{"role":"system","content":"CLIENT"},{"role":"user","content":"hi"}]}`
-	postSettings(t, s, `{"workbuddy":{"prompt_text":"CUSTOM"}}`)
+	postSettings(t, s, `{"workbuddy":{"prompt_mode":"custom","prompt_text":"CUSTOM"}}`)
 	if w := responseRequest(s, key, "/v1/chat/completions", body); w.Code != 200 {
 		t.Fatal(w.Code)
 	}

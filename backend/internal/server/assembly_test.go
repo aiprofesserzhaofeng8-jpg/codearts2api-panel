@@ -145,7 +145,7 @@ func attachModelPolicies(s *Server) {
 		s.Routing = catalog.NewRouting(s.Store, s.Reg)
 	}
 	if s.ModelPolicies == nil && s.Reg != nil {
-		s.ModelPolicies = config.NewModelPolicies(s.Store, s.Reg)
+		s.ModelPolicies = config.NewModelPolicies(s.Store, s.Reg, catalog.RecommendClientPolicy)
 	}
 	if s.UnifiedModels == nil && s.Reg != nil {
 		s.UnifiedModels = catalog.NewManagement(s.Store, s.Reg, s.ModelPolicies)

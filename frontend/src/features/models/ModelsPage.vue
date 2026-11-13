@@ -35,7 +35,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
         <div v-once class="card">
           <div v-once class="card-head"><div><h2>{{tr('客户端兼容与压缩策略')}}</h2></div><button class="btn" id="reloadModelPolicies">{{tr('刷新策略')}}</button></div>
           <p class="hint">{{tr('码道上游：Chat Completions。Responses / Messages 由网关转换。原生 Responses compact、WebSocket 和响应存储暂不支持。')}}</p>
-          <div v-once class="table-wrap"><table><thead><tr><th>{{tr('模型')}}</th><th>{{tr('推荐上下文 / 输出')}}</th><th>{{tr('压缩触发 / 保留')}}</th><th>{{tr('摘要处理')}}</th><th>{{tr('来源')}}</th><th>{{tr('操作')}}</th></tr></thead><tbody id="modelPolicies"></tbody></table></div>
+          <div v-once class="table-wrap"><table><thead><tr><th>{{tr('模型')}}</th><th>{{tr('模型用途')}}</th><th>{{tr('推荐上下文 / 输出')}}</th><th>{{tr('压缩触发 / 保留')}}</th><th>{{tr('摘要处理')}}</th><th>{{tr('来源')}}</th><th>{{tr('操作')}}</th></tr></thead><tbody id="modelPolicies"></tbody></table></div>
         </div>
       </section>
 <dialog v-once id="priceEditDialog" class="modal" aria-labelledby="priceEditTitle">

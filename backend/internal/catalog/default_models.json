@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 6,
   "models": [
     {
       "name": "deepseek-v4.1-flash",
@@ -168,21 +168,27 @@
       "image_input": "supported",
       "tool_calling": "supported",
       "reference": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
-      "verified_at": "2026-11-06"
+      "verified_at": "2026-11-07",
+      "context_label": "1M",
+      "max_output_label": "128K"
     },
     {
       "id": "glm-5.3-flashx",
       "image_input": "supported",
       "tool_calling": "supported",
       "reference": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
-      "verified_at": "2026-11-06"
+      "verified_at": "2026-11-07",
+      "context_label": "1M",
+      "max_output_label": "128K"
     },
     {
       "id": "glm-5.3-flashx-legal",
       "image_input": "supported",
       "tool_calling": "supported",
       "reference": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
-      "verified_at": "2026-11-06"
+      "verified_at": "2026-11-07",
+      "context_label": "1M",
+      "max_output_label": "128K"
     },
     {
       "id": "deepseek-v4-pro",
@@ -225,6 +231,364 @@
       "tool_calling": "",
       "reference": "https://cloud.tencent.com/document/product/1823/132252",
       "verified_at": "2026-11-06"
+    }
+  ],
+  "source_capabilities": [
+    {
+      "id": "codearts/Qwen3-VL-235B",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/deepseek-v4.1-flash-1017",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported",
+      "image_input": "supported"
+    },
+    {
+      "id": "codearts/glm-5.2-sft-harmony",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/kimi-k2.6-vl",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/kimi-k3",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported",
+      "image_input": "supported"
+    },
+    {
+      "id": "codearts/openpangu-2.0-flash",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/openpangu-2.0-pro",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/speed",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "qoder/cn/auto",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "image_input": "supported"
+    },
+    {
+      "id": "qoder/cn/fast",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "image_input": "supported"
+    },
+    {
+      "id": "qoder/cn/qfmodel",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported",
+      "image_input": "supported",
+      "name": "Qwen3.8-Flash"
+    },
+    {
+      "id": "qoder/cn/qmodel_38max",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "image_input": "supported",
+      "name": "Qwen3.8-Max"
+    },
+    {
+      "id": "teleagent/cn/chat-flash",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported",
+      "image_input": "supported"
+    },
+    {
+      "id": "teleagent/cn/chat-nano",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/DeepSeek-V4-Flash-Official",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/DeepSeek-V4-Pro-Official",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/Doubao-Seed-2.0-Code",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/Doubao-Seed-2.1-Pro",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/Doubao-Seed-2.1-Turbo",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/Doubao-Seed-Evolving",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/aquila",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/custom_model_gpt-5",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/custom_model_gpt-6",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/explore_sub_agent_v2",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/glm-5",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/glm-5-turbo",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/glm-5.3-flashx",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/kimi-k2.6",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/kimi-k2.7-code",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/kimi-k3",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/mimo-v2.6-flash",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/minimax-m3",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/qwen-3.7-plus",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/qwen3.8-max",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/seed-code-pro-0430",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/summary",
+      "verified_at": "2026-11-06",
+      "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    }
+  ],
+  "client_metadata": [
+    {
+      "ids": [
+        "workbuddy/cn/auto",
+        "workbuddy/us/auto",
+        "qoder/cn/auto",
+        "qoder/cn/fast",
+        "kiro/us-east-1/auto"
+      ],
+      "purpose": "auto",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "workbuddy/cn/codewise-completions"
+      ],
+      "purpose": "completion",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "workbuddy/cn/codewise-jump"
+      ],
+      "purpose": "jump",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "workbuddy/cn/codewise-rewrite"
+      ],
+      "purpose": "rewrite",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "workbuddy/cn/hunyuan-image-alpha"
+      ],
+      "purpose": "image_generation",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "trae/cn/browser_use_subagent",
+        "trae/cn/computer_use_subagent",
+        "trae/cn/explore_sub_agent_v2",
+        "trae/cn/file_search_agent",
+        "chatgpt/global/codex-auto-review"
+      ],
+      "purpose": "agent",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "trae/cn/summary"
+      ],
+      "purpose": "summary",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "workbuddy/cn/codewise-default-model-v2",
+        "workbuddy/cn/nes-gf",
+        "trae/cn/custom_model_placeholder",
+        "chatgpt/global/gpt-reserve"
+      ],
+      "purpose": "unknown",
+      "basis": "provider_service_purpose",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
+    },
+    {
+      "ids": [
+        "codearts/glm-5.3-flash",
+        "trae/cn/glm-5.3-flash",
+        "qoder/cn/gfmodel"
+      ],
+      "purpose": "chat",
+      "context_window": 32768,
+      "max_output_tokens": 4096,
+      "basis": "tested_recommendation",
+      "reference": "docs/acceptance/CLIENT-METADATA-R6-2026-11-07.md",
+      "verified_at": "2026-11-07"
     }
   ]
 }

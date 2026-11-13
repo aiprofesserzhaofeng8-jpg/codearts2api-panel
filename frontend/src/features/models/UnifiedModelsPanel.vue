@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DefaultModelsPanel from './DefaultModelsPanel.vue';
+import SourceStatusPanel from './SourceStatusPanel.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { api, isAbortError } from '../../api/client';
 import { serverState } from '../../shared/read-model';
@@ -170,7 +171,6 @@ async function readReport(event: Event) {
 function reread() { if (draft.value && confirm(tr('重新读取将丢弃当前草稿，是否继续？')))
     void open(draft.value); }
 const referenceLabels={group_grant:'分组授权',group_default:'分组默认',client_default:'客户端推荐',global_default:'全局默认'} as const;
-function observed(value?:string){return value?new Date(value).toLocaleString(dateLocale):'—';}
 </script>
 <template>
   <DefaultModelsPanel @applied="load" />
@@ -269,8 +269,8 @@ function observed(value?:string){return value?new Date(value).toLocaleString(dat
                     <button type="button" class="btn xs" :disabled="!available.has(source.id)" @click="probe(source.id)">{{testing===source.id?tr('测活中…'):tr('测活')}}</button>
                     <button type="button" class="btn xs danger" @click="sources.splice(index,1)">{{tr('移除')}}</button>
                   </div>
-                  <p v-if="probeResults[source.id]" :class="probeResults[source.id].ok?'hint':'err-text'">{{probeResults[source.id].message}} · {{probeResults[source.id].time}}</p>
-                  <p v-else-if="detail?.source_status.find(s=>s.id===source.id)" class="hint">{{tr('可调度账号快照')}}: {{detail.source_status.find(s=>s.id===source.id)?.eligible_account_count}} · {{observed(detail.source_status.find(s=>s.id===source.id)?.observed_at)}}</p>
+                  <SourceStatusPanel v-for="status in detail?.source_status.filter(s=>s.id===source.id)" :key="status.id" :status="status" :local-probe="probeResults[source.id]" />
+                  <p v-if="!detail?.source_status.some(s=>s.id===source.id) && probeResults[source.id]" :class="probeResults[source.id].ok?'hint':'err-text'">{{probeResults[source.id].message}} · {{probeResults[source.id].time}}</p>
                 </div>
               </div>
               <p class="hint">{{tr('一次文本测活不代表已验证图片或工具能力；目录缺失项不会被刷新自动删除。')}}</p>

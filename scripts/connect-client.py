@@ -44,6 +44,9 @@ def private_json(file, value):
     os.replace(temp, file)
 
 def build_launch(client, base, profile, config_dir, env):
+    compatibility = profile.get('client_compatibility') or {}
+    if compatibility.get('exportable') is False:
+        raise ValueError(compatibility.get('reason') or 'This model cannot be exported to a chat client')
     model = profile['model']
     context = profile['context_window']
     output = profile['max_output_tokens']
@@ -130,7 +133,7 @@ def check_codex_sandbox():
                          'Sandbox permissions were not relaxed.')
 
 def sync_pi_models(base, model_file, key_override=None):
-    """Refresh the active Pi provider in-place; never invent missing limits."""
+    """Sync the Pi catalog and per-model compaction; never invent missing limits."""
     original = model_file.read_bytes()
     document = json.loads(original)
     providers = document.get('providers', {})
@@ -156,13 +159,27 @@ def sync_pi_models(base, model_file, key_override=None):
     if not isinstance(rows, list) or not rows:
         raise ValueError('Gateway returned no model catalog; configuration was preserved')
     existing = {m['id']: dict(m) for m in provider.get('models', [])}
-    skipped, retained, unknown = [], [], []
+    skipped, retained, unknown, incompatible = [], [], [], []
+    compaction_updates = {}
+    catalog_ids = set()
     for row in rows:
         model_id = row.get('id')
         if not isinstance(model_id, str) or not model_id:
             raise ValueError('Invalid model catalog')
+        if model_id in catalog_ids:
+            raise ValueError('Gateway returned duplicate model IDs; configuration was preserved')
+        catalog_ids.add(model_id)
+        compatibility = row.get('client_compatibility') or {}
+        if not isinstance(compatibility, dict):
+            raise ValueError('Invalid client compatibility metadata; configuration was preserved')
+        if compatibility.get('exportable') is False and compatibility.get('status') != 'missing_limits':
+            incompatible.append({'model': model_id, 'reason': compatibility.get('reason', 'Unsupported model purpose'), 'kept_existing': model_id in existing})
+            continue
         profile = row.get('client_profile') or {}
-        limits = all(isinstance(profile.get(k), int) and profile[k] > 0 for k in ('context_window', 'max_output_tokens'))
+        if not isinstance(profile, dict):
+            raise ValueError('Invalid client profile; configuration was preserved')
+        limits = (type(profile.get('context_window')) is int and type(profile.get('max_output_tokens')) is int
+                  and profile['context_window'] >= 8192 and 256 <= profile['max_output_tokens'] < profile['context_window'])
         model = existing.get(model_id)
         if model is None and not limits:
             skipped.append(model_id)
@@ -173,6 +190,11 @@ def sync_pi_models(base, model_file, key_override=None):
         if limits:
             model['contextWindow'] = profile['context_window']
             model['maxTokens'] = profile['max_output_tokens']
+            compact = profile.get('compaction') or {}
+            reserve, keep = compact.get('reserve_tokens'), compact.get('keep_recent_tokens')
+            if (type(reserve) is int and type(keep) is int and reserve >= profile['max_output_tokens']
+                    and 0 <= keep < profile['context_window'] - reserve):
+                compaction_updates['codearts-local/' + model_id] = {'reserveTokens': reserve, 'keepRecentTokens': keep}
         else:
             retained.append(model_id)
         modalities = row.get('input_modalities', profile.get('input_modalities'))
@@ -181,19 +203,55 @@ def sync_pi_models(base, model_file, key_override=None):
         else:
             unknown.append(model_id)
             # Unknown is not an affirmative image guarantee. Report it explicitly.
-            model['input'] = ['text']
+            model.setdefault('input', ['text'])
         existing[model_id] = model
     provider['models'] = list(existing.values())
-    if model_file.read_bytes() != original:
+    settings_file = model_file.with_name('settings.json')
+    settings_original = settings_file.read_bytes() if settings_file.exists() else None
+    settings = json.loads(settings_original) if settings_original is not None else {}
+    if compaction_updates:
+        if not isinstance(settings, dict) or not isinstance(settings.get('compaction', {}), dict):
+            raise ValueError('Invalid Pi compaction settings; configuration was preserved')
+        overrides = settings.setdefault('compaction', {}).setdefault('modelOverrides', {})
+        if not isinstance(overrides, dict):
+            raise ValueError('Invalid Pi model overrides; configuration was preserved')
+        for model_id, values in compaction_updates.items():
+            override = overrides.setdefault(model_id, {})
+            if not isinstance(override, dict):
+                raise ValueError('Invalid Pi model override; configuration was preserved')
+            override.update(values)
+    if model_file.read_bytes() != original or (settings_file.read_bytes() if settings_file.exists() else None) != settings_original:
         raise ValueError('Pi configuration changed during sync; retry without overwriting it')
     backup = model_file.with_name(model_file.name + '.before-sync-' + str(time.time_ns()) + '.bak')
     fd = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, 'wb') as stream:
         stream.write(original)
-    private_json(model_file, document)
+    settings_backup = None
+    settings_written = None
+    try:
+        if compaction_updates:
+            if settings_original is not None:
+                settings_backup = settings_file.with_name(settings_file.name + '.before-sync-' + str(time.time_ns()) + '.bak')
+                fd = os.open(settings_backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                with os.fdopen(fd, 'wb') as stream:
+                    stream.write(settings_original)
+            private_json(settings_file, settings)
+            settings_written = settings_file.read_bytes()
+        private_json(model_file, document)
+    except OSError:
+        # Restore only our own settings write; a concurrent user edit wins.
+        if settings_written is not None and settings_file.read_bytes() == settings_written:
+            if settings_original is None:
+                settings_file.unlink()
+            else:
+                private_json(settings_file, json.loads(settings_original))
+        raise
     return {'config': str(model_file), 'backup': str(backup), 'models': len(existing),
             'retained_existing_limits': retained, 'skipped_missing_limits': skipped,
-            'unknown_image_capability': unknown}
+            'unknown_image_capability': unknown, 'skipped_incompatible': incompatible,
+            'retained_not_in_catalog': sorted(set(existing) - catalog_ids),
+            'compaction_updated': sorted(compaction_updates),
+            'settings_backup': str(settings_backup) if settings_backup else None}
 
 def main():
     argv = sys.argv[1:]
@@ -205,7 +263,7 @@ def main():
     parser.add_argument('--model', default='', help='Explicit model; otherwise use the group client preference or request default')
     parser.add_argument('--list-models', action='store_true', help='List models visible to this API key without launching the client')
     parser.add_argument('--config-dir', type=Path)
-    parser.add_argument('--sync-models', action='store_true', help='Pi: back up and update the active codearts-local catalog without launching')
+    parser.add_argument('--sync-models', action='store_true', help='Pi: back up and sync the active catalog and per-model compaction without launching')
     parser.add_argument('--pi-models-file', type=Path, default=Path.home()/'.pi/agent/models.json')
     parser.add_argument('--check-sandbox', action='store_true', help='Also validate the native Codex sandbox without a model request')
     parser.add_argument('--check', action='store_true', help='Validate connectivity and write client profile without launching a model request')
@@ -249,6 +307,9 @@ def main():
         raise ValueError('Gateway profile request failed (HTTP %d); verify gateway version, model and key' % exc.code) from None
     if profile.get('client_profile_status') == 'missing_limits':
         raise ValueError('Model capabilities are available but context/output limits are unverified. For existing Pi configuration use pi --sync-models; existing limits will be preserved and reported.')
+    compatibility = profile.get('client_compatibility') or {}
+    if compatibility.get('exportable') is False:
+        raise ValueError(compatibility.get('reason') or 'This model cannot be exported to a chat client')
     if profile.get('version') != 1 or profile.get('context_window', 0) <= 0:
         raise ValueError('Unsupported client profile')
     suffix = hashlib.sha256(base.encode()).hexdigest()[:12]

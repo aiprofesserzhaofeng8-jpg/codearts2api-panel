@@ -8,21 +8,23 @@ import { domState, fmtDur, fmtTime, toast } from '../../shared/dom';
 import { usageSVG } from '../usage/controller';
 import { cleanup, listen } from '../../shared/lifecycle';
 import { checkin, claim } from '../jobs/welfare';
-import { creditCell, openGrowth, openGrowthAccounts, invalidateCredit, refreshAccountCredit } from './credits';
+import { creditCell, openGrowth, openGrowthAccounts, invalidateCredit, refreshAccountCredit, loadCredits } from './credits';
 import { api } from '../../api/client';
 import { refresh } from '../../shared/refresh';
-import { readPreferences, savePreferences, optionalColumns, sortAccounts, runSelected } from './table';
+import { readPreferences, savePreferences, optionalColumns, pageSizes, paginateAccounts, sortAccounts, runSelected } from './table';
 export const accountsState = {};
 const preferences = readPreferences();
 const selected = new Set();
 let visibleAccounts = [], bulkBusy = false, bulkPlan = null, mounted = false, lifetime = 0;
+let accountPage = 1, accountFilterSignature = '';
 const rewardQueries = new Map();
 function refreshCredentialLabel(a) {
     if (a.non_expiring || a.permanent) return tr('无需续期');
     return a.has_refresh === true ? tr('有刷新凭据') : a.has_refresh === false ? tr('无刷新凭据') : tr('刷新凭据未知');
 }
-const columnNames = { credential: tr('凭据'), reward: tr('奖励'), lastUsed: tr('最近使用') };
+const columnNames = { platform: tr('平台'), capacity: tr('并发'), status: tr('状态'), quota: tr('额度与用量'), credential: tr('凭据'), reward: tr('奖励'), lastUsed: tr('最近使用') };
 function updateSelection() {
+    domState.$('.account-bulk-bar').hidden = selected.size === 0 && !bulkBusy;
     const all = domState.$('#accountSelectAll');
     all.checked = visibleAccounts.length > 0 && visibleAccounts.every(a => selected.has(a.id));
     all.indeterminate = selected.size > 0 && !all.checked;
@@ -30,12 +32,40 @@ function updateSelection() {
     domState.$('#accountBulkStart').disabled = bulkBusy || selected.size === 0;
     domState.$('#accountClearSelection').disabled = bulkBusy || selected.size === 0;
     all.disabled = bulkBusy || !visibleAccounts.length;
+    const mobile = domState.$('#accountSelectAllMobile');
+    mobile.checked = all.checked; mobile.indeterminate = all.indeterminate; mobile.disabled = all.disabled;
+    domState.$('#accountToolsExport').disabled = bulkBusy || selected.size !== 1;
+    domState.$('#accountToolsExport').title = selected.size === 1 ? '' : tr('请先勾选一个账号');
 }
 function applyColumns() {
     document.querySelectorAll('.account-table [data-column]').forEach(el => { el.hidden = preferences.hidden.includes(el.dataset.column); });
 }
 function saveTablePreferences() {
     if (!savePreferences(preferences)) toast(tr('显示偏好仅在本次页面生效'), 'warn');
+}
+
+function goToAccountPage(page) {
+    if (bulkBusy) return;
+    accountPage = page; selected.clear();
+    const restorePageFocus = domState.$('#accountPageNumbers').contains(document.activeElement);
+    if (serverState.data) renderAccounts(serverState.data);
+    domState.$('.account-table-wrap').scrollTop = 0;
+    if (restorePageFocus) domState.$('#accountPageNumbers [aria-current="page"]')?.focus({ preventScroll: true });
+}
+
+function renderAccountPagination(pagination) {
+    domState.$('#accountFilterCount').textContent = tr('显示 {from} 至 {to}，共 {total} 条结果').replace('{from}', pagination.from).replace('{to}', pagination.to).replace('{total}', pagination.total);
+    domState.$('#accountPrevPage').disabled = bulkBusy || pagination.page === 1;
+    domState.$('#accountNextPage').disabled = bulkBusy || pagination.page === pagination.pages;
+    domState.$('#accountPageSize').disabled = bulkBusy;
+    const numbers = domState.$('#accountPageNumbers'); numbers.textContent = '';
+    pagination.links.forEach(n => {
+        if (typeof n !== 'number') { numbers.appendChild(mk('span', 'account-page-gap', '…')); return; }
+        const button = btn(String(n), '', () => goToAccountPage(n));
+        button.setAttribute('aria-label', tr('第 {page} 页').replace('{page}', n));
+        if (n === pagination.page) button.setAttribute('aria-current', 'page');
+        button.disabled = bulkBusy; numbers.appendChild(button);
+    });
 }
 
 accountsState.accountFilter = "all";
@@ -86,10 +116,25 @@ export function accountMenuButton(label, account, items) {
     return trigger;
 }
 
+function accountIconButton(label, path, action, danger = false) {
+    const button = btn('', 'xs account-icon-action' + (danger ? ' danger' : ''), action);
+    button.title = label; button.setAttribute('aria-label', label);
+    const icon = usageSVG('svg', { viewBox: '0 0 24 24', class: 'ico', 'aria-hidden': 'true' });
+    icon.appendChild(usageSVG('path', { d: path })); button.append(icon, mk('span', '', label));
+    return button;
+}
+
 export function renderAccounts(d) {
     closeAccountMenu(false);
-    var tb = domState.$("#accounts");
-    tb.textContent = "";
+    const body = domState.$("#accounts");
+    const tb = document.createDocumentFragment();
+    const commitRows = () => {
+        const scroller = domState.$('.account-table-wrap');
+        const top = scroller.scrollTop, left = scroller.scrollLeft;
+        body.replaceChildren(tb);
+        applyColumns();
+        scroller.scrollTop = top; scroller.scrollLeft = left;
+    };
     var accts = d.accounts || [];
     domState.$("#accountGrowth").classList.toggle("hidden", domState.$("#accountProvider").value !== "workbuddy");
     domState.$("#accountGrowth").disabled = !accts.some(function (a) { return a.provider === "workbuddy" && a.growth_tasks_supported; });
@@ -124,20 +169,30 @@ export function renderAccounts(d) {
         return (!domState.$("#accountProvider").value || (a.provider || "codearts") === domState.$("#accountProvider").value) && (accountsState.accountFilter === "all" || accountState(a) === accountsState.accountFilter) &&
             (!query || [a.name, a.source, sourceName(a.source), a.provider, a.scope].join(" ").toLowerCase().indexOf(query) !== -1);
     });
-    visible = sortAccounts(visible, preferences.sort);
+    const signature = JSON.stringify([query, domState.$('#accountProvider').value, accountsState.accountFilter, preferences.sort]);
+    if (signature !== accountFilterSignature) {
+        accountPage = 1; accountFilterSignature = signature;
+        domState.$('.account-table-wrap').scrollTop = 0;
+    }
+    const pagination = paginateAccounts(sortAccounts(visible, preferences.sort), accountPage, preferences.pageSize);
+    if (accountPage !== pagination.page) domState.$('.account-table-wrap').scrollTop = 0;
+    accountPage = pagination.page; visible = pagination.items;
+    const changedPage = visibleAccounts.map(a => a.id).join('\0') !== visible.map(a => a.id).join('\0');
     visibleAccounts = visible;
-    // Filtering drops hidden selections instead of silently operating on hidden accounts.
+    if (changedPage) queueMicrotask(() => { if (mounted) loadCredits(false); });
+    // Selection is scoped to the current page, never to unseen matching accounts.
     const visibleIDs = new Set(visible.map(a => a.id));
     selected.forEach(id => { if (!visibleIDs.has(id)) selected.delete(id); });
     updateSelection();
-    domState.$("#accountFilterCount").textContent = visible.length + " / " + accts.length + tr(" 个账号");
+    renderAccountPagination(pagination);
+    applyColumns();
     if (!accts.length) {
-        tb.appendChild(emptyRow(7, tr("还没有账号。点击「浏览器登录」，复制链接授权后确认添加。")));
-        return;
+        tb.appendChild(emptyRow(10, tr("还没有账号。点击「浏览器登录」，复制链接授权后确认添加。")));
+        commitRows(); return;
     }
     if (!visible.length) {
-        tb.appendChild(emptyRow(7, tr("没有符合条件的账号，请更换筛选条件。")));
-        return;
+        tb.appendChild(emptyRow(10, tr("没有符合条件的账号，请更换筛选条件。")));
+        commitRows(); return;
     }
     visible.forEach(function (a) {
         var statusCell = cell("");
@@ -149,8 +204,8 @@ export function renderAccounts(d) {
         else if (a.status === 'error') statusCell.appendChild(mk('div', 'sub err-text', tr('最近检查失败')));
         if (a.failures > 0) statusCell.appendChild(mk('div', 'sub', tr('失败次数：') + a.failures));
         statusCell.title = tr('调度状态来自账号池，不代表所有模型或额度窗口均可用') + (a.cooldown_reason ? ' · ' + a.cooldown_reason : '');
-        if (a.pool)
-            statusCell.appendChild(mk("div", "sub", tr("在途 ") + a.pool.in_flight + " / " + a.pool.max_in_flight));
+        const capacity = cell(a.pool ? a.pool.in_flight + " / " + a.pool.max_in_flight : "—", "mono");
+        capacity.title = tr("在途请求") + " / " + tr("并发上限");
         statusCell.title = (a.max_in_flight > 0 ? tr("独立并发上限：") + a.max_in_flight : tr("并发上限使用全局默认值")) + (statusCell.title ? "；" + statusCell.title : "");
         var expCell = cell("", "cell-stack");
         if (a.non_expiring) {
@@ -177,7 +232,8 @@ export function renderAccounts(d) {
         const queried = rewardQueries.get(a.id);
         const rewardState = queried && Date.now() - queried.at < 300000 ? queried.state : null;
         if (a.daily_claim_supported === false) {
-            claimCell.appendChild(mk("span", "muted", tr("未提供签到接口")));
+            claimCell.appendChild(mk("span", "muted", "—"));
+            claimCell.title = tr("未提供签到接口");
         }
         else if (rewardState === 'claimed' || rewardState === 'already_claimed' || (!rewardState && a.claimed_today)) {
             claimCell.appendChild(pill(tr("已领"), "ok"));
@@ -190,10 +246,10 @@ export function renderAccounts(d) {
             claimCell.title = a.last_claim_msg;
         if (a.last_claim_err)
             claimCell.title = a.last_claim_err;
-        if (queried && rewardState) claimCell.appendChild(mk('span', 'sub', tr('查询于 ') + fmtTime(queried.at / 1000)));
+        if (queried && rewardState) claimCell.title += ' · ' + tr('查询于 ') + fmtTime(queried.at / 1000);
         var ops = cell("", "actions-cell"), actions = mk("div", "account-actions");
-        actions.appendChild(btn(tr("详情"), "xs", function () { openAccountDetail(a); }));
-        actions.appendChild(btn(tr("探活"), "xs", function () { return checkin(a.id); }));
+        actions.appendChild(accountIconButton(tr("并发设置"), "M12 3v18M3 12h18", () => openAccountConcurrency(a)));
+        actions.appendChild(accountIconButton(tr("探活"), "m3 12 4 0 3-8 4 16 3-8h4", () => checkin(a.id)));
         if (rewardState === 'claimable' && a.daily_claim_supported !== false)
             actions.appendChild(btn(a.provider && a.provider !== "codearts" ? tr("每日签到") : tr("领福利"), "xs", async function () { rewardQueries.delete(a.id); await claim(a.id); }));
         var more = [
@@ -215,7 +271,8 @@ export function renderAccounts(d) {
         if (a.failures > 0 || (a.pool && a.pool.cooldown_remaining_sec > 0) || Object.keys(a.model_health || {}).some(function (m) { return a.model_health[m].failures > 0; }))
             more.push({ label: tr("解除冷却 / 清错"), run: function () { return accountOp("clear-errors", { id: a.id }); } });
         more.push({ label: tr("删除"), danger: true, run: function () { showDeleteAccount(a); } });
-        actions.appendChild(accountMenuButton(tr("更多"), a, more));
+        actions.appendChild(accountIconButton(tr("删除"), "M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6", () => showDeleteAccount(a), true));
+        const menuButton = accountMenuButton(tr("更多"), a, more); menuButton.classList.add("account-icon-action"); actions.appendChild(menuButton);
         if (bulkBusy) actions.querySelectorAll('button').forEach(b => { b.disabled = true; });
         ops.appendChild(actions);
         var identity = cell("", "account-identity");
@@ -223,27 +280,27 @@ export function renderAccounts(d) {
         const select = document.createElement('input'); select.type = 'checkbox'; select.checked = selected.has(a.id); select.disabled = bulkBusy;
         select.setAttribute('aria-label', tr('选择账号：') + (a.name || a.id));
         select.onchange = () => { if (select.checked) selected.add(a.id); else selected.delete(a.id); updateSelection(); };
-        who.appendChild(select);
-        who.appendChild(mk("span", "account-avatar", Array.from(a.name || tr("码"))[0].toUpperCase()));
+        const selectionCell = cell("", "account-selection"); selectionCell.appendChild(select);
+
         var info = mk("div", "account-name");
         info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
-        info.appendChild(pill(a.provider === "teleagent" ? "TeleAgent · " + tr("国内") : a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
+        const platform = cell("", "account-platform-cell");
+        platform.appendChild(pill(a.provider === "teleagent" ? "TeleAgent · " + tr("国内") : a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
         info.appendChild(mk("span", "account-caption", sourceName(a.source)));
         who.appendChild(info);
         identity.appendChild(who);
         const quota = creditCell(a);
-        quota.appendChild(btn(tr('额度详情'), 'xs ghost', () => openAccountDetail(a)));
-        var r = row([identity, expCell, quota, statusCell, claimCell, cell(fmtTime(a.last_used), 'muted nowrap'), ops]);
+        var r = row([selectionCell, identity, platform, statusCell, capacity, quota, expCell, claimCell, cell(fmtTime(a.last_used), 'muted nowrap'), ops]);
         r.dataset.state = accountState(a);
         r.dataset.accountId = a.id;
-        const columns = ['identity', 'credential', 'quota', 'status', 'reward', 'lastUsed', 'actions'];
-        const labelsForCells = [tr('账号 / 平台'), tr('凭据'), tr('额度与用量'), tr('调度 / 并发'), tr('奖励'), tr('最近使用'), tr('操作')];
+        const columns = ['select', 'identity', 'platform', 'status', 'capacity', 'quota', 'credential', 'reward', 'lastUsed', 'actions'];
+        const labelsForCells = [tr('选择账号'), tr('名称'), tr('平台'), tr('状态'), tr('并发'), tr('额度与用量'), tr('凭据有效期'), tr('奖励'), tr('最近使用'), tr('操作')];
         Array.from(r.children).forEach(function (td, i) { td.dataset.label = labelsForCells[i]; td.dataset.column = columns[i]; });
         if (a.last_err)
             r.title = a.last_err;
         tb.appendChild(r);
     });
-    applyColumns();
+    commitRows();
 }
 
 export function accountState(a) {
@@ -273,9 +330,9 @@ export function exportSession(id) {
         domState.$("#exportJSON").value = r.session_json || "";
         domState.$("#exportMeta").textContent = tr("账号 ") + (r.name || "") +
             tr(" · 凭据有效期至 ") + fmtTime(r.expires_at) +
-            tr(" · 可续期 ") + (r.has_refresh ? tr("是") : tr("否"));
+            tr(" · 可续期 ") + (r.has_refresh === true ? tr("是") : r.has_refresh === false ? tr("否") : tr("未知"));
         domState.$("#exportPanel").classList.remove("hidden");
-        toast(tr("已导出（含 refresh_token，请勿外传）"), "ok");
+        toast(tr("已导出登录凭据，请勿外传"), "ok");
     }).catch(function (e) { if (isAbortError(e)) return; toast(tr("导出失败：") + e.message, "err"); });
 }
 
@@ -325,17 +382,42 @@ export function openModelHealth(a) {
 
 export function mountAccounts() {
 mounted = true; lifetime++;
-cleanup(() => { mounted = false; lifetime++; selected.clear(); rewardQueries.clear(); bulkPlan = null; bulkBusy = false; });
+cleanup(() => { mounted = false; lifetime++; selected.clear(); rewardQueries.clear(); bulkPlan = null; bulkBusy = false; accountPage = 1; accountFilterSignature = ''; });
 domState.$('#accountSort').value = preferences.sort;
 listen(domState.$('#accountSort'), 'change', e => { preferences.sort = e.target.value; saveTablePreferences(); if (serverState.data) renderAccounts(serverState.data); });
-const columnOptions = domState.$('#accountColumnOptions'); columnOptions.textContent = '';
-optionalColumns.forEach(key => { const label = mk('label', 'check'); const box = document.createElement('input'); box.type = 'checkbox'; box.checked = !preferences.hidden.includes(key);
-    box.onchange = () => { preferences.hidden = box.checked ? preferences.hidden.filter(x => x !== key) : [...preferences.hidden, key]; saveTablePreferences(); applyColumns(); };
-    label.append(box, document.createTextNode(columnNames[key])); columnOptions.appendChild(label);
+domState.$('#accountPageSize').value = String(preferences.pageSize);
+listen(domState.$('#accountPageSize'), 'change', e => {
+    if (bulkBusy) return;
+    const size = Number(e.target.value); if (!pageSizes.includes(size)) return;
+    preferences.pageSize = size; saveTablePreferences(); goToAccountPage(1);
 });
-listen(domState.$('#accountSelectAll'), 'change', e => { visibleAccounts.forEach(a => { if (e.target.checked) selected.add(a.id); else selected.delete(a.id); }); if (serverState.data) renderAccounts(serverState.data); });
+on('#accountPrevPage', () => goToAccountPage(accountPage - 1));
+on('#accountNextPage', () => goToAccountPage(accountPage + 1));
+const toolsMenu = domState.$('#accountToolsMenu');
+listen(toolsMenu, 'beforetoggle', e => domState.$('#accountToolsToggle').setAttribute('aria-expanded', String(e.newState === 'open')));
+listen(toolsMenu, 'toggle', e => { if (e.newState === 'open') toolsMenu.querySelector('button:not(:disabled)')?.focus({ preventScroll: true }); });
+listen(toolsMenu, 'click', e => { if (e.target.closest('.account-tools-item')) toolsMenu.hidePopover(); });
+listen(toolsMenu, 'keydown', e => {
+    const buttons = Array.from(toolsMenu.querySelectorAll('button:not(:disabled)'));
+    const index = buttons.indexOf(document.activeElement);
+    const next = e.key === 'ArrowDown' ? (index + 1) % buttons.length : e.key === 'ArrowUp' ? (index - 1 + buttons.length) % buttons.length : e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : -1;
+    if (next >= 0) { e.preventDefault(); buttons[next].focus(); }
+});
+on('#accountToolsImport', () => { toolsMenu.hidePopover(); domState.$('#addAccount').click(); domState.$('#accountMethodImport').click(); });
+on('#accountToolsExport', () => { if (bulkBusy || selected.size !== 1) return; const account = visibleAccounts.find(a => selected.has(a.id)); if (account) return exportSession(account.id); });
+const columnOptions = domState.$('#accountColumnOptions'); columnOptions.textContent = '';
+optionalColumns.forEach(key => {
+    const button = btn('', 'account-column-option', () => {
+        preferences.hidden = preferences.hidden.includes(key) ? preferences.hidden.filter(x => x !== key) : [...preferences.hidden, key];
+        button.setAttribute('aria-checked', String(!preferences.hidden.includes(key))); saveTablePreferences(); applyColumns();
+    });
+    button.dataset.columnOption = key; button.setAttribute('role', 'checkbox'); button.setAttribute('aria-checked', String(!preferences.hidden.includes(key)));
+    const tick = usageSVG('svg', { viewBox: '0 0 24 24', class: 'ico', 'aria-hidden': 'true' }); tick.appendChild(usageSVG('path', { d: 'm5 12 4 4L19 6' }));
+    button.append(mk('span', '', columnNames[key]), tick); columnOptions.appendChild(button);
+});
+['#accountSelectAll', '#accountSelectAllMobile'].forEach(selector => listen(domState.$(selector), 'change', e => { visibleAccounts.forEach(a => { if (e.target.checked) selected.add(a.id); else selected.delete(a.id); }); if (serverState.data) renderAccounts(serverState.data); }));
 on('#accountClearSelection', () => { selected.clear(); if (serverState.data) renderAccounts(serverState.data); });
-on('#accountDetailClose', () => domState.$('#accountDetailDialog').close());
+listen(domState.$('#accountStatusFilter'), 'change', e => { accountsState.accountFilter = e.target.value; if (serverState.data) renderAccounts(serverState.data); });
 on('#accountBulkStart', prepareBulk);
 listen(domState.$('#accountBulkConfirm'), 'click', executeBulk);
 on('#accountBulkClose', () => { if (!bulkBusy) domState.$('#accountBulkDialog').close(); });
@@ -455,22 +537,6 @@ async function queryRewards(a) {
     return { state, message: r.message || tr('奖励查询完成') };
 }
 
-function openAccountDetail(a) {
-    const body = domState.$('#accountDetailBody'); body.textContent = '';
-    body.appendChild(mk('h3', '', a.name || a.id));
-    const fields = [
-        [tr('来源'), sourceName(a.source)], [tr('凭据有效期'), a.expires_at ? fmtTime(a.expires_at) : a.permanent || a.non_expiring ? tr('长期密钥') : tr('未知')],
-        [tr('刷新凭据'), refreshCredentialLabel(a)],
-        [tr('最近使用'), fmtTime(a.last_used)], [tr('失败次数'), a.failures || 0],
-        [tr('最近错误'), a.last_err || '—'], [tr('冷却原因'), a.cooldown_reason || '—'],
-        [tr('最近奖励记录'), a.last_claim_msg || '—'], [tr('奖励记录时间'), fmtTime(a.last_claim_at)], [tr('奖励错误'), a.last_claim_err || '—']
-    ];
-    fields.forEach(([label, value]) => { const p = mk('p', 'account-detail-field'); p.append(mk('strong', '', label + ': '), document.createTextNode(value)); body.appendChild(p); });
-    body.appendChild(mk('p', 'hint', tr('刷新凭据的存在不代表自动续期已启用或续期成功。额度快照不代表所有模型均可调用。')));
-    const quota = mk('div', 'cell-stack'); const rendered = creditCell(a, false); quota.append(...Array.from(rendered.childNodes)); body.appendChild(quota);
-    if (!domState.$('#accountDetailDialog').open) domState.$('#accountDetailDialog').showModal();
-}
-
 function prepareBulk() {
     if (bulkBusy) return;
     const targets = visibleAccounts.filter(a => selected.has(a.id)).map(a => ({ ...a }));
@@ -540,3 +606,5 @@ async function executeBulk() {
         }
     }
 }
+
+export function currentAccountPage() { return mounted && domState.$('#tab-accounts')?.classList.contains('on') ? visibleAccounts.slice() : []; }

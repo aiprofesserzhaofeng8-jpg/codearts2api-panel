@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	apicompat "codearts2api/internal/responsescompat"
 )
 
 // Request 是 Anthropic Messages 请求体中网关关心的字段。
@@ -78,17 +80,28 @@ func RequiresNativeMessages(req *Request) bool {
 	}
 	for _, m := range req.Messages {
 		var blocks []struct {
-			Type string `json:"type"`
+			Type      string          `json:"type"`
+			Signature json.RawMessage `json:"signature"`
 		}
 		if json.Unmarshal(m.Content, &blocks) == nil {
 			for _, b := range blocks {
-				if b.Type == "thinking" || b.Type == "redacted_thinking" {
+				if b.Type == "redacted_thinking" || (b.Type == "thinking" && hasThinkingSignature(b.Signature)) {
 					return true
 				}
 			}
 		}
 	}
 	return false
+}
+
+// Empty signatures emitted by compatible clients carry no native signature.
+// Non-string values remain native-only so malformed opaque data is not stripped.
+func hasThinkingSignature(raw json.RawMessage) bool {
+	if len(raw) == 0 || bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
+		return false
+	}
+	var signature string
+	return json.Unmarshal(raw, &signature) != nil || signature != ""
 }
 func toOpenAI(req *Request, model string, native bool) (map[string]any, error) {
 	out := map[string]any{
@@ -186,112 +199,135 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 		return nil, fmt.Errorf("Messages 消息角色须为 user 或 assistant")
 	}
 	var text string
-	if err := json.Unmarshal(m.Content, &text); err == nil {
+	if json.Unmarshal(m.Content, &text) == nil {
 		return []map[string]any{{"role": m.Role, "content": text}}, nil
 	}
-
 	var blocks []map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(m.Content))
 	decoder.UseNumber()
 	if err := decoder.Decode(&blocks); err != nil {
 		return nil, fmt.Errorf("content 字段格式不支持")
 	}
-
-	role := m.Role
-	var (
-		parts          []any
-		toolCalls      []any
-		toolMsgs       []map[string]any
-		thinkingBlocks []any
-		toolImages     []any
-	)
-
+	var ordinary []map[string]any
+	var thought []any
+	var reasoning strings.Builder
+	hasReasoning := false
+	var assistantParts []any
+	toolResults := []string{}
 	for _, b := range blocks {
 		switch b["type"] {
+		case "thinking", "redacted_thinking":
+			if m.Role != "assistant" {
+				return nil, fmt.Errorf("思考块只允许在助手消息中")
+			}
+			signature, _ := json.Marshal(b["signature"])
+			if (b["type"] == "redacted_thinking" || hasThinkingSignature(signature)) && !native {
+				return nil, fmt.Errorf("签名或加密思考历史需要兼容的原生 Messages 来源，未删除历史")
+			}
+			if native {
+				thought = append(thought, b)
+			} else {
+				t, ok := b["thinking"].(string)
+				if !ok {
+					return nil, fmt.Errorf("thinking 内容须为字符串")
+				}
+				reasoning.WriteString(t)
+				hasReasoning = true
+			}
+			continue
 		case "text":
 			t, ok := b["text"].(string)
 			if !ok {
 				return nil, fmt.Errorf("text 内容须为字符串")
 			}
 			if t != "" {
-				parts = append(parts, map[string]any{"type": "text", "text": t})
+				assistantParts = append(assistantParts, map[string]any{"type": "text", "text": t})
 			}
 		case "image":
-			if u := ImageURL(b); u != "" {
-				parts = append(parts, map[string]any{"type": "image_url", "image_url": map[string]any{"url": u}})
-			} else {
+			u := ImageURL(b)
+			if u == "" {
 				return nil, fmt.Errorf("image 内容缺少有效的图片 source，未丢弃图片")
 			}
-		case "document", "audio", "video", "input_audio", "file":
-			return nil, fmt.Errorf("当前 Messages 转换尚不支持 %s 内容，请转换为文本或图片后提交", Str(b["type"]))
+			assistantParts = append(assistantParts, map[string]any{"type": "image_url", "image_url": map[string]string{"url": u}})
 		case "tool_use":
-			args, _ := json.Marshal(b["input"])
-			toolCalls = append(toolCalls, map[string]any{
-				"id":   Str(b["id"]),
-				"type": "function",
-				"function": map[string]any{
-					"name":      Str(b["name"]),
-					"arguments": string(args),
-				},
-			})
+			if m.Role != "assistant" {
+				return nil, fmt.Errorf("tool_use 只允许在助手消息中")
+			}
 		case "tool_result":
-			text, images, err := toolResultContent(b)
+			if m.Role != "user" {
+				return nil, fmt.Errorf("tool_result 只允许在用户消息中")
+			}
+			t, _, err := toolResultContent(b)
 			if err != nil {
 				return nil, err
 			}
-			if len(images) > 0 {
-				toolImages = append(toolImages, map[string]any{"type": "text", "text": "Images returned by tool " + Str(b["tool_use_id"]) + ":"})
-				toolImages = append(toolImages, images...)
-			}
-			toolMsgs = append(toolMsgs, map[string]any{
-				"role":         "tool",
-				"tool_call_id": Str(b["tool_use_id"]),
-				"content":      text,
-			})
-		case "thinking", "redacted_thinking":
-			if native {
-				if m.Role != "assistant" {
-					return nil, fmt.Errorf("思考块只允许在助手消息中")
-				}
-				thinkingBlocks = append(thinkingBlocks, b)
-			}
+			toolResults = append(toolResults, t)
 		default:
 			return nil, fmt.Errorf("当前 Messages 转换不支持内容块 %q，未静默删除", Str(b["type"]))
 		}
+		ordinary = append(ordinary, b)
 	}
-
-	out := make([]map[string]any, 0, 2)
-	msg := map[string]any{"role": role}
-	if len(thinkingBlocks) > 0 {
-		msg["anthropic_thinking_blocks"] = thinkingBlocks
-	}
-	if len(parts) == 1 {
-		// 单个文本块直接摊平成字符串，与 OpenAI 的常见写法一致
-		if p, ok := parts[0].(map[string]any); ok && p["type"] == "text" {
-			msg["content"] = p["text"]
-		} else {
-			msg["content"] = parts
+	raw := m.Content
+	if len(thought) > 0 {
+		var err error
+		raw, err = json.Marshal(ordinary)
+		if err != nil {
+			return nil, err
 		}
-	} else if len(parts) > 1 {
-		msg["content"] = parts
-	} else {
-		msg["content"] = ""
 	}
-	if len(toolCalls) > 0 {
-		msg["tool_calls"] = toolCalls
+	converted, err := apicompat.AnthropicMessageToChatMessages(apicompat.AnthropicMessage{Role: m.Role, Content: raw})
+	if err != nil {
+		return nil, err
 	}
-	if role == "user" && len(toolMsgs) > 0 {
-		out = append(out, toolMsgs...)
-		toolMsgs = nil
-	}
-	if len(parts) > 0 || len(toolCalls) > 0 || len(thinkingBlocks) > 0 {
+	// The shared bridge owns tool calls, result expansion and image placement.
+	// Local contracts retain ordinary reasoning and native opaque history without
+	// applying Sub2API's provider-specific history filters or system cleanup.
+	out := make([]map[string]any, 0, len(converted))
+	resultIndex := 0
+	for _, c := range converted {
+		msg := map[string]any{"role": c.Role, "content": ""}
+		if len(c.Content) > 0 {
+			var content any
+			decoder = json.NewDecoder(bytes.NewReader(c.Content))
+			decoder.UseNumber()
+			if err := decoder.Decode(&content); err != nil {
+				return nil, err
+			}
+			msg["content"] = content
+		}
+		if len(c.ToolCalls) > 0 {
+			calls := make([]any, 0, len(c.ToolCalls))
+			for _, call := range c.ToolCalls {
+				calls = append(calls, map[string]any{"id": call.ID, "type": call.Type, "function": map[string]any{"name": call.Function.Name, "arguments": call.Function.Arguments}})
+			}
+			msg["tool_calls"] = calls
+		}
+		if c.Role == "tool" {
+			msg["tool_call_id"] = c.ToolCallID
+			if resultIndex < len(toolResults) {
+				msg["content"] = toolResults[resultIndex]
+				resultIndex++
+			}
+		}
 		out = append(out, msg)
 	}
-	out = append(out, toolMsgs...)
-	// Chat Completions tool messages accept text, not image blocks. Complete
-	// the tool-result group first, then preserve images as a user media message.
-	if len(toolImages) > 0 {
-		out = append(out, map[string]any{"role": "user", "content": toolImages})
+	if m.Role == "assistant" {
+		if len(out) == 0 {
+			out = []map[string]any{{"role": "assistant"}}
+		}
+		msg := out[0]
+		msg["content"] = ""
+		if len(assistantParts) == 1 && assistantParts[0].(map[string]any)["type"] == "text" {
+			msg["content"] = assistantParts[0].(map[string]any)["text"]
+		} else if len(assistantParts) > 0 {
+			msg["content"] = assistantParts
+		}
+		if hasReasoning {
+			msg["reasoning_content"] = reasoning.String()
+		}
+		if len(thought) > 0 {
+			msg["anthropic_thinking_blocks"] = thought
+		}
 	}
 	return out, nil
 }

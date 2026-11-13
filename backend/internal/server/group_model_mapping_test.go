@@ -281,7 +281,9 @@ func TestMappedModelProfileDoesNotResolveNameCollision(t *testing.T) {
 		s.Handler().ServeHTTP(w, r)
 		return w
 	}
-	if w := request(); w.Code != 200 || !strings.Contains(w.Body.String(), `"client_profile_status":"missing_limits"`) || strings.Contains(w.Body.String(), `"context_window"`) {
+	// Missing numeric fields now use a labeled template, not the unrelated
+	// colliding CodeArts policy (65536 / 8192).
+	if w := request(); w.Code != 200 || !strings.Contains(w.Body.String(), `"context_window":32768`) || strings.Contains(w.Body.String(), `"context_window":65536`) || !strings.Contains(w.Body.String(), "兼容默认值") {
 		t.Fatal("borrowed profile from unrelated model", w.Code, w.Body.String())
 	}
 	if err := s.Store.SetModelPolicyAndSave("test-model", p); err != nil {

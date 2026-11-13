@@ -244,7 +244,7 @@ func TestModelsToolCapabilityLimitedToVerifiedConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i, want := range []string{"supported", "", ""} {
-		if models[i].ToolCalling != want || models[i].Context != 0 || models[i].ImageInput != "" {
+		if models[i].ToolCalling != want || models[i].Context != 0 || models[i].ImageInput != "unsupported" {
 			t.Fatal("unverified capability inferred", i)
 		}
 	}

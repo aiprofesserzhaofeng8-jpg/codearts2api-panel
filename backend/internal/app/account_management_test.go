@@ -90,37 +90,44 @@ func TestAccountManagementStrictFailureRetainsAccountAndCredentialCache(t *testi
 	}
 }
 
-func TestAccountManagementLegacyFailureAndDuplicateImportSemantics(t *testing.T) {
+func TestAccountManagementSaveFailureRollsBack(t *testing.T) {
 	srv, st, session := managementFixture(t)
+	st.MarkModelResult("native", "test-model", false, "failure", 60)
 	restore := blockManagementWrites(t, st)
-	if err := srv.AccountManagement.Toggle("native"); err != nil || st.Account("native").Enabled {
-		t.Fatal("legacy toggle save behavior changed", err)
+	for _, action := range []func() error{
+		func() error { return srv.AccountManagement.Toggle("native") },
+		func() error { return srv.AccountManagement.SetPaused("native", true) },
+		func() error { return srv.AccountManagement.ClearErrors("native") },
+	} {
+		if err := action(); err == nil {
+			t.Fatal("save failure reported success")
+		}
 	}
-	if err := srv.AccountManagement.SetPaused("native", true); err != nil || !st.Account("native").Paused {
-		t.Fatal("legacy pause save behavior changed", err)
+	if !st.Account("native").Enabled || st.Account("native").Paused || len(st.ModelHealthSnapshot()["native"]) != 1 {
+		t.Fatal("failed mutation changed live state")
 	}
 	srv.Cred.Remember("native", session)
-	newAccount := &accounts.Account{ID: "new-id", Enabled: true, NativeCredential: session}
-	other := &accounts.Account{ID: "other", Provider: "workbuddy", ExternalID: "other-user", Enabled: true}
-	created := srv.AccountManagement.Import([]*accounts.Account{newAccount, other})
-	if len(created) != 2 || created[0] || !created[1] || newAccount.ID != "native" || srv.Cred.Cached("native", time.Hour) != nil {
-		t.Fatal("deduplication identity or invalidation changed")
+	list := []*accounts.Account{{ID: "new-id", Enabled: true, NativeCredential: session}, {ID: "other", Provider: "workbuddy", ExternalID: "other-user", Enabled: true}}
+	if _, err := srv.AccountManagement.Import(list); err == nil {
+		t.Fatal("import reported success")
 	}
-	a := st.Account("native")
-	if a.Enabled || !a.Paused || a.MaxInFlight != 2 {
-		t.Fatal("duplicate import reset scheduling controls")
+	if st.Account("other") != nil || srv.Cred.Cached("native", time.Hour) == nil {
+		t.Fatal("failed import changed account or cache")
 	}
 	restore()
-	reopened, err := storage.Open(st.Path())
-	if err != nil || !reopened.Account("native").Enabled || reopened.Account("native").Paused || reopened.Account("other") != nil {
-		t.Fatal("failed best-effort write unexpectedly changed disk", err)
+	created, err := srv.AccountManagement.Import(list)
+	if err != nil || len(created) != 2 || created[0] || !created[1] || list[0].ID != "native" {
+		t.Fatal("deduplication changed", err)
 	}
-	if err := st.Save(); err != nil {
+	if srv.Cred.Cached("native", time.Hour) != nil {
+		t.Fatal("successful import did not invalidate cache")
+	}
+	if err := srv.AccountManagement.SetPaused("native", true); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err = storage.Open(st.Path())
-	if err != nil || reopened.Account("native").Enabled || !reopened.Account("native").Paused || reopened.Account("other") == nil {
-		t.Fatal("legacy in-memory mutation was not recoverable", err)
+	reopened, err := storage.Open(st.Path())
+	if err != nil || !reopened.Account("native").Paused || reopened.Account("other") == nil {
+		t.Fatal("successful mutation not durable", err)
 	}
 }
 

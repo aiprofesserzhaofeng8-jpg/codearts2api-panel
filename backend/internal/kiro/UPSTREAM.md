@@ -24,8 +24,23 @@ API Key 的 Q 服务根路径与两个不同操作 target 另核对 MIT 项目 [
 - OIDC 设备授权按上游轮询间隔执行，`slow_down` 加长间隔；10 分钟内存会话、128 项上限、取消即失效。链接严格限制官方 HTTPS 域名。
 - 刷新响应处理后立即返回凭据，由已有账号协调器完成条件提交，不在轮转和提交之间追加目录/资料请求。
 - CRC 校验完整 AWS 帧，损坏即失败，不尝试跳过坏字节后宣布成功。单帧 8 MiB，工具参数累计 8 MiB；工具 JSON 和大整数保留原始表示。正常帧边界的 HTTP EOF 是该协议的结束方式，无法识别上游在完整帧之后错误地正常关闭连接的情况。
+- 空文本事件不提前提交角色或成功状态；推理事件中出现错误类型或 null 内容时失败，不跳过损坏内容后完成。空响应、半帧与未完成工具仍不能作为成功结束；本地故障注入不等于真实 Kiro 故障已恢复。
 - 仅转发上游明确返回的 token 计量；credits 和上下文占用百分比不冒充 token 或美元费用。未知计量继续沿用网关原有未知用量规则。
 
 ## 更新与验收
 
 协议可能随 Kiro 客户端更新。变更前核对实际端点与脱敏捕获，再更新本目录的模拟上游测试；不得把真实凭据或请求内容加入夹具。真实账号登录、模型生成、API Key 路由和到期续期尚未验收，不能据模拟测试宣称上游长期可用。
+
+## 2026-11-08 响应格式兼容
+
+行为参考 MIT 项目 [kiro-cpa-plugin 的成功响应处理](https://github.com/nguyenha935/kiro-cpa-plugin/blob/1f498ab543bc909f2661a1b41ee26d1b48672ba4/internal/runtime/executor/kiro_executor.go)：成功响应直接交给事件流解析器，不能仅凭 Content-Type 拒绝。本次按现有适配器独立实现，没有引入该项目的执行器、重试或账号池代码。
+
+本项目以有界缓冲查看响应体首字节，合法帧继续逐帧处理；JSON 错误最多读取 64 KiB 加一个超限检测字节。只映射已知机器错误码，未知代码和原始错误正文不对外暴露。JSON 错误不是生成结果，HTTP 200 也不能覆盖帧中的异常。所有 CRC、帧长度和未完成工具校验仍然生效；不增加持久化、后台任务、模型替换或端点重试。
+
+验收边界与真实账号验证命令见 [Kiro 响应修复验收](../../../docs/acceptance/KIRO-RESPONSE-FIX-2026-11-08.md)。
+
+## IdC 应用令牌选择修复
+
+2026-11-08 检查发现 applyToken 在 IdC 响应同时含 accessToken/idToken 时错误优先保存 idToken；登录和续期共用此函数。现统一只接受 accessToken，缺少它时失败，保留已有刷新令牌的规则不变。依据 [AWS CreateToken 的 accessToken 定义](https://docs.aws.amazon.com/singlesignon/latest/OIDCAPIReference/API_CreateToken.html)，应用 Bearer 应使用 accessToken。旧测试中优先 idToken 的预期已纠正，并补充仅返回 idToken 时拒绝的测试。
+
+这是可确定的源码缺陷，但尚未证实用户当前状态保存的就是 idToken。先前只读工具不刷新凭据，因此 token 过期也可能导致真实 403。修复不会把已保存的身份令牌自动变为访问令牌；实际恢复需要在修复版中通过正常续期/登录事务更新凭据，不能绕过存储提交直接轮转 refresh token。

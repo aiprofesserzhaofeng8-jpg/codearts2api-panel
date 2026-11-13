@@ -44,7 +44,10 @@ def violations(packages):
                     reason = "HTTP belongs to transport or platform adapters"
                 elif top == "gateway" and owner != "gateway":
                     reason = "business module must not depend back on gateway"
-            if owner in PURE and local:
+            # Protocol may reuse the vendored pure conversion library. Both
+            # modules remain subject to the transitive transport/storage ban.
+            pure_conversion = relative == "protocol" and local == "responsescompat"
+            if owner in PURE and local and not pure_conversion:
                 reason = "value/algorithm module must remain independent of other internal modules"
             platform = relative.split("/")[-1] if relative.startswith("upstream/") else relative
             if platform in PLATFORMS and (top in PLATFORMS or (local and local.startswith("upstream/"))):

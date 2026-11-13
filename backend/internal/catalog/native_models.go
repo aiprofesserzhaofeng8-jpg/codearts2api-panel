@@ -48,6 +48,7 @@ func constrainNative(model provider.Model, contract *provider.NativeModelContrac
 }
 
 func (p *ModelPlan) sourceCapabilities(model provider.Model) provider.Model {
+	model = reviewedSourceCapabilities(model)
 	model = constrainNative(model, NativeModelContract(model))
 	return constrainNative(model, nativeModelByName(p.Public))
 }

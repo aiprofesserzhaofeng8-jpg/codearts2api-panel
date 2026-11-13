@@ -10,6 +10,8 @@ Go 标准库实现，接入本项目的 Adapter / BrowserLogin，不启动 Qoder
 
 这是非官方数据面协议，可能随客户端更新。模型必须从当前账号的 chat 目录读取；发送实际 key，包含 business.model_key，不根据展示名猜测底层模型或能力。缺少 UMID 桥接时不伪造 MachineToken/Type。尚未完成真实 Qoder 账号验收，见 [使用说明](../../../docs/QODER.md)。
 
+2026-11-07 R4 补齐结构化工具历史的空内容兼容：仅将带 tool_calls 的助手消息以及 tool 消息中的 null/缺失 content 转为 `""`。协议依据为上述固定版本 qoder_proxy.py 的 flatten_messages 结构化历史分支；没有采用其工具文本化、历史裁剪、推理补造或额外调度。保留实际历史、调用 ID、参数、推理和媒体。签名后请求检查及真实三协议复验见 [R4 验收](../../../docs/acceptance/QODER-TOOLS-R4-2026-11-07.md)；其中直接平台来源和隔离中继验证的范围分别记录，不代表所有型号、地区或账号均已验证。
+
 ## Campaign rewards (2026-11-08)
 
 Billing protocol reference: [mmqz/cpa-multi-plugins campaign.go](https://github.com/mmqz/cpa-multi-plugins/blob/e3cd4bba5d6012354bb6a0d03c61b442ae8e93cf/plugins/qoder/campaign.go) and billing.go at the same revision (MIT, notice in LICENSE.qoder). Our small DailyRewards adapter uses plain Bearer, Cosy-ClientType 10, GET /sash/api/v1/me/campaigns and POST /sash/api/v1/me/campaigns/{id}/claim. Both CN and global use their existing region OpenAPI origin. The retired daily-check-in endpoint is not used.

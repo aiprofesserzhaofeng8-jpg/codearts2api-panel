@@ -147,7 +147,11 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		for _, result := range results {
 			list = append(list, result.Account)
 		}
-		created := s.AccountManagement.Import(list)
+		created, err := s.AccountManagement.Import(list)
+		if err != nil {
+			writeAccountManagementError(w, err)
+			return
+		}
 		imported := make([]map[string]any, 0, len(results))
 		for i, result := range results {
 			imported = append(imported, map[string]any{
@@ -165,7 +169,11 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
 			return
 		}
-		isNew := s.AccountManagement.Add(acct)
+		isNew, err := s.AccountManagement.Add(acct)
+		if err != nil {
+			writeAccountManagementError(w, err)
+			return
+		}
 		response := map[string]any{"ok": true, "new": isNew, "id": acct.ID}
 		if permanent {
 			response["credential_kind"] = "aksk"
@@ -177,7 +185,11 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 			writeAccountManagementError(w, err)
 			return
 		}
-		isNew := s.AccountManagement.Add(acct)
+		isNew, err := s.AccountManagement.Add(acct)
+		if err != nil {
+			writeAccountManagementError(w, err)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "new": isNew, "id": acct.ID})
 	case "remove":
 		if err := s.AccountManagement.Remove(body.ID); err != nil {
@@ -193,7 +205,10 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	case "clear-errors":
-		s.AccountManagement.ClearErrors(body.ID)
+		if err := s.AccountManagement.ClearErrors(body.ID); err != nil {
+			writeAccountManagementError(w, err)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	case "pause", "resume":
 		if err := s.AccountManagement.SetPaused(body.ID, body.Action == "pause"); err != nil {
@@ -466,9 +481,28 @@ func (s *Server) handleAdminCredits(w http.ResponseWriter, r *http.Request) {
 	}
 	fresh := r.URL.Query().Get("fresh") != ""
 	targets := s.Store.Accounts()
-	if id := strings.TrimSpace(r.URL.Query().Get("id")); id != "" {
+	if ids, scoped := r.URL.Query()["id"]; scoped {
+		if len(ids) > 100 {
+			writeErr(w, 400, "一次最多查询 100 个账号", "invalid_request_error")
+			return
+		}
 		targets = nil
-		if a := s.Store.Account(id); a != nil {
+		seen := map[string]bool{}
+		for _, id := range ids {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				writeErr(w, 400, "缺少账号 ID", "invalid_request_error")
+				return
+			}
+			if seen[id] {
+				continue
+			}
+			seen[id] = true
+			a := s.Store.Account(id)
+			if a == nil {
+				writeErr(w, 404, "账号不存在", "invalid_request_error")
+				return
+			}
 			targets = append(targets, a)
 		}
 	}

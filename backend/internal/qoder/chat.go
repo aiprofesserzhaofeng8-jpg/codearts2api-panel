@@ -2,6 +2,7 @@ package qoder
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"codearts2api/internal/provider"
+	"codearts2api/internal/providerhttp"
 )
 
 func chatBody(a Credentials, request provider.Request) ([]byte, string, error) {
@@ -25,6 +27,13 @@ func chatBody(a Credentials, request provider.Request) ([]byte, string, error) {
 	var messages []map[string]json.RawMessage
 	if json.Unmarshal(input["messages"], &messages) != nil || len(messages) == 0 {
 		return nil, "", &provider.Error{Status: 400, Message: "Qoder 请求缺少 messages"}
+	}
+	// Qoder's structured-history converter expects string content on tool
+	// continuations. OpenAI permits null/missing assistant content alongside
+	// tool_calls; normalize only that empty representation, retaining every
+	// call ID, argument, reasoning field and non-empty/media content.
+	if normalizeEmptyToolContent(messages) {
+		input["messages"], _ = json.Marshal(messages)
 	}
 	id, err := uuid()
 	if err != nil {
@@ -70,6 +79,29 @@ func chatBody(a Credentials, request provider.Request) ([]byte, string, error) {
 	return b, model, err
 }
 
+func normalizeEmptyToolContent(messages []map[string]json.RawMessage) bool {
+	changed := false
+	for _, message := range messages {
+		content := bytes.TrimSpace(message["content"])
+		if len(content) != 0 && !bytes.Equal(content, []byte("null")) {
+			continue
+		}
+		switch stringField(message, "role") {
+		case "assistant":
+			var calls []json.RawMessage
+			if json.Unmarshal(message["tool_calls"], &calls) != nil || len(calls) == 0 {
+				continue
+			}
+		case "tool":
+		default:
+			continue
+		}
+		message["content"] = json.RawMessage(`""`)
+		changed = true
+	}
+	return changed
+}
+
 func (c *Client) Stream(ctx context.Context, raw json.RawMessage, request provider.Request, emit func([]byte) error) error {
 	a, err := decode(raw)
 	if err != nil {
@@ -85,7 +117,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, request provid
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return failure(resp.StatusCode)
+		return providerhttp.FailureResponse("Qoder", resp)
 	}
 	if !strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/event-stream") {
 		return &provider.Error{Status: 502, Message: "Qoder 未返回流式对话响应"}

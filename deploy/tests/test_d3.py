@@ -72,7 +72,11 @@ class UpgradeBoundaryTest(unittest.TestCase):
 
 
 class PackageBoundaryTest(unittest.TestCase):
-    setUp = base_tests.OperationsTest.setUp
+    def setUp(self):
+        base_tests.OperationsTest.setUp(self)
+        source = patch.object(packaging, 'prepare_source', return_value={'commit': 'fixture', 'dirty': False, 'channel': 'stable'})
+        source.start()
+        self.addCleanup(source.stop)
 
     def fake_build(self, command, **kwargs):
         Path(command[command.index('-o') + 1]).write_bytes(b'synthetic-release-binary')

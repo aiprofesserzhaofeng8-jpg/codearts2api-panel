@@ -12,7 +12,7 @@ import CredentialImport from './providers/CredentialImport.vue';
           <div v-once class="connection-info"><span class="connection-dot"></span><span>{{tr('API 接入地址')}}</span><code id="apiBaseURL"></code></div>
           <button class="btn xs ghost" id="copyBaseURL">{{tr('复制地址')}}</button>
         </div>
-        <div v-once class="card">
+        <div v-once class="card accounts-workspace">
           <div v-once class="card-head">
             <div v-once>
               <h2>{{tr('账号管理 ')}}<span class="heading-count" id="accountCount">{{tr('0 个账号')}}</span></h2>
@@ -20,9 +20,8 @@ import CredentialImport from './providers/CredentialImport.vue';
             <div v-once class="card-actions">
               <button class="btn primary" id="addAccount">{{tr('＋ 添加账号')}}</button>
               <button class="btn hidden" id="accountGrowth" type="button">{{tr('成长任务')}}</button>
-              <button class="btn" id="checkinAll">{{tr('全部探活')}}</button>
-              <button class="btn" id="refreshCredits">{{tr('刷新额度')}}</button>
-              <button class="btn" id="claimAll">{{tr('领取活动福利')}}</button>
+              <button class="btn" id="refreshCredits" :title="tr('刷新本页额度')">{{tr('刷新额度')}}</button>
+              <button class="btn" id="accountToolsToggle" popovertarget="accountToolsMenu" aria-expanded="false" aria-controls="accountToolsMenu"><span aria-hidden="true">⋯</span>{{tr('更多操作')}}<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
             </div>
           </div>
 
@@ -48,19 +47,11 @@ import CredentialImport from './providers/CredentialImport.vue';
           <div v-once class="account-toolbar">
             <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option><option value="teleagent">TeleAgent</option></select></label>
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" :placeholder="tr('搜索账号名称或来源')" :aria-label="tr('搜索账号')"></label>
-            <div v-once class="account-filters" role="group" :aria-label="tr('账号状态筛选')">
-              <button class="filter-chip on" data-account-filter="all" aria-pressed="true">{{tr('全部')}}</button>
-              <button class="filter-chip" data-account-filter="ready" aria-pressed="false">{{tr('可调度')}}</button>
-              <button class="filter-chip" data-account-filter="cooling" aria-pressed="false">{{tr('冷却中')}}</button>
-              <button class="filter-chip" data-account-filter="paused" aria-pressed="false">{{tr('已暂停')}}</button>
-              <button class="filter-chip" data-account-filter="disabled" aria-pressed="false">{{tr('已停用')}}</button>
-            </div>
+            <select id="accountStatusFilter" :aria-label="tr('账号状态筛选')"><option value="all">{{tr('全部状态')}}</option><option value="ready">{{tr('可调度')}}</option><option value="cooling">{{tr('冷却中')}}</option><option value="paused">{{tr('已暂停')}}</option><option value="disabled">{{tr('已停用')}}</option></select>
             <label>{{tr('排序')}} <select id="accountSort"><option value="default">{{tr('默认顺序')}}</option><option value="name">{{tr('账号名称')}}</option><option value="lastUsed">{{tr('最近使用优先')}}</option><option value="expires">{{tr('即将过期优先')}}</option></select></label>
-            <details class="account-columns"><summary>{{tr('显示列')}}</summary><div id="accountColumnOptions"></div></details>
-            <span class="filter-count" id="accountFilterCount" aria-live="polite"></span>
           </div>
-          <div class="account-bulk-bar">
-            <label><input type="checkbox" id="accountSelectAll"> {{tr('选择当前筛选结果')}}</label>
+          <label class="account-mobile-select"><input type="checkbox" id="accountSelectAllMobile">{{tr('选择本页账号')}}</label>
+          <div class="account-bulk-bar" hidden>
             <span id="accountSelectionCount" aria-live="polite"></span>
             <button class="btn xs" id="accountClearSelection">{{tr('清除选择')}}</button>
             <select id="accountBulkAction" :aria-label="tr('批量操作')">
@@ -69,19 +60,22 @@ import CredentialImport from './providers/CredentialImport.vue';
             </select>
             <button class="btn xs" id="accountBulkStart">{{tr('操作所选账号')}}</button>
           </div>
-          <div v-once class="table-wrap account-table-wrap">
+          <div v-once class="table-wrap account-table-wrap" tabindex="0" role="region" :aria-label="tr('账号管理 ')">
             <table class="account-table">
-              <thead><tr><th data-column="identity">{{tr('账号 / 平台')}}</th><th data-column="credential">{{tr('凭据')}}</th><th data-column="quota">{{tr('额度与用量')}}</th><th data-column="status">{{tr('调度 / 并发')}}</th><th data-column="reward">{{tr('奖励')}}</th><th data-column="lastUsed">{{tr('最近使用')}}</th><th data-column="actions">{{tr('操作')}}</th></tr></thead>
+              <thead><tr><th data-column="select"><input type="checkbox" id="accountSelectAll" :aria-label="tr('选择本页账号')"></th><th data-column="identity">{{tr('名称')}}</th><th data-column="platform">{{tr('平台')}}</th><th data-column="status">{{tr('状态')}}</th><th data-column="capacity">{{tr('并发')}}</th><th data-column="quota">{{tr('额度与用量')}}</th><th data-column="credential">{{tr('凭据有效期')}}</th><th data-column="reward">{{tr('奖励')}}</th><th data-column="lastUsed">{{tr('最近使用')}}</th><th data-column="actions">{{tr('操作')}}</th></tr></thead>
               <tbody id="accounts"></tbody>
             </table>
           </div>
+          <div class="account-table-footer">
+            <div class="account-page-info"><span id="accountFilterCount" aria-live="polite"></span><label for="accountPageSize">{{tr('每页')}}:</label><select id="accountPageSize"><option value="10">10</option><option value="20">20</option><option value="50">50</option><option value="100">100</option></select></div>
+            <nav class="account-pagination" :aria-label="tr('账号分页')"><button class="btn" id="accountPrevPage" :aria-label="tr('上一页')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div id="accountPageNumbers"></div><button class="btn" id="accountNextPage" :aria-label="tr('下一页')"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></nav>
+          </div>
         </div>
 
-        <div v-once class="card">
-          <div v-once class="card-head">
-            <div v-once>
-              <h2>{{tr('活动福利')}}</h2>
-            </div>
+        <details v-once class="account-welfare" id="accountWelfare">
+          <summary><span>{{tr('活动福利')}}</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></summary>
+          <div class="account-welfare-content">
+          <div v-once class="account-welfare-toolbar">
             <div v-once class="card-actions">
               <label class="inline-field">
                 <span>{{tr('账号')}}</span>
@@ -112,13 +106,22 @@ import CredentialImport from './providers/CredentialImport.vue';
             </div>
             <input class="w-full" id="inviteURL" readonly data-select-on-click="1" :aria-label="tr('邀请链接')">
           </div>
+          </div>
+        </details>
+
+        <div id="accountToolsMenu" class="account-tools-menu" popover="auto" role="group" :aria-label="tr('更多操作')">
+          <div class="account-tools-section"><p>{{tr('数据操作')}}</p>
+            <button id="accountToolsImport" class="account-tools-item"><span class="account-tool-icon green"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></svg></span>{{tr('导入账号')}}</button>
+            <button id="accountToolsExport" class="account-tools-item" disabled :title="tr('请先勾选一个账号')"><span class="account-tool-icon violet"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 15v6h16v-6"/></svg></span>{{tr('导出所选账号')}}</button>
+          </div>
+          <div class="account-tools-section"><p>{{tr('工具')}}</p>
+            <button id="checkinAll" class="account-tools-item"><span class="account-tool-icon blue"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5 7a8 8 0 0 1 13-2l2 3M4 16l2 3a8 8 0 0 0 13-2"/></svg></span>{{tr('全部探活')}}</button>
+            <button id="claimAll" class="account-tools-item"><span class="account-tool-icon orange"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v4H3zM5 12v9h14v-9M12 8v13M12 8C3 8 5 0 9 3l3 5c9 0 7-8 3-5z"/></svg></span>{{tr('领取活动福利')}}</button>
+          </div>
+          <div class="account-tools-section"><p>{{tr('列显示')}}</p><div id="accountColumnOptions"></div></div>
         </div>
 
       </section>
-<dialog v-once id="accountDetailDialog" class="modal" aria-labelledby="accountDetailTitle">
-  <div class="modal-head"><h2 id="accountDetailTitle">{{tr('账号详情')}}</h2><button class="btn ghost" id="accountDetailClose">{{tr('关闭')}}</button></div>
-  <div class="modal-body" id="accountDetailBody"></div>
-</dialog>
 <dialog v-once id="accountBulkDialog" class="modal" aria-labelledby="accountBulkTitle">
   <div class="modal-head"><h2 id="accountBulkTitle">{{tr('批量操作')}}</h2></div>
   <div class="modal-body"><p id="accountBulkSummary"></p><p class="hint">{{tr('仅处理下面列出的账号，逐个执行。关闭或切页不会撤销已提交的操作；失败项不会自动重试。')}}</p><ul id="accountBulkTargets"></ul><div id="accountBulkResults" role="status" aria-live="polite"></div></div>

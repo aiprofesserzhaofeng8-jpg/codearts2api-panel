@@ -150,10 +150,18 @@ func (c *Checker) fetch(ctx context.Context) (Status, error) {
 			return s, nil
 		}
 	}
-	current, ok := parse(c.Current)
+	currentVersion := c.Current
+	local := regexp.MustCompile(`-local\.[0-9]{8,14}$`).FindString(currentVersion)
+	currentVersion = strings.TrimSuffix(currentVersion, local)
+	current, ok := parse(currentVersion)
 	if !ok {
 		s.State = "development"
 		s.Message = "当前为开发或定制版本，请人工核对发布说明后迁移"
+		return s, nil
+	}
+	if local != "" && current == target {
+		s.State = "available"
+		s.Message = "当前为本地验证版本，可升级到同版本号的正式发布"
 		return s, nil
 	}
 	s.State = "current"

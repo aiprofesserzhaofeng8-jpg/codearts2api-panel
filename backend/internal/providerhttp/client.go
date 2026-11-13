@@ -33,6 +33,22 @@ func Failure(name string, status int) error {
 	}
 	return &provider.Error{Status: status, AccountFault: status == 401, Message: fmt.Sprintf("%s 上游请求失败（HTTP %d）", name, status)}
 }
+
+// FailureResponse retains an upstream Retry-After without interpreting it as a
+// quota reset. No body is read or exposed; malformed/past values remain unknown.
+func FailureResponse(name string, resp *http.Response) error {
+	err := Failure(name, resp.StatusCode).(*provider.Error)
+	if resp.StatusCode == 429 || resp.StatusCode == 503 {
+		now := time.Now()
+		value := strings.TrimSpace(resp.Header.Get("Retry-After"))
+		if seconds, e := strconv.ParseInt(value, 10, 64); e == nil && seconds > 0 && seconds <= 7*86400 {
+			err.RetryAt = now.Unix() + seconds
+		} else if at, e := http.ParseTime(value); e == nil && at.After(now) && at.Sub(now) <= 7*24*time.Hour {
+			err.RetryAt = at.Unix()
+		}
+	}
+	return err
+}
 func Do(ctx context.Context, client *http.Client, name, method, endpoint string, headers http.Header, body any) (*http.Response, error) {
 	var data []byte
 	var err error

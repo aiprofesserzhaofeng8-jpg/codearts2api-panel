@@ -152,7 +152,7 @@ func TestProductInheritedFallbackFalseAndAtomicSettingsValidation(t *testing.T) 
 					io.WriteString(w, `{"code":"content_policy_violation","message":"blocked by security policy"}`)
 				}
 			})
-			patch := fmt.Sprintf(`{"common_prompt":{"prompt_mode":"passthrough","prompt_fallback":true},%q:{"prompt_overrides":{"prompt_fallback":false,"sanitize":false,"prompt_text":""}}}`, platform)
+			patch := fmt.Sprintf(`{"common_prompt":{"prompt_mode":"passthrough","prompt_fallback":true,"sanitize":true},%q:{"prompt_overrides":{"prompt_fallback":false,"sanitize":false,"prompt_text":""}}}`, platform)
 			postSettings(t, s, patch)
 			w := responseRequest(s, key, "/v1/chat/completions", mappedBody("/v1/chat/completions", false, model))
 			if calls != 1 || w.Code == 200 {

@@ -14,6 +14,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:1,ready:1,models:5}}));
  await page.goto((process.env.CODEARTS_TEST_BASE||'http://127.0.0.1:10088')+'/#accounts');
  const row=page.locator('#accounts tr[data-state]');await row.locator('[data-quota-window="balance"]').waitFor();assert.ok((await row.textContent()).includes('50 Credits'));assert.equal(claims,0);
+ await page.locator('#accountWelfare > summary').click();
  await page.locator('#loadWelfare').click();await page.locator('#welfare').getByText('TeleAgent 每日积分',{exact:true}).waitFor();assert.equal(claims,0);assert.equal(await page.locator('#welfare tr').count(),2);
  const before=balanceReads;
  await row.getByRole('button',{name:locale==='zh-CN'?'更多':'More',exact:true}).click();

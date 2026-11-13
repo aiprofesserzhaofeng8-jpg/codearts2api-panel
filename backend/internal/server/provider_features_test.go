@@ -344,7 +344,7 @@ func TestExternalSearchCancellation(t *testing.T) {
 }
 func TestProviderSettingsValidationIsAtomic(t *testing.T) {
 	s := newTestServer(t, 0, 1)
-	postSettings(t, s, `{"codearts":{"prompt_text":"CA"},"trae":{"prompt_text":"TR"},"workbuddy":{"prompt_text":"WB"}}`)
+	postSettings(t, s, `{"codearts":{"prompt_text":"CA","sanitize":true},"trae":{"prompt_text":"TR","sanitize":true},"workbuddy":{"prompt_text":"WB","sanitize":true}}`)
 	for _, body := range []string{`{"codearts":{"prompt_text":"CHANGED"},"trae":{"search_enabled":true}}`, `{"codearts":null}`, `{"trae":{"search_scope":"global"}}`, `{"trae":{"search_backend":"native"}}`, `{"codearts":{"search_url":"https://user:secret@example.test"}}`, `{"codearts":{"search_url":"file:///tmp/search"}}`, `{"workbuddy":{"search_url":"https://example.test"}}`} {
 		w := httptest.NewRecorder()
 		s.handleAdminSettings(w, httptest.NewRequest("POST", "/admin/api/settings", strings.NewReader(body)))

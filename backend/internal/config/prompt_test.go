@@ -32,3 +32,20 @@ func TestPromptInheritanceLegacyFalseEmptyAndIsolation(t *testing.T) {
 		t.Fatal("platform cross contamination")
 	}
 }
+
+func TestNewPromptDefaultsPreserveClientContent(t *testing.T) {
+	common := DefaultPromptSettings()
+	if common.Mode != "passthrough" || common.Fallback || common.Sanitize {
+		t.Fatal(common)
+	}
+	for _, p := range []string{"codearts", "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude", "teleagent"} {
+		v := DefaultProviderSettings(p).ResolvePrompt(common)
+		if v.PromptMode != "passthrough" || v.PromptFallback || v.Sanitize {
+			t.Fatal(p, v)
+		}
+	}
+	explicit := ProviderSettings{PromptMode: "custom", PromptText: "existing", PromptFallback: true, Sanitize: true}
+	if got := explicit.ResolvePrompt(common); !reflect.DeepEqual(got, explicit) {
+		t.Fatal("rewrote existing configuration", got)
+	}
+}

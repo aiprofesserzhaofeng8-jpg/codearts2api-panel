@@ -23,9 +23,9 @@ type ProviderSettings struct {
 }
 
 func DefaultProviderSettings(name string) ProviderSettings {
-	w := ProviderSettings{PromptMode: "passthrough", PromptFallback: true, Sanitize: true, SearchScope: "cn", SearchBackend: "searxng"}
+	w := ProviderSettings{PromptMode: "passthrough", SearchScope: "cn", SearchBackend: "searxng"}
 	if name == provider.WorkBuddy {
-		w.PromptMode, w.SearchEnabled, w.SearchBackend = "custom", true, "native"
+		w.SearchEnabled, w.SearchBackend = true, "native"
 	}
 	if name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.TeleAgent {
 		w.PromptOverrides = &PromptOverrides{}

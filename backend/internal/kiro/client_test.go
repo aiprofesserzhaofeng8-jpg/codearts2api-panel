@@ -96,9 +96,6 @@ func TestRefreshUsesIssuerAndRetainsIdentity(t *testing.T) {
 			}
 			fresh, e := decode(raw)
 			want := "rotated"
-			if method == "idc" {
-				want = "rotated-id"
-			}
 			if e != nil || fresh.AccessToken != want || fresh.RefreshToken != "new-refresh" || fresh.ExpiresAt <= time.Now().Unix() || identity(fresh).ID != identity(a).ID {
 				t.Fatal(fresh, e)
 			}

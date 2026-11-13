@@ -45,6 +45,11 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		reject(http.StatusBadRequest, "invalid_request_error", "读取请求体失败: "+err.Error())
 		return
 	}
+	if err := rejectUnsupportedFiles(body); err != nil {
+		status, reason, message := http.StatusBadRequest, "unsupported_file_input", err.Error()
+		reject(status, "invalid_request_error", message, reason)
+		return
+	}
 	if err := json.Unmarshal(body, &req); err != nil {
 		reject(http.StatusBadRequest, "invalid_request_error", "请求体解析失败: "+err.Error())
 		return

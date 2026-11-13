@@ -149,20 +149,7 @@ func convertStream(ctx context.Context, r io.Reader, model string, emit func([]b
 			if code == "" {
 				code = h[":error-code"]
 			}
-			status := 502
-			fault := false
-			switch code {
-			case "throttlingException", "ThrottlingException":
-				status = 429
-			case "accessDeniedException", "AccessDeniedException":
-				status = 403
-			case "validationException", "ValidationException":
-				status = 400
-			case "UnauthorizedException":
-				status = 401
-				fault = true
-			}
-			return &provider.Error{Status: status, AccountFault: fault, Code: code, Message: "Kiro 上游流返回异常"}
+			return upstreamException(code)
 		}
 		if h[":message-type"] != "event" {
 			return broken()
@@ -186,7 +173,7 @@ func convertStream(ctx context.Context, r io.Reader, model string, emit func([]b
 					}
 				}
 			}
-			if len(delta) > 0 {
+			if len(delta) > 0 && observed {
 				if e = start(); e != nil {
 					return e
 				}
@@ -195,6 +182,14 @@ func convertStream(ctx context.Context, r io.Reader, model string, emit func([]b
 				}
 			}
 		case "reasoningContentEvent":
+			for _, key := range []string{"text", "content"} {
+				if b, ok := o[key]; ok {
+					var text string
+					if string(b) == "null" || json.Unmarshal(b, &text) != nil {
+						return broken()
+					}
+				}
+			}
 			text := field(o, "text", "content")
 			if text != "" {
 				observed = true
