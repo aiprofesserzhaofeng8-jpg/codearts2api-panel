@@ -37,9 +37,9 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
  for(const id of ['a','b','c'])assert.deepEqual(posts.filter(p=>p.kind==='run'&&p.id===id).map(p=>p.task_code),['Model_chat_GLM5.2','chat_5']);
  assert.equal(await page.locator('#growthRunAll').isDisabled(),true);await page.locator('#growthClose').click();
  reset(true);posts=[];pending='b';await open();await page.locator('#growthRunAll').click();await idle();
- assert.equal(posts.filter(p=>p.id==='b').length,1);assert.equal(posts.length,5);assert.match(await page.locator('[data-account-id="b"]').textContent(),/不会重复调用/);
- assert.equal(await page.locator('[data-account-id="b"] [data-task-code="Model_chat_GLM5.2"]').getByRole('button',{name:'执行任务',exact:true}).isDisabled(),true);
- await page.locator('#growthClose').click();reset(true);posts=[];pending='';prerequisite='b';await open();await page.locator('#growthRunAll').click();await idle();assert.equal(posts.filter(p=>p.id==='b').length,1);assert.match(await page.locator('[data-account-id="b"]').textContent(),/领养第一只 Buddy/);await page.locator('#growthClose').click();reset(true);posts=[];prerequisite='';requestDelay=300;await open();await page.locator('#growthRunAll').click();
+ assert.equal(posts.filter(p=>p.id==='b').length,1);assert.equal(posts.length,5);assert.match(await page.locator('.growth-account[data-account-id="b"]').textContent(),/不会重复调用/);
+ assert.equal(await page.locator('.growth-account[data-account-id="b"] [data-task-code="Model_chat_GLM5.2"]').getByRole('button',{name:'执行任务',exact:true}).isDisabled(),true);
+ await page.locator('#growthClose').click();reset(true);posts=[];pending='';prerequisite='b';await open();await page.locator('#growthRunAll').click();await idle();assert.equal(posts.filter(p=>p.id==='b').length,1);assert.match(await page.locator('.growth-account[data-account-id="b"]').textContent(),/领养第一只 Buddy/);await page.locator('#growthClose').click();reset(true);posts=[];prerequisite='';requestDelay=300;await open();await page.locator('#growthRunAll').click();
  await page.waitForFunction(()=>document.querySelector('#growthTaskList').textContent.includes('执行中'));await page.locator('#growthClose').click();await delay(450);assert.equal(posts.length,2,'closing started queued tasks');assert.equal(aborted,2,'run requests not canceled');
  requestDelay=30;await open();
  for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
