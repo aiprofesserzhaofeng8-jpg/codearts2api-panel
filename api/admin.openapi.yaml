@@ -57,6 +57,10 @@
                     "helper_challenge": {
                       "type": "string",
                       "description": "Optional TeleAgent local helper task binding. Not a public callback credential or an account save authorization."
+                    },
+                    "qr_code": {
+                      "type": "string",
+                      "description": "Optional provider-issued PNG data URL for QR login; expires_at is the QR deadline."
                     }
                   },
                   "additionalProperties": true

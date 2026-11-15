@@ -13,9 +13,19 @@ var ErrEmptyModelList = errors.New("上游未返回任何可用模型")
 
 // Refresh serializes updates to the same provider/scope partitions. Failed
 // fetches retain their previous lists; the legacy partial-success rule is kept.
-func (s *Runtime) Refresh(ctx context.Context, ops RefreshOperations) error {
+func (s *Runtime) Refresh(ctx context.Context, ops RefreshOperations) (result error) {
 	s.refreshMu.Lock()
 	defer s.refreshMu.Unlock()
+	defer func() {
+		if result == nil && ops.Reconcile != nil {
+			result = ops.Reconcile()
+			if result != nil {
+				s.mu.Lock()
+				s.err = result.Error()
+				s.mu.Unlock()
+			}
+		}
+	}()
 	s.refreshReferences(ctx)
 	failures := s.refreshProviderModels(ctx, ops)
 	err := s.refreshCodeArtsModels(ctx, ops)

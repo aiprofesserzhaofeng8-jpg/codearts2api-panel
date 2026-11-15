@@ -66,7 +66,7 @@ func TestProbesPreserveSequenceDeadlinesPartialResultsAndSaveFailure(t *testing.
 		}
 		st.current = ctx
 	}
-	got := NewProbes(st, probeDirectory{t, st}, func(string, ...any) { logged++ }).Run(t.Context(), "", ProbeOperations{
+	got, saveErr := NewProbes(st, probeDirectory{t, st}, func(string, ...any) { logged++ }).Run(t.Context(), "", ProbeOperations{
 		Invalidate: func(id string) { st.events = append(st.events, "invalidate:"+id) },
 		Provider: func(ctx context.Context, a *Account) ([]provider.Model, error) {
 			checkDeadline(ctx, 30*time.Second)
@@ -86,6 +86,9 @@ func TestProbesPreserveSequenceDeadlinesPartialResultsAndSaveFailure(t *testing.
 	if !reflect.DeepEqual(st.events, wantEvents) || logged != 1 {
 		t.Fatal("changed operation order", st.events, logged)
 	}
+	if saveErr == nil {
+		t.Fatal("save failure hidden")
+	}
 	if len(got) != 3 || got[0].OK || !got[1].OK || got[2].OK || got[2].Credentials != info || got[0].Credentials != nil || got[0].Name != "disabled" {
 		t.Fatal("lost partial probe results", got)
 	}
@@ -96,7 +99,7 @@ func TestProbesExactTargetSelectionAndEmptySave(t *testing.T) {
 		t.Run(id, func(t *testing.T) {
 			st := &probeStore{list: []*Account{{ID: "present", Provider: provider.WorkBuddy}}}
 			calls := 0
-			got := NewProbes(st, probeDirectory{t, st}, nil).Run(t.Context(), id, ProbeOperations{Provider: func(ctx context.Context, a *Account) ([]provider.Model, error) {
+			got, err := NewProbes(st, probeDirectory{t, st}, nil).Run(t.Context(), id, ProbeOperations{Provider: func(ctx context.Context, a *Account) ([]provider.Model, error) {
 				calls++
 				st.current = ctx
 				return nil, errors.New("fixture")
@@ -104,6 +107,9 @@ func TestProbesExactTargetSelectionAndEmptySave(t *testing.T) {
 			want := 0
 			if id == "present" {
 				want = 1
+			}
+			if err != nil {
+				t.Fatal(err)
 			}
 			if got == nil || len(got) != want || calls != want || st.events[0] != "accounts" || st.events[1] != "account:"+id || st.events[len(st.events)-1] != "save" {
 				t.Fatal("changed empty/explicit target behavior", got, st.events)
@@ -116,7 +122,10 @@ func TestProbesParentCancellationRetainsPerAccountResults(t *testing.T) {
 	st := &probeStore{list: []*Account{{ID: "a", Provider: provider.WorkBuddy}, {ID: "b", Provider: provider.Trae}}}
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	got := NewProbes(st, probeDirectory{t, st}, nil).Run(ctx, "", ProbeOperations{Provider: func(ctx context.Context, a *Account) ([]provider.Model, error) { return nil, ctx.Err() }})
+	got, err := NewProbes(st, probeDirectory{t, st}, nil).Run(ctx, "", ProbeOperations{Provider: func(ctx context.Context, a *Account) ([]provider.Model, error) { return nil, ctx.Err() }})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(got) != 2 || got[0].Error != context.Canceled.Error() || got[1].Error != context.Canceled.Error() || st.events[len(st.events)-1] != "save" {
 		t.Fatal("changed canceled batch behavior", got, st.events)
 	}

@@ -66,7 +66,7 @@ func SourcePartition(id string) (string, error) {
 		return "", fmt.Errorf("来源须为完整平台型号")
 	}
 	switch p[0] {
-	case "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude", "teleagent":
+	case "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude", "teleagent", "mobileclaw":
 		return p[0] + "/" + p[1], nil
 	}
 	return "", fmt.Errorf("未知来源平台")

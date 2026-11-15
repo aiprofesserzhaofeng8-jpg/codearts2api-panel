@@ -15,11 +15,9 @@ type ManagementStore interface {
 	SaveGroup(AccountGroup) (AccountGroup, error)
 	DeleteGroup(string) error
 	AddKeyInGroupAndSave(string, string) (*APIKey, error)
-	DeleteKey(string) bool
-	ToggleKey(string) bool
+	ChangeKeysAndSave(string, string) error
 	SetKeyGroupAndSave(string, string) error
 	SetKeyBudgetAndSave(string, KeyBudget, bool) error
-	Save() error
 }
 
 // ModelResolver borrows the current catalog and aliases. It keeps no second
@@ -128,19 +126,9 @@ func (m *Management) AddKey(name, group string) (*APIKey, error) {
 	return m.store.AddKeyInGroupAndSave(name, group)
 }
 
-// ChangeKeys retains the legacy delete-then-toggle behavior, including a fresh
-// reference lookup after deletion and logging Save failure without rollback.
-// Empty/unknown references remain accepted by the existing HTTP contract.
-func (m *Management) ChangeKeys(deleteRef, toggleRef string) {
-	if deleteRef != "" {
-		m.store.DeleteKey(m.ResolveKeyRef(deleteRef))
-	}
-	if toggleRef != "" {
-		m.store.ToggleKey(m.ResolveKeyRef(toggleRef))
-	}
-	if err := m.store.Save(); err != nil && m.logf != nil {
-		m.logf("保存状态文件失败: %v", err)
-	}
+// ChangeKeys commits delete and toggle together before publishing new access state.
+func (m *Management) ChangeKeys(deleteRef, toggleRef string) error {
+	return m.store.ChangeKeysAndSave(m.ResolveKeyRef(deleteRef), m.ResolveKeyRef(toggleRef))
 }
 
 func (m *Management) SetKeyGroup(ref, group string) error {

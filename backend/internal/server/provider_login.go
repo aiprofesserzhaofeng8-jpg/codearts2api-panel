@@ -68,6 +68,9 @@ func (s *Server) handleProviderLogin(w http.ResponseWriter, r *http.Request) {
 	switch result.State {
 	case accounts.LoginStarted:
 		body := map[string]any{"session_id": result.SessionID, "url": result.URL, "provider": result.Provider, "scope": result.Scope, "expires_at": result.ExpiresAt}
+		if result.QRCode != "" {
+			body["qr_code"] = result.QRCode
+		}
 		if result.HelperChallenge != "" {
 			body["helper_challenge"] = result.HelperChallenge
 		}

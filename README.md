@@ -335,6 +335,8 @@ Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查
 
 AI 署名记录使用 OpenAI 工具进行辅助开发的事实，不表示 OpenAI 公司参与维护、官方合作或背书。更多贡献说明见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。
 
+MobileClaw（中国移动云）个人免费 Token 账号的导入与限制见 [接入说明](docs/MOBILECLAW.md)。
+
 ## 许可证
 
 基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，[Qoder 接入](docs/QODER.md)的协议参考来源保留 [MIT 声明](LICENSE.qoder)，[Kiro 接入](docs/KIRO.md)的协议参考来源保留 [MIT 声明](LICENSE.kiro)，协议转换库 `backend/internal/responsescompat` 与模型参数库 `backend/internal/catalog/modelmeta` 中的复用代码采用 LGPL-3.0（[协议库许可](backend/internal/responsescompat/LICENSE)、[参数库许可](backend/internal/catalog/modelmeta/LICENSE)），附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。

@@ -19,6 +19,7 @@ func (s *Server) RefreshModels(ctx context.Context) error {
 }
 func (s *Server) catalogRefreshOperations() catalog.RefreshOperations {
 	return catalog.RefreshOperations{
+		Reconcile: s.UnifiedModels.SyncDefaultModels,
 		Native: func(ctx context.Context, a *accounts.Account) ([]provider.Model, error) {
 			return s.CodeArts.Models(ctx, s.Cred, a, s.resolveOptions())
 		},

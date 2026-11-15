@@ -405,6 +405,14 @@ def model_run(api, row, folder, features=FEATURES):
     return out
 
 
+def acceptance_passed(results, features):
+    # Text success alone cannot certify images, tools, or another protocol.
+    return bool(results) and all(
+        row.get("cases", {}).get(feature, {}).get("status") == "PASS"
+        for row in results for feature in features
+    )
+
+
 def credentials(args):
     key = os.environ.get("CODEARTS_API_KEY")
     if not key:
@@ -429,6 +437,8 @@ def main():
     parser.add_argument("--workers", type=int, default=2, choices=(1, 2))
     parser.add_argument("--timeout", type=int, default=45)
     parser.add_argument("--max-output-tokens", type=int, default=512)
+    parser.add_argument("--max-requests", type=int, default=1800, help="Hard total HTTP request budget, including catalog and retries")
+    parser.add_argument("--skip-gateway-checks", action="store_true", help="Only test selected models/features; skip endpoint-discovery probes")
     parser.add_argument("--min-interval", type=float, default=0.35, help="Minimum global interval between HTTP starts, seconds")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--features", nargs="+", choices=FEATURES, default=list(FEATURES))
@@ -436,12 +446,16 @@ def main():
     args = parser.parse_args()
     if not 16 <= args.max_output_tokens <= 4096:
         parser.error("--max-output-tokens must be 16..4096")
+    if not 1 <= args.max_requests <= 1800:
+        parser.error("--max-requests must be 1..1800")
+    if not 1 <= args.timeout <= 120:
+        parser.error("--timeout must be 1..120 seconds")
     OUTPUT_TOKENS = args.max_output_tokens
     os.umask(0o077)
     args.output.mkdir(parents=True, exist_ok=True, mode=0o700)
     if not 0.05 <= args.min_interval <= 30:
         parser.error("--min-interval must be 0.05..30 seconds")
-    api = API(args.url.rstrip("/").removesuffix("/v1"), credentials(args), args.timeout, min_interval=args.min_interval)
+    api = API(args.url.rstrip("/").removesuffix("/v1"), credentials(args), args.timeout, max_requests=args.max_requests, min_interval=args.min_interval)
     catalog_response = api.request("/v1/models")
     if catalog_response.get("status") != 200:
         raise SystemExit("Cannot obtain model catalog: " + str(catalog_response.get("status")))
@@ -463,7 +477,7 @@ def main():
         save(catalog_path, catalog)
     run = {"started_at": now(), "url": api.base, "model_count": len(models), "scope": "configured_raw_sources" if args.source_inventory else "visible_public_models", "features": args.features, "workers": args.workers, "timeout": args.timeout, "max_output_tokens": OUTPUT_TOKENS, "min_interval": args.min_interval, "max_requests": api.max_requests, "no_configuration_writes": True}
     save(args.output / "run.json", run)
-    if not (args.output / "gateway.json").exists():
+    if not args.skip_gateway_checks and not (args.output / "gateway.json").exists():
         save(args.output / "gateway.json", gateway_checks(api))
     results, todo = [], []
     for row in models:
@@ -482,7 +496,7 @@ def main():
     summary = {"models": len(results), "http_requests": api.count, "features": {f: {s: sum(r["cases"][f]["status"] == s for r in results) for s in ("PASS", "FAIL", "BLOCKED", "ERROR")} for f in args.features}}
     save(args.output / "summary.json", summary)
     print(json.dumps(summary, ensure_ascii=False), flush=True)
-    return 0 if all(r["cases"]["chat_text"]["status"] == "PASS" for r in results) else 1
+    return 0 if acceptance_passed(results, args.features) else 1
 
 
 if __name__ == "__main__":

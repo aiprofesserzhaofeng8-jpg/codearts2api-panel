@@ -117,7 +117,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, request provid
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return providerhttp.FailureResponse("Qoder", resp)
+		return providerhttp.FailureResponseWithCode("Qoder", resp)
 	}
 	if !strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/event-stream") {
 		return &provider.Error{Status: 502, Message: "Qoder 未返回流式对话响应"}

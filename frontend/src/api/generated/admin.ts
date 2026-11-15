@@ -1888,6 +1888,8 @@ export interface operations {
                     "application/json": {
                         /** @description Optional TeleAgent local helper task binding. Not a public callback credential or an account save authorization. */
                         helper_challenge?: string;
+                        /** @description Optional provider-issued PNG data URL for QR login; expires_at is the QR deadline. */
+                        qr_code?: string;
                     } & {
                         [key: string]: unknown;
                     };

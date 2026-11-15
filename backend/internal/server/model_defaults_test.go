@@ -32,9 +32,9 @@ func defaultBody(p catalog.DefaultModelsPreview, names ...string) config.Default
 func TestDefaultModelsAllProvidersAtomicIdempotentAndReopen(t *testing.T) {
 	s, _ := unifiedAPIFixture(t)
 	s.Reg.ReplaceProvider(provider.CodeArts, "", []provider.Model{{ID: "deepseek-v4.1-flash"}})
-	for _, p := range []string{provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent} {
+	for _, p := range []string{provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw} {
 		id := "native-v1"
-		if p == provider.WorkBuddy || p == provider.Trae {
+		if p == provider.WorkBuddy || p == provider.Trae || p == provider.MobileClaw {
 			id = "deepseek-v4.1-flash"
 		}
 		if p == provider.Qoder {
@@ -43,7 +43,7 @@ func TestDefaultModelsAllProvidersAtomicIdempotentAndReopen(t *testing.T) {
 		s.Reg.ReplaceProvider(p, "cn", []provider.Model{{ID: id}})
 	}
 	preview := defaultPreview(t, s)
-	if len(preview.Providers) != 8 {
+	if len(preview.Providers) != 9 {
 		t.Fatal(preview)
 	}
 	names := []string{}
@@ -57,7 +57,7 @@ func TestDefaultModelsAllProvidersAtomicIdempotentAndReopen(t *testing.T) {
 			deep = row
 		}
 	}
-	if len(deep.Sources) != 3 {
+	if len(deep.Sources) != 4 {
 		t.Fatal("verified sources not grouped", deep)
 	}
 	request := defaultBody(preview, names...)
@@ -86,7 +86,7 @@ func TestDefaultModelsAllProvidersAtomicIdempotentAndReopen(t *testing.T) {
 	// Native names remain directly addressable, distinct from the new public route.
 	key, _ := s.Store.AddKeyInGroupAndSave("native-collision", "")
 	_, plan, err := s.Routing.Resolve(key.Key, s.Store.Settings(), deep.Name)
-	if err != nil || plan == nil || len(plan.IDs) != 3 {
+	if err != nil || plan == nil || len(plan.IDs) != 4 {
 		t.Fatal(plan, err)
 	}
 	_, plan, err = s.Routing.Resolve(key.Key, s.Store.Settings(), "codearts/deepseek-v4.1-flash")

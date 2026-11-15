@@ -19,6 +19,7 @@ const Kiro = "kiro"
 const ChatGPT = "chatgpt"
 const Claude = "claude"
 const TeleAgent = "teleagent"
+const MobileClaw = "mobileclaw"
 
 type Model struct {
 	ID         string `json:"id"`
@@ -93,8 +94,10 @@ type Request struct {
 	RequestID string
 }
 type Login struct {
-	State string
-	URL   string
+	QRCode    string
+	ExpiresAt int64
+	State     string
+	URL       string
 	// HelperChallenge binds a local browser helper result to this staged login.
 	// It never authorizes a public callback or an account save.
 	HelperChallenge string

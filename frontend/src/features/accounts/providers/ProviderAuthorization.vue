@@ -17,6 +17,7 @@ import { t as tr } from '../../../i18n';
     <div v-once class="field"><label for="providerMachineID">{{tr('机器标识（machine_id）')}}</label><input id="providerMachineID" autocomplete="off" spellcheck="false" maxlength="256" :placeholder="tr('粘贴官方客户端的机器标识')"></div>
     <div v-once class="field"><label for="providerDeviceID">{{tr('设备标识（device_id）')}}</label><input id="providerDeviceID" autocomplete="off" spellcheck="false" inputmode="numeric" maxlength="32" :placeholder="tr('粘贴官方客户端的数字设备号')"></div>
   </div>
+  <div v-once id="mobileclawQR" class="hidden"><img id="mobileclawQRImage" width="220" height="220" :alt="tr('MobileClaw 登录二维码')"><p id="mobileclawQRStatus" class="hint" role="status"></p></div>
   <div v-once class="row"><button class="btn primary" id="providerLoginStart">{{tr('生成登录链接')}}</button><button class="btn" id="providerLoginCopy" disabled>{{tr('复制登录链接')}}</button><a class="btn hidden" id="providerLoginOpen" target="_blank" rel="noopener noreferrer">{{tr('在浏览器打开')}}</a></div>
   <div v-once class="field"><label for="providerLoginURL">{{tr('授权链接')}}</label><input id="providerLoginURL" readonly></div>
   <div v-once id="providerTeleAgentHelper" class="hidden">
@@ -42,7 +43,7 @@ import { t as tr } from '../../../i18n';
   <button class="btn" id="providerLoginCheck" disabled>{{tr('检查授权信息')}}</button>
   <div v-once id="providerPreview" class="hidden"><p id="providerPreviewText"></p><label><input id="providerReplace" type="checkbox">{{tr('若账号已存在，确认更新它的凭据')}}</label><div class="field"><label for="providerAccountName">{{tr('账号备注（可选）')}}</label><input id="providerAccountName"></div><button class="btn primary" id="providerLoginComplete">{{tr('确认保存账号')}}</button></div>
   </div>
-  <details id="providerImportSection"><summary id="providerImportTitle">{{tr('导入上游凭据 JSON')}}</summary><p class="hint" id="providerImportHint">{{tr('支持扁平或 auth/account 嵌套 JSON，导入前向上游核对身份。')}}</p><textarea id="providerImportJSON" :aria-label="tr('上游凭据 JSON')" :placeholder="tr('粘贴完整上游凭据 JSON')"></textarea><label><input id="providerImportReplace" type="checkbox">{{tr('确认覆盖已有同地区账号的凭据')}}</label><div class="row"><button class="btn" id="providerImport">{{tr('校验并导入')}}</button></div></details>
+  <details id="providerImportSection"><summary id="providerImportTitle">{{tr('导入上游凭据 JSON')}}</summary><p class="hint" id="providerImportHint">{{tr('支持扁平或 auth/account 嵌套 JSON，导入前向上游核对身份。')}}</p><button class="btn hidden" id="mobileclawExportHelper">{{tr('下载 MobileClaw 导出助手')}}</button><textarea id="providerImportJSON" :aria-label="tr('上游凭据 JSON')" :placeholder="tr('粘贴完整上游凭据 JSON')"></textarea><label><input id="providerImportReplace" type="checkbox">{{tr('确认覆盖已有同地区账号的凭据')}}</label><div class="row"><button class="btn" id="providerImport">{{tr('校验并导入')}}</button></div></details>
   <p id="providerLoginStatus" class="hint" role="status"></p><p id="providerLoginError" class="hint" role="alert"></p>
 </section>
 </template>

@@ -34,14 +34,14 @@ func TestConfigurationValidationAndIndependentPartialUpdates(t *testing.T) {
 	}
 }
 
-func TestConfigurationRetainsLegacySettingsAndStrictPolicySaveFailures(t *testing.T) {
+func TestConfigurationSaveFailuresPreservePublishedState(t *testing.T) {
 	srv, st, _ := managementFixture(t)
 	before, policies := st.Settings(), st.ModelPolicies()
 	logged, retries := 0, 7
 	manager := config.NewManagement(st, nil, func(string, ...any) { logged++ })
 	restore := blockManagementWrites(t, st)
-	if err := manager.UpdateSettings(config.SettingsUpdate{MaxRetries: &retries}); err != nil || logged != 1 || st.Settings().MaxRetries != retries {
-		t.Fatal("legacy configuration Save failure no longer retains memory changes", err)
+	if err := manager.UpdateSettings(config.SettingsUpdate{MaxRetries: &retries}); err == nil || logged != 0 || !reflect.DeepEqual(before, st.Settings()) {
+		t.Fatal("failed configuration save changed published state", err)
 	}
 	policy := storage.DefaultModelPolicies()["deepseek-v4.1-flash"]
 	policy.SummaryRetry = false
@@ -57,9 +57,17 @@ func TestConfigurationRetainsLegacySettingsAndStrictPolicySaveFailures(t *testin
 		t.Fatal(err)
 	}
 	reopened, err = storage.Open(st.Path())
-	if err != nil || reopened.Settings().MaxRetries != retries {
-		t.Fatal("legacy settings could not be persisted after recovery", err)
+	if err != nil || reopened.Settings().MaxRetries != before.MaxRetries {
+		t.Fatal("later save resurrected a failed change", err)
 	}
+	if err := manager.UpdateSettings(config.SettingsUpdate{MaxRetries: &retries}); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err = storage.Open(st.Path())
+	if err != nil || reopened.Settings().MaxRetries != retries {
+		t.Fatal("committed setting not durable", err)
+	}
+
 }
 
 func TestConfigurationPolicyUsesCurrentAliasesAndEnforcesProviderScope(t *testing.T) {

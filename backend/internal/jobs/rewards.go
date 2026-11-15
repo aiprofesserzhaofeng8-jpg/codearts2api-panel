@@ -162,7 +162,7 @@ func WindowOpen(now time.Time, hour, minute int) bool {
 	return cur >= hour*60+minute
 }
 
-// Claim preserves the distinct native and external persistence guarantees.
+// Claim reports persistence separately from irreversible upstream reward effects.
 // CodeArts has no new deduplication lock or retry gate introduced here.
 func (s *Rewards) Claim(ctx context.Context, a *accounts.Account, today string, ops RewardOperations) (string, error) {
 	if a.ProviderID() != provider.CodeArts {
@@ -178,7 +178,10 @@ func (s *Rewards) Claim(ctx context.Context, a *accounts.Account, today string, 
 	}
 	s.store.MarkClaimResult(a.ID, today, err == nil, record)
 	if saveErr := s.store.Save(); saveErr != nil {
-		s.logf("保存状态文件失败: %v", saveErr)
+		if s.logf != nil {
+			s.logf("保存状态文件失败: %v", saveErr)
+		}
+		return msg, fmt.Errorf("领取操作已执行，但结果未保存；请先核对上游状态，避免重复提交")
 	}
 	return msg, err
 }

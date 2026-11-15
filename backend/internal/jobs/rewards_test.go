@@ -150,7 +150,7 @@ func TestRewardsConfirmationPersistenceAndCacheOrder(t *testing.T) {
 
 type creditOnlyAdapter struct{ provider.Adapter }
 
-func TestRewardStatusAndNativeLegacySaveFailure(t *testing.T) {
+func TestRewardStatusAndNativeSaveFailure(t *testing.T) {
 	st, r, c := rewardFixture(t)
 	c.Store("wb", &accounts.CreditInfo{Remaining: 10}, nil)
 	ops := RewardOperations{Provider: func(context.Context, *accounts.Account) (provider.Adapter, json.RawMessage, error) {
@@ -177,7 +177,7 @@ func TestRewardStatusAndNativeLegacySaveFailure(t *testing.T) {
 	logs := 0
 	r.logf = func(string, ...any) { logs++ }
 	ops.Native = func(context.Context, *accounts.Account) (string, error) { return "native success", nil }
-	if msg, err := r.Claim(t.Context(), st.Account("ca"), "2000-01-02", ops); err != nil || msg != "native success" {
+	if msg, err := r.Claim(t.Context(), st.Account("ca"), "2000-01-02", ops); err == nil || msg != "native success" {
 		t.Fatal(msg, err)
 	}
 	if st.Account("ca").LastClaimDate != "2000-01-02" || logs != 1 {

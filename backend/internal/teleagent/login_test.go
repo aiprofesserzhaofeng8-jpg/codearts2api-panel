@@ -56,7 +56,7 @@ func TestBrowserHelperBindsFlowAndVerifiesBeforePreview(t *testing.T) {
 	}
 	var a Credentials
 	_ = json.Unmarshal(b, &a)
-	if a.Name != "Verified name" || a.InstallID != fixture().InstallID {
+	if a.Name != "Verified name" || a.InstallID != fixture().InstallID || !a.Renewable {
 		t.Fatal("identity or device lost")
 	}
 	// Concurrent retries share one verified result and never consume the code again.

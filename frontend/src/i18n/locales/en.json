@@ -1580,5 +1580,14 @@
   "第 {page} 页": "Page {page}",
   "并发": "Concurrency",
   "刷新本页额度": "Refresh quotas on this page",
-  "已导出登录凭据，请勿外传": "Credentials exported; keep them private"
+  "已导出登录凭据，请勿外传": "Credentials exported; keep them private",
+  "在官方客户端登录，运行 mobileclaw-export.mjs 导出后导入；当前支持个人免费 Token 额度": "Sign in with the official desktop app and export with mobileclaw-export.mjs. Personal free Token quota is supported.",
+  "下载 MobileClaw 导出助手": "Download MobileClaw export helper",
+  "先在官方 MobileClaw 客户端登录，再运行 node mobileclaw-export.mjs，粘贴生成的 mobileclaw-credentials.json。当前仅个人免费 Token 通道；到期请重新导出并勾选覆盖。": "Sign in to the official MobileClaw app, run node mobileclaw-export.mjs, then paste mobileclaw-credentials.json. Personal free Token quota only. Re-export and enable replacement when credentials expire.",
+  "MobileClaw 登录二维码": "MobileClaw sign-in QR code",
+  "生成二维码或复制登录链接 → 使用手机蜂窝网络确认 → 自动显示账号预览 → 确认保存。无需粘贴回调地址。": "Generate a QR code or copy the sign-in link → confirm using mobile data → review the account → save. No callback URL is required.",
+  "请用手机扫码或打开登录链接，关闭 Wi-Fi 后确认授权。面板会自动检查，核对账号后再保存。": "Scan or open the link on your phone using mobile data with Wi-Fi off. The panel checks automatically; review the account before saving.",
+  "二维码响应无效，请重新生成": "Invalid QR response; generate a new code.",
+  "二维码有效期至 ": "QR code expires at ",
+  "二维码已过期，请重新生成": "The QR code expired; generate a new code."
 }

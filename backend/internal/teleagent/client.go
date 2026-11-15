@@ -26,6 +26,7 @@ const CreditPath = "/superCowork/sapi/user/portal/companyStore/userCenter"
 const PortalPath = "/meter/super-agent/user/portal/points/detail"
 
 type Credentials struct {
+	Renewable      bool   `json:"renewable,omitempty"`
 	Token          string `json:"token"`
 	APIKey         string `json:"api_key"`
 	AccountID      string `json:"account_id"`
@@ -103,6 +104,7 @@ func (*Client) Normalize(raw json.RawMessage) (json.RawMessage, provider.Identit
 		return nil, provider.Identity{}, invalid("未确认可用的续期协议，请导入当前账号令牌")
 	}
 	a := Credentials{Token: providerhttp.Field(o, "token", "access_token", "accessToken"), APIKey: providerhttp.Field(o, "api_key", "apiKey", "gateway_key"), AccountID: accountField(o, "account_id", "accountId", "uid"), Name: providerhttp.Field(o, "name", "nickname", "accountName"), DeviceID: providerhttp.Field(o, "device_id", "deviceId"), InstallID: providerhttp.Field(o, "install_id", "installId"), AppVersion: providerhttp.Field(o, "app_version", "appVersion"), ExpiresAt: providerhttp.Timestamp(o["expires_at"]), OperationToken: providerhttp.Field(o, "operation_token", "operationToken"), OperToken: providerhttp.Field(o, "oper_token", "operToken")}
+	_ = json.Unmarshal(o["renewable"], &a.Renewable)
 	parts, claims := jwtParts(a.Token)
 	if len(parts) != 3 {
 		return nil, provider.Identity{}, invalid("token 须为完整账号 JWT，可包含租户前缀")
@@ -139,15 +141,12 @@ func identity(a Credentials) provider.Identity {
 	if name == "" {
 		name = "TeleAgent"
 	}
-	return provider.Identity{ID: a.AccountID, Name: name, Scope: "cn", ExpiresAt: a.ExpiresAt}
+	return provider.Identity{ID: a.AccountID, Name: name, Scope: "cn", ExpiresAt: a.ExpiresAt, HasRefresh: a.Renewable}
 }
 func decode(raw json.RawMessage) (Credentials, error) {
 	var a Credentials
 	e := json.Unmarshal(raw, &a)
 	return a, e
-}
-func (*Client) Refresh(context.Context, json.RawMessage) (json.RawMessage, error) {
-	return nil, invalid("没有已确认的自动续期端点，请重新登录并更新凭据")
 }
 func identityHeaders(a Credentials) http.Header {
 	h := http.Header{}

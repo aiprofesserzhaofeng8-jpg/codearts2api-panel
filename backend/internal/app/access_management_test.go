@@ -94,7 +94,7 @@ func TestAccessManagementStrictTransactionsRetainPublishedAccessOnFailure(t *tes
 	}
 }
 
-func TestAccessManagementLegacyKeyChangesKeepSaveFailureSemantics(t *testing.T) {
+func TestAccessManagementKeySaveFailurePreservesAccess(t *testing.T) {
 	_, st, _ := managementFixture(t)
 	first, _ := st.AddKeyInGroupAndSave("delete", "")
 	second, _ := st.AddKeyInGroupAndSave("toggle", "")
@@ -109,9 +109,11 @@ func TestAccessManagementLegacyKeyChangesKeepSaveFailureSemantics(t *testing.T) 
 		t.Fatal("unknown reference no longer passes through")
 	}
 	restore := blockManagementWrites(t, st)
-	mgr.ChangeKeys(access.KeyReference(first.Key), codearts.Mask(second.Key))
-	if len(st.Keys()) != 1 || st.Keys()[0].Enabled || logged != 1 {
-		t.Fatal("legacy deletion/toggle or logged-save-failure behavior changed")
+	if err := mgr.ChangeKeys(access.KeyReference(first.Key), codearts.Mask(second.Key)); err == nil {
+		t.Fatal("failed save reported success")
+	}
+	if len(st.Keys()) != 2 || !st.Keys()[1].Enabled || logged != 0 {
+		t.Fatal("failed mutation changed online key access")
 	}
 	if key, ok := mgr.RevealKey(access.KeyReference(second.Key)); !ok || key != second.Key {
 		t.Fatal("administrator cannot retrieve a disabled key")
@@ -121,7 +123,7 @@ func TestAccessManagementLegacyKeyChangesKeepSaveFailureSemantics(t *testing.T) 
 	if err != nil || len(reopened.Keys()) != 2 || !reopened.Keys()[1].Enabled {
 		t.Fatal("failed legacy save unexpectedly modified disk", err)
 	}
-	if err = st.Save(); err != nil {
+	if err = mgr.ChangeKeys(access.KeyReference(first.Key), codearts.Mask(second.Key)); err != nil {
 		t.Fatal(err)
 	}
 	reopened, err = storage.Open(st.Path())

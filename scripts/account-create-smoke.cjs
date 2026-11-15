@@ -28,7 +28,16 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   assert.equal(await page.locator('.card-actions #browserLogin,.card-actions #workbuddyLogin,.card-actions #traeLogin,.card-actions #importLocal').count(),0);
   assert.equal(await page.locator('#manualAccountPanel').isVisible(),false);
   await page.locator('#addAccount').click();await page.locator('#accountCreateName').fill('统一入口测试');
-  await page.locator('#traeLogin').click();assert.equal(await page.locator('#traeLogin').getAttribute('aria-pressed'),'true');
+  await page.locator('[data-account-platform="mobileclaw"]').click();
+  assert.equal(await page.locator('[data-account-method="browser"]').isDisabled(),false);
+  await page.locator('#accountMethodImport').click();
+  await page.locator('#accountCreateNext').click();
+  assert.equal(await page.locator('#providerImportSection').isVisible(),true);
+  assert.equal(await page.locator('#providerBrowserFields').isVisible(),false);
+  assert.equal(await page.locator('#mobileclawExportHelper').isVisible(),true);
+  assert.match(await page.locator('#providerImportHint').textContent(),/免费 Token/);
+  await page.locator('#accountCreateBack').click();
+  await page.locator('#traeLogin').click();await page.locator('#accountMethodBrowser').click();assert.equal(await page.locator('#traeLogin').getAttribute('aria-pressed'),'true');
   assert.equal(starts,0);assert.equal(await page.locator('#providerDeviceID').isVisible(),false);
   fs.mkdirSync('artifacts',{recursive:true});await page.evaluate(()=>document.documentElement.dataset.theme='light');
   await page.screenshot({path:'artifacts/add-account-platforms.png'});

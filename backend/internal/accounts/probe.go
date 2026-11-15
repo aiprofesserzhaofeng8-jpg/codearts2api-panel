@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"codearts2api/internal/provider"
@@ -51,8 +52,9 @@ func NewProbes(store ProbeStore, directory ProbeDirectory, logf func(string, ...
 
 // Run preserves sequential checks (including disabled/paused accounts), native
 // invalidation before the timeout, result publication after cancel, and one
-// final logged save even when the explicit account ID is missing.
-func (p *Probes) Run(ctx context.Context, id string, ops ProbeOperations) []ProbeResult {
+// final save even when the explicit account ID is missing. Persistence errors
+// do not roll back observations or rotated credentials.
+func (p *Probes) Run(ctx context.Context, id string, ops ProbeOperations) ([]ProbeResult, error) {
 	targets := p.store.Accounts()
 	if id != "" {
 		targets = nil
@@ -85,8 +87,11 @@ func (p *Probes) Run(ctx context.Context, id string, ops ProbeOperations) []Prob
 		p.store.MarkAccountResult(a.ID, err == nil, note)
 		results = append(results, ProbeResult{ID: a.ID, Name: a.DisplayName(), OK: err == nil, Error: note, Credentials: info})
 	}
-	if err := p.store.Save(); err != nil && p.logf != nil {
-		p.logf("保存状态文件失败: %v", err)
+	if err := p.store.Save(); err != nil {
+		if p.logf != nil {
+			p.logf("保存状态文件失败: %v", err)
+		}
+		return results, errors.New("探活已完成，但结果未保存；请检查状态文件目录权限，新凭据仍保留在内存")
 	}
-	return results
+	return results, nil
 }

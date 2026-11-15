@@ -59,7 +59,8 @@ architecture: frontend
 	$(PYTHON) -m unittest discover -s tools -p test_check_architecture.py
 
 check: frontend-check vet vet-linux test console architecture
-	node --test scripts/teleagent-login.test.mjs
+	node --test scripts/teleagent-login.test.mjs scripts/mobileclaw-export.test.mjs
+	$(PYTHON) -m unittest discover -s scripts -p test_model_capability_audit.py
 	$(PYTHON) -m unittest discover -s deploy/tests -v
 	$(PYTHON) -m unittest discover -s tools -p test_convert_state_v7_to_v6.py
 	$(PYTHON) -m unittest discover -s tools -p test_convert_state_v8_to_v7.py

@@ -120,6 +120,8 @@ func (c *Client) CheckCallback(ctx context.Context, scope, state, input string) 
 	}
 	a, _ := decode(raw)
 	a.Name = verified.Name
+	// Only the fresh panel browser flow opts into rotation. Legacy imports stay unchanged.
+	a.Renewable = true
 	raw, err = json.Marshal(a)
 	if err != nil {
 		return nil, false, err

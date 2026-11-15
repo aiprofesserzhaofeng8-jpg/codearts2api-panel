@@ -240,3 +240,29 @@ func TestProbeCancellationAndPlatformScope(t *testing.T) {
 		t.Fatal("oversized paid probe was admitted")
 	}
 }
+
+func TestDiscoveryReconcileFailureIsReportedAndRetryUsesExistingRefresh(t *testing.T) {
+	r, _, _ := runtimeFixture(t, &accounts.Account{ID: "mc", Provider: provider.MobileClaw, Scope: "cn", Enabled: true})
+	calls := 0
+	saveFailure := errors.New("save failed")
+	ops := RefreshOperations{
+		Provider: func(context.Context, *accounts.Account) ([]provider.Model, error) {
+			return []provider.Model{{ID: "glm-5.3"}}, nil
+		},
+		Reconcile: func() error { calls++; return saveFailure },
+	}
+	if err := r.Refresh(context.Background(), ops); !errors.Is(err, saveFailure) || r.Error() != saveFailure.Error() {
+		t.Fatal("save failure hidden", err, r.Error())
+	}
+	ops.Provider = func(context.Context, *accounts.Account) ([]provider.Model, error) { return nil, errors.New("offline") }
+	if err := r.Refresh(context.Background(), ops); err == nil || calls != 1 {
+		t.Fatal("failed discovery reconciled stale sources", err, calls)
+	}
+	ops.Provider = func(context.Context, *accounts.Account) ([]provider.Model, error) {
+		return []provider.Model{{ID: "glm-5.3"}}, nil
+	}
+	ops.Reconcile = func() error { calls++; return nil }
+	if err := r.Refresh(context.Background(), ops); err != nil || calls != 2 || r.Error() != "" {
+		t.Fatal("next normal refresh failed", err, calls, r.Error())
+	}
+}

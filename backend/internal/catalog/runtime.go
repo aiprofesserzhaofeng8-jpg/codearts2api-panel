@@ -27,8 +27,10 @@ type Directory interface {
 }
 
 type RefreshOperations struct {
-	Native   func(context.Context, *accounts.Account) ([]provider.Model, error)
-	Provider func(context.Context, *accounts.Account) ([]provider.Model, error)
+	// Reconcile runs only after successful discovery, under the refresh lock.
+	Reconcile func() error
+	Native    func(context.Context, *accounts.Account) ([]provider.Model, error)
+	Provider  func(context.Context, *accounts.Account) ([]provider.Model, error)
 }
 type ProbeOperations struct {
 	Native   func(context.Context, *accounts.Account, string) error

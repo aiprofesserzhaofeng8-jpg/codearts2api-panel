@@ -31,12 +31,20 @@ func validateRoutingSettings(st *State, next Settings) error {
 	return nil
 }
 func (s *Store) UpdateSettingsChecked(expected uint64, fn func(*Settings)) error {
+	return s.updateSettingsAndSave(expected, true, fn)
+}
+func (s *Store) UpdateSettingsAndSave(fn func(*Settings)) error {
+	return s.updateSettingsAndSave(0, false, fn)
+}
+func (s *Store) updateSettingsAndSave(expected uint64, checked bool, fn func(*Settings)) error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := checkRevision(expected, s.st.ModelRoutingRevision); err != nil {
-		return err
+	if checked {
+		if err := checkRevision(expected, s.st.ModelRoutingRevision); err != nil {
+			return err
+		}
 	}
 	next := s.st.Settings
 	next.ModelAliases = copyAliases(next.ModelAliases)
@@ -55,7 +63,7 @@ func (s *Store) UpdateSettingsChecked(expected uint64, fn func(*Settings)) error
 	s.st.Settings = next
 	if err := s.saveGroupStateLocked(); err != nil {
 		s.st.Settings, s.st.ModelRoutingRevision = before, rev
-		return config.ModelFailure(500, "model_save_failed", "模型设置保存失败")
+		return config.ModelFailure(500, "model_save_failed", "设置未保存，请检查状态文件目录权限后重试")
 	}
 	return nil
 }

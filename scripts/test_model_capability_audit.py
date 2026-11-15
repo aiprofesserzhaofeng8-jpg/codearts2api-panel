@@ -15,6 +15,27 @@ def sse(*items, done=False):
 
 
 class EvidenceTests(unittest.TestCase):
+    def test_acceptance_requires_every_requested_feature(self):
+        rows = [{"cases": {"chat_text": {"status": "PASS"}, "image": {"status": "FAIL"}}}]
+        self.assertFalse(audit.acceptance_passed(rows, ["chat_text", "image"]))
+        self.assertTrue(audit.acceptance_passed(rows, ["chat_text"]))
+        for status in ("BLOCKED", "ERROR", "FAIL"):
+            rows[0]["cases"]["image"]["status"] = status
+            self.assertFalse(audit.acceptance_passed(rows, ["image"]))
+        rows[0]["cases"]["image"]["status"] = "PASS"
+        self.assertTrue(audit.acceptance_passed(rows, ["image"]))
+        self.assertFalse(audit.acceptance_passed(rows, ["messages_tools"]))
+        self.assertFalse(audit.acceptance_passed([], ["chat_text"]))
+
+    def test_exhausted_request_budget_does_not_send(self):
+        api = audit.API("http://127.0.0.1:1", "test-key", max_requests=1, min_interval=0)
+        api.count = 1
+        with mock.patch.object(audit.urllib.request, "urlopen") as send:
+            result = api.request("/v1/chat/completions", {})
+        send.assert_not_called()
+        self.assertEqual(result["status"], 0)
+        self.assertIn("budget exhausted", result["error"])
+
     def test_chat_fragments_merge_tool_arguments(self):
         raw = sse(
             {"choices": [{"delta": {"tool_calls": [{"index": 0, "id": "call_1", "function": {"name": "read_fixture", "arguments": '{"pa'}}]}}]},

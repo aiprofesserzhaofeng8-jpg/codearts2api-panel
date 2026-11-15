@@ -10,9 +10,8 @@ import (
 type ManagementStore interface {
 	Settings() Settings
 	Groups() []access.AccountGroup
-	UpdateSettings(func(*Settings)) error
+	UpdateSettingsAndSave(func(*Settings)) error
 	SetModelPolicyAndSave(string, ModelPolicy) error
-	Save() error
 }
 
 // ModelRef borrows identity only; catalog ownership remains unchanged.
@@ -28,7 +27,7 @@ func NewManagement(store ManagementStore, resolve func(string) (ModelRef, bool),
 }
 func (m *Management) Settings() Settings { return m.store.Settings() }
 
-// UpdateSettings retains validation-before-mutation and legacy logged Save failure.
+// UpdateSettings returns success only after the validated settings reach storage.
 // HTTP applies the existing identity and limiter effects after this returns.
 func (m *Management) UpdateSettings(body SettingsUpdate) error {
 	return m.updateSettings(body, false)
@@ -211,7 +210,6 @@ func (m *Management) updateSettings(body SettingsUpdate, checked bool) error {
 			}
 		}
 	}
-	var err error
 	if checked && routing {
 		st, ok := m.store.(interface {
 			UpdateSettingsChecked(uint64, func(*Settings)) error
@@ -221,14 +219,7 @@ func (m *Management) updateSettings(body SettingsUpdate, checked bool) error {
 		}
 		return st.UpdateSettingsChecked(body.ExpectedRoutingRevision, update)
 	}
-	err = m.store.UpdateSettings(update)
-	if err != nil {
-		return err
-	}
-	if err := m.store.Save(); err != nil && m.logf != nil {
-		m.logf("保存状态文件失败: %v", err)
-	}
-	return nil
+	return m.store.UpdateSettingsAndSave(update)
 }
 
 // setIf 仅在指针非空时赋值。

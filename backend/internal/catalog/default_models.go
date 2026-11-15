@@ -213,7 +213,7 @@ func (m *Management) defaultModelsPlan() (DefaultModelsPreview, map[string]confi
 	digestData, _ := json.Marshal(fingerprint)
 	digest := sha256.Sum256(digestData)
 	out := DefaultModelsPreview{Version: defaultCatalog.Version, CatalogRevision: hex.EncodeToString(digest[:]), RoutingRevision: snap.Revision,
-		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent}, Models: []DefaultModelEntry{}}
+		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw}, Models: []DefaultModelEntry{}}
 	proposals := map[string]config.UnifiedModel{}
 	policies := map[string]config.ModelPolicy{}
 	existing := map[string]config.UnifiedModel{}
@@ -376,4 +376,34 @@ func (m *Management) ApplyDefaultModels(request config.DefaultModelsApply) (conf
 		return config.UnifiedSnapshot{}, fmt.Errorf("default model storage unavailable")
 	}
 	return st.ApplyDefaultModels(models, request.ExpectedRoutingRevision, request.GroupID, request.ExpectedGroupRevision, policies)
+}
+
+// SyncDefaultModels reconciles discovery with public names using the existing
+// versioned transaction. It never changes group grants or enables disabled
+// definitions/sources. Conflicts remain visible in the default-model preview.
+func (m *Management) SyncDefaultModels() error {
+	preview, proposals, policies, err := m.defaultModelsPlan()
+	if err != nil {
+		return err
+	}
+	models := []config.UnifiedModel{}
+	for _, entry := range preview.Models {
+		if entry.Status == "create" || entry.Status == "update" {
+			models = append(models, proposals[entry.Name])
+		}
+	}
+	if len(models) == 0 {
+		return nil
+	}
+	st, ok := m.store.(interface {
+		ApplyDefaultModels([]config.UnifiedModel, uint64, string, uint64, map[string]config.ModelPolicy) (config.UnifiedSnapshot, error)
+	})
+	if !ok {
+		return fmt.Errorf("default model storage unavailable")
+	}
+	_, err = st.ApplyDefaultModels(models, preview.RoutingRevision, "", 0, policies)
+	if err != nil {
+		return fmt.Errorf("模型目录已刷新，但共享模型自动保存失败：%w", err)
+	}
+	return nil
 }

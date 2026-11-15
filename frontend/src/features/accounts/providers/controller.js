@@ -12,6 +12,7 @@ import { connectorKey, pairConnector, forgetConnector, checkConnector, connector
 import { accountsState, renderAccounts } from '../controller';
 import { refresh } from '../../../shared/refresh';
 import teleagentHelperSource from '../../../../../scripts/teleagent-login.mjs?raw';
+import mobileclawExportSource from '../../../../../scripts/mobileclaw-export.mjs?raw';
 const providersState = {};
 providersState.activeProvider = "workbuddy";
 
@@ -37,17 +38,18 @@ export function updateAccountCreateBusy() {
     domState.$("#teleagentResultFile").disabled = busy || !providersState.teleagentTask;
 }
 
-export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude", teleagent: "TeleAgent" }[providersState.accountCreatePlatform]; }
+export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude", teleagent: "TeleAgent", mobileclaw: "MobileClaw" }[providersState.accountCreatePlatform]; }
 
 export function renderAccountChoices() {
     var teleagent = providersState.accountCreatePlatform === "teleagent";
+    var mobileclaw = providersState.accountCreatePlatform === "mobileclaw";
     var browserButton = document.querySelector('[data-account-method="browser"]');
     browserButton.disabled = false;
     browserButton.classList.remove("hidden");
     document.querySelectorAll("[data-account-platform]").forEach(function (b) { var selected = b.dataset.accountPlatform === providersState.accountCreatePlatform; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     document.querySelectorAll("[data-account-method]").forEach(function (b) { var selected = b.dataset.accountMethod === providersState.accountCreateMethod; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     domState.$("#accountBrowserHint").textContent = providersState.accountCreatePlatform === "teleagent" ? tr("通过本机登录助手完成官方网页登录，核对后保存。") : providersState.accountCreatePlatform === "kiro" ? tr("通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。") : tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
-    domState.$("#accountImportHint").textContent = teleagent ? tr("在官方客户端登录后，导入完整账号与设备凭据") : providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
+    domState.$("#accountImportHint").textContent = mobileclaw ? tr("在官方客户端登录，运行 mobileclaw-export.mjs 导出后导入；当前支持个人免费 Token 额度") : teleagent ? tr("在官方客户端登录后，导入完整账号与设备凭据") : providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
     domState.$("#accountChoiceHint").textContent = providersState.accountCreatePlatform === "trae" && providersState.accountCreateMethod === "browser" ? tr("下一步填写官方客户端设备信息，再生成授权链接。") : tr("选择平台和添加方式后继续，账号核对完成后再保存。");
 }
 
@@ -159,7 +161,7 @@ export function addAccountCredentials(action, extra) {
     }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = tr("导入失败：") + e.message; return false; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
 }
 
-export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude",teleagent:"TeleAgent"}[providersState.activeProvider] || providersState.activeProvider; }
+export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude",teleagent:"TeleAgent",mobileclaw:"MobileClaw"}[providersState.activeProvider] || providersState.activeProvider; }
 
 export function clearDeviceResults() { providersState.providerDevices = []; domState.$("#providerDeviceChoices").classList.add("hidden"); domState.$("#providerDeviceChoice").textContent = ""; domState.$("#providerDeviceStatus").textContent = ""; }
 
@@ -238,11 +240,12 @@ PY
 `;
 
 export function selectProvider(name) {
+    domState.$("#mobileclawExportHelper").classList.toggle("hidden", name !== "mobileclaw");
     domState.$("#providerTraeDevice").classList.toggle("hidden", name !== "trae");
     domState.$("#providerTeleAgentHelper").classList.toggle("hidden", name !== "teleagent");
-    domState.$("#providerBrowserSteps").textContent = name === "teleagent" ? tr("点击浏览器登录 → 完成官方认证 → 自动显示账号预览 → 确认保存。") : tr("生成链接 → 在另一浏览器授权 → 检查账号预览 → 确认保存。关闭窗口不会自动保存账号。");
+    domState.$("#providerBrowserSteps").textContent = name === "mobileclaw" ? tr("生成二维码或复制登录链接 → 使用手机蜂窝网络确认 → 自动显示账号预览 → 确认保存。无需粘贴回调地址。") : name === "teleagent" ? tr("点击浏览器登录 → 完成官方认证 → 自动显示账号预览 → 确认保存。") : tr("生成链接 → 在另一浏览器授权 → 检查账号预览 → 确认保存。关闭窗口不会自动保存账号。");
     domState.$("#providerLoginCallback").type = name === "trae" || name === "teleagent" ? "password" : "text";
-    domState.$("#providerLoginCallback").parentElement.classList.toggle("hidden", ["qoder", "kiro", "teleagent"].includes(name));
+    domState.$("#providerLoginCallback").parentElement.classList.toggle("hidden", ["qoder", "kiro", "teleagent", "mobileclaw"].includes(name));
     domState.$("#providerLoginURL").parentElement.classList.toggle("hidden", name === "teleagent");
     domState.$("#providerLoginStart").textContent = name === "teleagent" ? tr("浏览器登录") : tr("生成登录链接");
     domState.$("#providerLoginCopy").classList.toggle("hidden", name === "teleagent");
@@ -268,10 +271,11 @@ export function selectProvider(name) {
     var scopeSelect = domState.$("#providerScope");
     var scopeValue = scopeSelect.value;
     scopeSelect.textContent = "";
-    var scopes = name === "teleagent" ? [["cn", tr("国内版")]] : ["chatgpt", "claude"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
+    var scopes = ["teleagent", "mobileclaw"].includes(name) ? [["cn", tr("国内版")]] : ["chatgpt", "claude"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
     scopes.forEach(function (entry) { var option = document.createElement("option"); option.value = entry[0]; option.textContent = entry[1]; option.disabled = name === "trae" && entry[0] === "global"; scopeSelect.appendChild(option); });
     if (scopes.some(function (entry) { return entry[0] === scopeValue && !(name === "trae" && scopeValue === "global"); })) scopeSelect.value = scopeValue;
     const hints = {
+mobileclaw: "先在官方 MobileClaw 客户端登录，再运行 node mobileclaw-export.mjs，粘贴生成的 mobileclaw-credentials.json。当前仅个人免费 Token 通道；到期请重新导出并勾选覆盖。",
 teleagent: "TeleAgent 需要 token、api_key、device_id、install_id、app_version，account_id 与 expires_at 可从 JWT 读取。使用本人获准使用的完整凭据；到期需重新登录。operation_token / oper_token 可选，用于独立积分门户。",
 chatgpt: "支持 Codex auth.json 或 access_token、account_id、user_id、expires_at；也可导入官方 OpenAI api_key（sk- 开头）。浏览器授权后粘贴完整 localhost:1455/auth/callback 地址。",
 claude: "支持 access_token、account_uuid、expires_at 和可选 refresh_token；也可导入官方 Anthropic api_key（sk-ant- 开头）。浏览器授权后粘贴 code#state 或完整回调地址。",
@@ -295,7 +299,7 @@ export function openProvider(name) { if (!sessionState.adminAuthenticated) {
 
 export function providerError(e) { domState.$("#providerLoginError").textContent = e.message || String(e); }
 
-export function resetProviderLogin() { clearTeleagentTask(); providersState.providerSession = ""; providersState.providerPreviewID = ""; domState.$("#providerLoginURL").value = ""; domState.$("#providerLoginCallback").value = ""; domState.$("#providerPreview").classList.add("hidden"); domState.$("#providerLoginOpen").classList.add("hidden"); domState.$("#providerLoginOpen").removeAttribute("href"); domState.$("#providerLoginCopy").disabled = true; domState.$("#providerLoginCheck").disabled = true; domState.$("#providerScope").disabled = false; setDeviceInputsLocked(false); domState.$("#providerLoginStatus").textContent = ""; domState.$("#providerLoginError").textContent = ""; domState.$("#providerReplace").checked = false; }
+export function resetProviderLogin() { stopMobileClawQR(); clearTeleagentTask(); providersState.providerSession = ""; providersState.providerPreviewID = ""; domState.$("#providerLoginURL").value = ""; domState.$("#providerLoginCallback").value = ""; domState.$("#providerPreview").classList.add("hidden"); domState.$("#providerLoginOpen").classList.add("hidden"); domState.$("#providerLoginOpen").removeAttribute("href"); domState.$("#providerLoginCopy").disabled = true; domState.$("#providerLoginCheck").disabled = true; domState.$("#providerScope").disabled = false; setDeviceInputsLocked(false); domState.$("#providerLoginStatus").textContent = ""; domState.$("#providerLoginError").textContent = ""; domState.$("#providerReplace").checked = false; }
 
 function clearTeleagentTask() {
     stopTeleagentConnector();
@@ -329,6 +333,7 @@ export function refreshAfterProviderSave() { resetProviderLogin(); domState.$("#
 
 export function trustedProviderURL(raw) { try {
     var u = new URL(raw);
+    if (providersState.activeProvider === "mobileclaw") return u.protocol === "https:" && u.host === "www.cmpassport.com" && !u.username && !u.password && !u.hash && u.pathname === "/h5/js/jssdk_yw_auth/auth/scanAuth.html";
     if (providersState.activeProvider === "teleagent") return u.protocol === "https:" && u.hostname === "www.teleai.com.cn" && !u.port && !u.username && !u.password && u.pathname === "/teleai-api/upms/public/auth/authorize";
     return u.protocol === "https:" && !u.username && !u.password && (providersState.activeProvider === "trae" ? ["trae.cn"] : providersState.activeProvider === "chatgpt" ? ["auth.openai.com"] : providersState.activeProvider === "claude" ? ["claude.com"] : providersState.activeProvider === "kiro" ? ["view.awsapps.com", "device.sso.us-east-1.amazonaws.com", "device.sso.eu-central-1.amazonaws.com"] : providersState.activeProvider === "qoder" ? ["qoder.com", "qoder.com.cn", "qoder.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
 }
@@ -366,8 +371,41 @@ async function automaticTeleagentLogin(task, session) {
     } finally { if (providersState.connectorAbort === controller) providersState.connectorAbort = null; }
 }
 
+let mobileclawQRTask = null;
+function stopMobileClawQR() {
+    if (mobileclawQRTask) clearTimeout(mobileclawQRTask.timer);
+    mobileclawQRTask = null;
+    domState.$('#mobileclawQR')?.classList.add('hidden');
+    domState.$('#mobileclawQRImage')?.removeAttribute('src');
+}
+function startMobileClawQR(d) {
+    stopMobileClawQR();
+    if (typeof d.qr_code !== 'string' || d.qr_code.length > 180000 || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(d.qr_code) || !Number.isSafeInteger(d.expires_at) || d.expires_at * 1000 <= Date.now()) throw new Error(tr('二维码响应无效，请重新生成'));
+    domState.$('#mobileclawQRImage').src = d.qr_code;
+    domState.$('#mobileclawQR').classList.remove('hidden');
+    mobileclawQRTask = { session: d.session_id, expires: d.expires_at * 1000, timer: null, checking: false };
+    domState.$('#mobileclawQRStatus').textContent = tr('二维码有效期至 ') + new Date(d.expires_at * 1000).toLocaleTimeString();
+    mobileclawQRTask.timer = setTimeout(pollMobileClawQR, 2500);
+}
+async function pollMobileClawQR() {
+    const task = mobileclawQRTask;
+    if (!task || task.checking || providersState.providerPreviewID) return;
+    clearTimeout(task.timer);
+    if (Date.now() >= task.expires) { stopMobileClawQR(); domState.$('#providerLoginStatus').textContent = tr('二维码已过期，请重新生成'); return; }
+    task.checking = true;
+    try {
+        const d = await providerCall('check', { session_id: task.session });
+        if (mobileclawQRTask !== task || providersState.providerSession !== task.session) return;
+        if (d.ready) { stopMobileClawQR(); showProviderPreview(d); }
+        else task.timer = setTimeout(pollMobileClawQR, 2500);
+    } catch (e) {
+        if (mobileclawQRTask !== task) return;
+        stopMobileClawQR(); if (!isAbortError(e)) providerError(e);
+    } finally { task.checking = false; }
+}
+
 export function mountProviders() {
-cleanup(function () { stopTeleagentConnector(); providersState.teleagentTask = null; });
+cleanup(function () { stopMobileClawQR(); stopTeleagentConnector(); providersState.teleagentTask = null; });
 on("#addAccount", openAccountCreate);
 document.querySelectorAll("[data-account-platform]").forEach(function (button) { listen(button, "click", function () { providersState.accountCreatePlatform = this.dataset.accountPlatform; renderAccountChoices(); }); });
 document.querySelectorAll("[data-account-method]").forEach(function (button) { listen(button, "click", function () { providersState.accountCreateMethod = this.dataset.accountMethod; renderAccountChoices(); }); });
@@ -425,7 +463,7 @@ function startProviderAuthorization(automatic = true) {
         }
         var previous = providersState.providerSession ? providerCall("cancel") : Promise.resolve();
         return previous.then(function () { resetProviderLogin(); return providerCall("start", options); }).then(function (d) { if (!trustedProviderURL(d.url))
-            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.toggle("hidden", providersState.activeProvider === "teleagent"); if (providersState.activeProvider === "teleagent") setTeleagentTask(d); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "teleagent" ? tr("请下载助手和本次任务，在自己的电脑完成官方登录，再选择结果文件并检查；不要直接在普通浏览器打开授权链接。") : providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : providersState.activeProvider === "chatgpt" ? tr("授权后复制完整 localhost:1455/auth/callback 地址并粘贴。若页面显示连接失败，仍可复制地址栏中的回调地址；检查预览后再保存。") : providersState.activeProvider === "claude" ? tr("授权后粘贴 code#state 或完整 Claude OAuth 回调地址，检查预览后再保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); if (providersState.activeProvider === "teleagent" && automatic) setTimeout(function () { if (providersState.providerSession === d.session_id) automaticTeleagentLogin(providersState.teleagentTask, d.session_id); }, 0); });
+            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; if (providersState.activeProvider === "mobileclaw") startMobileClawQR(d); domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.toggle("hidden", providersState.activeProvider === "teleagent"); if (providersState.activeProvider === "teleagent") setTeleagentTask(d); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "mobileclaw" ? tr("请用手机扫码或打开登录链接，关闭 Wi-Fi 后确认授权。面板会自动检查，核对账号后再保存。") : providersState.activeProvider === "teleagent" ? tr("请下载助手和本次任务，在自己的电脑完成官方登录，再选择结果文件并检查；不要直接在普通浏览器打开授权链接。") : providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : providersState.activeProvider === "chatgpt" ? tr("授权后复制完整 localhost:1455/auth/callback 地址并粘贴。若页面显示连接失败，仍可复制地址栏中的回调地址；检查预览后再保存。") : providersState.activeProvider === "claude" ? tr("授权后粘贴 code#state 或完整 Claude OAuth 回调地址，检查预览后再保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); if (providersState.activeProvider === "teleagent" && automatic) setTimeout(function () { if (providersState.providerSession === d.session_id) automaticTeleagentLogin(providersState.teleagentTask, d.session_id); }, 0); });
     });
 }
 on("#providerLoginStart", function () { return startProviderAuthorization(true); });
@@ -434,6 +472,7 @@ on("#teleagentManualCheck", function () { domState.$("#providerLoginCheck").clic
 on("#teleagentInstallCopy", function () { return copyText(domState.$("#teleagentInstallCommand").value, tr("安装命令已复制，请在自己的电脑执行一次")); });
 on("#teleagentPair", function () { return providerJob(async function () { await pairConnector(domState.$("#teleagentPairKey").value); domState.$("#teleagentPairKey").value = ""; domState.$("#teleagentConnectorSetup").open = false; domState.$("#teleagentConnectorStatus").textContent = tr("本机组件已配对，点击浏览器登录即可开始。"); }); });
 on("#teleagentForget", function () { stopTeleagentConnector(); forgetConnector(); domState.$("#teleagentPairKey").value = ""; domState.$("#teleagentConnectorSetup").open = true; domState.$("#teleagentConnectorStatus").textContent = tr("首次使用请先连接本机登录组件"); });
+on("#mobileclawExportHelper", function () { downloadText("mobileclaw-export.mjs", mobileclawExportSource, "text/javascript;charset=utf-8"); });
 on("#teleagentHelperDownload", function () { downloadText("teleagent-login.mjs", teleagentHelperSource, "text/javascript;charset=utf-8"); });
 on("#teleagentTaskDownload", function () {
     if (!providersState.teleagentTask || providersState.teleagentTask.expires_at * 1000 <= Date.now()) { providerError(new Error(tr("登录任务已过期，请重新生成"))); return; }
@@ -459,7 +498,7 @@ listen(domState.$("#teleagentResultFile"), "change", function () {
     });
 });
 on("#providerLoginCopy", function () { return copyText(domState.$("#providerLoginURL").value, providerLabel() + tr(" 授权链接已复制")); });
-on("#providerLoginCheck", function () { return providerJob(function () {
+on("#providerLoginCheck", function () { if (providersState.activeProvider === "mobileclaw") return pollMobileClawQR(); return providerJob(function () {
     providersState.providerPreviewID = ""; domState.$("#providerPreview").classList.add("hidden");
     return providerCall("check", { input: domState.$("#providerLoginCallback").value.trim() }).then(showProviderPreview);
 }); });

@@ -293,7 +293,10 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "key": k.Key})
 	case http.MethodDelete:
 		q := r.URL.Query()
-		s.AccessManagement.ChangeKeys(q.Get("key"), q.Get("toggle"))
+		if err := s.AccessManagement.ChangeKeys(q.Get("key"), q.Get("toggle")); err != nil {
+			writeErr(w, http.StatusInternalServerError, "密钥变更未保存，请检查状态文件目录权限后重试", "server_error")
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	default:
 		writeErr(w, http.StatusMethodNotAllowed, "不支持的方法", "invalid_request_error")
@@ -303,7 +306,10 @@ func (s *Server) handleAdminKeys(w http.ResponseWriter, r *http.Request) {
 // handleAdminLogs 返回或清空请求日志。
 func (s *Server) handleAdminLogs(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodDelete {
-		s.Store.ClearLogs()
+		if err := s.Store.ClearLogsAndSave(); err != nil {
+			writeErr(w, 500, "日志清空未保存，请检查状态文件目录权限", "server_error")
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 		return
 	}
@@ -313,7 +319,10 @@ func (s *Server) handleAdminLogs(w http.ResponseWriter, r *http.Request) {
 // handleAdminStats 返回或重置统计。
 func (s *Server) handleAdminStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodDelete {
-		s.Store.ClearStats()
+		if err := s.Store.ClearStatsAndSave(); err != nil {
+			writeErr(w, 500, "统计重置未保存，请检查状态文件目录权限", "server_error")
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 		return
 	}
@@ -406,7 +415,7 @@ func (s *Server) handleAdminCheckin(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 
-	checked := s.AccountProbes.Run(r.Context(), body.ID, accounts.ProbeOperations{
+	checked, saveErr := s.AccountProbes.Run(r.Context(), body.ID, accounts.ProbeOperations{
 		Invalidate: s.Cred.Invalidate,
 		Provider: func(ctx context.Context, a *accounts.Account) ([]provider.Model, error) {
 			adapter, raw, err := s.providerCredentials(ctx, a)
@@ -433,6 +442,10 @@ func (s *Server) handleAdminCheckin(w http.ResponseWriter, r *http.Request) {
 			row["access_key"] = result.Credentials.AccessKey
 		}
 		results = append(results, row)
+	}
+	if saveErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "results": results, "error": map[string]any{"message": saveErr.Error(), "type": "server_error"}})
+		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "results": results})
 }

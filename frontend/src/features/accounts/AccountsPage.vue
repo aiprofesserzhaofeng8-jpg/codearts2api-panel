@@ -45,7 +45,7 @@ import CredentialImport from './providers/CredentialImport.vue';
           </div>
 
           <div v-once class="account-toolbar">
-            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option><option value="teleagent">TeleAgent</option></select></label>
+            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option><option value="teleagent">TeleAgent</option><option value="mobileclaw">MobileClaw</option></select></label>
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" :placeholder="tr('搜索账号名称或来源')" :aria-label="tr('搜索账号')"></label>
             <select id="accountStatusFilter" :aria-label="tr('账号状态筛选')"><option value="all">{{tr('全部状态')}}</option><option value="ready">{{tr('可调度')}}</option><option value="cooling">{{tr('冷却中')}}</option><option value="paused">{{tr('已暂停')}}</option><option value="disabled">{{tr('已停用')}}</option></select>
             <label>{{tr('排序')}} <select id="accountSort"><option value="default">{{tr('默认顺序')}}</option><option value="name">{{tr('账号名称')}}</option><option value="lastUsed">{{tr('最近使用优先')}}</option><option value="expires">{{tr('即将过期优先')}}</option></select></label>
@@ -154,6 +154,7 @@ import CredentialImport from './providers/CredentialImport.vue';
         <button id="qoderLogin" class="account-platform" data-account-platform="qoder" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">Q</span><span>Qoder</span></button>
         <button id="chatgptLogin" class="account-platform" data-account-platform="chatgpt" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">G</span><span>ChatGPT / Codex</span></button>
         <button id="claudeLogin" class="account-platform" data-account-platform="claude" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">A</span><span>Claude</span></button>
+        <button class="account-platform" data-account-platform="mobileclaw" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">M</span><span>MobileClaw</span></button>
         <button id="teleagentLogin" class="account-platform" data-account-platform="teleagent" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">T</span><span>TeleAgent</span></button>
       </div>
       <p class="account-field-label" id="accountMethodLabel">{{tr('添加方式')}}</p>
