@@ -177,3 +177,15 @@ sudo -u codearts2api python3 - /opt/codearts2api/data/state.json \
 - 首次 v0.4.13 发布流程发现 Docker 前端缺少 MobileClaw 导出助手，未公开该版本；修复复制清单和跨平台测试路径后发布新标签。Windows 已关闭安装接口的连接重置只在负向验收内作有界重试，不重放成功安装。
 
 发布说明明确：MobileClaw 和 TeleAgent 的真实自动续期未完整验收；Qoder 403 未解决；自动归并不扩大分组权限。发布没有替换本机正在运行的 local.202611150200，本机升级仍需管理员执行安装器 upgrade。MC-1/MC-3/MC-4/MC-5 完成，MC-2 保留待验证。
+
+## 正式版升级后的 MC-2 运行验收
+
+用户执行校验过的本地升级脚本成功，服务为 v0.4.14。当前 systemd PID 4143452，自 2026-11-15 20:35:07 CST 启动；同进程日志在 20:35:13 记录目录同步完成。原已记录到期值为 1794738200（18:23:20），升级后用户读取磁盘得到 1794753313（22:35:13），身份、供应商绑定及刷新材料检查均正常。新有效期恰为目录同步完成后两小时。
+
+代码路径核对：app.startBackground 启动既有目录同步，server.catalogRefreshOperations.Provider 调用 providerCredentials，ProviderCredentials.Resolve 在到期窗口内经过原账号锁执行适配器 Refresh 并通过 CommitProviderCredentials 保存。MobileClaw Normalize 从令牌 exp 读取期限，不自行延长时间；Refresh 校验身份及供应商。该路径没有新定时器或离线轮转。
+
+随后通过当前运行网关直接调用 mobileclaw/cn/glm-5.3-flash，随机正文断言 PASS（1.2 秒）；私有结果在 `model-auto-sync-20261115/renewal-post-upgrade/result.json`。因此运行验收已有启动刷新时间线、更新后凭证落盘、绑定保持及后续生成成功证据，MC-2 记为运行验收通过。自动续期触发的归因是结合时间线和代码路径的判断，未抓取真实刷新报文，亦未强制轮转或篡改期限。
+
+用户执行 --require-renewal 时读到的新窗口表示服务已经提前通过目录同步处理到期凭证；该次脚本没有发推理请求，其 passed=false 不应解读为续期失败。无需继续追逐下一窗口。先前发布时真实续期待验证的说明保持其历史事实，本条补充发布后的运行验收。
+
+本文范围 MC-1～MC-5 已闭环：原始与共享 Pi 调用、限定能力验证、旧授权检查、正式发布、本机升级及续期运行验收完成。TeleAgent 真实续期、Qoder 403、其他套餐和最大上下文仍不在该结论内。
