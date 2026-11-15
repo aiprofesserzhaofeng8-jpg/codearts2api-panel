@@ -166,3 +166,14 @@ sudo -u codearts2api python3 - /opt/codearts2api/data/state.json \
 本机时间为 2026-11-15 17:06 CST，尚早于已知续期窗口 18:18:20。没有重复发起必然不能触发续期的调用，也没有改变令牌期限。用户返回的 renewal_not_due 是“未执行”，不是上游续期失败。
 
 已把发布草案更新为共享 Pi 真实验收通过，并在私有交付目录生成候选源码路径与 SHA256 清单 `candidate-source-manifest.json`，用于提交前检查源码漂移；该清单不包含源码内容或运行凭据，不等同于已提交、已推送或已发布。再次核对现有完整检查与竞态测试日志均成功。下一项仍为 MC-2 正常窗口的真实验收，MC-5 发布按原计划等待结果。
+
+## 正式交付 v0.4.14
+
+用户明确要求直接进行发布，接受保持真实续期待验证的记录。2026-11-15 17:46 CST 已公开 [v0.4.14](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases/tag/v0.4.14)，latest 返回该版本。正式源码提交 `1f659941cda605b2524c87e76cf2cd39102e99b8`。
+
+- [Release 43699460388](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/runs/43699460388) 全部成功：Windows 包和安装验收、Linux amd64/arm64 构建、Docker/Compose/反向代理、受管及系统级服务升级、schema 迁移恢复、多架构镜像。
+- [CI 43699460531](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/actions/runs/43699460531) 全部成功：Windows 与 Linux 检查、全量竞态及浏览器验收。
+- 六个附件：Linux 两架构包、Windows amd64 zip、install.sh、panelctl.py、SHA256SUMS。下载后五个制品的摘要全部通过；Linux manifest 确认干净源码和正式版本。
+- 首次 v0.4.13 发布流程发现 Docker 前端缺少 MobileClaw 导出助手，未公开该版本；修复复制清单和跨平台测试路径后发布新标签。Windows 已关闭安装接口的连接重置只在负向验收内作有界重试，不重放成功安装。
+
+发布说明明确：MobileClaw 和 TeleAgent 的真实自动续期未完整验收；Qoder 403 未解决；自动归并不扩大分组权限。发布没有替换本机正在运行的 local.202611150200，本机升级仍需管理员执行安装器 upgrade。MC-1/MC-3/MC-4/MC-5 完成，MC-2 保留待验证。
