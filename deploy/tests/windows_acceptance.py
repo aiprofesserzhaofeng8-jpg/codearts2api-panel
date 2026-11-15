@@ -124,7 +124,17 @@ def run(archive):
             wait_ready(True)
             assert state.is_file() and not token_path.exists()
             assert password not in state.read_text(encoding='utf-8')
-            assert request('/setup/install', body)[0] == 403
+            # Windows may reset a connection when an already-closed handler
+            # rejects a POST before its body is consumed. Retry only this known
+            # closed endpoint assertion, never the successful installation POST.
+            for attempt in range(3):
+                try:
+                    assert request('/setup/install', body)[0] == 403
+                    break
+                except ConnectionResetError:
+                    if attempt == 2:
+                        raise
+                    time.sleep(.1)
             assert request('/v1/models')[0] == 401
             status, html = request('/')
             assert status == 200
@@ -146,7 +156,17 @@ def run(archive):
             login('windows-test', user_password)
             assert request('/user/api/profile')[0] == 200
             assert request('/admin/api/state')[0] == 403
-            assert request('/setup/install', body)[0] == 403
+            # Windows may reset a connection when an already-closed handler
+            # rejects a POST before its body is consumed. Retry only this known
+            # closed endpoint assertion, never the successful installation POST.
+            for attempt in range(3):
+                try:
+                    assert request('/setup/install', body)[0] == 403
+                    break
+                except ConnectionResetError:
+                    if attempt == 2:
+                        raise
+                    time.sleep(.1)
             assert not list(cwd.glob('*.json')) and not list(first.glob('state*')) and not list(second.glob('state*'))
             stop()
             log.flush()

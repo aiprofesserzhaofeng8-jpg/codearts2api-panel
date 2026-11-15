@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 const helper=new URL('./mobileclaw-export.mjs',import.meta.url);
 test('export excludes refresh material, preserves source and refuses overwrite/expired credentials',()=>{
@@ -13,7 +14,7 @@ test('export excludes refresh material, preserves source and refuses overwrite/e
   const token='eyJ.'+payload+'.fixture';
   const original=JSON.stringify({token,userId:'user',userName:'fixture',deviceId:'device',workspaceMode:'personal',refreshToken:'private-refresh',systemFingerprint:'private-fingerprint'});
   fs.writeFileSync(config,original);
-  const run=()=>spawnSync(process.execPath,[helper.pathname,'--config',config,'--output',out],{encoding:'utf8'});
+  const run=()=>spawnSync(process.execPath,[fileURLToPath(helper),'--config',config,'--output',out],{encoding:'utf8'});
   const first=run();assert.equal(first.status,0);assert.equal(fs.readFileSync(config,'utf8'),original);
   assert.equal(fs.readFileSync(out,'utf8').includes('private-'),false);
   assert.equal(first.stdout.includes(token),false);
