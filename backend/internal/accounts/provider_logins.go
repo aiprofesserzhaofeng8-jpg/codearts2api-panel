@@ -288,6 +288,23 @@ func (s *ProviderLogins) Import(ctx context.Context, body ProviderImportRequest,
 	if err != nil {
 		return "", &LoginError{Kind: LoginInvalid, Message: err.Error()}
 	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	// Some cloud credentials must exchange a service-account assertion before
+	// their first verification. Preparation never saves or changes identity.
+	if preparer, ok := adapter.(interface {
+		PrepareImport(context.Context, json.RawMessage) (json.RawMessage, error)
+	}); ok {
+		prepared, prepareErr := preparer.PrepareImport(ctx, raw)
+		if prepareErr != nil {
+			return "", &LoginError{Kind: LoginInvalid, Message: "准备上游凭据失败，请检查授权"}
+		}
+		normalized, fresh, normalizeErr := adapter.Normalize(prepared)
+		if normalizeErr != nil || fresh.ID != identity.ID || fresh.Scope != identity.Scope {
+			return "", &LoginError{Kind: LoginInvalid, Message: "准备后的凭据身份不匹配"}
+		}
+		raw, identity = normalized, fresh
+	}
 	if !identity.NonExpiring && identity.ExpiresAt <= time.Now().Unix() {
 		return "", &LoginError{Kind: LoginInvalid, Message: "导入凭据已过期，请先在原客户端刷新或重新登录"}
 	}
@@ -297,8 +314,6 @@ func (s *ProviderLogins) Import(ctx context.Context, body ProviderImportRequest,
 	if !ok {
 		return "", &LoginError{Kind: LoginInvalid, Message: "该上游尚不支持凭据身份校验"}
 	}
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 	verified, err := verifier.Verify(ctx, raw)
 	if err != nil || verified.ID != identity.ID || verified.Scope != identity.Scope {
 		return "", &LoginError{Kind: LoginInvalid, Message: "上游账号身份校验失败，请检查完整凭据和所属地区"}

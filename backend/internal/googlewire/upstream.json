@@ -1,0 +1,35 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "sources": [
+    {
+      "path": "backend/internal/service/gemini_messages_compat_service.go",
+      "sha256": "263fd0c2cd3adb75003a7f02e5a6f25ad3f74c54d4d085563703f47183400f9a",
+      "local": "../googlewire/schema.go",
+      "use": "extracted schema helpers",
+      "selection": "cleanToolSchema through schemaNumberFloat64",
+      "extracted_sha256": "90356d5a91175cc7848fc1048c62769fb38b902dec8cbf117da86e8e8bbf9b90"
+    },
+    {
+      "path": "backend/internal/service/gemini_chat_completions_compat_service.go",
+      "sha256": "147dc950bf1d05273aa4421ea4bd1717b70a5253159f6db63a6a69b8100064d2",
+      "local": "native.go",
+      "use": "flow or protocol mapping adapted"
+    }
+  ],
+  "local_files": [
+    {
+      "path": "request.go",
+      "sha256": "f680c579a6200cf522de0fe0bb609303702926970f4abdcd71dfc77eb80ca667"
+    },
+    {
+      "path": "response.go",
+      "sha256": "d79fc70180ec67f347d4cf9404cf73ba949e1efe2b68b18e71135bc78a2bfc9c"
+    },
+    {
+      "path": "schema.go",
+      "sha256": "cada8d9ac4d7a8a22e7ff10d0e6a43d3a8fd367a1c02728d1340a1f9958d23d4"
+    }
+  ]
+}

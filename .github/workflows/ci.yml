@@ -10,6 +10,9 @@ permissions:
   contents: read
 
 jobs:
+  arm64:
+    uses: ./.github/workflows/arm64-acceptance.yml
+
   test:
     name: test (linux)
     timeout-minutes: 30
@@ -20,11 +23,8 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
-          # 本项目零第三方依赖（ADR 0001），因此没有 go.sum。
-          # setup-go 默认拿 go.sum 算缓存 key，找不到就整段缓存失效并告警；
-          # 指向 go.mod 后缓存仍能命中（主要收益是 GOCACHE 里的标准库编译产物）。
           cache: true
-          cache-dependency-path: backend/go.mod
+          cache-dependency-path: backend/go.sum
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -54,6 +54,11 @@ jobs:
           python tools/check_architecture.py
           python -m unittest discover -s tools -p test_check_architecture.py
 
+      - name: Pinned Sub2API provenance and compatibility regression
+        timeout-minutes: 10
+        run: |
+          python3 -m unittest discover -s scripts -p test_sub2api_compat.py
+          python3 scripts/check-sub2api-compat.py
       - name: go vet
         working-directory: backend
         run: go vet ./...
@@ -103,7 +108,7 @@ jobs:
         with:
           go-version-file: backend/go.mod
           cache: true
-          cache-dependency-path: backend/go.mod
+          cache-dependency-path: backend/go.sum
       - uses: actions/setup-node@v5
         with:
           node-version: "24.11.0"

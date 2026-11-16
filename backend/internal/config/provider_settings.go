@@ -27,14 +27,14 @@ func DefaultProviderSettings(name string) ProviderSettings {
 	if name == provider.WorkBuddy {
 		w.SearchEnabled, w.SearchBackend = true, "native"
 	}
-	if name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.TeleAgent || name == provider.MobileClaw {
+	if name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.TeleAgent || name == provider.MobileClaw || name == provider.DeepSeek || name == provider.Zhipu || name == provider.Kimi || name == provider.MiniMax || name == provider.Gemini || name == provider.Antigravity || name == provider.Grok || name == provider.OpenCode || name == provider.CommandCode || name == provider.Cline || name == provider.Bedrock || name == provider.Vertex {
 		w.PromptOverrides = &PromptOverrides{}
 	}
 	return w
 }
 
 func (w ProviderSettings) ValidateFor(name string) error {
-	if name != provider.WorkBuddy && name != provider.CodeArts && name != provider.Trae && name != provider.Qoder && name != provider.Kiro && name != provider.ChatGPT && name != provider.Claude && name != provider.TeleAgent && name != provider.MobileClaw {
+	if name != provider.WorkBuddy && name != provider.CodeArts && name != provider.Trae && name != provider.Qoder && name != provider.Kiro && name != provider.ChatGPT && name != provider.Claude && name != provider.TeleAgent && name != provider.MobileClaw && name != provider.DeepSeek && name != provider.Zhipu && name != provider.Kimi && name != provider.MiniMax && name != provider.Gemini && name != provider.Antigravity && name != provider.Grok && name != provider.OpenCode && name != provider.CommandCode && name != provider.Cline && name != provider.Bedrock && name != provider.Vertex {
 		return fmt.Errorf("未知平台配置")
 	}
 	if w.PromptMode != "custom" && w.PromptMode != "passthrough" {
@@ -46,7 +46,7 @@ func (w ProviderSettings) ValidateFor(name string) error {
 	if w.SearchScope != "cn" && !(name == provider.WorkBuddy && w.SearchScope == "global") {
 		return fmt.Errorf("%s 搜索地区无效", name)
 	}
-	if (name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.TeleAgent || name == provider.MobileClaw) && (w.SearchEnabled || w.SearchURL != "") {
+	if (name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.TeleAgent || name == provider.MobileClaw || name == provider.DeepSeek || name == provider.Zhipu || name == provider.Kimi || name == provider.MiniMax || name == provider.Gemini || name == provider.Antigravity || name == provider.Grok || name == provider.OpenCode || name == provider.CommandCode || name == provider.Cline || name == provider.Bedrock || name == provider.Vertex) && (w.SearchEnabled || w.SearchURL != "") {
 		return fmt.Errorf("%s 尚未接入独立联网搜索", name)
 	}
 	if name == provider.WorkBuddy {

@@ -1,0 +1,102 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "files": [
+    {
+      "path": "backend/internal/pkg/geminicli/constants.go",
+      "sha256": "030c4e19279e1e2e4a6227ca0b98b708f38ea7fcfb7801266428acbba7c90e5c",
+      "local": "oauth_constants.go",
+      "use": "copy with package/header changes"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/codeassist_types.go",
+      "sha256": "77bc3fb578675cf7b40f4fd590b52860cb9147d392ed95f5b9ffd2fd7819409c",
+      "local": "codeassist_types.go",
+      "use": "copy with package/header changes"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/token_types.go",
+      "sha256": "a74c08a1922cc2f8e027d960de98aa6fd66d3cf02eccc458a5162950a183db71",
+      "local": "token_types.go",
+      "use": "copy with package/header changes"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/models.go",
+      "sha256": "42a77e8c43810e1b07913edb2def2c44e9d689d9e74e7e0a5ff3c11198146547",
+      "local": "cli_models.go",
+      "use": "copy with package/header changes"
+    },
+    {
+      "path": "backend/internal/service/gemini_messages_compat_service.go",
+      "sha256": "263fd0c2cd3adb75003a7f02e5a6f25ad3f74c54d4d085563703f47183400f9a",
+      "local": "../googlewire/schema.go",
+      "use": "extracted schema helpers",
+      "selection": "cleanToolSchema through schemaNumberFloat64",
+      "extracted_sha256": "90356d5a91175cc7848fc1048c62769fb38b902dec8cbf117da86e8e8bbf9b90"
+    },
+    {
+      "path": "backend/internal/service/gemini_oauth_service.go",
+      "sha256": "c972a1b07d06b0d02effa17187df311873faab04bb14fd6495230d6aba262586",
+      "local": "oauth.go",
+      "use": "flow or protocol mapping adapted"
+    },
+    {
+      "path": "backend/internal/repository/geminicli_codeassist_client.go",
+      "sha256": "471580c6077a003a46a7a08fc0e74cf197fe2ddb6ef765d94eff2b12ece82400",
+      "local": "oauth.go",
+      "use": "flow or protocol mapping adapted"
+    },
+    {
+      "path": "backend/internal/service/gemini_chat_completions_compat_service.go",
+      "sha256": "147dc950bf1d05273aa4421ea4bd1717b70a5253159f6db63a6a69b8100064d2",
+      "local": "native.go",
+      "use": "flow or protocol mapping adapted"
+    }
+  ],
+  "local_files": [
+    {
+      "path": "cli_models.go",
+      "sha256": "831f67f08d1c12289a7170807b01ed099f63b7a9ebed00aba26729aec41e6fbc"
+    },
+    {
+      "path": "codeassist_types.go",
+      "sha256": "942bbe3792d04aa13e08f15bb53fff7c47d7ab1434c3c045805de715c30d2f80"
+    },
+    {
+      "path": "native.go",
+      "sha256": "6490126dccac2fc92aacc84884839b5bb78ca42f6dd13cb917a3aa5f3b662374"
+    },
+    {
+      "path": "oauth.go",
+      "sha256": "aefbfc16f974cb4086d41d7f11765789f250ea696b8c9ef81ef08b08d53c65e3"
+    },
+    {
+      "path": "oauth_constants.go",
+      "sha256": "778b932bb78a699b9f262608fb12883a66866ecbd3f4350b5ca92d4e826d497d"
+    },
+    {
+      "path": "../googlewire/schema.go",
+      "sha256": "cada8d9ac4d7a8a22e7ff10d0e6a43d3a8fd367a1c02728d1340a1f9958d23d4"
+    },
+    {
+      "path": "token_types.go",
+      "sha256": "a078cb8fac6d69defade7a1cfd992f5545b993d042f53f38710fe79775a0fe09"
+    }
+  ],
+  "google_reference": {
+    "repository": "https://github.com/google-gemini/gemini-cli",
+    "revision": "4ed06ed0ddc523a6d356a4ad35ddfea331041888",
+    "files": [
+      {
+        "path": "packages/core/src/code_assist/server.ts",
+        "sha256": "34c51c4ab12415ed4e78bc42c346eea99a8e532cc21bb64f7f043b1c16620426",
+        "use": "reference only: operation polling URL, GEMINI_CLI metadata, retrieveUserQuota fields"
+      },
+      {
+        "path": "packages/core/src/code_assist/types.ts",
+        "sha256": "65b10b0bccb87965afadce906c8c13256d620de6b3e8c002d9ffb683e5b510f4",
+        "use": "reference only: operation polling URL, GEMINI_CLI metadata, retrieveUserQuota fields"
+      }
+    ]
+  }
+}

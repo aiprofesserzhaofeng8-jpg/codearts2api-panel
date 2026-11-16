@@ -18,10 +18,11 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 	}
 
 	type toolCall struct {
-		ID        string
-		Type      string
-		Name      string
-		Arguments strings.Builder
+		ExtraContent json.RawMessage
+		ID           string
+		Type         string
+		Name         string
+		Arguments    strings.Builder
 	}
 
 	// Choice and tool indices are independent namespaces. Keep each candidate's
@@ -29,6 +30,7 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 	type choiceState struct {
 		content, think, refusal, signature strings.Builder
 		nativeThinking                     []json.RawMessage
+		reasoningDetails                   []json.RawMessage
 		hasRefusal                         bool
 		finish                             string
 		calls                              map[int]*toolCall
@@ -58,11 +60,13 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 					ReasoningContent   string            `json:"reasoning_content"`
 					ReasoningSignature string            `json:"reasoning_signature"`
 					NativeThinking     []json.RawMessage `json:"anthropic_thinking_blocks"`
+					ReasoningDetails   []json.RawMessage `json:"reasoning_details"`
 					ToolCalls          []struct {
-						Index    int    `json:"index"`
-						ID       string `json:"id"`
-						Type     string `json:"type"`
-						Function struct {
+						ExtraContent json.RawMessage `json:"extra_content"`
+						Index        int             `json:"index"`
+						ID           string          `json:"id"`
+						Type         string          `json:"type"`
+						Function     struct {
 							Name      string `json:"name"`
 							Arguments string `json:"arguments"`
 						} `json:"function"`
@@ -98,6 +102,7 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 			state.think.WriteString(ch.Delta.ReasoningContent)
 			state.signature.WriteString(ch.Delta.ReasoningSignature)
 			state.nativeThinking = append(state.nativeThinking, ch.Delta.NativeThinking...)
+			state.reasoningDetails = append(state.reasoningDetails, ch.Delta.ReasoningDetails...)
 			if ch.Delta.Refusal != nil {
 				state.hasRefusal = true
 				state.refusal.WriteString(*ch.Delta.Refusal)
@@ -108,6 +113,9 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 					call = &toolCall{}
 					state.calls[tc.Index] = call
 					state.order = append(state.order, tc.Index)
+				}
+				if len(tc.ExtraContent) > 0 && string(tc.ExtraContent) != "null" {
+					call.ExtraContent = append(json.RawMessage(nil), tc.ExtraContent...)
 				}
 				if tc.ID != "" {
 					call.ID = tc.ID
@@ -147,6 +155,9 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 				msg["reasoning_signature"] = state.signature.String()
 			}
 		}
+		if len(state.reasoningDetails) > 0 {
+			msg["reasoning_details"] = state.reasoningDetails
+		}
 		if len(state.nativeThinking) > 0 {
 			msg["anthropic_thinking_blocks"] = state.nativeThinking
 		}
@@ -163,7 +174,7 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 				if typ == "" {
 					typ = "function"
 				}
-				list = append(list, map[string]any{
+				entry := map[string]any{
 					"index": idx,
 					"id":    callID,
 					"type":  typ,
@@ -171,7 +182,11 @@ func AggregateSSE(chunks [][]byte) ([]byte, error) {
 						"name":      call.Name,
 						"arguments": call.Arguments.String(),
 					},
-				})
+				}
+				if len(call.ExtraContent) > 0 {
+					entry["extra_content"] = call.ExtraContent
+				}
+				list = append(list, entry)
 			}
 			msg["tool_calls"] = list
 			if state.finish == "" {

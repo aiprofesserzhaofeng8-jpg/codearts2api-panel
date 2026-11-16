@@ -48,7 +48,7 @@ func (a *credentialAdapter) Normalize(raw json.RawMessage) (json.RawMessage, pro
 	a.normalizes.Add(1)
 	var c credentialFixture
 	err := json.Unmarshal(raw, &c)
-	return raw, provider.Identity{ID: c.ID, Scope: c.Scope, ExpiresAt: c.Expires}, err
+	return raw, provider.Identity{ID: c.ID, Scope: c.Scope, ExpiresAt: c.Expires, HasRefresh: a.refresh != nil}, err
 }
 
 func (a *credentialAdapter) Refresh(ctx context.Context, raw json.RawMessage) (json.RawMessage, error) {
@@ -293,6 +293,57 @@ func TestProviderCredentialsPreserveErrorAndIdentityBoundaries(t *testing.T) {
 				var fault *provider.Error
 				if !errors.As(err, &fault) || fault.Status != 401 || !fault.AccountFault || a.refreshes.Load() != 0 {
 					t.Fatal("identity validation changed", err)
+				}
+			}
+		})
+	}
+}
+
+func TestProviderCredentialsRefreshCapabilityBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name                                       string
+		ttl                                        time.Duration
+		renewable, enabled, wantError, wantRefresh bool
+	}{
+		{"temporary-near-expiry", time.Minute, false, true, false, false},
+		{"temporary-refresh-disabled", time.Minute, false, false, false, false},
+		{"temporary-expired", -time.Second, false, true, true, false},
+		{"temporary-expired-disabled", -time.Second, false, false, true, false},
+		{"refreshable-window", time.Minute, true, true, false, true},
+		{"refreshable-expired", -time.Second, true, true, false, true},
+		{"refreshable-outside-window", time.Hour, true, true, false, false},
+		{"refreshable-disabled", time.Minute, true, false, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st, service := credentialStore(t, true)
+			st.UpdateSettings(func(s *storage.Settings) { s.AutoRefresh = tc.enabled })
+			acct := st.Account("a")
+			acct.Credentials, _ = json.Marshal(credentialFixture{"original", "user", "cn", time.Now().Add(tc.ttl).Unix()})
+			st.UpsertAccount(acct)
+			if err := st.Save(); err != nil {
+				t.Fatal(err)
+			}
+			before, _ := os.ReadFile(st.Path())
+			a := &credentialAdapter{}
+			if tc.renewable {
+				a.refresh = func(context.Context, json.RawMessage) (json.RawMessage, error) {
+					return rawCredential("rotated", "user", "cn", true), nil
+				}
+			}
+			raw, err := service.Resolve(t.Context(), "a", a)
+			if (err != nil) != tc.wantError || (a.refreshes.Load() != 0) != tc.wantRefresh {
+				t.Fatalf("err=%v refreshes=%d", err, a.refreshes.Load())
+			}
+			if tc.wantError {
+				var fault *provider.Error
+				if !errors.As(err, &fault) || fault.Status != 401 || !fault.AccountFault || raw != nil {
+					t.Fatalf("unexpected fault: %v", err)
+				}
+			}
+			if !tc.wantRefresh {
+				after, _ := os.ReadFile(st.Path())
+				if !bytes.Equal(before, after) || !bytes.Equal(acct.Credentials, st.Account("a").Credentials) {
+					t.Fatal("resolution wrote credentials")
 				}
 			}
 		})

@@ -138,8 +138,9 @@ func anthropicAssistantToChatMessages(raw json.RawMessage) ([]ChatMessage, error
 			args = string(b.Input)
 		}
 		msg.ToolCalls = append(msg.ToolCalls, ChatToolCall{
-			ID:   b.ID,
-			Type: "function",
+			ID:           b.ID,
+			ExtraContent: b.ExtraContent,
+			Type:         "function",
 			Function: ChatFunctionCall{
 				Name:      b.Name,
 				Arguments: args,

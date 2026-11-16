@@ -54,7 +54,9 @@ type AnthropicMessage struct {
 
 // AnthropicContentBlock is one block inside a message's content array.
 type AnthropicContentBlock struct {
-	Type string `json:"type"`
+	// Opaque upstream tool metadata (e.g. Gemini thought signatures).
+	ExtraContent json.RawMessage `json:"extra_content,omitempty"`
+	Type         string          `json:"type"`
 
 	CacheControl *AnthropicCacheControl `json:"cache_control,omitempty"`
 
@@ -267,6 +269,8 @@ type ResponsesText struct {
 // ResponsesInputItem is one item in the Responses API input array.
 // The Type field determines which other fields are populated.
 type ResponsesInputItem struct {
+	// Opaque upstream tool metadata (e.g. Gemini thought signatures).
+	ExtraContent json.RawMessage `json:"extra_content,omitempty"`
 	// Common
 	Type string `json:"type,omitempty"` // "message" for role-based messages
 
@@ -400,7 +404,10 @@ type ResponsesIncompleteDetails struct {
 
 // ResponsesOutput is one output item in a Responses API response.
 type ResponsesOutput struct {
-	Type string `json:"type"` // "message" | "reasoning" | "function_call" | "web_search_call"
+	ReasoningDetails []json.RawMessage `json:"reasoning_details,omitempty"`
+	// Opaque upstream tool metadata (e.g. Gemini thought signatures).
+	ExtraContent json.RawMessage `json:"extra_content,omitempty"`
+	Type         string          `json:"type"` // "message" | "reasoning" | "function_call" | "web_search_call"
 
 	// type=message
 	ID      string                 `json:"id,omitempty"`
@@ -441,6 +448,9 @@ func (o ResponsesOutput) MarshalJSON() ([]byte, error) {
 		"call_id":   o.CallID,
 		"execution": "client",
 		"arguments": toolSearchCallArgumentsJSON(o.Arguments),
+	}
+	if len(o.ExtraContent) > 0 && string(o.ExtraContent) != "null" {
+		m["extra_content"] = o.ExtraContent
 	}
 	if o.Status != "" {
 		m["status"] = o.Status
@@ -694,14 +704,15 @@ type ChatStreamOptions struct {
 
 // ChatMessage is a single message in the Chat Completions conversation.
 type ChatMessage struct {
-	Role             string          `json:"role"` // "system" | "user" | "assistant" | "tool" | "function"
-	Content          json.RawMessage `json:"content,omitempty"`
-	Refusal          string          `json:"refusal,omitempty"`
-	ReasoningContent string          `json:"reasoning_content,omitempty"`
-	Reasoning        string          `json:"reasoning,omitempty"`
-	Name             string          `json:"name,omitempty"`
-	ToolCalls        []ChatToolCall  `json:"tool_calls,omitempty"`
-	ToolCallID       string          `json:"tool_call_id,omitempty"`
+	ReasoningDetails []json.RawMessage `json:"reasoning_details,omitempty"`
+	Role             string            `json:"role"` // "system" | "user" | "assistant" | "tool" | "function"
+	Content          json.RawMessage   `json:"content,omitempty"`
+	Refusal          string            `json:"refusal,omitempty"`
+	ReasoningContent string            `json:"reasoning_content,omitempty"`
+	Reasoning        string            `json:"reasoning,omitempty"`
+	Name             string            `json:"name,omitempty"`
+	ToolCalls        []ChatToolCall    `json:"tool_calls,omitempty"`
+	ToolCallID       string            `json:"tool_call_id,omitempty"`
 
 	// Legacy function calling
 	FunctionCall *ChatFunctionCall `json:"function_call,omitempty"`
@@ -754,10 +765,12 @@ type ChatFunction struct {
 // ChatToolCall represents a tool call made by the assistant.
 // Index is only populated in streaming chunks (omitted in non-streaming responses).
 type ChatToolCall struct {
-	Index    *int             `json:"index,omitempty"`
-	ID       string           `json:"id,omitempty"`
-	Type     string           `json:"type,omitempty"` // "function"
-	Function ChatFunctionCall `json:"function"`
+	// Opaque upstream tool metadata (e.g. Gemini thought signatures).
+	ExtraContent json.RawMessage  `json:"extra_content,omitempty"`
+	Index        *int             `json:"index,omitempty"`
+	ID           string           `json:"id,omitempty"`
+	Type         string           `json:"type,omitempty"` // "function"
+	Function     ChatFunctionCall `json:"function"`
 }
 
 // ChatFunctionCall contains the function name and arguments.
@@ -835,12 +848,13 @@ type ChatChunkChoice struct {
 
 // ChatDelta carries incremental content in a streaming chunk.
 type ChatDelta struct {
-	Role             string         `json:"role,omitempty"`
-	Content          *string        `json:"content,omitempty"` // pointer: omit when not present, null vs "" matters
-	Refusal          *string        `json:"refusal,omitempty"`
-	ReasoningContent *string        `json:"reasoning_content,omitempty"`
-	Reasoning        *string        `json:"reasoning,omitempty"`
-	ToolCalls        []ChatToolCall `json:"tool_calls,omitempty"`
+	ReasoningDetails []json.RawMessage `json:"reasoning_details,omitempty"`
+	Role             string            `json:"role,omitempty"`
+	Content          *string           `json:"content,omitempty"` // pointer: omit when not present, null vs "" matters
+	Refusal          *string           `json:"refusal,omitempty"`
+	ReasoningContent *string           `json:"reasoning_content,omitempty"`
+	Reasoning        *string           `json:"reasoning,omitempty"`
+	ToolCalls        []ChatToolCall    `json:"tool_calls,omitempty"`
 }
 
 func (m ChatMessage) reasoningText() string {

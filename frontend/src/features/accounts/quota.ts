@@ -80,6 +80,7 @@ export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now(
   const windows = Array.isArray(info.windows) ? info.windows : [];
   if (!windows.length && !info.balance) return false;
   parent.classList.add('account-quota');
+  if (info.reason) parent.append(node('span', 'sub quota-query-error', tr(info.reason)));
   if (info.package_name && provider !== 'qoder') parent.append(node('span', 'sub quota-plan-name', info.package_name));
   windows.forEach(w => parent.append(renderWindow(w, now, provider === 'qoder')));
   if (info.balance) {

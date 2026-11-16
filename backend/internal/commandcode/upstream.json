@@ -1,0 +1,29 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "sources": [
+    {
+      "path": "backend/internal/service/command_code.go",
+      "sha256": "13fade0abb86e5dbbd648fce34b7a97fdab0fb1f2a0fecf109513dafc75763c0"
+    },
+    {
+      "path": "backend/internal/service/command_code_usage.go",
+      "sha256": "aecdfa850d2013e86042d23c123736a2bd3a6f944df558fd2eea3bccc0097976"
+    },
+    {
+      "path": "backend/internal/service/command_code_test.go",
+      "sha256": "a8161e9028e106b322b6d3983f051836cab3e810a11418ef03b501831d701a81"
+    },
+    {
+      "path": "backend/internal/service/command_code_usage_test.go",
+      "sha256": "32a737e47210141801c778d6c7af3909ab9d09f9ef4a8f9eeb6f2dd8638630c1"
+    }
+  ],
+  "local": {
+    "client.go": "124989ad20678fad28558c335e3a15071cb1ca19dfa2e0cc31e43016ce55e234",
+    "catalog.go": "037b9bc933bdaaf63cd0f8723fa6384a16a7ed44636f3bbd10023bb0164c50a3",
+    "credit.go": "71e7fd30103dc9a992b99067a80733d078106ca0d1cc2cb75d45e45fcbb6779f",
+    "stream.go": "56f00c4fa213bb944c703d077b884690f06101d34368acd53fbd21752245aa2d"
+  }
+}

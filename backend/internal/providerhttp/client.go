@@ -67,7 +67,9 @@ func Do(ctx context.Context, client *http.Client, name, method, endpoint string,
 		req.Header = http.Header{}
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "codearts2api-panel/"+strings.ToLower(name))
+	if req.Header.Get("User-Agent") == "" {
+		req.Header.Set("User-Agent", "codearts2api-panel/"+strings.ToLower(name))
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {

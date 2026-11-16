@@ -9,16 +9,26 @@ import (
 
 	"codearts2api/internal/access"
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/antigravity"
+	"codearts2api/internal/bedrock"
 	"codearts2api/internal/catalog"
 	"codearts2api/internal/chatgpt"
 	"codearts2api/internal/claude"
+	"codearts2api/internal/cline"
 	"codearts2api/internal/codearts"
+	"codearts2api/internal/commandcode"
 	"codearts2api/internal/config"
+	"codearts2api/internal/deepseek"
 	"codearts2api/internal/gateway"
+	"codearts2api/internal/gemini"
+	"codearts2api/internal/grok"
 	"codearts2api/internal/identitytransport"
 	"codearts2api/internal/jobs"
+	"codearts2api/internal/kimi"
 	"codearts2api/internal/kiro"
+	"codearts2api/internal/minimax"
 	"codearts2api/internal/mobileclaw"
+	"codearts2api/internal/opencode"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/qoder"
 	"codearts2api/internal/registry"
@@ -26,10 +36,13 @@ import (
 	"codearts2api/internal/storage"
 	"codearts2api/internal/teleagent"
 	"codearts2api/internal/trae"
+	"codearts2api/internal/typesafe"
 	codeartsup "codearts2api/internal/upstream/codearts"
 	"codearts2api/internal/usage"
+	"codearts2api/internal/vertex"
 	"codearts2api/internal/websearch"
 	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/zhipu"
 )
 
 func Build(st *storage.Store) (*server.Server, error) {
@@ -38,7 +51,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 	}
 	up := codearts.NewClient()
 	adapters := provider.NewRegistry()
-	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New(), qoder.New(), kiro.New(), chatgpt.New(), claude.New(), teleagent.New(), mobileclaw.New()} {
+	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New(), qoder.New(), kiro.New(), chatgpt.New(), claude.New(), teleagent.New(), mobileclaw.New(), deepseek.New(), zhipu.New(), kimi.New(), minimax.New(), gemini.New(), antigravity.New(), grok.New(), opencode.New(), commandcode.New(), cline.New(), typesafe.New(), bedrock.New(), vertex.New()} {
 		if err := adapters.Register(adapter); err != nil {
 			return nil, fmt.Errorf("register %s: %w", adapter.Describe().ID, err)
 		}

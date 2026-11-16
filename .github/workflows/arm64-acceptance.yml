@@ -1,0 +1,54 @@
+name: Linux arm64 acceptance
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: v0.0.0
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    env:
+      GOMAXPROCS: '2'
+      GOFLAGS: '-p=2'
+      PACKAGE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24.11.0'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Require native ARM host
+        run: test "$(uname -m)" = aarch64
+      - name: Frontend assets
+        run: |
+          npm install --global pnpm@10.34.9
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend build
+      - name: Native Go tests
+        working-directory: backend
+        run: go test ./...
+      - name: Package and exercise ARM binary
+        run: |
+          python3 deploy/package_release.py --version "$PACKAGE_VERSION" --arch arm64
+          python3 deploy/tests/live_acceptance.py --archive "artifacts/releases/codearts2api-panel-${PACKAGE_VERSION}-linux-arm64.tar.gz"
+      - name: Native ARM Docker build and disposable Compose acceptance
+        run: |
+          docker build --platform linux/arm64 --build-arg VERSION="$PACKAGE_VERSION" -t codearts2api:ci-arm64 .
+          python3 deploy/tests/docker_acceptance.py --image codearts2api:ci-arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-release
+          path: |
+            artifacts/releases/*-linux-arm64.tar.gz
+            artifacts/releases/*-linux-arm64.tar.gz.sha256
+          if-no-files-found: error

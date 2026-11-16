@@ -18,6 +18,84 @@ import urllib.request
 import zipfile
 
 
+def check_package(package):
+    """Validate packaged files on any OS; native process checks remain Windows-only."""
+    manifest = json.loads(package.read('manifest.json'))
+    assert manifest['os'] == 'windows' and manifest['arch'] == 'amd64'
+    expected = {
+        'COPYING.antigravity',
+        'COPYING.bedrock',
+        'COPYING.cline',
+        'COPYING.cnapi',
+        'COPYING.commandcode',
+        'COPYING.gemini',
+        'COPYING.googlewire',
+        'COPYING.grok',
+        'COPYING.opencode',
+        'COPYING.sub2api',
+        'COPYING.typesafe',
+        'COPYING.vertex',
+        'LICENSE',
+        'LICENSE.antigravity',
+        'LICENSE.aws-sdk-go-v2',
+        'LICENSE.bedrock',
+        'LICENSE.cline',
+        'LICENSE.cnapi',
+        'LICENSE.commandcode',
+        'LICENSE.gemini',
+        'LICENSE.googlewire',
+        'LICENSE.grok',
+        'LICENSE.kiro',
+        'LICENSE.opencode',
+        'LICENSE.qoder',
+        'LICENSE.smithy-go',
+        'LICENSE.sub2api',
+        'LICENSE.teleagent',
+        'LICENSE.typesafe',
+        'LICENSE.vertex',
+        'LICENSE.workbuddy',
+        'NOTICE',
+        'NOTICE.aws-sdk-go-v2',
+        'NOTICE.smithy-go',
+        'README.md',
+        'SUB2API-ANTIGRAVITY.json',
+        'SUB2API-ANTIGRAVITY.md',
+        'SUB2API-BEDROCK.json',
+        'SUB2API-BEDROCK.md',
+        'SUB2API-CLINE.json',
+        'SUB2API-CLINE.md',
+        'SUB2API-CNAPI.json',
+        'SUB2API-CNAPI.md',
+        'SUB2API-COMMANDCODE.json',
+        'SUB2API-COMMANDCODE.md',
+        'SUB2API-GEMINI.json',
+        'SUB2API-GEMINI.md',
+        'SUB2API-GOOGLEWIRE.json',
+        'SUB2API-GOOGLEWIRE.md',
+        'SUB2API-GROK.json',
+        'SUB2API-GROK.md',
+        'SUB2API-METADATA.json',
+        'SUB2API-METADATA.md',
+        'SUB2API-OPENCODE.json',
+        'SUB2API-OPENCODE.md',
+        'SUB2API-PROTOCOL.md',
+        'SUB2API-TYPESAFE.json',
+        'SUB2API-TYPESAFE.md',
+        'SUB2API-VERTEX.json',
+        'SUB2API-VERTEX.md',
+        'codearts2api-panel.exe',
+        'start.cmd',
+    }
+    assert set(manifest['files']) == expected
+    assert set(package.namelist()) == expected | {'manifest.json'}
+    for name, entry in manifest['files'].items():
+        payload = package.read(name)
+        assert len(payload) == entry['size']
+        assert hashlib.sha256(payload).hexdigest() == entry['sha256']
+    assert len(package.namelist()) == len(expected) + 1
+    return manifest
+
+
 def run(archive):
     if os.name != 'nt':
         raise RuntimeError('Native Windows acceptance must run on Windows')
@@ -28,15 +106,7 @@ def run(archive):
         root = Path(folder)
         first, second = root / '首次 解压', root / '升级 解压'
         with zipfile.ZipFile(archive) as package:
-            manifest = json.loads(package.read('manifest.json'))
-            assert manifest['os'] == 'windows' and manifest['arch'] == 'amd64'
-            expected = {'codearts2api-panel.exe', 'start.cmd', 'README.md', 'LICENSE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent', 'NOTICE', 'LICENSE.sub2api', 'COPYING.sub2api', 'SUB2API-METADATA.md', 'SUB2API-METADATA.json', 'SUB2API-PROTOCOL.md'}
-            assert set(manifest['files']) == expected
-            assert set(package.namelist()) == expected | {'manifest.json'}
-            for name, entry in manifest['files'].items():
-                payload = package.read(name)
-                assert len(payload) == entry['size']
-                assert hashlib.sha256(payload).hexdigest() == entry['sha256']
+            manifest = check_package(package)
             package.extractall(first)
             package.extractall(second)
         version = subprocess.check_output([str(first / 'codearts2api-panel.exe'), '-version'], text=True).strip()

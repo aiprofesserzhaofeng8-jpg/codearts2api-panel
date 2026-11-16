@@ -424,3 +424,50 @@ func TestProviderImportVerifiesBeforeSaveAndPreservesReplacement(t *testing.T) {
 		t.Fatal("expired import reached store")
 	}
 }
+
+type preparingLoginFixture struct {
+	*loginAdapterFixture
+	prepare func(context.Context, json.RawMessage) (json.RawMessage, error)
+}
+
+func (a *preparingLoginFixture) PrepareImport(ctx context.Context, b json.RawMessage) (json.RawMessage, error) {
+	return a.prepare(ctx, b)
+}
+func TestProviderImportPreparationCannotChangeIdentityOrSaveOnFailure(t *testing.T) {
+	for _, scenario := range []string{"identity", "scope", "expired", "error", "malformed"} {
+		t.Run(scenario, func(t *testing.T) {
+			st := &loginMemoryStore{accounts: map[string]*Account{}}
+			base := &loginAdapterFixture{identity: provider.Identity{ID: "original", Scope: "global", HasRefresh: true}}
+			verified := false
+			base.verify = func(context.Context, json.RawMessage) (provider.Identity, error) {
+				verified = true
+				return base.identity, nil
+			}
+			a := &preparingLoginFixture{loginAdapterFixture: base, prepare: func(ctx context.Context, b json.RawMessage) (json.RawMessage, error) {
+				if _, ok := ctx.Deadline(); !ok {
+					t.Error("missing import deadline")
+				}
+				base.identity.ExpiresAt = time.Now().Add(time.Hour).Unix()
+				switch scenario {
+				case "identity":
+					base.identity.ID = "other"
+				case "scope":
+					base.identity.Scope = "other"
+				case "expired":
+					base.identity.ExpiresAt = 1
+				case "error":
+					return nil, errors.New("private-secret")
+				case "malformed":
+					base.normalizeError = errors.New("private-secret")
+				}
+				return b, nil
+			}}
+			reg := provider.NewRegistry()
+			reg.Register(a)
+			svc := NewProviderLogins(st, func(int) string { return "account" })
+			if _, err := svc.Import(t.Context(), ProviderImportRequest{Provider: "fixture", Credentials: json.RawMessage(`{}`)}, reg); err == nil || strings.Contains(err.Error(), "private-secret") || verified || st.calls != 0 {
+				t.Fatal("invalid prepared credential accepted", err, verified, st.calls)
+			}
+		})
+	}
+}

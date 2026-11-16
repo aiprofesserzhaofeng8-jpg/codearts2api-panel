@@ -64,10 +64,22 @@ type DefaultModelsPreview struct {
 
 // Model identities use complete upstream IDs, preserving all version/variant
 // suffixes. Internal provider routes (auto, dfmodel, custom_model_*) stay scoped.
-var publicModelIdentity = regexp.MustCompile(`(?i)^(?:deepseek-(?:v?[0-9]|r[0-9])|glm-[0-9]|kimi-k[0-9]|qwen-?[0-9]|gpt-(?:[0-9]|oss-[0-9])|claude-(?:[0-9]|(?:haiku|sonnet|opus)-[0-9])|gemini-[0-9]|minimax-m[0-9]|mimo-v[0-9]|doubao-seed-[0-9]|step-[0-9]|openpangu-[0-9]|hunyuan-[0-9]|moonshot-v[0-9]|o[1-9](?:-|$))`)
+var publicModelIdentity = regexp.MustCompile(`(?i)^(?:deepseek-(?:v?[0-9]|r[0-9])|glm-[0-9]|kimi-k[0-9]|qwen-?[0-9]|gpt-(?:[0-9]|oss-[0-9])|claude-(?:[0-9]|(?:haiku|sonnet|opus)-[0-9])|grok-[0-9]|gemini-[0-9]|minimax-m[0-9]|mimo-v[0-9]|doubao-seed-[0-9]|step-[0-9]|openpangu-[0-9]|hunyuan-[0-9]|moonshot-v[0-9]|o[1-9](?:-|$))`)
 
 func modelIdentity(raw provider.Model) (string, bool) {
-	_, _, upstream := provider.ParseModel(raw.ID)
+	p, _, upstream := provider.ParseModel(raw.ID)
+	if p == provider.CommandCode {
+		parts := strings.SplitN(upstream, "/", 2)
+		if len(parts) == 2 {
+			prefixes := map[string][]string{"deepseek": {"deepseek-"}, "anthropic": {"claude-"}, "openai": {"gpt-", "o1", "o3", "o4"}, "google": {"gemini-"}, "qwen": {"qwen"}, "zhipu": {"glm-"}, "minimax": {"minimax-"}, "moonshotai": {"kimi-"}, "xai": {"grok-"}}
+			for _, prefix := range prefixes[strings.ToLower(parts[0])] {
+				if strings.HasPrefix(strings.ToLower(parts[1]), prefix) {
+					upstream = parts[1]
+					break
+				}
+			}
+		}
+	}
 	if publicModelIdentity.MatchString(upstream) && !strings.ContainsAny(upstream, " /\t\r\n") {
 		return strings.ToLower(upstream), true
 	}
@@ -213,7 +225,7 @@ func (m *Management) defaultModelsPlan() (DefaultModelsPreview, map[string]confi
 	digestData, _ := json.Marshal(fingerprint)
 	digest := sha256.Sum256(digestData)
 	out := DefaultModelsPreview{Version: defaultCatalog.Version, CatalogRevision: hex.EncodeToString(digest[:]), RoutingRevision: snap.Revision,
-		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw}, Models: []DefaultModelEntry{}}
+		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw, provider.DeepSeek, provider.Zhipu, provider.Kimi, provider.MiniMax, provider.Gemini, provider.Antigravity, provider.Grok, provider.OpenCode, provider.CommandCode, provider.Cline, provider.Bedrock, provider.Vertex}, Models: []DefaultModelEntry{}}
 	proposals := map[string]config.UnifiedModel{}
 	policies := map[string]config.ModelPolicy{}
 	existing := map[string]config.UnifiedModel{}

@@ -11,6 +11,10 @@ services:
       - codearts_data:/data
     environment:
       TZ: ${TZ:-Asia/Shanghai}
+      GEMINI_CLI_OAUTH_CLIENT_ID: ${GEMINI_CLI_OAUTH_CLIENT_ID:-}
+      GEMINI_CLI_OAUTH_CLIENT_SECRET: ${GEMINI_CLI_OAUTH_CLIENT_SECRET:-}
+      ANTIGRAVITY_OAUTH_CLIENT_ID: ${ANTIGRAVITY_OAUTH_CLIENT_ID:-}
+      ANTIGRAVITY_OAUTH_CLIENT_SECRET: ${ANTIGRAVITY_OAUTH_CLIENT_SECRET:-}
     command: ["-host", "0.0.0.0", "-port", "10087", "-data", "/data/codearts2api-data.json", "-no-import"]
     security_opt:
       - no-new-privileges:true

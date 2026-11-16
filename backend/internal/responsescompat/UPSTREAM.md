@@ -40,3 +40,41 @@ The rest of this package retains the base revision above. Response/SSE conversio
 and gateway service code from this newer revision were not imported. Keep the
 local regression tests when updating these functions, and review both source
 manifests rather than treating the whole package as a single upstream snapshot.
+
+## Gemini tool metadata preservation (2026-11-15)
+
+Local amendments to `types.go`, `chatcompletions_responses_bridge.go`, `responses_stream_event_wire.go`, and
+`anthropic_chat_messages.go` preserve optional opaque `extra_content` on tool
+calls, Responses output items and Messages tool_use blocks. Stream final items
+and replayed input retain the same bytes. This extends the existing copied
+converters; no extra upstream files or dependencies were copied. Original
+source hashes remain unchanged in the manifests; they describe upstream, not
+these amended local files. LGPL terms continue to apply.
+
+This is a gateway extension for clients that retain unknown tool metadata, not
+a claim that all official SDKs preserve it. A local Pi fixture showed that its
+OpenAI-compatible client drops it. No signature cache, fake signature or model
+switching was added to hide that client limitation.
+
+## Opaque reasoning extension (2026-11-16)
+
+Local amendments retain raw `reasoning_details` arrays on Chat messages/deltas
+and Responses reasoning output items, including streamed terminal items and
+replayed assistant/tool history. They are an explicit compatibility extension,
+not native OpenAI encrypted_content. User-turn boundaries clear inherited
+opaque data. No server cache, fake signature, decryption or model switch is used.
+Original source-file hashes above remain upstream hashes, not modified-local hashes.
+Clients that discard unknown item fields cannot use this extension reliably.
+
+## Adapted-source verification (2026-11-16)
+
+`upstream.json.source_files` still records the original upstream hashes.
+`adapted_source_files` records the reviewed local hashes and reasons for the
+three modified base files. `scripts/check-sub2api-compat.py` checks local bytes
+against the appropriate hash, independently fetches/verifies pinned upstream
+originals and tests, then runs upstream and local regression tests together.
+Downloaded tests use an upstream_ prefix, so local tests are not overwritten.
+Unrecorded drift still fails; do not rewrite provenance hashes to bless edits.
+
+`make check` runs `--local-only` without network access. CI and Release run the
+full pinned-source and regression check before artifacts can be published.

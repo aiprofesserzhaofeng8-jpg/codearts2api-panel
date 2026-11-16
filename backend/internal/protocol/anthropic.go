@@ -210,6 +210,7 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 	}
 	var ordinary []map[string]any
 	var thought []any
+	var reasoningDetails []json.RawMessage
 	var reasoning strings.Builder
 	hasReasoning := false
 	var assistantParts []any
@@ -217,6 +218,17 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 	for _, b := range blocks {
 		switch b["type"] {
 		case "thinking", "redacted_thinking":
+			if value, ok := b["reasoning_details"]; ok {
+				if m.Role != "assistant" {
+					return nil, fmt.Errorf("reasoning_details requires assistant role")
+				}
+				raw, _ := json.Marshal(value)
+				var details []json.RawMessage
+				if json.Unmarshal(raw, &details) != nil {
+					return nil, fmt.Errorf("reasoning_details must be an array")
+				}
+				reasoningDetails = append(reasoningDetails, details...)
+			}
 			if m.Role != "assistant" {
 				return nil, fmt.Errorf("思考块只允许在助手消息中")
 			}
@@ -298,7 +310,11 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 		if len(c.ToolCalls) > 0 {
 			calls := make([]any, 0, len(c.ToolCalls))
 			for _, call := range c.ToolCalls {
-				calls = append(calls, map[string]any{"id": call.ID, "type": call.Type, "function": map[string]any{"name": call.Function.Name, "arguments": call.Function.Arguments}})
+				entry := map[string]any{"id": call.ID, "type": call.Type, "function": map[string]any{"name": call.Function.Name, "arguments": call.Function.Arguments}}
+				if len(call.ExtraContent) > 0 {
+					entry["extra_content"] = call.ExtraContent
+				}
+				calls = append(calls, entry)
 			}
 			msg["tool_calls"] = calls
 		}
@@ -321,6 +337,9 @@ func messageToOpenAI(m Message, native bool) ([]map[string]any, error) {
 			msg["content"] = assistantParts[0].(map[string]any)["text"]
 		} else if len(assistantParts) > 0 {
 			msg["content"] = assistantParts
+		}
+		if len(reasoningDetails) > 0 {
+			msg["reasoning_details"] = reasoningDetails
 		}
 		if hasReasoning {
 			msg["reasoning_content"] = reasoning.String()
@@ -495,10 +514,12 @@ func FromOpenAI(raw []byte, model string) Reply {
 				ReasoningContent   string            `json:"reasoning_content"`
 				ReasoningSignature string            `json:"reasoning_signature"`
 				NativeThinking     []json.RawMessage `json:"anthropic_thinking_blocks"`
+				ReasoningDetails   []json.RawMessage `json:"reasoning_details"`
 				Refusal            string            `json:"refusal"`
 				ToolCalls          []struct {
-					ID       string `json:"id"`
-					Function struct {
+					ExtraContent json.RawMessage `json:"extra_content"`
+					ID           string          `json:"id"`
+					Function     struct {
 						Name      string `json:"name"`
 						Arguments string `json:"arguments"`
 					} `json:"function"`
@@ -536,8 +557,11 @@ func FromOpenAI(raw []byte, model string) Reply {
 					return Reply{}
 				}
 			}
-		} else if thinking != "" {
+		} else if thinking != "" || len(ch.Message.ReasoningDetails) > 0 {
 			block := map[string]any{"type": "thinking", "thinking": thinking}
+			if len(ch.Message.ReasoningDetails) > 0 {
+				block["reasoning_details"] = ch.Message.ReasoningDetails
+			}
 			if ch.Message.ReasoningSignature != "" {
 				block["signature"] = ch.Message.ReasoningSignature
 			}
@@ -559,9 +583,11 @@ func FromOpenAI(raw []byte, model string) Reply {
 			if id == "" {
 				id = "toolu_" + randomHex(12)
 			}
-			content = append(content, map[string]any{
-				"type": "tool_use", "id": id, "name": tc.Function.Name, "input": input,
-			})
+			entry := map[string]any{"type": "tool_use", "id": id, "name": tc.Function.Name, "input": input}
+			if len(tc.ExtraContent) > 0 {
+				entry["extra_content"] = tc.ExtraContent
+			}
+			content = append(content, entry)
 			stopReason = "tool_use"
 		}
 		if ch.FinishReason == "length" {

@@ -25,6 +25,8 @@
 
 源码版另增加 [Kiro 适配](docs/KIRO.md)：Builder ID 设备授权、API Key / OAuth 导入、自动续期、动态模型与现有统一映射。真实上游尚未验收；参数兼容边界见接入说明。
 
+源码版增加 [DeepSeek / 智谱 / Kimi / MiniMax 官方 API Key](docs/OFFICIAL-APIS.md)：国内按量接入、目录发现、统一名称与现有三个客户端接口；隔离验收通过，真实密钥验收待完成。
+
 ## 项目简介
 
 CodeArts2API Panel 为个人自用提供多平台账号管理、模型请求转发、协议转换与用量统计。服务使用 Go 标准库开发，管理页面嵌入二进制，状态保存在本地 JSON 文件中。
@@ -342,3 +344,15 @@ MobileClaw（中国移动云）个人免费 Token 账号的导入与限制见 [�
 基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，[Qoder 接入](docs/QODER.md)的协议参考来源保留 [MIT 声明](LICENSE.qoder)，[Kiro 接入](docs/KIRO.md)的协议参考来源保留 [MIT 声明](LICENSE.kiro)，协议转换库 `backend/internal/responsescompat` 与模型参数库 `backend/internal/catalog/modelmeta` 中的复用代码采用 LGPL-3.0（[协议库许可](backend/internal/responsescompat/LICENSE)、[参数库许可](backend/internal/catalog/modelmeta/LICENSE)），附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
 
 各组件的来源、修改声明和许可证边界见 [NOTICE](NOTICE)。本项目为独立社区项目。
+
+Gemini AI Studio API Key / CLI OAuth（源码接入及隔离验收通过，真实账号与 Pi 签名验收待完成）：[接入与限制](docs/GEMINI-API.md)。
+
+Antigravity（源码及隔离验收通过；真实账号验收待完成）：[接入说明](docs/ANTIGRAVITY.md)。
+
+Grok Build OAuth（源码及隔离验收通过，真实账号待验证）：[接入说明](docs/GROK.md)。
+
+[OpenCode Zen / Go 接入说明](docs/OPENCODE.md)（源码与隔离验收；真实账号验收待完成）。
+
+[Command Code 接入 / Setup](docs/COMMANDCODE.md) — 源码接入及隔离验收，真实账号待验证。
+
+[Cline 接入 / Setup](docs/CLINE.md) — 基础接入与跨协议透明扩展隔离验收通过；真实账号及 Messages 客户端待验证。

@@ -1,0 +1,64 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "files": [
+    {
+      "path": "backend/internal/service/bedrock_signer.go",
+      "sha256": "4d2099320ea10ae3fb24441803d239c60e7804759c38b32d973d4d3fe3f4893f",
+      "local": "signer.go",
+      "changes": "Remove Account-bound constructor; retain official AWS SDK signer."
+    },
+    {
+      "path": "backend/internal/service/bedrock_stream.go",
+      "sha256": "b6cad524874b5c9c74b5c175ccdda9a774cd20b9d9948d11b97d4ed0910e4e1d",
+      "local": "eventstream.go, wire.go",
+      "changes": "Extract bounded CRC decoder; redact exception payloads; stdlib JSON metrics and lazy Messages reader, no service queues."
+    },
+    {
+      "path": "backend/internal/service/bedrock_request.go",
+      "sha256": "5875be975ccede904969a48563cde7d9180f067088121da0a6e3e293d1e41b99",
+      "local": "wire.go",
+      "changes": "Native URL escaping and version/model/stream rules; reuse local Messages conversion, do not copy model alias or CC heuristics."
+    },
+    {
+      "path": "backend/internal/service/bedrock_stream_test.go",
+      "sha256": "58e37fce0ac68b0d47a0d0ebd20ac99412e927dc4d472daf974378b080a21d08",
+      "local": "wire_test.go",
+      "changes": "Adapt CRC, length, metrics cases to standard testing; add tools, image encoding, truncation, cancellation and signer tests."
+    }
+  ],
+  "local_files": [
+    {
+      "path": "client.go",
+      "sha256": "97927b8a6e185fb2180f0a15e96e929e1b33f4b3f66fcd9a3f44cc2e2662cc24"
+    },
+    {
+      "path": "client_test.go",
+      "sha256": "34fde5c186e5fa845e1a2efec1fc3be4b2525279dd9423b6cb3a0333997545c8"
+    },
+    {
+      "path": "eventstream.go",
+      "sha256": "545099915885f1084541d9560fd80e0fcd41374d66c4a6cddaa47d40d5fa21a2"
+    },
+    {
+      "path": "login_save_test.go",
+      "sha256": "990e84ce8ef4efb83ae2e66ee9facf7ae6f37c7c00133fb773a9afb30862b6cf"
+    },
+    {
+      "path": "signer.go",
+      "sha256": "26ab4faf00fdcde5afb7919b76a1bc4c82aac7808a2a1ae0e9d9817d1d7c1606"
+    },
+    {
+      "path": "wire.go",
+      "sha256": "002b525d9ea066f2e3211c45dc2d39bdc29b0cd5645aa5336ebb1408e484bbe9"
+    },
+    {
+      "path": "wire_test.go",
+      "sha256": "d99e08463dac1cbbf1ac5d04c97bbd381d65037145d25023b785088f3d772d14"
+    },
+    {
+      "path": "credentials_test.go",
+      "sha256": "0cd237d877b2f531785f6a83704e7640a906e2498f71500eb5dff724f8f16102"
+    }
+  ]
+}

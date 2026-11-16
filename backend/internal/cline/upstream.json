@@ -1,0 +1,39 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "sources": [
+    {
+      "path": "backend/internal/service/cline.go",
+      "sha256": "ba7492cfc7f81e7641749cbca87dab6e24cedadb168a9a5794f13cf9bff2b028"
+    },
+    {
+      "path": "backend/internal/service/cline_usage.go",
+      "sha256": "739d51220805c9391d501d5a953f7a5543ff968e478e79c7930cf1e195130ef1"
+    },
+    {
+      "path": "backend/internal/service/cline_test.go",
+      "sha256": "d371bdc9d7e46fdeb36e31722c8745ec60bc2644c7c35cf547295f097ecbcb08"
+    },
+    {
+      "path": "backend/internal/service/ratelimit_cline.go",
+      "sha256": "affca7dee9640c81851ee70ef3e55f62ba25ee75ecf1778ef74b4ed8325f176a"
+    }
+  ],
+  "local": {
+    "client.go": "d1d09111d53330fb81cfedfcb7215972cbe66265162cb44706388a5a44f93d69",
+    "catalog.go": "97eaddef75fa06db5ea98fa3e690d8806132b7a437495323293d64f461b7149d",
+    "credit.go": "e89ed1ada1920956360d4363acdb90a8772e3d95600e074608f6ad8189131082",
+    "stream.go": "423f9abae9fcc23aac837e6b9fb527bd91a0088d88834f9eebbb31a78b04b584",
+    "errors.go": "223d110b91e6c9c2a62373c2546918d3d9433abf80423e085a57f6c606f89f36"
+  },
+  "public_catalog": {
+    "url": "https://api.cline.bot/api/v1/models",
+    "observed_at": "2026-11-16",
+    "authenticated": false,
+    "count": 453,
+    "original_sha256": "1ad823c947f9faa3a26a68b22afda654e58a1802d005d58b6a22e88e5ed99bce",
+    "fixture": "testdata/public-models-20261116.json",
+    "fixture_sha256": "5afdef25b14656a612b80e80aa20051ac7aa46e00f75b49621c53152a2819639"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "files": [
+    {
+      "path": "backend/internal/service/ratelimit_cn_providers.go",
+      "sha256": "db2d64256c76b95d9f8f3fc417a6275f6c3a6032d8dcb3b57a75d8ee0ad05ac5",
+      "symbol": "cnProviderResponseIndicatesInsufficientBalance",
+      "extracted_sha256": "912adddd8b198a8339089345ad3d13ceff6cb88165e7fec50e069090ff4a1ba4",
+      "local": "upstream.go",
+      "changes": "function body unchanged; package/import adapted"
+    },
+    {
+      "path": "backend/internal/service/cn_provider_balance_service.go",
+      "sha256": "4c4af50d00b8d21ff04546570a59a07cd8458fe25d4490fb25dfe32bfd8e2719",
+      "local": "credit.go",
+      "changes": "Adapt field mappings; strict missing/finite checks; no repository writes; independent currencies",
+      "extracted_sha256": "6781fce0d729f3cb4d09379feeca973c2598c29787c80a25d1536cac43c5fa6c",
+      "selection": "switch provider block before result.Balances assignment"
+    },
+    {
+      "path": "backend/internal/service/cn_provider_balance_service_test.go",
+      "sha256": "4247fb4fa64ccf0b4483163b2842a75053c4cb89153abd88d0885896b4c13d6b",
+      "local": "client_test.go",
+      "changes": "Adapt missing/empty/invalid/zero balance cases to httptest and Credit results"
+    },
+    {
+      "path": "backend/internal/service/domain_constants.go",
+      "sha256": "b8e5c5d896696fb54783c5a4302b94ad9066cc044ce1f822ec3ff3bf3f77c6de",
+      "local": "../deepseek/client.go, ../zhipu/client.go, ../kimi/client.go, ../minimax/client.go",
+      "changes": "Select domestic payg endpoint constants; MiniMax changed to current api.minimax.cn"
+    },
+    {
+      "path": "backend/internal/service/provider_profile.go",
+      "sha256": "bd7eef2600ff60f35960537e777c35619b2d138848d4d50e5fe363c574191d33",
+      "local": "../deepseek/client.go, ../zhipu/client.go, ../kimi/client.go, ../minimax/client.go",
+      "changes": "Select payg Chat Completions only; no framework or Account copied"
+    },
+    {
+      "path": "backend/internal/service/cn_provider_quota_service.go",
+      "sha256": "cfb7be86599ffffd8f690186b2c05b54ff3341c69b866bab793b5fb7b80f22e7",
+      "symbol": "parseKimiUsageTiers, kimiQuotaURL, parseZhipuTokenTiers, parseMiniMaxUsageTiers",
+      "local": "coding_quota.go, coding_plan_quota.go",
+      "changes": "Reuse subscription window mappings; existing QuotaWindow, preserve missing values, explicit Zhipu units and unknown unclassified windows. Current official MiniMax M Plan URL replaces pinned legacy URL. No persistent snapshots or background jobs."
+    }
+  ],
+  "local_files": [
+    {
+      "path": "upstream.go",
+      "sha256": "56ad97a959f3f6b63d90d69205f69cbb106a83024bd72f1e7a654f21c8ca22b7"
+    },
+    {
+      "path": "credit.go",
+      "sha256": "3c82a1a92d05893ee1fc61e302d4b487ffad2cd68cd01b6e1c94f3fa2e8d40a5"
+    },
+    {
+      "path": "client_test.go",
+      "sha256": "bfb4d13460050615df1ae9ac74520a10d092295b309ba31a4f019a84df1a285a"
+    },
+    {
+      "path": "../deepseek/client.go",
+      "sha256": "40c531d501f46981981c25a12521fe60b074d81456165ca8e480c74875038997"
+    },
+    {
+      "path": "../zhipu/client.go",
+      "sha256": "b26ed482666ce9c83e138ced5e5154fc03f354f0188a77f4de7d1b2e758a3734"
+    },
+    {
+      "path": "../kimi/client.go",
+      "sha256": "52f5e6d62fe11549248687d053b537ac86405095e3d6427ea654e88be4acc883"
+    },
+    {
+      "path": "../minimax/client.go",
+      "sha256": "cf7ef9778831f41e5341f03bb763a93cd4dc2665c060215b7d6855bab6298fe7"
+    },
+    {
+      "path": "client.go",
+      "sha256": "05436000022aae62ed3a88898f62a397bcfdceea14b0b2a99530b7bb033e2d12"
+    },
+    {
+      "path": "coding_quota.go",
+      "sha256": "5daf0fa0d6a77f89607e5723f9de786e57333dd69de9941f91a8abc4c06ece56"
+    },
+    {
+      "path": "coding_plan_quota.go",
+      "sha256": "dc77044fdcad5e8019cad6870372a93c8a76d0174389cbae9bad4e48a17a4414"
+    },
+    {
+      "path": "coding_plan_quota_test.go",
+      "sha256": "07d1908d5db2b86ca9dc4c2586e31cdc5f5f90e1cb41bff1136e4d158580d95c"
+    },
+    {
+      "path": "coding_integration_test.go",
+      "sha256": "df12e1738c654660b891c4a81d2d38ebaa8bddde8b324a1c862027171c28c1b7"
+    }
+  ]
+}

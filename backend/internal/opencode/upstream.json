@@ -1,0 +1,47 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "sources": [
+    {
+      "path": "backend/internal/service/opencode_go.go",
+      "sha256": "95ce0dcb877507b69d9666a3b2e78596261cb82c48e4cbbe89a2881d97e1c186"
+    },
+    {
+      "path": "backend/internal/service/opencode_go_usage.go",
+      "sha256": "0fea1a04c684ae866dfa5bcc976e53b07c0cb6c704f81123089e910166afe0ad"
+    },
+    {
+      "path": "backend/internal/service/openai_opencode_session.go",
+      "sha256": "8ee88d4a1ad4723e329e477718e6b36c7cab15e3c6550e84fda08262266cd954"
+    }
+  ],
+  "local": {
+    "client.go": "f4f9772120373a69247253f71e6a112323170903fafce8c6cbdb36eb63641dea",
+    "routing.go": "393edd1a8f97b4da86ac02396d5eb8e337f6bb1d38ae56d670e102cf9f8aa500",
+    "credit.go": "679a10ac3576c5b1f56a586dd4b0ce8bc9b4b0e5c1cecf30eb9e34a6b919b914",
+    "stream.go": "8b3ad1ffff476051a0d06e28da5ef4e22d4998b0635238cc9c6defc8f02ef4a1"
+  },
+  "public_catalog_snapshots": [
+    {
+      "scope": "zen",
+      "url": "https://opencode.ai/inference/v1/models",
+      "observed_at": "2026-11-16",
+      "authentication": "none (public metadata only)",
+      "count": 86,
+      "original_sha256": "5439c0c48b7c081e2ebbdf04d24204c8c1d553232c13d96c8d81e194087638a2",
+      "fixture": "testdata/zen-models-20261116.json",
+      "fixture_sha256": "947cb6015c779da039c1be7aa159fb3bc471ee7db3bd709a8089897ea7ad2f31"
+    },
+    {
+      "scope": "go",
+      "url": "https://opencode.ai/inference/go/v1/models",
+      "observed_at": "2026-11-16",
+      "authentication": "none (public metadata only)",
+      "count": 30,
+      "original_sha256": "26946553ed61111d81ecb632f39ea2538f08a329e5cbbe071b5edb7360517c00",
+      "fixture": "testdata/go-models-20261116.json",
+      "fixture_sha256": "095953da6fcd7bd77970df94c75811b959b5267a257fb973d9e9deccf0f08112"
+    }
+  ]
+}

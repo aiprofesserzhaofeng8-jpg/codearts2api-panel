@@ -1,0 +1,87 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "files": [
+    {
+      "path": "backend/internal/pkg/gemini/function_response.go",
+      "sha256": "fe3cad359fcf932d83c7e135776ccfd57fb87a82026543d744e742cb0bc67623",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/gemini/function_response_test.go",
+      "sha256": "30ab66c17ec913371da3c8b47fd9138b5154c1f7d85fc958017f3c7d8bff6f28",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/gemini/models.go",
+      "sha256": "0a285a59ccaf61ffdd82f3aec536331b8fdab1c548b19e06d9b2b2b2ad1d16f4",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/gemini/models_test.go",
+      "sha256": "b39b25a8f29c1563be0c596876576849fb57d09f02c0624affc4b7dbb50f102a",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/codeassist_types.go",
+      "sha256": "77bc3fb578675cf7b40f4fd590b52860cb9147d392ed95f5b9ffd2fd7819409c",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/constants.go",
+      "sha256": "030c4e19279e1e2e4a6227ca0b98b708f38ea7fcfb7801266428acbba7c90e5c",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/models.go",
+      "sha256": "42a77e8c43810e1b07913edb2def2c44e9d689d9e74e7e0a5ff3c11198146547",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/oauth.go",
+      "sha256": "14626e092f83e01e52618b56ff0791d239a7bdea2d7c5a4de5d1338578c3e20e",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/sanitize.go",
+      "sha256": "356a5b6db9091e9512cf13afc04bdb4e5e06c5fb9a70d14c26bc2be57b36f4f1",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/pkg/geminicli/token_types.go",
+      "sha256": "a74c08a1922cc2f8e027d960de98aa6fd66d3cf02eccc458a5162950a183db71",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/repository/geminicli_codeassist_client.go",
+      "sha256": "471580c6077a003a46a7a08fc0e74cf197fe2ddb6ef765d94eff2b12ece82400",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/service/gemini_chat_completions_compat_service.go",
+      "sha256": "147dc950bf1d05273aa4421ea4bd1717b70a5253159f6db63a6a69b8100064d2",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/service/gemini_compat_thinking.go",
+      "sha256": "39208964e5b5c116b028dfa2ea021dcacb61a193e889d61f291de20ed7fab4e0",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/service/gemini_messages_compat_service.go",
+      "sha256": "263fd0c2cd3adb75003a7f02e5a6f25ad3f74c54d4d085563703f47183400f9a",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/service/gemini_upstream_url.go",
+      "sha256": "26d362ee4869ffec02c8c6446fd146c74fc2961583633e5627bf26e4a3423066",
+      "use": "review only; not copied into runtime"
+    },
+    {
+      "path": "backend/internal/service/geminicli_codeassist.go",
+      "sha256": "42cfe5b9b81bf232ff5b39503f7edc089c9f37ba0e38542311fbe309c600bb38",
+      "use": "review only; not copied into runtime"
+    }
+  ],
+  "decision": "P2a uses official OpenAI compatibility with existing cnapi transport; native conversion and CLI OAuth remain P2b. No service/DB/scheduler copied."
+}

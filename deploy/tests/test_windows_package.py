@@ -11,6 +11,11 @@ packaging = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(packaging)
 
 
+acceptance_spec = importlib.util.spec_from_file_location('windows_acceptance', Path(__file__).with_name('windows_acceptance.py'))
+acceptance = importlib.util.module_from_spec(acceptance_spec)
+acceptance_spec.loader.exec_module(acceptance)
+
+
 class WindowsPackageTest(unittest.TestCase):
     def setUp(self):
         source = patch.object(packaging, 'prepare_source', return_value={'commit': 'fixture', 'dirty': False, 'channel': 'stable'})
@@ -25,11 +30,11 @@ class WindowsPackageTest(unittest.TestCase):
             output = Path(temp)
             archive = packaging.build('v0.3.7', output, 'go')
             with zipfile.ZipFile(archive) as package:
-                manifest = json.loads(package.read('manifest.json'))
+                manifest = acceptance.check_package(package)
                 self.assertEqual(set(package.namelist()), set(manifest['files']) | {'manifest.json'})
                 self.assertEqual(manifest['os'], 'windows')
                 self.assertEqual(manifest['source']['commit'], 'fixture')
-                for name in ('NOTICE', 'LICENSE.sub2api', 'COPYING.sub2api', 'SUB2API-METADATA.md', 'SUB2API-METADATA.json', 'SUB2API-PROTOCOL.md'):
+                for name in ('NOTICE', 'LICENSE.sub2api', 'COPYING.sub2api', 'SUB2API-METADATA.md', 'SUB2API-METADATA.json', 'SUB2API-PROTOCOL.md', 'SUB2API-CNAPI.md', 'SUB2API-CNAPI.json', 'LICENSE.cnapi', 'COPYING.cnapi', 'SUB2API-GEMINI.md', 'SUB2API-GEMINI.json', 'LICENSE.gemini', 'COPYING.gemini', 'SUB2API-ANTIGRAVITY.md', 'SUB2API-ANTIGRAVITY.json', 'LICENSE.antigravity', 'COPYING.antigravity', 'SUB2API-GROK.md', 'SUB2API-GROK.json', 'LICENSE.grok', 'COPYING.grok', 'SUB2API-OPENCODE.md', 'SUB2API-OPENCODE.json', 'LICENSE.opencode', 'COPYING.opencode', 'SUB2API-COMMANDCODE.md', 'SUB2API-COMMANDCODE.json', 'LICENSE.commandcode', 'COPYING.commandcode', 'SUB2API-CLINE.md', 'SUB2API-CLINE.json', 'LICENSE.cline', 'COPYING.cline', 'SUB2API-VERTEX.md', 'SUB2API-VERTEX.json', 'LICENSE.vertex', 'COPYING.vertex', 'SUB2API-BEDROCK.md', 'SUB2API-BEDROCK.json', 'LICENSE.bedrock', 'COPYING.bedrock', 'LICENSE.aws-sdk-go-v2', 'NOTICE.aws-sdk-go-v2', 'LICENSE.smithy-go', 'NOTICE.smithy-go', 'SUB2API-TYPESAFE.md', 'SUB2API-TYPESAFE.json', 'LICENSE.typesafe', 'COPYING.typesafe', 'SUB2API-GOOGLEWIRE.md', 'SUB2API-GOOGLEWIRE.json', 'LICENSE.googlewire', 'COPYING.googlewire'):
                     self.assertIn(name, manifest['files'])
                 for name, info in manifest['files'].items():
                     self.assertEqual(packaging.hashlib.sha256(package.read(name)).hexdigest(), info['sha256'])

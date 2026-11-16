@@ -1,0 +1,464 @@
+{
+  "format": 1,
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "phase": "P0",
+  "status": "source inventory; no implementation copied",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b",
+      "bytes": 7651,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "retain-license",
+      "scope": "原样保留 LGPL-3.0 许可文本；代码复制时随迁移包分发。",
+      "imports": [],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/domain/constants.go",
+      "sha256": "1fe31edbf0ae6865d5c70a5b380ed855b2db579b3416cbfd513385f9022c4d1c",
+      "bytes": 11191,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-only",
+      "scope": "平台枚举参考；不导入上游 domain。",
+      "imports": [],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/account.go",
+      "sha256": "65c641236f9358b36dfe7a29b8b7c985441be7ad87e8dc8ad51c9e1f0f602687",
+      "bytes": 100929,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-only",
+      "scope": "鉴权模式和协议选择语义；Account 及 Credentials map 不迁移。",
+      "imports": [
+        "encoding/json",
+        "errors",
+        "log/slog",
+        "net/url",
+        "reflect",
+        "slices",
+        "sort",
+        "strconv",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/domain",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/geminicli",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/typesafe",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/xai"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/cn_provider_balance_service.go",
+      "sha256": "4c4af50d00b8d21ff04546570a59a07cd8458fe25d4490fb25dfe32bfd8e2719",
+      "bytes": 13088,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "extract",
+      "scope": "DeepSeek balance_infos 与 Kimi data.available_balance 解析、端点规则；排除 Repository/Proxy/singleflight/UpdateExtra。Kimi 缺失字段必须未知而非零。",
+      "imports": [
+        "context",
+        "fmt",
+        "io",
+        "log/slog",
+        "net/http",
+        "strconv",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/errors",
+        "github.com/tidwall/gjson",
+        "golang.org/x/sync/singleflight"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/cn_provider_balance_service_test.go",
+      "sha256": "4247fb4fa64ccf0b4483163b2842a75053c4cb89153abd88d0885896b4c13d6b",
+      "bytes": 3615,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "adapt-tests",
+      "scope": "保留缺失/空/非法余额与真实零余额用例；改 httptest 和本地 Credit 返回值。",
+      "imports": [
+        "context",
+        "io",
+        "net/http",
+        "strings",
+        "testing",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint",
+        "github.com/stretchr/testify/require"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/cn_provider_probe_url.go",
+      "sha256": "c08ad79774e9f5b36bad0702e312f00fa6db64d651b7634a0743040d24b68cdd",
+      "bytes": 1922,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-only",
+      "scope": "固定可信端点、禁止重定向满足本批需求；不引入 config/urlvalidator 或自定义 base_url。",
+      "imports": [
+        "errors",
+        "fmt",
+        "strings",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/cn_provider_probe_url_test.go",
+      "sha256": "8e10b6c5aba0ea14bd3799e98cd98cf13163418c70d421094d86c00b412b86ac",
+      "bytes": 7775,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-tests",
+      "scope": "保留凭据不外发的威胁用例；不搬上游 allowlist 配置测试框架。",
+      "imports": [
+        "context",
+        "io",
+        "net/http",
+        "strings",
+        "testing",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint",
+        "github.com/stretchr/testify/require"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/cn_provider_quota_service.go",
+      "sha256": "cfb7be86599ffffd8f690186b2c05b54ff3341c69b866bab793b5fb7b80f22e7",
+      "bytes": 26465,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "defer-P4e",
+      "scope": "Coding Plan 用量服务不属 P1；cnParseF64 可抽取但须加有限数值校验；cc-switch 来源须在实际复制片段时复核。",
+      "imports": [
+        "context",
+        "encoding/json",
+        "fmt",
+        "io",
+        "log/slog",
+        "net/http",
+        "sort",
+        "strconv",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/errors",
+        "github.com/tidwall/gjson",
+        "golang.org/x/sync/singleflight"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/cn_providers_test.go",
+      "sha256": "cd3bbfa4651f2fb262b2a479f0324555a424b31cc396fa489eefa490d8dd24f7",
+      "bytes": 42423,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "adapt-tests",
+      "scope": "筛选 payg/余额/错误/端点用例；Coding Plan 窗口测试留 P4e。",
+      "imports": [
+        "context",
+        "testing",
+        "time",
+        "github.com/stretchr/testify/require",
+        "github.com/tidwall/gjson",
+        "github.com/Wei-Shaw/sub2api/internal/config"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/domain_constants.go",
+      "sha256": "b8e5c5d896696fb54783c5a4302b94ad9066cc044ce1f822ec3ff3bf3f77c6de",
+      "bytes": 48286,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "extract",
+      "scope": "仅四厂商 payg 端点常量；不搬全平台常量。",
+      "imports": [
+        "fmt",
+        "github.com/Wei-Shaw/sub2api/internal/domain"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_chat_completions.go",
+      "sha256": "6fe047766eb28f2b03e6d5ccafc3c5162c518457762dbb268032410f3c4f19c8",
+      "bytes": 51132,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-only",
+      "scope": "标准 Chat Completions 语义复用本地 protocol/providerhttp；不复制完整服务。",
+      "imports": [
+        "bufio",
+        "context",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "net/http",
+        "regexp",
+        "strconv",
+        "strings",
+        "sync/atomic",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/apicompat",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/logger",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat",
+        "github.com/Wei-Shaw/sub2api/internal/util/responseheaders",
+        "github.com/gin-gonic/gin",
+        "github.com/tidwall/gjson",
+        "github.com/tidwall/sjson",
+        "go.uber.org/zap"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_chat_completions_raw.go",
+      "sha256": "5a46a8a6211a4932e5ee337885bc42748a41b4d973f5eb91a49f75aa41246f1f",
+      "bytes": 23668,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-only",
+      "scope": "流转发/错误语义作为测试参考；不引入 Gin 和 upstream 调度。",
+      "imports": [
+        "context",
+        "errors",
+        "fmt",
+        "net/http",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/logger",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai",
+        "github.com/Wei-Shaw/sub2api/internal/util/responseheaders",
+        "github.com/gin-gonic/gin",
+        "github.com/tidwall/gjson",
+        "github.com/tidwall/sjson",
+        "go.uber.org/zap"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_deepseek_chat_reasoning_test.go",
+      "sha256": "7ffc3a6be2b7dbcc2db18ff9d9450a61d05e77c10e0e8e6a6ee8d729ad2c100c",
+      "bytes": 10404,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "adapt-tests",
+      "scope": "保留真实 reasoning_content 不覆盖及工具历史用例；缺失占位规则须验证，不能当恢复真实推理。",
+      "imports": [
+        "bytes",
+        "context",
+        "io",
+        "net/http",
+        "net/http/httptest",
+        "strings",
+        "testing",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat",
+        "github.com/gin-gonic/gin",
+        "github.com/stretchr/testify/require",
+        "github.com/tidwall/gjson"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_deepseek_input_image_test.go",
+      "sha256": "b5c60151d1ffb1fdceb34303c190e0162fbb68eee9c3a162d8c29fc39c9716b4",
+      "bytes": 8894,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "defer-native-responses",
+      "scope": "仅供后续原生 Responses 转换参考；不是已证实所有 DeepSeek 模型支持图片。",
+      "imports": [
+        "bytes",
+        "context",
+        "io",
+        "net/http",
+        "testing",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat",
+        "github.com/stretchr/testify/require",
+        "github.com/tidwall/gjson"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_request_body.go",
+      "sha256": "f15545d0409f6a066a1b02b30e6bb430fec4c8ec92223f41943e2d4bb2974ad6",
+      "bytes": 89039,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "defer-native-responses",
+      "scope": "原生 Responses 请求适配非 P1 Chat 上游范围；客户端 Responses 走既有转换。",
+      "imports": [
+        "bytes",
+        "context",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai",
+        "net/http",
+        "strings",
+        "unicode/utf8",
+        "github.com/MoeForge/moego/ojson",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/apicompat",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/httputil",
+        "github.com/Wei-Shaw/sub2api/internal/util/urlvalidator",
+        "github.com/gin-gonic/gin",
+        "github.com/google/uuid",
+        "github.com/tidwall/gjson",
+        "github.com/tidwall/sjson"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_responses_chat_fallback.go",
+      "sha256": "3429246048109d9db6639506d83d6522ff09c8f291c148329a6e7a0e49b48939",
+      "bytes": 19790,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "extract-with-review",
+      "scope": "DeepSeek reasoning_content 历史处理及测试；不得不加判断复制空格占位，优先保留真实历史；无摘要/推理缓存新服务。",
+      "imports": [
+        "bytes",
+        "context",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "net/http",
+        "net/url",
+        "strconv",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/apicompat",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/logger",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai",
+        "github.com/Wei-Shaw/sub2api/internal/util/responseheaders",
+        "github.com/gin-gonic/gin",
+        "github.com/tidwall/gjson",
+        "github.com/tidwall/sjson",
+        "go.uber.org/zap"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_service.go",
+      "sha256": "e5cc2673b5f8a53d0ea93e8d30f238f82daf0193606dec079925c2851960b6e0",
+      "bytes": 46993,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "reference-only",
+      "scope": "总服务依赖众多；不迁移网关所有者或调度。",
+      "imports": [
+        "context",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "log/slog",
+        "math/rand",
+        "net/http",
+        "strings",
+        "sync",
+        "sync/atomic",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/ip",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/logger",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/openai",
+        "github.com/Wei-Shaw/sub2api/internal/platform/liveattestation",
+        "github.com/Wei-Shaw/sub2api/internal/util/responseheaders",
+        "github.com/cespare/xxhash/v2",
+        "github.com/gin-gonic/gin",
+        "go.uber.org/zap"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/openai_usage_deepseek_cache_test.go",
+      "sha256": "f828438de4901e97c4bb3e3fc52b54b4043c4d9ed61d8ebcaa9beccfb40251ff",
+      "bytes": 1076,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "adapt-tests",
+      "scope": "prompt_cache_hit_tokens 与 nested cached_tokens 优先级用例；此文件 unit build tag 不得漏跑。",
+      "imports": [
+        "testing",
+        "github.com/stretchr/testify/require",
+        "github.com/tidwall/gjson"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/provider_profile.go",
+      "sha256": "bd7eef2600ff60f35960537e777c35619b2d138848d4d50e5fe363c574191d33",
+      "bytes": 10860,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "extract",
+      "scope": "四个 payg 端点映射；不引入 Account/ProtocolRule/聚合平台路由框架。",
+      "imports": [
+        "strings"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/provider_profile_test.go",
+      "sha256": "962d80d10a11a0f0dc146d864ce872c617d8c892f90ec3398bf64816ff73ab21",
+      "bytes": 6949,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "adapt-tests",
+      "scope": "迁移四厂商 payg 端点测试；用本项目适配器代替 Account。",
+      "imports": [
+        "testing",
+        "github.com/stretchr/testify/require"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/ratelimit_cn_providers.go",
+      "sha256": "db2d64256c76b95d9f8f3fc417a6275f6c3a6032d8dcb3b57a75d8ee0ad05ac5",
+      "bytes": 16274,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "extract",
+      "scope": "仅余额不足/频率/额度错误特征与解析；不迁移 RateLimitService、后台余额恢复及仓库写入。",
+      "imports": [
+        "context",
+        "log/slog",
+        "net/http",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/config",
+        "github.com/tidwall/gjson"
+      ],
+      "migrated": false
+    },
+    {
+      "path": "backend/internal/service/upstream_models.go",
+      "sha256": "3ab072d7daf9aed952390b0b6fd7d04f8093ff29f5018c81ff7b48a27c4adcdb",
+      "bytes": 66622,
+      "license_basis": "repository LICENSE (LGPL-3.0); retain individual notices on extraction",
+      "decision": "extract",
+      "scope": "buildOpenAIAPIKeyModelsRequest、buildOpenAIModelsURL、目录解析的必要部分；保留现有 modelmeta，禁止重复导入服务层。",
+      "imports": [
+        "context",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "log/slog",
+        "net/http",
+        "net/url",
+        "sort",
+        "strconv",
+        "strings",
+        "time",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/antigravity",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/claude",
+        "github.com/Wei-Shaw/sub2api/internal/pkg/geminicli"
+      ],
+      "migrated": false
+    }
+  ],
+  "missing_upstream_paths": [
+    {
+      "path": "COPYING",
+      "result": "404 at pinned revision; root tree contains LICENSE only"
+    }
+  ]
+}

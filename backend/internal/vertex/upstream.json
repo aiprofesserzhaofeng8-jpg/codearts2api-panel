@@ -1,0 +1,30 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "files": [
+    {
+      "path": "backend/internal/service/vertex_service_account.go",
+      "sha256": "d4f2cd9f448502fc2cdee739f7437c6fa6fd668e1b4d3088e2c3bf5d960df536",
+      "local": "auth.go",
+      "changes": "Adapt service-account JWT exchange and regional Gemini URL; use stdlib RSA and shared credential coordinator instead of distributed token cache."
+    }
+  ],
+  "local_files": [
+    {
+      "path": "auth.go",
+      "sha256": "e9ad345135c7739cbbeba3db824b66411b96a70d15722b8fad66a000e408a740"
+    },
+    {
+      "path": "auth_test.go",
+      "sha256": "6f7777040a6b2be131082e9bbaafe41e0a145cdd1758a56334dcc2d31228a4d3"
+    },
+    {
+      "path": "client.go",
+      "sha256": "4714badee5ef4b07af0b02006a3025f789b7d9ae1af52a45f5674002151a3fa0"
+    },
+    {
+      "path": "client_test.go",
+      "sha256": "4afac367b2f636b264df16903ec49e2449bd7f09eaecf7968cfa8325b64f0176"
+    }
+  ]
+}

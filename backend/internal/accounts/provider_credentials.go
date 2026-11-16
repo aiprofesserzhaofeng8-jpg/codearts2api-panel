@@ -58,8 +58,18 @@ func (s *ProviderCredentials) Resolve(ctx context.Context, id string, adapter Cr
 	if identity.ID != latest.ExternalID || identity.Scope != latest.Scope {
 		return nil, &provider.Error{Status: 401, AccountFault: true, Message: "上游凭据身份或地区与账号记录不一致，请重新导入"}
 	}
-	if identity.NonExpiring || time.Unix(identity.ExpiresAt, 0).After(time.Now().Add(5*time.Minute)) {
+	now := time.Now()
+	expires := time.Unix(identity.ExpiresAt, 0)
+	if identity.NonExpiring || expires.After(now.Add(5*time.Minute)) {
 		return raw, nil
+	}
+	// A refresh window is only meaningful when the credential can be renewed.
+	// Imported temporary tokens remain usable until their actual expiry.
+	if !identity.HasRefresh {
+		if expires.After(now) {
+			return raw, nil
+		}
+		return nil, &provider.Error{Status: 401, AccountFault: true, Message: "上游凭据已过期且无法自动续期，请重新登录或导入"}
 	}
 	if !s.allowRefresh() {
 		return nil, &provider.Error{Status: 401, AccountFault: true, Message: "上游凭据已过期，请重新登录或启用续期"}

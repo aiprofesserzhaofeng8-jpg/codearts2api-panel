@@ -13,6 +13,7 @@ import { accountsState, renderAccounts } from '../controller';
 import { refresh } from '../../../shared/refresh';
 import teleagentHelperSource from '../../../../../scripts/teleagent-login.mjs?raw';
 import mobileclawExportSource from '../../../../../scripts/mobileclaw-export.mjs?raw';
+const officialAPI = {deepseek: "DeepSeek", zhipu: "智谱", kimi: "Kimi", minimax: "MiniMax", gemini: "Gemini", opencode: "OpenCode Zen / Go", commandcode: "Command Code", cline: "Cline", typesafe: "TypeSafe"};
 const providersState = {};
 providersState.activeProvider = "workbuddy";
 
@@ -38,18 +39,20 @@ export function updateAccountCreateBusy() {
     domState.$("#teleagentResultFile").disabled = busy || !providersState.teleagentTask;
 }
 
-export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude", teleagent: "TeleAgent", mobileclaw: "MobileClaw" }[providersState.accountCreatePlatform]; }
+export function accountPlatformLabel() { return { codearts: tr("华为云码道"), workbuddy: "WorkBuddy", trae: "Trae CN / SOLO", qoder: "Qoder", kiro: "Kiro", chatgpt: "ChatGPT / Codex", claude: "Claude", teleagent: "TeleAgent", mobileclaw: "MobileClaw", bedrock: "AWS Bedrock", vertex: "Vertex AI", ...officialAPI }[providersState.accountCreatePlatform]; }
 
 export function renderAccountChoices() {
     var teleagent = providersState.accountCreatePlatform === "teleagent";
     var mobileclaw = providersState.accountCreatePlatform === "mobileclaw";
     var browserButton = document.querySelector('[data-account-method="browser"]');
-    browserButton.disabled = false;
-    browserButton.classList.remove("hidden");
+    var apiOnly = !!officialAPI[providersState.accountCreatePlatform] && providersState.accountCreatePlatform !== "gemini";
+    browserButton.disabled = apiOnly || ["bedrock", "vertex"].includes(providersState.accountCreatePlatform);
+    browserButton.classList.toggle("hidden", apiOnly || ["bedrock", "vertex"].includes(providersState.accountCreatePlatform));
+    if (apiOnly || ["bedrock", "vertex"].includes(providersState.accountCreatePlatform)) providersState.accountCreateMethod = "import";
     document.querySelectorAll("[data-account-platform]").forEach(function (b) { var selected = b.dataset.accountPlatform === providersState.accountCreatePlatform; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     document.querySelectorAll("[data-account-method]").forEach(function (b) { var selected = b.dataset.accountMethod === providersState.accountCreateMethod; b.classList.toggle("selected", selected); b.setAttribute("aria-pressed", String(selected)); });
     domState.$("#accountBrowserHint").textContent = providersState.accountCreatePlatform === "teleagent" ? tr("通过本机登录助手完成官方网页登录，核对后保存。") : providersState.accountCreatePlatform === "kiro" ? tr("通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。") : tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
-    domState.$("#accountImportHint").textContent = mobileclaw ? tr("在官方客户端登录，运行 mobileclaw-export.mjs 导出后导入；当前支持个人免费 Token 额度") : teleagent ? tr("在官方客户端登录后，导入完整账号与设备凭据") : providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
+    domState.$("#accountImportHint").textContent = providersState.accountCreatePlatform === "vertex" ? tr("服务账号 JSON：service_account 内粘贴 Google 服务账号，location 指定区域，model_ids 填写已授权 Gemini 型号。校验会发送一次短推理请求，可能产生费用。") : providersState.accountCreatePlatform === "bedrock" ? tr("AWS 凭据 JSON：aws_access_key_id、aws_secret_access_key、aws_region；临时凭据另需 aws_session_token 和 expires_at。可用 model_ids 指定已授权 Claude 型号。校验会发送一次短推理请求，可能产生费用。") : providersState.accountCreatePlatform === "typesafe" ? tr("TypeSafe 使用独立的 /v1/systemone 决策接口，不是聊天模型。使用 API Key 校验模型访问，不发送付费决策请求。") : providersState.accountCreatePlatform === "cline" ? tr("使用 Cline API Key；账号校验不发送推理请求。按量、ClinePass 和免费模型分别计量，登录成功不代表所有模型有权限。") : providersState.accountCreatePlatform === "commandcode" ? tr("需要支持外部 API 的 Command Code 套餐或 Provider 按量账号；Go 套餐不适用。校验会发送一次短推理请求，可能消耗额度。") : providersState.accountCreatePlatform === "opencode" ? tr("Zen 按量与 Go 订阅分别导入。校验会发送一次短推理请求，可能消耗额度；公开目录不代表密钥有效。") : providersState.accountCreatePlatform === "gemini" ? tr("导入使用 AI Studio API Key；浏览器授权使用 Gemini CLI / Code Assist，两个通道独立。") : apiOnly ? tr("使用所选模式对应的 API Key。Kimi、智谱个人版及 MiniMax 支持套餐选项；目录不可用时，导入校验会发送一次短请求，可能消耗额度。") : mobileclaw ? tr("在官方客户端登录，运行 mobileclaw-export.mjs 导出后导入；当前支持个人免费 Token 额度") : teleagent ? tr("在官方客户端登录后，导入完整账号与设备凭据") : providersState.accountCreatePlatform === "codearts" ? tr("本机客户端、STS / AK/SK 或 session JSON") : ["chatgpt", "claude"].includes(providersState.accountCreatePlatform) ? tr("导入 OAuth 凭据或官方 API Key JSON") : tr("从已有客户端导入完整凭据 JSON");
     domState.$("#accountChoiceHint").textContent = providersState.accountCreatePlatform === "trae" && providersState.accountCreateMethod === "browser" ? tr("下一步填写官方客户端设备信息，再生成授权链接。") : tr("选择平台和添加方式后继续，账号核对完成后再保存。");
 }
 
@@ -110,7 +113,7 @@ export function beginAccountAuthorization() {
 }
 
 export function clearAccountSensitiveFields() {
-    ["#providerLoginCallback", "#providerImportJSON", "#loginPasted", "#manualAK", "#manualSK", "#manualSTS", "#sessionJSON", "#providerDeviceJSON"].forEach(function (id) { domState.$(id).value = ""; });
+    ["#providerAPIKey", "#providerLoginCallback", "#providerImportJSON", "#loginPasted", "#manualAK", "#manualSK", "#manualSTS", "#sessionJSON", "#providerDeviceJSON"].forEach(function (id) { domState.$(id).value = ""; });
     clearTeleagentTask();
     domState.$("#teleagentPairKey").value = "";
 }
@@ -161,7 +164,7 @@ export function addAccountCredentials(action, extra) {
     }).catch(function (e) { if (isAbortError(e)) return; domState.$("#accountCreateError").textContent = tr("导入失败：") + e.message; return false; }).finally(function () { providersState.accountCreateBusy = false; updateAccountCreateBusy(); });
 }
 
-export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude",teleagent:"TeleAgent",mobileclaw:"MobileClaw"}[providersState.activeProvider] || providersState.activeProvider; }
+export function providerLabel() { return {trae:"Trae",workbuddy:"WorkBuddy",qoder:"Qoder",kiro:"Kiro",chatgpt:"ChatGPT / Codex",claude:"Claude",teleagent:"TeleAgent",mobileclaw:"MobileClaw",antigravity:"Antigravity",grok:"Grok Build",bedrock:"AWS Bedrock",vertex:"Vertex AI",...officialAPI}[providersState.activeProvider] || providersState.activeProvider; }
 
 export function clearDeviceResults() { providersState.providerDevices = []; domState.$("#providerDeviceChoices").classList.add("hidden"); domState.$("#providerDeviceChoice").textContent = ""; domState.$("#providerDeviceStatus").textContent = ""; }
 
@@ -240,6 +243,19 @@ PY
 `;
 
 export function selectProvider(name) {
+    const apiOnly = !!officialAPI[name];
+    domState.$("#codingImportModeField").classList.toggle("hidden", !["kimi", "zhipu", "minimax"].includes(name));
+    domState.$("#codingImportMode").value = "payg";
+    domState.$("#codingImportMode").options[1].textContent = name === "minimax" ? "M Plan / Subscription" : "Coding Plan / Subscription";
+    domState.$("#commandcodeImportModeField").classList.toggle("hidden", name !== "commandcode");
+    domState.$("#commandcodeImportMode").value = "subscription";
+    domState.$("#opencodeImportScopeField").classList.toggle("hidden", name !== "opencode");
+    domState.$("#opencodeImportScope").value = "zen";
+    domState.$("#geminiImportModeField").classList.toggle("hidden", name !== "gemini");
+    domState.$("#geminiImportMode").value = "api";
+    domState.$("#providerAPIKeyField").classList.toggle("hidden", !apiOnly);
+    domState.$("#providerImportJSON").classList.toggle("hidden", apiOnly);
+    domState.$("#providerAPIKey").value = "";
     domState.$("#mobileclawExportHelper").classList.toggle("hidden", name !== "mobileclaw");
     domState.$("#providerTraeDevice").classList.toggle("hidden", name !== "trae");
     domState.$("#providerTeleAgentHelper").classList.toggle("hidden", name !== "teleagent");
@@ -267,14 +283,16 @@ export function selectProvider(name) {
     }
     providersState.activeProvider = name;
     domState.$("#providerLoginTitle").textContent = tr("添加 ") + providerLabel() + tr(" 账号");
-    domState.$("#providerImportTitle").textContent = tr("导入 ") + providerLabel() + tr(" 凭据 JSON");
+    domState.$("#providerImportTitle").textContent = apiOnly ? providerLabel() + " API Key" : tr("导入 ") + providerLabel() + tr(" 凭据 JSON");
     var scopeSelect = domState.$("#providerScope");
     var scopeValue = scopeSelect.value;
     scopeSelect.textContent = "";
-    var scopes = ["teleagent", "mobileclaw"].includes(name) ? [["cn", tr("国内版")]] : ["chatgpt", "claude"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
+    var scopes = name === "vertex" ? [["global", "Global"], ["us-central1", "us-central1"], ["europe-west4", "europe-west4"]] : name === "bedrock" ? [["us-east-1", "us-east-1"], ["us-west-2", "us-west-2"], ["eu-west-1", "eu-west-1"]] : ["typesafe", "cline", "commandcode"].includes(name) ? [["global", "Global"]] : name === "opencode" ? [["zen", "Zen / Pay as you go"], ["go", "Go / Subscription"]] : name === "grok" ? [["build", "Build OAuth"]] : name === "gemini" ? (providersState.accountCreateMethod === "browser" ? [["cli", "CLI / Code Assist"]] : [["api", "AI Studio API"]]) : ["teleagent", "mobileclaw", ...Object.keys(officialAPI)].includes(name) ? [["cn", tr("国内版")]] : ["chatgpt", "claude", "antigravity"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
     scopes.forEach(function (entry) { var option = document.createElement("option"); option.value = entry[0]; option.textContent = entry[1]; option.disabled = name === "trae" && entry[0] === "global"; scopeSelect.appendChild(option); });
     if (scopes.some(function (entry) { return entry[0] === scopeValue && !(name === "trae" && scopeValue === "global"); })) scopeSelect.value = scopeValue;
     const hints = {
+grok: "使用 Grok Build 浏览器授权，或导入 access_token、refresh_token、expires_at、scope=build；不支持网页登录 Cookie 或普通 API Key。",
+antigravity: "导入包含 access_token、refresh_token、subject、project_id、expires_at、scope=global 的完整凭据；也可使用浏览器授权。",
 mobileclaw: "先在官方 MobileClaw 客户端登录，再运行 node mobileclaw-export.mjs，粘贴生成的 mobileclaw-credentials.json。当前仅个人免费 Token 通道；到期请重新导出并勾选覆盖。",
 teleagent: "TeleAgent 需要 token、api_key、device_id、install_id、app_version，account_id 与 expires_at 可从 JWT 读取。使用本人获准使用的完整凭据；到期需重新登录。operation_token / oper_token 可选，用于独立积分门户。",
 chatgpt: "支持 Codex auth.json 或 access_token、account_id、user_id、expires_at；也可导入官方 OpenAI api_key（sk- 开头）。浏览器授权后粘贴完整 localhost:1455/auth/callback 地址。",
@@ -284,9 +302,9 @@ claude: "支持 access_token、account_uuid、expires_at 和可选 refresh_token
         kiro: "Kiro 支持 Builder ID 设备授权；也可导入 api_key（ksk_ 开头）或完整 OAuth JSON。region 默认 us-east-1；导入前校验上游模型访问。",
         qoder: "Qoder 凭据需包含 access_token、uid、expires_at、machine_id 和 scope（cn / global）。导入前会向上游核对身份。"
     };
-    domState.$("#providerImportHint").textContent = tr(hints[name]);
-    document.querySelector('label[for="providerLoginCallback"]').textContent = ["chatgpt", "claude"].includes(name) ? tr("回调地址或授权码（必填）") : tr("回调地址（可选）");
-    domState.$("#providerLoginCallback").placeholder = name === "chatgpt" ? tr("粘贴完整 http://localhost:1455/auth/callback?code=…&state=… 地址") : name === "claude" ? tr("粘贴 code#state 或完整 Claude OAuth 回调地址") : name === "trae" ? tr("粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）") : tr("完成授权后可直接检查，也可粘贴带 state 的回调地址");
+    domState.$("#providerImportHint").textContent = tr(name === "vertex" ? "服务账号 JSON：service_account 内粘贴 Google 服务账号，location 指定区域，model_ids 填写已授权 Gemini 型号。校验会发送一次短推理请求，可能产生费用。" : name === "bedrock" ? "AWS 凭据 JSON：aws_access_key_id、aws_secret_access_key、aws_region；临时凭据另需 aws_session_token 和 expires_at。可用 model_ids 指定已授权 Claude 型号。校验会发送一次短推理请求，可能产生费用。" : name === "typesafe" ? "TypeSafe 使用独立的 /v1/systemone 决策接口，不是聊天模型。使用 API Key 校验模型访问，不发送付费决策请求。" : name === "cline" ? "使用 Cline API Key；账号校验不发送推理请求。按量、ClinePass 和免费模型分别计量，登录成功不代表所有模型有权限。" : name === "commandcode" ? "需要支持外部 API 的 Command Code 套餐或 Provider 按量账号；Go 套餐不适用。校验会发送一次短推理请求，可能消耗额度。" : name === "opencode" ? "Zen 按量与 Go 订阅分别导入。校验会发送一次短推理请求，可能消耗额度；公开目录不代表密钥有效。" : name === "gemini" ? "导入使用 AI Studio API Key；浏览器授权使用 Gemini CLI / Code Assist，两个通道独立。" : apiOnly ? "使用所选模式对应的 API Key。Kimi、智谱个人版及 MiniMax 支持套餐选项；目录不可用时，导入校验会发送一次短请求，可能消耗额度。" : hints[name]);
+    document.querySelector('label[for="providerLoginCallback"]').textContent = ["chatgpt", "claude", "gemini", "antigravity", "grok"].includes(name) ? tr("回调地址或授权码（必填）") : tr("回调地址（可选）");
+    domState.$("#providerLoginCallback").placeholder = name === "grok" ? tr("粘贴完整 http://127.0.0.1:56121/callback?code=…&state=… 地址") : name === "antigravity" ? tr("粘贴完整 http://localhost:8085/callback?code=…&state=… 地址") : name === "gemini" ? tr("粘贴完整 codeassist.google.com/authcode 回调地址（含 code 和 state）") : name === "chatgpt" ? tr("粘贴完整 http://localhost:1455/auth/callback?code=…&state=… 地址") : name === "claude" ? tr("粘贴 code#state 或完整 Claude OAuth 回调地址") : name === "trae" ? tr("粘贴 127.0.0.1:18080/authorize?... 完整回调地址（含 loginTraceID）") : tr("完成授权后可直接检查，也可粘贴带 state 的回调地址");
 }
 
 export function openProvider(name) { if (!sessionState.adminAuthenticated) {
@@ -335,7 +353,7 @@ export function trustedProviderURL(raw) { try {
     var u = new URL(raw);
     if (providersState.activeProvider === "mobileclaw") return u.protocol === "https:" && u.host === "www.cmpassport.com" && !u.username && !u.password && !u.hash && u.pathname === "/h5/js/jssdk_yw_auth/auth/scanAuth.html";
     if (providersState.activeProvider === "teleagent") return u.protocol === "https:" && u.hostname === "www.teleai.com.cn" && !u.port && !u.username && !u.password && u.pathname === "/teleai-api/upms/public/auth/authorize";
-    return u.protocol === "https:" && !u.username && !u.password && (providersState.activeProvider === "trae" ? ["trae.cn"] : providersState.activeProvider === "chatgpt" ? ["auth.openai.com"] : providersState.activeProvider === "claude" ? ["claude.com"] : providersState.activeProvider === "kiro" ? ["view.awsapps.com", "device.sso.us-east-1.amazonaws.com", "device.sso.eu-central-1.amazonaws.com"] : providersState.activeProvider === "qoder" ? ["qoder.com", "qoder.com.cn", "qoder.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
+    return u.protocol === "https:" && !u.username && !u.password && (providersState.activeProvider === "grok" ? ["auth.x.ai"] : providersState.activeProvider === "trae" ? ["trae.cn"] : ["gemini", "antigravity"].includes(providersState.activeProvider) ? ["accounts.google.com"] : providersState.activeProvider === "chatgpt" ? ["auth.openai.com"] : providersState.activeProvider === "claude" ? ["claude.com"] : providersState.activeProvider === "kiro" ? ["view.awsapps.com", "device.sso.us-east-1.amazonaws.com", "device.sso.eu-central-1.amazonaws.com"] : providersState.activeProvider === "qoder" ? ["qoder.com", "qoder.com.cn", "qoder.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
 }
 catch (e) {
     return false;
@@ -348,7 +366,7 @@ function stopTeleagentConnector() {
 function showProviderPreview(d) {
     if (!d.ready) { domState.$("#providerLoginStatus").textContent = d.message || tr("尚未完成授权"); return; }
     providersState.providerPreviewID = d.preview_id;
-    domState.$("#providerPreviewText").textContent = (d.name || providerLabel() + tr(" 账号")) + " · " + d.uid + " · " + (providersState.activeProvider === "kiro" ? d.scope : d.scope === "global" ? tr("国际版") : tr("国内版")) + (d.existing ? tr(" · 已存在，保存将更新凭据") : tr(" · 新账号"));
+    domState.$("#providerPreviewText").textContent = (d.name || providerLabel() + tr(" 账号")) + " · " + d.uid + " · " + (["kiro", "gemini", "grok", "opencode"].includes(providersState.activeProvider) ? d.scope : d.scope === "global" ? tr("国际版") : tr("国内版")) + (d.existing ? tr(" · 已存在，保存将更新凭据") : tr(" · 新账号"));
     domState.$("#providerPreview").classList.remove("hidden");
     domState.$("#providerLoginStatus").textContent = tr("账号已验证，点击确认保存才会加入账号池。");
     domState.$("#providerLoginCallback").value = "";
@@ -463,7 +481,7 @@ function startProviderAuthorization(automatic = true) {
         }
         var previous = providersState.providerSession ? providerCall("cancel") : Promise.resolve();
         return previous.then(function () { resetProviderLogin(); return providerCall("start", options); }).then(function (d) { if (!trustedProviderURL(d.url))
-            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; if (providersState.activeProvider === "mobileclaw") startMobileClawQR(d); domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.toggle("hidden", providersState.activeProvider === "teleagent"); if (providersState.activeProvider === "teleagent") setTeleagentTask(d); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "mobileclaw" ? tr("请用手机扫码或打开登录链接，关闭 Wi-Fi 后确认授权。面板会自动检查，核对账号后再保存。") : providersState.activeProvider === "teleagent" ? tr("请下载助手和本次任务，在自己的电脑完成官方登录，再选择结果文件并检查；不要直接在普通浏览器打开授权链接。") : providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : providersState.activeProvider === "chatgpt" ? tr("授权后复制完整 localhost:1455/auth/callback 地址并粘贴。若页面显示连接失败，仍可复制地址栏中的回调地址；检查预览后再保存。") : providersState.activeProvider === "claude" ? tr("授权后粘贴 code#state 或完整 Claude OAuth 回调地址，检查预览后再保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); if (providersState.activeProvider === "teleagent" && automatic) setTimeout(function () { if (providersState.providerSession === d.session_id) automaticTeleagentLogin(providersState.teleagentTask, d.session_id); }, 0); });
+            throw new Error(tr("授权链接不在所选上游官方域名范围")); providersState.providerSession = d.session_id; if (providersState.activeProvider === "mobileclaw") startMobileClawQR(d); domState.$("#providerLoginURL").value = d.url; domState.$("#providerLoginOpen").href = d.url; domState.$("#providerLoginOpen").classList.toggle("hidden", providersState.activeProvider === "teleagent"); if (providersState.activeProvider === "teleagent") setTeleagentTask(d); domState.$("#providerScope").disabled = true; setDeviceInputsLocked(true); domState.$("#providerLoginCopy").disabled = false; domState.$("#providerLoginCheck").disabled = false; domState.$("#providerLoginStatus").textContent = providersState.activeProvider === "mobileclaw" ? tr("请用手机扫码或打开登录链接，关闭 Wi-Fi 后确认授权。面板会自动检查，核对账号后再保存。") : providersState.activeProvider === "teleagent" ? tr("请下载助手和本次任务，在自己的电脑完成官方登录，再选择结果文件并检查；不要直接在普通浏览器打开授权链接。") : providersState.activeProvider === "trae" ? tr("请在另一浏览器完成 Trae 授权，跳转到 127.0.0.1:18080 后复制完整地址并粘贴。该地址无人监听时会显示连接失败，但地址中的授权信息仍可提交；检查后再确认保存。") : ["gemini", "antigravity"].includes(providersState.activeProvider) ? tr("完成 Google 授权后粘贴包含 code 和 state 的完整回调地址，检查项目与账号后再保存。") : providersState.activeProvider === "chatgpt" ? tr("授权后复制完整 localhost:1455/auth/callback 地址并粘贴。若页面显示连接失败，仍可复制地址栏中的回调地址；检查预览后再保存。") : providersState.activeProvider === "claude" ? tr("授权后粘贴 code#state 或完整 Claude OAuth 回调地址，检查预览后再保存。") : tr("链接已生成。请复制到另一浏览器完成授权，再点击检查。"); if (providersState.activeProvider === "teleagent" && automatic) setTimeout(function () { if (providersState.providerSession === d.session_id) automaticTeleagentLogin(providersState.teleagentTask, d.session_id); }, 0); });
     });
 }
 on("#providerLoginStart", function () { return startProviderAuthorization(true); });
@@ -503,8 +521,15 @@ on("#providerLoginCheck", function () { if (providersState.activeProvider === "m
     return providerCall("check", { input: domState.$("#providerLoginCallback").value.trim() }).then(showProviderPreview);
 }); });
 on("#providerLoginComplete", function () { return providerJob(function () { return providerCall("complete", { preview_id: providersState.providerPreviewID, replace_existing: domState.$("#providerReplace").checked, name: domState.$("#providerAccountName").value.trim() }).then(refreshAfterProviderSave); }); });
+listen(domState.$("#geminiImportMode"), "change", function () {
+    var cli = domState.$("#geminiImportMode").value === "cli";
+    domState.$("#providerAPIKeyField").classList.toggle("hidden", cli);
+    domState.$("#providerImportJSON").classList.toggle("hidden", !cli);
+    domState.$("#providerAPIKey").value = "";
+    domState.$("#providerImportJSON").value = "";
+});
 on("#providerImport", function () { return providerJob(function () { var credentials; try {
-    credentials = JSON.parse(domState.$("#providerImportJSON").value);
+    credentials = providersState.activeProvider === "typesafe" ? {api_key:domState.$("#providerAPIKey").value.trim(),scope:"global"} : officialAPI[providersState.activeProvider] && !(providersState.activeProvider === "gemini" && domState.$("#geminiImportMode").value === "cli") ? {api_key: domState.$("#providerAPIKey").value.trim(), scope:["kimi", "zhipu", "minimax"].includes(providersState.activeProvider) && domState.$("#codingImportMode").value === "coding" ? "coding-cn" : ["typesafe", "cline", "commandcode"].includes(providersState.activeProvider) ? "global" : providersState.activeProvider === "opencode" ? domState.$("#opencodeImportScope").value : providersState.activeProvider === "gemini" ? "api" : "cn", account_mode: ["kimi", "zhipu", "minimax"].includes(providersState.activeProvider) ? domState.$("#codingImportMode").value : providersState.activeProvider === "cline" ? "api" : providersState.activeProvider === "commandcode" ? domState.$("#commandcodeImportMode").value : providersState.activeProvider === "opencode" && domState.$("#opencodeImportScope").value === "go" ? "subscription" : "payg"} : JSON.parse(domState.$("#providerImportJSON").value);
 }
 catch (e) {
     throw new Error(tr("请粘贴有效的 ") + providerLabel() + tr(" JSON 凭据"));

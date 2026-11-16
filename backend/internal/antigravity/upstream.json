@@ -1,0 +1,36 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "original": [
+    {
+      "path": "backend/internal/pkg/antigravity/oauth.go",
+      "sha256": "949312c5a648090dfd611cd4c5d3b1200efcf1d1f8d8aa7ed7439143a04aa6bf"
+    },
+    {
+      "path": "backend/internal/pkg/antigravity/client.go",
+      "sha256": "260db95819bd7468b7c310d2c7c286e40d5aba45b6efd18e5743c7f5842882d6"
+    },
+    {
+      "path": "backend/internal/pkg/antigravity/request_transformer.go",
+      "sha256": "936acf62aaaca657c8f05a455f8af4dd1af52665ab53aada5ea893430b3ca74a"
+    },
+    {
+      "path": "backend/internal/service/antigravity_oauth_service.go",
+      "sha256": "7a7f616f4734b40e2fcb6953c8ee38e1ff9439366f61a7014e6c02d9cbd85d51"
+    }
+  ],
+  "copied_fragment": {
+    "source": "backend/internal/pkg/antigravity/client.go",
+    "start": "type ModelQuotaInfo",
+    "end_exclusive": "// FetchAvailableModels 获取",
+    "sha256": "8c91806100110c03ac1285d5e7cba0cc1c72fd45881c96fce1817ae1abb7a474"
+  },
+  "local": {
+    "client.go": "202b98ec090f0bd5fd78b519421ab27d083936e76ad95ceb60f5a73fedc93c61",
+    "oauth.go": "2cf0286cb2be0517a01bdf61addf59c39445e8dd8df71e7c23cf4103c33a973b",
+    "catalog_types.go": "c5b0489d31c711059fbf081310daa42b777bdfc8ee36a8707a12261971185590",
+    "native.go": "29f71739a3d1c20623959b83f596a7615ae65caf046ae08783ae3f56833708a9",
+    "onboard.go": "437a8ae9225dc264d40ffa62531730778003c218dbcbed7a827c498698aaaa1d"
+  }
+}

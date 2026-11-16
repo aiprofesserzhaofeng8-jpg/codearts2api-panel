@@ -16,7 +16,7 @@ RUN pnpm typecheck && pnpm test && pnpm build
 
 FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS build
 WORKDIR /src
-COPY backend/go.mod ./
+COPY backend/go.mod backend/go.sum ./
 COPY backend/cmd ./cmd
 COPY backend/internal ./internal
 COPY --from=frontend /src/backend/internal/webui/dist ./internal/webui/dist
@@ -36,6 +36,17 @@ COPY deploy/healthcheck.sh /usr/local/bin/codearts-healthcheck
 COPY LICENSE NOTICE LICENSE.workbuddy LICENSE.qoder LICENSE.kiro LICENSE.teleagent /usr/share/licenses/codearts2api/
 COPY backend/internal/catalog/modelmeta/LICENSE backend/internal/catalog/modelmeta/COPYING backend/internal/catalog/modelmeta/UPSTREAM.md backend/internal/catalog/modelmeta/upstream.json /usr/share/licenses/codearts2api/modelmeta/
 COPY backend/internal/responsescompat/LICENSE backend/internal/responsescompat/COPYING backend/internal/responsescompat/UPSTREAM.md /usr/share/licenses/codearts2api/responsescompat/
+COPY backend/internal/gemini/LICENSE backend/internal/gemini/COPYING backend/internal/gemini/UPSTREAM.md backend/internal/gemini/upstream.json /usr/share/licenses/codearts2api/gemini/
+COPY backend/internal/antigravity/LICENSE backend/internal/antigravity/COPYING backend/internal/antigravity/UPSTREAM.md backend/internal/antigravity/upstream.json /usr/share/licenses/codearts2api/antigravity/
+COPY backend/internal/grok/LICENSE backend/internal/grok/COPYING backend/internal/grok/UPSTREAM.md backend/internal/grok/upstream.json /usr/share/licenses/codearts2api/grok/
+COPY backend/internal/opencode/LICENSE backend/internal/opencode/COPYING backend/internal/opencode/UPSTREAM.md backend/internal/opencode/upstream.json /usr/share/licenses/codearts2api/opencode/
+COPY backend/internal/commandcode/LICENSE backend/internal/commandcode/COPYING backend/internal/commandcode/UPSTREAM.md backend/internal/commandcode/upstream.json /usr/share/licenses/codearts2api/commandcode/
+COPY backend/internal/cline/LICENSE backend/internal/cline/COPYING backend/internal/cline/UPSTREAM.md backend/internal/cline/upstream.json /usr/share/licenses/codearts2api/cline/
+COPY backend/internal/typesafe/LICENSE backend/internal/typesafe/COPYING backend/internal/typesafe/UPSTREAM.md backend/internal/typesafe/upstream.json /usr/share/licenses/codearts2api/typesafe/
+COPY backend/internal/googlewire/LICENSE backend/internal/googlewire/COPYING backend/internal/googlewire/UPSTREAM.md backend/internal/googlewire/upstream.json /usr/share/licenses/codearts2api/googlewire/
+COPY backend/internal/cnapi/LICENSE backend/internal/cnapi/COPYING backend/internal/cnapi/UPSTREAM.md backend/internal/cnapi/upstream.json /usr/share/licenses/codearts2api/cnapi/
+COPY backend/internal/vertex/LICENSE backend/internal/vertex/COPYING backend/internal/vertex/UPSTREAM.md backend/internal/vertex/upstream.json /usr/share/licenses/codearts2api/vertex/
+COPY backend/internal/bedrock/LICENSE backend/internal/bedrock/COPYING backend/internal/bedrock/UPSTREAM.md backend/internal/bedrock/upstream.json backend/internal/bedrock/LICENSE.aws-sdk-go-v2 backend/internal/bedrock/NOTICE.aws-sdk-go-v2 backend/internal/bedrock/LICENSE.smithy-go backend/internal/bedrock/NOTICE.smithy-go /usr/share/licenses/codearts2api/bedrock/
 USER 10001:10001
 WORKDIR /data
 VOLUME ["/data"]

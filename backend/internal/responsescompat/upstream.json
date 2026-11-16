@@ -19,5 +19,19 @@
     "chatcompletions_responses_request_invariants_test.go": "2227000c237ec6cbe6284c458609caf42edf5dee943969741cc379f4c55b270e",
     "chatcompletions_responses_stream_lifecycle_test.go": "6f7e3f3d7709401190cb4c8b85cfae01c949cdd2d9b82ddccc507b47f643e066",
     "chatcompletions_responses_tool_output_media_test.go": "37f034147e0ba7cc2f8e6331584785d6d3f49f169db3f6a72c8964278bbe3ec4"
+  },
+  "adapted_source_files": {
+    "responses_stream_event_wire.go": {
+      "sha256": "7685e3db0d45b863b72b82a1f9c984c9e9471543631fca523f974beeae788cf2",
+      "reason": "Preserve optional Gemini extra_content and Cline reasoning_details; see UPSTREAM.md and local regression tests."
+    },
+    "chatcompletions_responses_bridge.go": {
+      "sha256": "180b4ab184571b122d42456dba4fcf2e2b29ec9ed31d96487adc310d3d686f44",
+      "reason": "Preserve optional Gemini extra_content and Cline reasoning_details; see UPSTREAM.md and local regression tests."
+    },
+    "types.go": {
+      "sha256": "8c9bc63bf1cc53268fd94c74d54b4508617ece9f6fa19cbb2f01f6ef83dfbae1",
+      "reason": "Preserve optional Gemini extra_content and Cline reasoning_details; see UPSTREAM.md and local regression tests."
+    }
   }
 }

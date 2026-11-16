@@ -152,6 +152,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/client-profile", s.withAuth(s.withRateLimit(errOpenAI, s.handleClientProfile)))
 	mux.HandleFunc("/v1/models", s.withAuth(s.withRateLimit(errOpenAI, s.handleModels)))
 	mux.HandleFunc("/v1/chat/completions", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleChatCompletions))))
+	mux.HandleFunc("/v1/systemone", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleSystemOne))))
 	mux.HandleFunc("/v1/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
 	mux.HandleFunc("/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
 	mux.HandleFunc("/v1/search/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleSearchMessages))))

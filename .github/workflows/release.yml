@@ -11,6 +11,11 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  arm64:
+    uses: ./.github/workflows/arm64-acceptance.yml
+    with:
+      version: ${{ github.ref_name }}
+
   windows:
     name: Windows x64 package and acceptance
     runs-on: windows-latest
@@ -20,7 +25,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.mod
+          cache-dependency-path: backend/go.sum
       - uses: actions/setup-node@v5
         with:
           node-version: '24.11.0'
@@ -50,7 +55,7 @@ jobs:
             artifacts/releases/*-windows-amd64.zip.sha256
           if-no-files-found: error
   release:
-    needs: windows
+    needs: [windows, arm64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -62,7 +67,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.mod
+          cache-dependency-path: backend/go.sum
       - uses: actions/setup-node@v5
         with:
           node-version: '24.11.0'
@@ -78,12 +83,20 @@ jobs:
         run: |
           make check
           python3 -m unittest discover -s deploy/tests -v
+      - name: Pinned Sub2API provenance and compatibility regression
+        timeout-minutes: 10
+        run: |
+          python3 -m unittest discover -s scripts -p test_sub2api_compat.py
+          python3 scripts/check-sub2api-compat.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: arm64-release
+          path: artifacts/releases
       - name: Build Linux releases from this commit
         env:
           RELEASE_VERSION: ${{ github.ref_name }}
         run: |
           python3 deploy/package_release.py --version "$RELEASE_VERSION" --arch amd64
-          python3 deploy/package_release.py --version "$RELEASE_VERSION" --arch arm64
           cp deploy/panelctl.py artifacts/releases/panelctl.py
           cp deploy/install.sh artifacts/releases/install.sh
           sha256sum artifacts/releases/install.sh | sed 's|artifacts/releases/||' > artifacts/releases/install.sh.sha256

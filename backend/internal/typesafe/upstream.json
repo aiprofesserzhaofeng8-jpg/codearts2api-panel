@@ -1,0 +1,32 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "sources": [
+    {
+      "path": "backend/internal/pkg/typesafe/client.go",
+      "sha256": "738c3efafc5e7c2ac63eb80f643c8e2d760fe8c4618ed8f8f61498b439c1ae2b"
+    },
+    {
+      "path": "backend/internal/pkg/typesafe/systemone.go",
+      "sha256": "81315b00acf0255635ca61d5b91e97486eacdb56a54716d002112954c87bf56a"
+    },
+    {
+      "path": "backend/internal/pkg/typesafe/client_test.go",
+      "sha256": "176ed387635bd0df4e1352a4bbd17ad6434495da3ec35a8c3100cdcca32df42b"
+    },
+    {
+      "path": "backend/internal/pkg/typesafe/systemone_test.go",
+      "sha256": "c5bbb952cda4ed66f41247aa79d460087437efa0f72e5747d643ec27fda376aa"
+    }
+  ],
+  "local": {
+    "client.go": "35aea096c0b6291781791e0d95a9ee3446ac7c43fb205a0781e8399e0ed0b6ba",
+    "systemone.go": "72a1b6dbf0c24ec3373e4e22db7ec43b680ba779426ea25208fcba8b98c205f3"
+  },
+  "schema_review": {
+    "url": "https://api.typesafe.ai/openapi.json",
+    "date": "2026-11-16",
+    "local_fetch": "TLS handshake failed; browser read succeeded"
+  }
+}

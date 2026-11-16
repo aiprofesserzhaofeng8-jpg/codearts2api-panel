@@ -6,6 +6,12 @@ type Quota = Parameters<typeof appendQuota>[1];
 const now = 1794000000;
 function render(info: Quota) { const el = document.createElement('div'); expect(appendQuota(el, info, now)).toBe(true); return el; }
 describe('provider quota presentation', () => {
+  it('shows partial-query warnings without hiding known balances', () => {
+    const el = render({ available: true, kind: 'windows', reason: 'monthly details unavailable', windows: [{ id: 'monthly', name: 'Monthly', unit: 'USD', remaining: 34.9 }] });
+    expect(el.textContent).toContain('monthly details unavailable');
+    expect(el.textContent).toContain('34.9');
+    expect(el.querySelector('progress')).toBeNull();
+  });
   it('keeps legacy credit rendering with its controller', () => {
     const el = document.createElement('div'); expect(appendQuota(el, { available: true, total: 100, used: 1, remaining: 99 })).toBe(false); expect(el.childElementCount).toBe(0);
   });

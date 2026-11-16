@@ -56,7 +56,11 @@ func (a *liveObservedAdapter) Stream(ctx context.Context, raw json.RawMessage, r
 		return errors.New("live inference attempt cap reached")
 	}
 	a.calls.Add(1)
-	return a.Adapter.Stream(ctx, raw, req, emit)
+	streamer, ok := a.Adapter.(provider.Streaming)
+	if !ok {
+		return errors.New("provider is not a chat transport")
+	}
+	return streamer.Stream(ctx, raw, req, emit)
 }
 
 func liveJSONRequest(client *http.Client, base, key, path string, body any) (int, []byte, error) {

@@ -421,3 +421,17 @@ func (s *Routing) ClientDefault(key string) string {
 	}
 	return ""
 }
+
+// CheckNative checks account/model permissions for a non-chat protocol without
+// inserting its models into the chat directory or applying chat aliases.
+func (s *Routing) CheckNative(key, model string) error {
+	scope, err := s.store.AccessScope(key)
+	if err != nil {
+		return GroupDenied()
+	}
+	platform, region, _ := provider.ParseModel(model)
+	if !ScopeAllows(scope, s.store.Accounts(), provider.Model{ID: model, Provider: platform, Scope: region}) {
+		return GroupDenied()
+	}
+	return nil
+}

@@ -20,6 +20,19 @@ const ChatGPT = "chatgpt"
 const Claude = "claude"
 const TeleAgent = "teleagent"
 const MobileClaw = "mobileclaw"
+const DeepSeek = "deepseek"
+const Zhipu = "zhipu"
+const Kimi = "kimi"
+const MiniMax = "minimax"
+const Gemini = "gemini"
+const Antigravity = "antigravity"
+const Grok = "grok"
+const OpenCode = "opencode"
+const CommandCode = "commandcode"
+const Cline = "cline"
+const TypeSafe = "typesafe"
+const Bedrock = "bedrock"
+const Vertex = "vertex"
 
 type Model struct {
 	ID         string `json:"id"`
@@ -106,9 +119,27 @@ type Adapter interface {
 	Describe() Descriptor
 	Normalize(json.RawMessage) (json.RawMessage, Identity, error)
 	Refresh(context.Context, json.RawMessage) (json.RawMessage, error)
-	Stream(context.Context, json.RawMessage, Request, func([]byte) error) error
 	Models(context.Context, json.RawMessage) ([]Model, error)
 	Credit(context.Context, json.RawMessage) (json.RawMessage, error)
+}
+
+// Streaming is optional: native decision providers do not implement fake chat.
+type Streaming interface {
+	Stream(context.Context, json.RawMessage, Request, func([]byte) error) error
+}
+type DecisionUsage struct {
+	Known        bool  `json:"known"`
+	InputTokens  int64 `json:"input_tokens"`
+	OutputTokens int64 `json:"output_tokens"`
+}
+type DecisionResult struct {
+	Body  json.RawMessage
+	Model string
+	Usage DecisionUsage
+}
+type Decision interface {
+	ValidateDecision([]byte) (string, error)
+	Decide(context.Context, json.RawMessage, []byte) (*DecisionResult, error)
 }
 type BrowserLogin interface {
 	BeginLogin(context.Context, string) (Login, error)

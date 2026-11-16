@@ -1,0 +1,41 @@
+{
+  "repository": "https://github.com/Wei-Shaw/sub2api",
+  "revision": "530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484",
+  "license": "LGPL-3.0-only",
+  "original": [
+    {
+      "path": "backend/internal/pkg/xai/oauth.go",
+      "sha256": "ee0c44317227226630e4bcff64b11b092d0bcd2d0d708e43305ab74fe7d4f32f"
+    },
+    {
+      "path": "backend/internal/repository/grok_oauth_client.go",
+      "sha256": "fe6ee8960019419d28075c5531a60405788f6d38114a97e5863f513f7b0a0e16"
+    },
+    {
+      "path": "backend/internal/service/grok_oauth_service.go",
+      "sha256": "9bba6134e61c4a71c9c7de7fb0ae60674be3f18062006e31b10727e74ce2e8c6"
+    },
+    {
+      "path": "backend/internal/pkg/xai/cli_identity.go",
+      "sha256": "34cd69814708edeea902f25182a804e402071e0ee881a2b6415b0c5df02864d3"
+    },
+    {
+      "path": "backend/internal/pkg/xai/billing.go",
+      "sha256": "5c78b421977413563aa1c3d137801e1ce87401c068fc813c97c53dc1d75b2800"
+    },
+    {
+      "path": "backend/internal/service/grok_model_catalog.go",
+      "sha256": "f78028a137fe38efadeccee6deaa383079eaba2a1c58f269335514e36631a250"
+    },
+    {
+      "path": "backend/internal/service/openai_gateway_grok.go",
+      "sha256": "2e50513b918206a579a55e4a25a6e70917c8b7cfa6cf274b2245ec7cc548bf49"
+    }
+  ],
+  "local": {
+    "oauth.go": "7592498f2e8c7709ef0d225a320b0c775f3233542fd8508aa9ede65199598bf2",
+    "catalog.go": "7f0be6a46c0365cbf016ae038b3cff97b5f10b9e43bd9f23fbe7d89c775a57f4",
+    "stream.go": "cec39bbb09811702e3c5c0497481c6807d5dc754916ce945059d1c322246c1f5",
+    "credit.go": "6d9cbe259f28fc25cb54e63be65406109e22dae0d855964e02903bd58829a3e1"
+  }
+}

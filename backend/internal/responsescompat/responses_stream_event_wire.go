@@ -164,6 +164,9 @@ func responsesItemWire(item *ResponsesOutput) map[string]any {
 		"type": item.Type,
 		"id":   item.ID,
 	}
+	if len(item.ExtraContent) > 0 && string(item.ExtraContent) != "null" {
+		m["extra_content"] = item.ExtraContent
+	}
 	if item.Status != "" {
 		m["status"] = item.Status
 	}

@@ -243,10 +243,11 @@ type anthropicStream struct {
 }
 
 type anthropicToolBlock struct {
-	index    int // downstream block index; -1 until ID and name are available
-	id, name string
-	args     strings.Builder
-	sent     int
+	extraContent json.RawMessage
+	index        int // downstream block index; -1 until ID and name are available
+	id, name     string
+	args         strings.Builder
+	sent         int
 }
 
 func newAnthropicStream(w http.ResponseWriter, f http.Flusher, msgID, model string, promptLen int) *anthropicStream {
@@ -301,7 +302,7 @@ func (a *anthropicStream) flushTool(tool *anthropicToolBlock) {
 		tool.index = a.index
 		a.send("content_block_start", map[string]any{
 			"type": "content_block_start", "index": tool.index,
-			"content_block": map[string]any{"type": "tool_use", "id": tool.id, "name": tool.name, "input": map[string]any{}},
+			"content_block": tool.contentBlock(),
 		})
 	}
 	if tool.sent < tool.args.Len() {
@@ -313,7 +314,15 @@ func (a *anthropicStream) flushTool(tool *anthropicToolBlock) {
 	}
 }
 
-func (a *anthropicStream) consumeTool(index int, id, name, args string) error {
+func (tool *anthropicToolBlock) contentBlock() map[string]any {
+	block := map[string]any{"type": "tool_use", "id": tool.id, "name": tool.name, "input": map[string]any{}}
+	if len(tool.extraContent) > 0 {
+		block["extra_content"] = tool.extraContent
+	}
+	return block
+}
+
+func (a *anthropicStream) consumeTool(index int, id, name, args string, metadata ...json.RawMessage) error {
 	if index < 0 {
 		return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游工具索引无效"}
 	}
@@ -338,6 +347,12 @@ func (a *anthropicStream) consumeTool(index int, id, name, args string) error {
 			return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游工具名称发生变化"}
 		}
 		tool.name = name
+	}
+	if len(metadata) > 0 && len(metadata[0]) > 0 && string(metadata[0]) != "null" {
+		if tool.index >= 0 && string(tool.extraContent) != string(metadata[0]) {
+			return &codearts.UpstreamError{Status: http.StatusBadGateway, Message: "上游在工具开始后改变元数据，无法完整转换"}
+		}
+		tool.extraContent = append(json.RawMessage(nil), metadata[0]...)
 	}
 	tool.args.WriteString(args)
 	a.sawToolUse = true
@@ -375,11 +390,13 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 				ReasoningContent   string            `json:"reasoning_content"`
 				ReasoningSignature string            `json:"reasoning_signature"`
 				NativeThinking     []json.RawMessage `json:"anthropic_thinking_blocks"`
+				ReasoningDetails   []json.RawMessage `json:"reasoning_details"`
 				Refusal            string            `json:"refusal"`
 				ToolCalls          []struct {
-					Index    int    `json:"index"`
-					ID       string `json:"id"`
-					Function struct {
+					ExtraContent json.RawMessage `json:"extra_content"`
+					Index        int             `json:"index"`
+					ID           string          `json:"id"`
+					Function     struct {
 						Name      string `json:"name"`
 						Arguments string `json:"arguments"`
 					} `json:"function"`
@@ -396,6 +413,12 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 	}
 	n := 0
 	for _, ch := range c.Choices {
+		if len(ch.Delta.ReasoningDetails) > 0 {
+			a.closeBlock()
+			a.index++
+			a.send("content_block_start", map[string]any{"type": "content_block_start", "index": a.index, "content_block": map[string]any{"type": "thinking", "thinking": "", "reasoning_details": ch.Delta.ReasoningDetails}})
+			a.send("content_block_stop", map[string]any{"type": "content_block_stop", "index": a.index})
+		}
 		if ch.Delta.ReasoningContent != "" {
 			a.openBlock("thinking")
 			n += len([]rune(ch.Delta.ReasoningContent))
@@ -426,7 +449,7 @@ func (a *anthropicStream) consume(chunk []byte) (int, error) {
 		n += a.textDelta(ch.Delta.Content)
 		n += a.textDelta(ch.Delta.Refusal)
 		for _, tc := range ch.Delta.ToolCalls {
-			if err := a.consumeTool(tc.Index, tc.ID, tc.Function.Name, tc.Function.Arguments); err != nil {
+			if err := a.consumeTool(tc.Index, tc.ID, tc.Function.Name, tc.Function.Arguments, tc.ExtraContent); err != nil {
 				return n, err
 			}
 		}

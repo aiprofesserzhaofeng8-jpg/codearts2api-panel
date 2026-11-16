@@ -16,7 +16,9 @@ import (
 
 type OAuthConfig struct {
 	Name, Authorize, Redirect, ClientID, Scopes string
-	Extra                                       url.Values
+	// AccountScope defaults to global for existing integrations.
+	AccountScope string
+	Extra        url.Values
 }
 type Flow struct {
 	mu          sync.Mutex
@@ -35,12 +37,18 @@ func random() (string, error) {
 	_, e := rand.Read(b[:])
 	return base64.RawURLEncoding.EncodeToString(b[:]), e
 }
+func (p *PKCE) accountScope() string {
+	if p.Config.AccountScope != "" {
+		return p.Config.AccountScope
+	}
+	return "global"
+}
 func (p *PKCE) Begin(ctx context.Context, scope string) (provider.Login, error) {
 	if e := ctx.Err(); e != nil {
 		return provider.Login{}, e
 	}
-	if scope != "global" {
-		return provider.Login{}, Invalid(p.Config.Name, "地区须为 global")
+	if scope != p.accountScope() {
+		return provider.Login{}, Invalid(p.Config.Name, "授权范围不匹配")
 	}
 	state, e := random()
 	if e != nil {
@@ -83,7 +91,7 @@ func (p *PKCE) Check(ctx context.Context, scope, state, input string, exchange f
 	p.mu.Lock()
 	f := p.pending[state]
 	p.mu.Unlock()
-	if f == nil || scope != "global" {
+	if f == nil || scope != p.accountScope() {
 		return nil, false, Invalid(p.Config.Name, "授权会话不存在或已取消")
 	}
 	f.mu.Lock()

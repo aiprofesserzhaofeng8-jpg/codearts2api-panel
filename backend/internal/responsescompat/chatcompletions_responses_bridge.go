@@ -408,6 +408,7 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 	// across an assistant message (so a following tool call in the same turn
 	// still receives it); any other role ends the thinking span.
 	var pendingReasoning string
+	var pendingDetails []json.RawMessage
 	// lastTurnReasoning is the most recent reasoning text of the current turn,
 	// surviving tool outputs. DeepSeek emits reasoning only once per turn, so
 	// chained tool calls (reasoning → call A → output A → call B) leave call B's
@@ -440,6 +441,7 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 				messages = append(messages, ChatMessage{Role: "user", Content: content})
 				pendingReasoning = ""
 				lastTurnReasoning = ""
+				pendingDetails = nil
 				continue
 			}
 			return nil, nil, fmt.Errorf("parse responses input item: %w", err)
@@ -449,6 +451,13 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 		itemType := rawString(item["type"])
 		switch itemType {
 		case "reasoning":
+			if b, ok := item["reasoning_details"]; ok && string(b) != "null" {
+				var details []json.RawMessage
+				if json.Unmarshal(b, &details) != nil {
+					return nil, nil, fmt.Errorf("reasoning_details must be an array")
+				}
+				pendingDetails = append(pendingDetails, details...)
+			}
 			if txt := extractResponsesReasoningText(item); txt != "" {
 				pendingReasoning = txt
 			} else if opts != nil && opts.ReasoningContentByID != nil {
@@ -493,14 +502,16 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 				name = flattenNamespaceToolName(ns, name)
 			}
 			toolCall := ChatToolCall{
-				ID:   callID,
-				Type: "function",
+				ID:           callID,
+				ExtraContent: item["extra_content"],
+				Type:         "function",
 				Function: ChatFunctionCall{
 					Name:      name,
 					Arguments: arguments,
 				},
 			}
 			messages = appendAssistantToolCall(messages, toolCall, reasoningForAssistant())
+			messages[len(messages)-1].ReasoningDetails = append([]json.RawMessage(nil), pendingDetails...)
 			pendingReasoning = ""
 			continue
 		case "tool_search_call":
@@ -522,6 +533,7 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 				},
 			}
 			messages = appendAssistantToolCall(messages, toolCall, reasoningForAssistant())
+			messages[len(messages)-1].ReasoningDetails = append([]json.RawMessage(nil), pendingDetails...)
 			pendingReasoning = ""
 			continue
 		case "custom_tool_call":
@@ -538,6 +550,7 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 				},
 			}
 			messages = appendAssistantToolCall(messages, toolCall, reasoningForAssistant())
+			messages[len(messages)-1].ReasoningDetails = append([]json.RawMessage(nil), pendingDetails...)
 			pendingReasoning = ""
 			continue
 		case "function_call_output", "custom_tool_call_output", "tool_search_output":
@@ -593,12 +606,14 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 			messages = append(messages, ChatMessage{Role: "user", Content: content})
 			pendingReasoning = ""
 			lastTurnReasoning = ""
+			pendingDetails = nil
 			continue
 		case "input_text", "text":
 			content, _ := json.Marshal(rawString(item["text"]))
 			messages = append(messages, ChatMessage{Role: "user", Content: content})
 			pendingReasoning = ""
 			lastTurnReasoning = ""
+			pendingDetails = nil
 			continue
 		case "input_file", "document", "file":
 			return nil, nil, fmt.Errorf("file input is not supported by Chat conversion; send text or images directly")
@@ -610,6 +625,7 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 			messages = append(messages, ChatMessage{Role: "user", Content: content})
 			pendingReasoning = ""
 			lastTurnReasoning = ""
+			pendingDetails = nil
 			continue
 		}
 
@@ -644,10 +660,12 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 		// ReasoningContent when it is still empty.
 		if role == "assistant" {
 			msg.ReasoningContent = reasoningForAssistant()
+			msg.ReasoningDetails = append([]json.RawMessage(nil), pendingDetails...)
 			pendingReasoning = ""
 		} else {
 			pendingReasoning = ""
 			lastTurnReasoning = ""
+			pendingDetails = nil
 		}
 		messages = append(messages, msg)
 	}
@@ -1402,10 +1420,11 @@ func chatServiceTier(resp *ChatCompletionsResponse) string {
 func chatMessageToResponsesOutput(message ChatMessage, customTools, functionTools map[string]bool, toolSearch bool, namespaceTools map[string]NamespacedToolName) []ResponsesOutput {
 	var outputs []ResponsesOutput
 	reasoning := message.reasoningText()
-	if reasoning != "" {
+	if reasoning != "" || len(message.ReasoningDetails) > 0 {
 		outputs = append(outputs, ResponsesOutput{
-			Type: "reasoning",
-			ID:   generateItemID(),
+			ReasoningDetails: message.ReasoningDetails,
+			Type:             "reasoning",
+			ID:               generateItemID(),
 			Summary: []ResponsesSummary{{
 				Type: "summary_text",
 				Text: reasoning,
@@ -1437,22 +1456,24 @@ func chatMessageToResponsesOutput(message ChatMessage, customTools, functionTool
 		}
 		if customName, ok := customToolCallName(toolCall.Function.Name, customTools, functionTools, namespaceTools); ok {
 			outputs = append(outputs, ResponsesOutput{
-				Type:   "custom_tool_call",
-				ID:     generateItemID(),
-				CallID: toolCall.ID,
-				Name:   customName,
-				Input:  extractCustomToolCallInput(arguments),
-				Status: "completed",
+				Type:         "custom_tool_call",
+				ID:           generateItemID(),
+				ExtraContent: toolCall.ExtraContent,
+				CallID:       toolCall.ID,
+				Name:         customName,
+				Input:        extractCustomToolCallInput(arguments),
+				Status:       "completed",
 			})
 			continue
 		}
 		if toolSearch && toolCall.Function.Name == toolSearchProxyName {
 			outputs = append(outputs, ResponsesOutput{
-				Type:      "tool_search_call",
-				ID:        generateItemID(),
-				CallID:    toolCall.ID,
-				Arguments: arguments,
-				Status:    "completed",
+				Type:         "tool_search_call",
+				ID:           generateItemID(),
+				ExtraContent: toolCall.ExtraContent,
+				CallID:       toolCall.ID,
+				Arguments:    arguments,
+				Status:       "completed",
 			})
 			continue
 		}
@@ -1465,23 +1486,25 @@ func chatMessageToResponsesOutput(message ChatMessage, customTools, functionTool
 		}
 		if ns, ok := namespaceTools[toolCall.Function.Name]; ok {
 			outputs = append(outputs, ResponsesOutput{
-				Type:      "function_call",
-				ID:        generateItemID(),
-				CallID:    toolCall.ID,
-				Name:      ns.Name,
-				Namespace: ns.Namespace,
-				Arguments: arguments,
-				Status:    "completed",
+				Type:         "function_call",
+				ID:           generateItemID(),
+				ExtraContent: toolCall.ExtraContent,
+				CallID:       toolCall.ID,
+				Name:         ns.Name,
+				Namespace:    ns.Namespace,
+				Arguments:    arguments,
+				Status:       "completed",
 			})
 			continue
 		}
 		outputs = append(outputs, ResponsesOutput{
-			Type:      "function_call",
-			ID:        generateItemID(),
-			CallID:    toolCall.ID,
-			Name:      toolCall.Function.Name,
-			Arguments: arguments,
-			Status:    "completed",
+			Type:         "function_call",
+			ID:           generateItemID(),
+			ExtraContent: toolCall.ExtraContent,
+			CallID:       toolCall.ID,
+			Name:         toolCall.Function.Name,
+			Arguments:    arguments,
+			Status:       "completed",
 		})
 	}
 
@@ -1585,10 +1608,11 @@ type ChatCompletionsToResponsesStreamState struct {
 	// reasoning_content before any content, so reasoning is modeled as its own
 	// "reasoning" output item that must be opened (output_item.added) before any
 	// reasoning delta and closed before the message/tool items open.
-	ReasoningItemID string
-	ReasoningIndex  int
-	ReasoningOpen   bool
-	ReasoningDone   bool
+	ReasoningDetails []json.RawMessage
+	ReasoningItemID  string
+	ReasoningIndex   int
+	ReasoningOpen    bool
+	ReasoningDone    bool
 
 	// Message item + output_text content-part lifecycle.
 	MessageItemID string
@@ -1718,6 +1742,10 @@ func ChatCompletionsChunkToResponsesEvents(
 		// (output_item.added + reasoning_summary_part.added) before the first
 		// delta, otherwise a strict client discards the delta. The leading
 		// empty-string reasoning delta upstreams send is filtered out.
+		if len(choice.Delta.ReasoningDetails) > 0 {
+			events = append(events, ensureChatReasoningItem(state)...)
+			state.ReasoningDetails = append(state.ReasoningDetails, choice.Delta.ReasoningDetails...)
+		}
 		reasoning := choice.Delta.reasoningText()
 		if reasoning != nil && *reasoning != "" {
 			events = append(events, ensureChatReasoningItem(state)...)
@@ -1775,6 +1803,9 @@ func ChatCompletionsChunkToResponsesEvents(
 				if toolCall.Function.Name != "" {
 					stored.Function.Name = toolCall.Function.Name
 				}
+			}
+			if len(toolCall.ExtraContent) > 0 && string(toolCall.ExtraContent) != "null" {
+				stored.ExtraContent = append(json.RawMessage(nil), toolCall.ExtraContent...)
 			}
 			events = append(events, announceChatToolItem(state, idx, stored, false)...)
 			if toolCall.Function.Arguments != "" {
@@ -1939,10 +1970,11 @@ func closeChatReasoningItem(state *ChatCompletionsToResponsesStreamState) []Resp
 		chatToResponsesEvent(state, "response.output_item.done", &ResponsesStreamEvent{
 			OutputIndex: state.ReasoningIndex,
 			Item: &ResponsesOutput{
-				Type:    "reasoning",
-				ID:      state.ReasoningItemID,
-				Status:  "completed",
-				Summary: []ResponsesSummary{{Type: "summary_text", Text: reasoning}},
+				ReasoningDetails: state.ReasoningDetails,
+				Type:             "reasoning",
+				ID:               state.ReasoningItemID,
+				Status:           "completed",
+				Summary:          []ResponsesSummary{{Type: "summary_text", Text: reasoning}},
 			},
 		}),
 	}
@@ -2046,12 +2078,13 @@ func announceChatToolItem(
 	events := []ResponsesStreamEvent{chatToResponsesEvent(state, "response.output_item.added", &ResponsesStreamEvent{
 		OutputIndex: state.ToolOutputIndex[idx],
 		Item: &ResponsesOutput{
-			Type:      itemType,
-			ID:        state.ToolItemIDs[idx],
-			CallID:    stored.ID,
-			Name:      itemName,
-			Namespace: itemNamespace,
-			Status:    "in_progress",
+			Type:         itemType,
+			ID:           state.ToolItemIDs[idx],
+			ExtraContent: stored.ExtraContent,
+			CallID:       stored.ID,
+			Name:         itemName,
+			Namespace:    itemNamespace,
+			Status:       "in_progress",
 		},
 	})}
 	// 迟到宣告时补发已累积的参数增量（custom/tool_search 的输入收尾统一下发，不补发）。
@@ -2114,12 +2147,13 @@ func closeChatToolItems(state *ChatCompletionsToResponsesStreamState) []Response
 				chatToResponsesEvent(state, "response.output_item.done", &ResponsesStreamEvent{
 					OutputIndex: outputIndex,
 					Item: &ResponsesOutput{
-						Type:   "custom_tool_call",
-						ID:     itemID,
-						CallID: toolCall.ID,
-						Name:   customNameForStreamTool(state, toolCall.Function.Name),
-						Input:  input,
-						Status: "completed",
+						Type:         "custom_tool_call",
+						ID:           itemID,
+						ExtraContent: toolCall.ExtraContent,
+						CallID:       toolCall.ID,
+						Name:         customNameForStreamTool(state, toolCall.Function.Name),
+						Input:        input,
+						Status:       "completed",
 					},
 				}),
 			)
@@ -2131,11 +2165,12 @@ func closeChatToolItems(state *ChatCompletionsToResponsesStreamState) []Response
 			events = append(events, chatToResponsesEvent(state, "response.output_item.done", &ResponsesStreamEvent{
 				OutputIndex: outputIndex,
 				Item: &ResponsesOutput{
-					Type:      "tool_search_call",
-					ID:        itemID,
-					CallID:    toolCall.ID,
-					Arguments: arguments,
-					Status:    "completed",
+					Type:         "tool_search_call",
+					ID:           itemID,
+					ExtraContent: toolCall.ExtraContent,
+					CallID:       toolCall.ID,
+					Arguments:    arguments,
+					Status:       "completed",
 				},
 			}))
 			continue
@@ -2156,13 +2191,14 @@ func closeChatToolItems(state *ChatCompletionsToResponsesStreamState) []Response
 			chatToResponsesEvent(state, "response.output_item.done", &ResponsesStreamEvent{
 				OutputIndex: outputIndex,
 				Item: &ResponsesOutput{
-					Type:      "function_call",
-					ID:        itemID,
-					CallID:    toolCall.ID,
-					Name:      name,
-					Namespace: namespace,
-					Arguments: arguments,
-					Status:    "completed",
+					Type:         "function_call",
+					ID:           itemID,
+					ExtraContent: toolCall.ExtraContent,
+					CallID:       toolCall.ID,
+					Name:         name,
+					Namespace:    namespace,
+					Arguments:    arguments,
+					Status:       "completed",
 				},
 			}),
 		)
@@ -2172,10 +2208,11 @@ func closeChatToolItems(state *ChatCompletionsToResponsesStreamState) []Response
 
 func (state *ChatCompletionsToResponsesStreamState) chatOutput() []ResponsesOutput {
 	var outputs []ResponsesOutput
-	if state.Reasoning.Len() > 0 {
+	if state.Reasoning.Len() > 0 || len(state.ReasoningDetails) > 0 {
 		outputs = append(outputs, ResponsesOutput{
-			Type: "reasoning",
-			ID:   generateItemID(),
+			ReasoningDetails: state.ReasoningDetails,
+			Type:             "reasoning",
+			ID:               generateItemID(),
 			Summary: []ResponsesSummary{{
 				Type: "summary_text",
 				Text: state.Reasoning.String(),
@@ -2205,22 +2242,24 @@ func (state *ChatCompletionsToResponsesStreamState) chatOutput() []ResponsesOutp
 		}
 		if state.toolIsCustom[i] {
 			outputs = append(outputs, ResponsesOutput{
-				Type:   "custom_tool_call",
-				ID:     generateItemID(),
-				CallID: toolCall.ID,
-				Name:   customNameForStreamTool(state, toolCall.Function.Name),
-				Input:  extractCustomToolCallInput(arguments),
-				Status: "completed",
+				Type:         "custom_tool_call",
+				ID:           generateItemID(),
+				ExtraContent: toolCall.ExtraContent,
+				CallID:       toolCall.ID,
+				Name:         customNameForStreamTool(state, toolCall.Function.Name),
+				Input:        extractCustomToolCallInput(arguments),
+				Status:       "completed",
 			})
 			continue
 		}
 		if state.toolIsToolSearch[i] {
 			outputs = append(outputs, ResponsesOutput{
-				Type:      "tool_search_call",
-				ID:        generateItemID(),
-				CallID:    toolCall.ID,
-				Arguments: arguments,
-				Status:    "completed",
+				Type:         "tool_search_call",
+				ID:           generateItemID(),
+				ExtraContent: toolCall.ExtraContent,
+				CallID:       toolCall.ID,
+				Arguments:    arguments,
+				Status:       "completed",
 			})
 			continue
 		}
@@ -2229,13 +2268,14 @@ func (state *ChatCompletionsToResponsesStreamState) chatOutput() []ResponsesOutp
 			name, namespace = ns.Name, ns.Namespace
 		}
 		outputs = append(outputs, ResponsesOutput{
-			Type:      "function_call",
-			ID:        generateItemID(),
-			CallID:    toolCall.ID,
-			Name:      name,
-			Namespace: namespace,
-			Arguments: arguments,
-			Status:    "completed",
+			Type:         "function_call",
+			ID:           generateItemID(),
+			ExtraContent: toolCall.ExtraContent,
+			CallID:       toolCall.ID,
+			Name:         name,
+			Namespace:    namespace,
+			Arguments:    arguments,
+			Status:       "completed",
 		})
 	}
 	return outputs

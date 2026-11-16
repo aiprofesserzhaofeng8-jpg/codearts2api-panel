@@ -36,7 +36,11 @@ func (s *Server) providerAttempt(ctx context.Context, acct *accounts.Account, mo
 		return upstream.StreamSession{}, err
 	}
 	session, _ := ctx.Value(routingSessionKey{}).(string)
-	return upstream.BindStream(adapter, raw, session, requestID(ctx)), nil
+	streamer, ok := adapter.(provider.Streaming)
+	if !ok {
+		return upstream.StreamSession{}, fmt.Errorf("该平台不是聊天接口")
+	}
+	return upstream.BindStream(streamer, raw, session, requestID(ctx)), nil
 }
 
 func (s *Server) chatProvider(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte) ([]byte, error) {

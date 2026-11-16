@@ -303,3 +303,17 @@ AI attribution records the use of OpenAI tools for assisted development. It does
 The base project uses [Apache-2.0](LICENSE). WorkBuddy-related design references retain their [MIT notices](LICENSE.workbuddy). Reused code under `backend/internal/responsescompat` uses [LGPL-3.0](backend/internal/responsescompat/LICENSE), and the bundled Ubuntu AppArmor profile retains its GPL-2.0-or-later notices.
 
 See [NOTICE](NOTICE) for component origins, modification notices, and license boundaries. This is an independent community project.
+
+Official China pay-as-you-go API key adapters for DeepSeek, Zhipu, Kimi and MiniMax are available in source. See [setup and limits](docs/OFFICIAL-APIS.md). Isolated tests pass; live-key verification is pending. Coding Plans and global endpoints are not included.
+
+Gemini AI Studio API key / CLI OAuth support (source and isolated tests complete; live account and Pi signature validation pending): [setup and limitations](docs/GEMINI-API.md).
+
+Antigravity (source and isolated acceptance including onboarding complete; live validation remains pending): [setup and limitations](docs/ANTIGRAVITY.md).
+
+Grok Build OAuth (source and isolated acceptance complete; live account validation pending): [setup and limits](docs/GROK.md).
+
+[OpenCode Zen / Go setup](docs/OPENCODE.md): source and isolated verification; live-account acceptance pending.
+
+[Command Code 接入 / Setup](docs/COMMANDCODE.md) — 源码接入及隔离验收，真实账号待验证。
+
+[Cline 接入 / Setup](docs/CLINE.md) — 基础接入与跨协议透明扩展隔离验收通过；真实账号及 Messages 客户端待验证。
