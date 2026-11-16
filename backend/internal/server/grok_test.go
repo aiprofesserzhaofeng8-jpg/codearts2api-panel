@@ -29,13 +29,14 @@ func TestGrokProtocolAccounting(t *testing.T) {
 					for _, stream := range []bool{false, true} {
 						t.Run(fmt.Sprintf("public=%v/%s/stream=%v", public, path, stream), func(t *testing.T) {
 							calls := 0
+							token := grokServerToken()
 							up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 								calls++
 								var body map[string]json.RawMessage
 								_ = json.NewDecoder(r.Body).Decode(&body)
 								var options map[string]json.RawMessage
 								_ = json.Unmarshal(body["stream_options"], &options)
-								if r.URL.Path != "/responses" || r.Header.Get("Authorization") != "Bearer "+grokServerToken() || string(body["model"]) != `"fixture-model"` {
+								if r.URL.Path != "/responses" || r.Header.Get("Authorization") != "Bearer "+token || string(body["model"]) != `"fixture-model"` {
 									t.Error("wrong upstream route or missing usage request")
 								}
 								w.Header().Set("Content-Type", "text/event-stream")
@@ -49,7 +50,7 @@ func TestGrokProtocolAccounting(t *testing.T) {
 							if err := s.Providers.Register(c); err != nil {
 								t.Fatal(err)
 							}
-							raw := json.RawMessage(fmt.Sprintf(`{"access_token":"%s","refresh_token":"fixture-refresh","project_id":"fixture-project","scope":"build","expires_at":%d}`, grokServerToken(), time.Now().Unix()+3600))
+							raw := json.RawMessage(fmt.Sprintf(`{"access_token":"%s","refresh_token":"fixture-refresh","project_id":"fixture-project","scope":"build","expires_at":%d}`, token, time.Now().Unix()+3600))
 
 							_, identity, err := c.Normalize(raw)
 							if err != nil {
