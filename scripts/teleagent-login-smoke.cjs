@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // Staged browser helper UI; all provider responses and identities are fixtures.
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs/promises');
 const url='https://www.teleai.com.cn/teleai-api/upms/public/auth/authorize?client_id=Z2veLLEHhZfq3hb5hWIwqJuPajIuasYi&redirect_uri=https%3A%2F%2Fagent.teleai.com.cn%2FsuperCowork%2Fsapi%2Fcowork%2Fauth';
@@ -19,7 +20,7 @@ const file=(challenge)=>({name:'result.json',mimeType:'application/json',buffer:
  });
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:5}}));
  await page.goto((process.env.CODEARTS_TEST_BASE||'http://127.0.0.1:10088')+'/#accounts');
- await page.locator('#addAccount').click();await page.locator('#teleagentLogin').click();await page.locator('#accountMethodBrowser').click();await page.locator('#accountCreateNext').click();
+ await page.locator('#addAccount').click();await selectPlatform(page,'teleagent');await page.locator('#accountMethodBrowser').click();await page.locator('#accountCreateNext').click();
  assert.equal(await page.locator('#providerTeleAgentHelper').isVisible(),true);assert.equal(await page.locator('#teleagentTaskDownload').isDisabled(),true);
  assert.equal(await page.locator('#providerLoginOpen').isVisible(),false);assert.equal(await page.locator('#providerLoginCallback').isVisible(),false);
  await page.locator('#teleagentFileFallback').evaluate(e=>e.open=true);await page.locator('#teleagentManualTask').click();await page.locator('#teleagentTaskDownload:not([disabled])').waitFor();
@@ -34,7 +35,7 @@ const file=(challenge)=>({name:'result.json',mimeType:'application/json',buffer:
  await page.locator('#teleagentManualCheck').click();await page.getByText('Upstream identity fixture denied',{exact:true}).waitFor();assert.equal(saves,0);
  await page.locator('#teleagentManualCheck').click();await page.locator('#providerPreview').waitFor({state:'visible'});assert.equal(saves,0);assert.equal(await page.locator('#providerLoginCallback').inputValue(),'');assert.ok(!(await page.locator('#providerPreviewText').textContent()).includes('fixture-secret'));
  await page.locator('#providerLoginComplete').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});assert.equal(saves,1);assert.equal(await page.locator('#teleagentHelperCommand').inputValue(),'');
- await page.locator('#addAccount').click();await page.locator('#teleagentLogin').click();await page.locator('#accountCreateNext').click();await page.locator('#teleagentFileFallback').evaluate(e=>e.open=true);await page.locator('#teleagentManualTask').click();await page.locator('#teleagentTaskDownload:not([disabled])').waitFor();
+ await page.locator('#addAccount').click();await selectPlatform(page,'teleagent');await page.locator('#accountCreateNext').click();await page.locator('#teleagentFileFallback').evaluate(e=>e.open=true);await page.locator('#teleagentManualTask').click();await page.locator('#teleagentTaskDownload:not([disabled])').waitFor();
  await page.locator('#teleagentResultFile').setInputFiles(file('A'.repeat(43)));await page.locator('#providerLoginError').filter({hasText:locale==='zh-CN'?'不属于本次任务':'does not belong'}).waitFor();assert.equal(checks,2);
  await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'artifacts/teleagent-browser-login-'+locale+'.png',fullPage:true});
  await page.locator('#accountCreateCancel').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});assert.equal(cancels,1);assert.equal(await page.locator('#providerLoginCallback').inputValue(),'');assert.deepEqual(errors,[]);await ctx.close();

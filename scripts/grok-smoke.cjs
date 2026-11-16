@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // Browser-only fixtures. No Google authorization, account tokens or production state.
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});try{
@@ -17,7 +18,7 @@ for(const locale of ['zh-CN','en-US']){
  return r.fulfill({json:out});});
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:0,ready:0}}));
  const ready=page.waitForResponse(r=>r.url().endsWith('/admin/api/state'));await page.goto(process.env.CODEARTS_TEST_BASE+'/#accounts');await ready;
- await page.locator('#addAccount').click();await page.locator('[data-account-platform="grok"]').click();await page.locator('[data-account-method="browser"]').click();await page.locator('#accountCreateNext').click();
+ await page.locator('#addAccount').click();await selectPlatform(page,'grok');await page.locator('[data-account-method="browser"]').click();await page.locator('#accountCreateNext').click();
  assert.equal(await page.locator('#providerScope').inputValue(),'build');assert.equal(await page.locator('#providerImportSection').isVisible(),false);
  await page.locator('#providerLoginStart').click();await page.locator('#providerLoginOpen').waitFor({state:'visible'});
  assert.ok((await page.locator('#providerLoginOpen').getAttribute('href')).startsWith('https://auth.x.ai/'));
@@ -25,7 +26,7 @@ for(const locale of ['zh-CN','en-US']){
  assert.equal(await page.locator('#providerLoginCallback').inputValue(),'');
  await page.locator('#providerLoginComplete').click();await page.waitForFunction(()=>document.querySelector('#providerLoginError').textContent.includes('fixture-save-failure'));
  assert.equal(await page.locator('#addAccountDialog').isVisible(),true);fail=false;await page.locator('#providerLoginComplete').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});
- await page.locator('#addAccount').click();await page.locator('[data-account-platform="grok"]').click();await page.locator('[data-account-method="import"]').click();await page.locator('#accountCreateNext').click();
+ await page.locator('#addAccount').click();await selectPlatform(page,'grok');await page.locator('[data-account-method="import"]').click();await page.locator('#accountCreateNext').click();
  assert.equal(await page.locator('#providerAPIKey').isVisible(),false);
  await page.locator('#providerImportJSON').fill(JSON.stringify({scope:'build',auth_mode:'oauth',access_token:'fake-token'}));await page.locator('#providerImport').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});
  assert.equal(starts,1);assert.equal(checks,1);assert.equal(saves,2);assert.equal(imports,1);assert.deepEqual(errors,[]);await ctx.close();

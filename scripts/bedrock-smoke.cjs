@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // Isolated official API wizard: no external provider calls or production state.
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});try{
@@ -14,7 +15,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:0,ready:0}}));
  const ready=page.waitForResponse(r=>r.url().endsWith('/admin/api/state'));await page.goto(process.env.CODEARTS_TEST_BASE+'/#accounts');await ready;
  for(const scope of ['api']){ const p='bedrock';expectedScope=scope;
- await page.locator('#addAccount').click();await page.locator(`[data-account-platform="${p}"]`).click();
+ await page.locator('#addAccount').click();await selectPlatform(page,p);
  assert.equal(await page.locator('[data-account-method="browser"]').isVisible(),p==='gemini');
  if(p==='gemini')await page.locator('[data-account-method="import"]').click();
  await page.locator('#accountCreateNext').click();

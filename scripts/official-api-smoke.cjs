@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // Isolated official API wizard: no external provider calls or production state.
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});try{
@@ -15,15 +16,16 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  const ready=page.waitForResponse(r=>r.url().endsWith('/admin/api/state'));await page.goto(process.env.CODEARTS_TEST_BASE+'/#accounts');await ready;
  for(const [p,mode] of [['deepseek','payg'],['zhipu','payg'],['kimi','payg'],['minimax','payg'],['gemini','payg'],['kimi','coding'],['zhipu','coding'],['minimax','coding']]){
  coding=mode==='coding';
- await page.locator('#addAccount').click();await page.locator(`[data-account-platform="${p}"]`).click();
- assert.equal(await page.locator('[data-account-method="browser"]').isVisible(),p==='gemini');
+ await page.locator('#addAccount').click();await selectPlatform(page,p);
+ assert.equal(await page.locator('[data-account-method="browser"]').isVisible(),false);
  if(p==='gemini')await page.locator('[data-account-method="import"]').click();
+ if(['kimi','zhipu','minimax'].includes(p))await page.locator(`[data-account-type="${mode}"]`).click();
  await page.locator('#accountCreateNext').click();
  assert.equal(await page.locator('#providerBrowserFields').isVisible(),false);
  assert.equal(await page.locator('#providerImportJSON').isVisible(),false);
  assert.equal(await page.locator('#providerAPIKey').getAttribute('type'),'password');
- assert.equal(await page.locator('#codingImportModeField').isVisible(),['kimi','zhipu','minimax'].includes(p));
- if(['kimi','zhipu','minimax'].includes(p))await page.locator('#codingImportMode').selectOption(mode);
+ assert.equal(await page.locator('#codingImportModeField').isVisible(),false);
+
  await page.locator('#providerAPIKey').fill('fixture-key');fail=true;await page.locator('#providerImport').click();
  await page.waitForFunction(()=>document.querySelector('#providerLoginError').textContent.includes('fixture-save-failure'));
  assert.equal(await page.locator('#addAccountDialog').isVisible(),true);assert.equal(await page.locator('#providerAPIKey').inputValue(),'fixture-key');

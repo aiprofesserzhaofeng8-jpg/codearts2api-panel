@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // UI fixtures only. Never authorize or import a real Kiro account.
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
@@ -42,7 +43,7 @@ const fs = require('node:fs');
     await ctx.route('**/health', r => r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
     const ready = page.waitForResponse(r => r.url().endsWith('/admin/api/state'));
     await page.goto((process.env.CODEARTS_TEST_BASE || 'http://127.0.0.1:10088')+'/#accounts'); await ready;
-    await page.locator('#addAccount').click(); await page.locator('#kiroLogin').click();
+    await page.locator('#addAccount').click(); await selectPlatform(page,'kiro');
     assert.equal(starts,0);
     await page.locator('#accountCreateNext').click();
     assert.equal(await page.locator('#providerTraeDevice').isVisible(),false);
@@ -74,7 +75,7 @@ const fs = require('node:fs');
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false);
     assert.ok(await page.locator('#kiroLogin').isVisible());
-    await page.locator('#qoderLogin').click(); await page.locator('#accountCreateNext').click();
+    await selectPlatform(page,'qoder'); await page.locator('#accountCreateNext').click();
     assert.deepEqual(await page.locator('#providerScope option').evaluateAll(options => options.map(o => o.value)), ['cn','global']);
     fs.mkdirSync('artifacts',{recursive:true}); await page.screenshot({path:'artifacts/kiro-mobile.png'});
     assert.deepEqual(errors,[]);

@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // Real loopback connector and production panel UI. Login results and upstream
 // account verification are fixtures; no downloads or result files are needed.
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
@@ -39,7 +40,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
    return r.fulfill({json:out});
   });
   await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
-  await page.goto(visit+'/#accounts');await page.locator('#addAccount').click();await page.locator('#teleagentLogin').click();await page.locator('#accountMethodBrowser').click();await page.locator('#accountCreateNext').click();
+  await page.goto(visit+'/#accounts');await page.locator('#addAccount').click();await selectPlatform(page,'teleagent');await page.locator('#accountMethodBrowser').click();await page.locator('#accountCreateNext').click();
   assert.equal(await page.locator('#teleagentResultFile').isVisible(),false);assert.equal(await page.locator('#teleagentTaskDownload').isVisible(),false);
   await page.locator('#providerLoginStart').click();await page.locator('#providerLoginError').filter({hasText:locale==='zh-CN'?'首次使用':'before first use'}).waitFor();assert.equal(starts,0);
   await page.locator('#teleagentPairKey').fill('wrong');await page.locator('#teleagentPair').click();assert.equal(starts,0);
@@ -49,7 +50,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.locator('#providerLoginComplete').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});assert.equal(saves,1);
   // A later login uses the same saved pairing and cancels the owned browser.
   pendingMode=true;const before=canceled;
-  await page.locator('#addAccount').click();await page.locator('#teleagentLogin').click();await page.locator('#accountCreateNext').click();assert.equal(await page.locator('#teleagentPairKey').isVisible(),false);
+  await page.locator('#addAccount').click();await selectPlatform(page,'teleagent');await page.locator('#accountCreateNext').click();assert.equal(await page.locator('#teleagentPairKey').isVisible(),false);
   await page.locator('#providerLoginStart').click();await page.locator('#providerLoginStatus').filter({hasText:locale==='zh-CN'?'正在打开':'Opening'}).waitFor();
   await page.waitForTimeout(300);await page.locator('#accountCreateCancel').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});
   for(let i=0;i<30 && canceled===before;i++)await page.waitForTimeout(100);assert.equal(canceled,before+1);assert.equal(checks,1);assert.equal(saves,1);assert.equal(downloaded,0);assert.deepEqual(errors,[]);

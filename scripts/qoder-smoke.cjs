@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // UI fixtures only. Never authorize or import a real Qoder account.
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
@@ -42,7 +43,7 @@ const fs = require('node:fs');
     await ctx.route('**/health', r => r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
     const ready = page.waitForResponse(r => r.url().endsWith('/admin/api/state'));
     await page.goto((process.env.CODEARTS_TEST_BASE || 'http://127.0.0.1:10088')+'/#accounts'); await ready;
-    await page.locator('#addAccount').click(); await page.locator('#qoderLogin').click();
+    await page.locator('#addAccount').click(); await selectPlatform(page,'qoder');
     assert.equal(starts,0);
     await page.locator('#accountCreateNext').click();
     assert.equal(await page.locator('#providerTraeDevice').isVisible(),false);

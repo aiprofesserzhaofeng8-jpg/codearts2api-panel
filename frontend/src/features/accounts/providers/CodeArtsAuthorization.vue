@@ -3,7 +3,7 @@ import { t as tr } from '../../../i18n';
 </script>
 <template>
 <section v-once id="loginPanel" class="account-authorize-panel hidden" aria-labelledby="loginTitle">
-  <h3 id="loginTitle" class="account-panel-title">{{tr('码道账号授权')}}</h3>
+  <h3 id="loginTitle" class="account-panel-title">{{tr('CodeArts 账号授权')}}</h3>
   <div v-once class="modal-body">
     <div v-once class="login-stepper" :aria-label="tr('登录步骤')"><span id="loginStep1" class="active">{{tr('1 获取链接')}}</span><span id="loginStep2">{{tr('2 提交授权信息')}}</span><span id="loginStep3">{{tr('3 确认保存')}}</span></div>
     <div v-once id="loginInitial"><h3>{{tr('准备登录链接')}}</h3><p class="hint">{{tr('点击下方按钮生成一次性链接。可以复制到其他浏览器或无痕窗口登录，避免沿用当前浏览器的账号。')}}</p><button class="btn primary" id="loginGenerate">{{tr('生成登录链接')}}</button></div>

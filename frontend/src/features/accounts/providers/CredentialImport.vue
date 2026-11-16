@@ -5,16 +5,16 @@ import { t as tr } from '../../../i18n';
 <section v-once id="manualAccountPanel" class="account-authorize-panel hidden">
           <div v-once class="card-head">
             <div v-once>
-              <h3 class="account-panel-title">{{tr('码道凭据导入')}}</h3>
+              <h3 class="account-panel-title">{{tr('CodeArts 凭据导入')}}</h3>
               <p class="card-sub">{{tr('手工录入 STS 临时凭据，或从 session JSON 导入完整登录态')}}</p>
             </div>
           </div>
 
-          <div v-once class="row"><button class="btn" id="importLocal">{{tr('从本机码道客户端导入')}}</button></div>
+          <div v-once class="row"><button class="btn" id="importLocal">{{tr('从本机 CodeArts 客户端导入')}}</button></div>
           <div v-once class="settings-group first">
             <h3>{{tr('手工录入')}}</h3>
             <div v-once class="field-grid cols-2">
-              <div v-once class="field">
+              <div v-once class="field hidden">
                 <label for="manualName">{{tr('账号名称（可选）')}}</label>
                 <input id="manualName" :placeholder="tr('留空自动命名')">
               </div>
@@ -47,7 +47,7 @@ import { t as tr } from '../../../i18n';
           <div v-once class="settings-group">
             <h3>{{tr('从 session JSON 导入')}}</h3>
             <div v-once class="field-grid cols-2">
-              <div v-once class="field">
+              <div v-once class="field hidden">
                 <label for="sessionName">{{tr('账号名称（可选）')}}</label>
                 <input id="sessionName" :placeholder="tr('留空自动命名')">
               </div>

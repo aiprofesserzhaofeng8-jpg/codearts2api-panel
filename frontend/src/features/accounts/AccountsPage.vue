@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { t as tr } from '../../i18n';
+import { brands, commonPlatforms, extraPlatforms, brandIcon } from './brands';
 
 import ProviderAuthorization from './providers/ProviderAuthorization.vue';
 import CodeArtsAuthorization from './providers/CodeArtsAuthorization.vue';
@@ -45,7 +46,7 @@ import CredentialImport from './providers/CredentialImport.vue';
           </div>
 
           <div v-once class="account-toolbar">
-            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option><option value="teleagent">TeleAgent</option><option value="mobileclaw">MobileClaw</option><option value="deepseek">DeepSeek</option><option value="zhipu">智谱</option><option value="kimi">Kimi</option><option value="minimax">MiniMax</option><option value="gemini">Gemini API / CLI</option><option value="antigravity">Antigravity</option><option value="grok">Grok Build</option><option value="opencode">OpenCode Zen / Go</option><option value="commandcode">Command Code</option><option value="cline">Cline</option><option value="bedrock">AWS Bedrock</option><option value="vertex">Vertex AI</option><option value="typesafe">TypeSafe</option></select></label>
+            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option v-for="brand in brands" :key="brand.id" :value="brand.id">{{brand.name}}</option></select></label>
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" :placeholder="tr('搜索账号名称或来源')" :aria-label="tr('搜索账号')"></label>
             <select id="accountStatusFilter" :aria-label="tr('账号状态筛选')"><option value="all">{{tr('全部状态')}}</option><option value="ready">{{tr('可调度')}}</option><option value="cooling">{{tr('冷却中')}}</option><option value="paused">{{tr('已暂停')}}</option><option value="disabled">{{tr('已停用')}}</option></select>
             <label>{{tr('排序')}} <select id="accountSort"><option value="default">{{tr('默认顺序')}}</option><option value="name">{{tr('账号名称')}}</option><option value="lastUsed">{{tr('最近使用优先')}}</option><option value="expires">{{tr('即将过期优先')}}</option></select></label>
@@ -144,32 +145,21 @@ import CredentialImport from './providers/CredentialImport.vue';
   <div v-once class="account-create-body">
     <div v-once class="account-create-steps" :aria-label="tr('添加账号步骤')"><span id="accountChooseStep" class="active"><b>1</b>{{tr(' 选择平台与方式')}}</span><i aria-hidden="true"></i><span id="accountAuthorizeStep"><b>2</b> <span id="accountAuthorizeLabel">{{tr('账号授权')}}</span></span></div>
     <div v-once id="accountChoose">
-      <div v-once class="field"><label for="accountCreateName">{{tr('账号名称（可选）')}}</label><input id="accountCreateName" autocomplete="off" :placeholder="tr('输入便于识别的账号名称')"></div>
+
       <p class="account-field-label" id="accountPlatformLabel">{{tr('平台')}}</p>
-      <div v-once class="account-platforms" role="group" aria-labelledby="accountPlatformLabel">
-        <button id="browserLogin" class="account-platform selected" data-account-platform="codearts" aria-pressed="true"><span class="platform-symbol" aria-hidden="true">C</span><span>{{tr('华为云码道')}}</span></button>
-        <button id="workbuddyLogin" class="account-platform" data-account-platform="workbuddy" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">W</span><span>WorkBuddy</span></button>
-        <button id="traeLogin" class="account-platform" data-account-platform="trae" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">T</span><span>Trae CN / SOLO</span></button>
-        <button id="kiroLogin" class="account-platform" data-account-platform="kiro" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">K</span><span>Kiro</span></button>
-        <button id="qoderLogin" class="account-platform" data-account-platform="qoder" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">Q</span><span>Qoder</span></button>
-        <button id="chatgptLogin" class="account-platform" data-account-platform="chatgpt" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">G</span><span>ChatGPT / Codex</span></button>
-        <button id="claudeLogin" class="account-platform" data-account-platform="claude" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">A</span><span>Claude</span></button>
-        <button class="account-platform" data-account-platform="mobileclaw" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">M</span><span>MobileClaw</span></button>
-        <button class="account-platform" data-account-platform="deepseek" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">D</span><span>DeepSeek API</span></button>
-        <button class="account-platform" data-account-platform="zhipu" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">智</span><span>智谱 API</span></button>
-        <button class="account-platform" data-account-platform="kimi" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">K</span><span>Kimi API</span></button>
-        <button class="account-platform" data-account-platform="minimax" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">M</span><span>MiniMax API</span></button>
-        <button class="account-platform" data-account-platform="gemini" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">G</span><span>Gemini API / CLI</span></button>
-        <button class="account-platform" data-account-platform="antigravity" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">A</span><span>Antigravity</span></button>
-        <button class="account-platform" data-account-platform="grok" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">X</span><span>Grok Build</span></button>
-        <button class="account-platform" data-account-platform="opencode" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">O</span><span>OpenCode Zen / Go</span></button>
-        <button class="account-platform" data-account-platform="commandcode" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">C</span><span>Command Code</span></button>
-        <button class="account-platform" data-account-platform="cline" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">C</span><span>Cline</span></button>
-        <button class="account-platform" data-account-platform="vertex" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">V</span><span>Vertex AI</span></button>
-        <button class="account-platform" data-account-platform="bedrock" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">B</span><span>AWS Bedrock</span></button>
-        <button class="account-platform" data-account-platform="typesafe" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">C</span><span>TypeSafe</span></button>
-        <button id="teleagentLogin" class="account-platform" data-account-platform="teleagent" aria-pressed="false"><span class="platform-symbol" aria-hidden="true">T</span><span>TeleAgent</span></button>
+      <div role="radiogroup" aria-labelledby="accountPlatformLabel">
+      <div class="account-platforms">
+        <button v-for="brand in commonPlatforms" :key="brand.id" :id="brand.id === 'codearts' ? 'browserLogin' : brand.id + 'Login'" class="account-platform" :data-account-platform="brand.id" role="radio" aria-checked="false"><img :src="brandIcon(brand.id)" alt=""><span>{{brand.name}}</span><span class="platform-check" aria-hidden="true">✓</span></button>
+        <button id="accountPlatformsMore" class="account-platform platform-expand" aria-expanded="false" aria-controls="accountExtraPlatforms">{{tr('更多平台')}} <span aria-hidden="true">···</span></button>
       </div>
+      <div id="accountExtraPlatforms" class="account-platforms hidden">
+        <button v-for="brand in extraPlatforms" :key="brand.id" :id="brand.id + 'Login'" class="account-platform" :data-account-platform="brand.id" role="radio" aria-checked="false"><img :src="brandIcon(brand.id)" alt=""><span>{{brand.name}}</span><span class="platform-check" aria-hidden="true">✓</span></button>
+        <button id="accountPlatformsLess" class="account-platform platform-collapse" aria-expanded="true" aria-controls="accountExtraPlatforms">{{tr('收起')}} <span aria-hidden="true">⌃</span></button>
+      </div>
+      </div>
+      <button id="accountSelectedSummary" class="btn hidden" type="button"></button>
+      <p class="account-field-label" id="accountTypeLabel">{{tr('账号类型')}}</p>
+      <div id="accountTypes" class="account-types" role="radiogroup" aria-labelledby="accountTypeLabel"></div>
       <p class="account-field-label" id="accountMethodLabel">{{tr('添加方式')}}</p>
       <div v-once class="account-methods" role="group" aria-labelledby="accountMethodLabel">
         <button id="accountMethodBrowser" class="account-method selected" data-account-method="browser" aria-pressed="true"><span class="method-symbol" aria-hidden="true">↗</span><span><strong>{{tr('浏览器授权')}}</strong><small id="accountBrowserHint">{{tr('通过官方页面登录并授权')}}</small></span></button>
@@ -178,6 +168,8 @@ import CredentialImport from './providers/CredentialImport.vue';
       <p class="hint account-choice-hint" id="accountChoiceHint">{{tr('选择平台和添加方式后继续，账号核对完成后再保存。')}}</p>
     </div>
     <div v-once id="accountAuthorize" class="hidden">
+      <h3 id="accountAuthorizationPath"></h3>
+      <div v-once class="field"><label for="accountCreateName">{{tr('账号名称（可选）')}}</label><input id="accountCreateName" autocomplete="off" :placeholder="tr('输入便于识别的账号名称')"></div>
 <ProviderAuthorization />
 <CodeArtsAuthorization />
         <CredentialImport />
@@ -186,6 +178,11 @@ import CredentialImport from './providers/CredentialImport.vue';
     <p id="accountCreateError" class="err-text" role="alert"></p>
   </div>
   <div v-once class="modal-actions account-create-actions"><button class="btn hidden" id="accountCreateBack">{{tr('上一步')}}</button><button class="btn" id="accountCreateCancel">{{tr('取消')}}</button><button class="btn primary" id="accountCreateNext">{{tr('下一步')}}</button></div>
+</dialog>
+<dialog v-once id="accountSwitchDialog" class="modal modal-small" aria-labelledby="accountSwitchTitle">
+  <div class="modal-head"><h2 id="accountSwitchTitle">{{tr('切换账号类型')}}</h2></div>
+  <div class="modal-body"><p>{{tr('切换后将清空当前授权信息')}}</p></div>
+  <div class="modal-actions"><button id="accountSwitchCancel" class="btn" autofocus>{{tr('取消')}}</button><button id="accountSwitchConfirm" class="btn primary">{{tr('确认切换')}}</button></div>
 </dialog>
 <dialog v-once id="modelHealthDialog" class="modal" aria-labelledby="modelHealthTitle">
   <div v-once class="card-head"><h2 id="modelHealthTitle">{{tr('账号模型健康')}}</h2><button class="btn xs" id="modelHealthClose">{{tr('关闭')}}</button></div>

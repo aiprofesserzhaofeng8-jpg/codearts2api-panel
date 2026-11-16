@@ -1,3 +1,4 @@
+const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // Isolated official API wizard: no external provider calls or production state.
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});try{
@@ -14,15 +15,16 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:0,ready:0}}));
  const ready=page.waitForResponse(r=>r.url().endsWith('/admin/api/state'));await page.goto(process.env.CODEARTS_TEST_BASE+'/#accounts');await ready;
  for(const scope of ['zen','go']){ const p='opencode';expectedScope=scope;
- await page.locator('#addAccount').click();await page.locator(`[data-account-platform="${p}"]`).click();
+ await page.locator('#addAccount').click();await selectPlatform(page,p);
  assert.equal(await page.locator('[data-account-method="browser"]').isVisible(),p==='gemini');
  if(p==='gemini')await page.locator('[data-account-method="import"]').click();
+ await page.locator(`[data-account-type="${scope}"]`).click();
  await page.locator('#accountCreateNext').click();
  assert.equal(await page.locator('#providerBrowserFields').isVisible(),false);
  assert.equal(await page.locator('#providerImportJSON').isVisible(),false);
  assert.equal(await page.locator('#providerAPIKey').getAttribute('type'),'password');
- assert.equal(await page.locator('#opencodeImportScope').isVisible(),true);
- await page.locator('#opencodeImportScope').selectOption(scope);
+ assert.equal(await page.locator('#opencodeImportScope').isVisible(),false);
+
  assert.ok((await page.locator('#providerImportHint').textContent()).includes(locale==='zh-CN'?'短推理':'inference'));
  await page.locator('#providerAPIKey').fill('fixture-key');fail=true;await page.locator('#providerImport').click();
  await page.waitForFunction(()=>document.querySelector('#providerLoginError').textContent.includes('fixture-save-failure'));

@@ -1,3 +1,4 @@
+import { brandName } from './brands';
 import { t as tr } from '../../i18n';
 import { copyText } from '../../shared/dom';
 import { btn, busyable, cell, emptyRow, mk, on, pill, row } from '../../components/controls';
@@ -167,7 +168,7 @@ export function renderAccounts(d) {
     var query = domState.$("#accountSearch").value.trim().toLowerCase();
     var visible = accts.filter(function (a) {
         return (!domState.$("#accountProvider").value || (a.provider || "codearts") === domState.$("#accountProvider").value) && (accountsState.accountFilter === "all" || accountState(a) === accountsState.accountFilter) &&
-            (!query || [a.name, a.source, sourceName(a.source), a.provider, a.scope].join(" ").toLowerCase().indexOf(query) !== -1);
+            (!query || [a.name, a.source, sourceName(a.source), brandName(a.provider || "codearts"), a.provider, a.scope].join(" ").toLowerCase().indexOf(query) !== -1);
     });
     const signature = JSON.stringify([query, domState.$('#accountProvider').value, accountsState.accountFilter, preferences.sort]);
     if (signature !== accountFilterSignature) {
@@ -285,7 +286,7 @@ export function renderAccounts(d) {
         var info = mk("div", "account-name");
         info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
         const platform = cell("", "account-platform-cell");
-        platform.appendChild(pill(["deepseek", "zhipu", "kimi", "minimax", "gemini"].includes(a.provider) ? ({deepseek:"DeepSeek", zhipu:"智谱", kimi:"Kimi", minimax:"MiniMax", gemini:a.scope === "cli" ? "Gemini CLI" : "Gemini"}[a.provider] + (a.provider === "gemini" && a.scope === "cli" ? "" : " API")) : a.provider === "vertex" ? "Vertex AI · " + (a.scope || "global") : a.provider === "bedrock" ? "Bedrock · " + a.scope : a.provider === "typesafe" ? "TypeSafe" : a.provider === "cline" ? "Cline" : a.provider === "commandcode" ? "Command Code" : a.provider === "opencode" ? "OpenCode " + (a.scope === "go" ? "Go" : "Zen") : a.provider === "grok" ? "Grok Build" : a.provider === "antigravity" ? "Antigravity" : a.provider === "mobileclaw" ? "MobileClaw · " + tr("国内") : a.provider === "teleagent" ? "TeleAgent · " + tr("国内") : a.provider === "chatgpt" ? "ChatGPT / Codex" : a.provider === "claude" ? "Claude" : a.provider === "kiro" ? "Kiro · " + a.scope : a.provider === "qoder" ? "Qoder · " + (a.scope === "global" ? tr("国际") : tr("国内")) : a.provider === "trae" ? tr("Trae · 国内") : (a.provider === "workbuddy" ? "WorkBuddy · " + (a.scope === "global" ? tr("国际") : tr("国内")) : tr("华为云码道"))));
+        platform.appendChild(pill(brandName(a.provider || 'codearts') + (a.scope ? ' · ' + (a.provider === 'opencode' ? (a.scope === 'go' ? 'Go' : 'Zen') : ['workbuddy', 'qoder', 'trae', 'teleagent', 'mobileclaw'].includes(a.provider) ? (a.scope === 'global' ? tr('国际') : tr('国内')) : a.scope) : '')));
         info.appendChild(mk("span", "account-caption", sourceName(a.source)));
         who.appendChild(info);
         identity.appendChild(who);
