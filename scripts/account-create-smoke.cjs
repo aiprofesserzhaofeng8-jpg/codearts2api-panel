@@ -37,9 +37,10 @@ for(const locale of ['zh-CN','en-US']){
  await page.setViewportSize({width:1280,height:1000});
  await page.locator('#accountPlatformsMore').click();assert.equal(await page.locator('[data-account-platform]:visible').count(),20);
  assert.equal(await page.locator('#accountPlatformsMore').getAttribute('aria-expanded'),'true');
- assert.equal(await page.evaluate(()=>document.activeElement.id),'accountPlatformsMore');
+ assert.equal(await page.locator('#accountPlatformsMore').isVisible(),false);
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'antigravityLogin');
  await selectPlatform(page,'qoder');await page.locator('#accountPlatformsLess').click();
- assert.equal(await page.locator('#qoderLogin').isVisible(),false);assert.match(await page.locator('#accountSelectedSummary').textContent(),/Qoder/);
+ assert.equal(await page.locator('#qoderLogin').isVisible(),false);assert.equal(await page.locator('#accountPlatformsMore').isVisible(),true);assert.equal(await page.locator('#accountPlatformsLess').isVisible(),false);assert.match(await page.locator('#accountSelectedSummary').textContent(),/Qoder/);
  await page.locator('#accountSelectedSummary').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'qoderLogin');
  await page.screenshot({path:`artifacts/onboarding-${locale}-expanded.png`});
  await page.setViewportSize({width:360,height:800});await page.locator('#commandcodeLogin').scrollIntoViewIfNeeded();

@@ -1,4 +1,4 @@
-import { accountTypes, brandName, brandIcon, extraPlatforms } from '../brands';
+import { accountTypes, brandName, brandIcon, brandIconClass, extraPlatforms } from '../brands';
 import { t as tr } from '../../../i18n';
 import { on } from '../../../components/controls';
 import { serverState } from '../../../shared/read-model';
@@ -52,11 +52,12 @@ export function accountPlatformLabel() { return brandName(providersState.account
 function renderExpansion() {
     const extra = extraPlatforms.some(b => b.id === providersState.accountCreateBrand);
     domState.$('#accountExtraPlatforms').classList.toggle('hidden', !providersState.expanded);
+    domState.$('#accountPlatformsMore').classList.toggle('hidden', providersState.expanded);
     domState.$('#accountPlatformsMore').setAttribute('aria-expanded', String(providersState.expanded));
     const summary = domState.$('#accountSelectedSummary');
     summary.classList.toggle('hidden', !extra || providersState.expanded);
     summary.replaceChildren();
-    const icon = document.createElement('img'); icon.src = brandIcon(providersState.accountCreateBrand); icon.alt = '';
+    const icon = document.createElement('img'); icon.src = brandIcon(providersState.accountCreateBrand); icon.alt = ''; icon.className = brandIconClass(providersState.accountCreateBrand);
     summary.append(icon, document.createTextNode(tr('已选：') + accountPlatformLabel()));
 }
 function renderTypes() {
@@ -501,7 +502,7 @@ listen(domState.$('#accountChoose'), 'keydown', e => {
     items[next].focus(); items[next].click();
     if (selector === '[data-account-type]') domState.$('#accountTypes [aria-checked="true"]')?.focus();
 });
-on('#accountPlatformsMore', () => { providersState.expanded = !providersState.expanded; renderExpansion(); });
+on('#accountPlatformsMore', () => { providersState.expanded = true; renderExpansion(); domState.$('#accountExtraPlatforms [aria-checked="true"], #accountExtraPlatforms [data-account-platform]')?.focus(); });
 on('#accountPlatformsLess', () => { providersState.expanded = false; renderExpansion(); domState.$('#accountPlatformsMore').focus(); });
 on('#accountSelectedSummary', () => { providersState.expanded = true; renderExpansion(); const selected = domState.$('#accountExtraPlatforms [aria-checked="true"]'); selected?.focus(); selected?.scrollIntoView({block: 'nearest'}); });
 on('#accountSwitchCancel', () => { pendingSwitch = null; domState.$('#accountSwitchDialog').close(); });

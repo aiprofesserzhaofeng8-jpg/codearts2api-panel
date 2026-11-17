@@ -11,10 +11,10 @@ export const brands = Object.entries(names).map(([id, name]) => ({id, name}));
 export const commonPlatforms = brands.slice(0, 11);
 export const extraPlatforms = brands.slice(11, 20);
 export const brandName = (id: string) => names[id] || id;
-const icons = import.meta.glob('../../assets/providers/*.svg', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
+const icons = import.meta.glob('../../assets/providers/*.{svg,png}', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 export function brandIcon(id: string) {
   const name = ({chatgpt: 'openai', gemini: 'googlegemini'} as Record<string, string>)[id] || id;
-  return icons[`../../assets/providers/${name}.svg`] || icons['../../assets/providers/product.svg'];
+  return icons[`../../assets/providers/${name}.svg`] || icons[`../../assets/providers/${name}.png`] || icons['../../assets/providers/product.svg'];
 }
 export interface AccountType {
   id: string; label: string; provider: string; methods: string[];
@@ -41,3 +41,5 @@ export function accountTypes(platform: string): AccountType[] {
   if (['deepseek', 'cline', 'typesafe'].includes(platform)) return [type(platform, 'api', platform === 'typesafe' ? '决策接口' : 'API', ['import'], {key: true})];
   return [type(platform, 'default', brandName(platform), ['browser', 'import'])];
 }
+
+export const brandIconClass = (id: string) => ['codearts', 'mobileclaw', 'teleagent', 'typesafe'].includes(id) ? 'brand-icon-color' : '';

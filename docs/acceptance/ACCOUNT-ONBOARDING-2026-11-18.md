@@ -24,3 +24,9 @@
 - 已查看 1280px 桌面与 360px 手机、中英文、明暗主题、展开及 Vertex 配置截图。产物在忽略的 `artifacts/onboarding-*.png`，测试日志位于 `artifacts/frontend-e2e/`、`artifacts/onboarding-e2e/`、`artifacts/onboarding-final/`、`artifacts/onboarding-visual/`。
 
 未使用真实凭据登录、刷新或发起付费推理。本次没有后端业务改动，未执行全量 Go test/race。临时验收二进制为 `/tmp/codearts-onboarding`，不作为运行服务升级包。
+
+## 图标与展开入口修正
+
+用户反馈后，展开时隐藏“更多平台”，只保留“收起”；收起后恢复入口，隐藏按钮不进入焦点顺序。展开焦点转到展开区首个平台，收起焦点返回入口。
+
+CodeArts、MobileClaw、TeleAgent、TypeSafe 已替换为各自官方产品图标（来源与权利归属见图标 README），保留原色，深色主题不再对这些图标反色。67 个单元测试、构建、页面静态检查及 account-create 浏览器回归通过；查看了桌面和 360px 手机的展开效果。

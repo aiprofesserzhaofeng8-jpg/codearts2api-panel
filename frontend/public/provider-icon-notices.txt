@@ -54,3 +54,16 @@ For these and/or other purposes and motivations, and without any expectation of 
     4. Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.
 
 For more information, please see <https://creativecommons.org/publicdomain/zero/1.0>.
+
+
+Official product marks
+ (2026-11-17)
+
+These four assets are proprietary brand identifiers, not MIT/CC0 assets. No open-source license is claimed for them. They are included solely to identify the corresponding integration; ownership remains with the respective provider. Original colors are preserved in both themes.
+
+- `codearts.svg`: [CodeArts product page](https://codearts.huaweicloud.com/), [original SVG](https://res-static.hc-cdn.cn/cloudbu-site/intl/zh-cn/codearts/logo.svg), Huawei Cloud. Original bytes.
+- `teleagent.svg`: [TeleAgent official site](https://ta.teleai.com.cn/), [original SVG favicon](https://ta.teleai.com.cn/favicon-ta-v2.svg), China Telecom / TeleAI. Original bytes.
+- `typesafe.png`: [TypeSafe AI official site](https://typesafe.ai/), [original PNG favicon](https://framerusercontent.com/images/aNFzSFxM4fjICmnibw7npfZjcQ.png), TypeSafe AI. Original 400 × 400 PNG.
+- `mobileclaw.png`: China Mobile Cloud MobileClaw desktop package `mobileclaw-desktop` version `1.9.8`, original `resources/icons/Square150x150Logo.png` (150 × 150). Confirmed by the installed desktop entry and package ownership; [official product page](https://ecloud.10086.cn/portal/product/hotCase). This is the China Mobile product used by this integration, not unrelated projects with the same name.
+
+Brand marks remain the property of their respective owners. Icons identify the corresponding account provider.
