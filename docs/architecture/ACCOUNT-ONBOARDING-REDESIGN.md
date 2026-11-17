@@ -14,15 +14,17 @@
 | Zhipu | Kimi | MiniMax | Grok |
 | CodeArts | WorkBuddy | Trae | 更多平台 ··· |
 
-点击“更多平台 ···”在同一选择区下方展开，不弹新窗口：
+点击“更多平台 ···”后隐藏该按钮，所有平台按同一网格连续排列，不弹新窗口：
 
 | 第一列 | 第二列 | 第三列 | 第四列 |
 |---|---|---|---|
-| Antigravity | Qoder | Kiro | MobileClaw |
-| TeleAgent | OpenCode | Command Code | Cline |
-| TypeSafe | | | 收起 ⌃ |
+| OpenAI | Claude | Gemini | DeepSeek |
+| Zhipu | Kimi | MiniMax | Grok |
+| CodeArts | WorkBuddy | Trae | Antigravity |
+| Qoder | Kiro | MobileClaw | TeleAgent |
+| OpenCode | Command Code | Cline | TypeSafe |
 
-空位只是排版留白，不画空卡片。未展开时不显示分类标签或搜索框；不按点击次数自动排序。不自动切换现有默认选择 CodeArts；默认显示顺序和默认选中是两件事。
+“收起 ⌃”位于网格末尾，独占一行。平台连续补位，不保留空卡槽。未展开时不显示分类标签或搜索框；不按点击次数自动排序。不自动切换现有默认选择 CodeArts。
 
 Bedrock 移入 Claude 的账号类型；Vertex AI 移入 Gemini 的账号类型。界面共20个顶层平台，底层22个接入标识全部保留。当前 Vertex 只实现 Gemini，Claude 下不展示尚未实现的 Vertex 入口。
 
@@ -59,7 +61,7 @@ Bedrock 移入 Claude 的账号类型；Vertex AI 移入 Gemini 的账号类型�
 
 - 使用本地品牌图标，优先 SVG；官方仅提供 PNG 时保留原图。记录来源及许可/权利归属，不依赖远程图片 CDN。
 - 没有合适许可资源时使用统一风格的产品类别图标，不伪造品牌标志，不继续使用字母方框。
-- 图标占位24×24px，名称左对齐、同字号、同基线；较长品牌名也不在单词中间断行。
+- 图标24×24px，置于32×32px浅色圆角底中；彩色素材保留原色，原生黑白标志不强行改色。名称左对齐、同字号、同基线；较长品牌名也不在单词中间断行。
 - 默认低干扰底色，选中后使用现有主题强调色、浅底和勾选标记；深色主题检查可读性，不只依靠颜色区分状态。
 
 ## 3. 两步流程

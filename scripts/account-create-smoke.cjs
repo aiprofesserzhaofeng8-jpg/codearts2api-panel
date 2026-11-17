@@ -37,12 +37,18 @@ for(const locale of ['zh-CN','en-US']){
  await page.setViewportSize({width:1280,height:1000});
  await page.locator('#accountPlatformsMore').click();assert.equal(await page.locator('[data-account-platform]:visible').count(),20);
  assert.equal(await page.locator('#accountPlatformsMore').getAttribute('aria-expanded'),'true');
+ const grid=await page.locator('[data-account-platform]:visible').evaluateAll(es=>es.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
+ assert.equal(new Set(grid.map(p=>p.y)).size,5);
+ for(let i=0;i<20;i++){assert.equal(grid[i].x,grid[i%4].x);assert.equal(grid[i].y,grid[Math.floor(i/4)*4].y);}
+ assert.equal(await page.locator('.platform-icon img').evaluateAll(es=>es.every(e=>e.complete && e.naturalWidth>0)),true);
+ assert.equal(await page.locator('.platform-icon').first().evaluate(e=>getComputedStyle(e).backgroundColor==='rgba(0, 0, 0, 0)'),false);
  assert.equal(await page.locator('#accountPlatformsMore').isVisible(),false);
  assert.equal(await page.evaluate(()=>document.activeElement.id),'antigravityLogin');
  await selectPlatform(page,'qoder');await page.locator('#accountPlatformsLess').click();
  assert.equal(await page.locator('#qoderLogin').isVisible(),false);assert.equal(await page.locator('#accountPlatformsMore').isVisible(),true);assert.equal(await page.locator('#accountPlatformsLess').isVisible(),false);assert.match(await page.locator('#accountSelectedSummary').textContent(),/Qoder/);
  await page.locator('#accountSelectedSummary').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'qoderLogin');
  await page.screenshot({path:`artifacts/onboarding-${locale}-expanded.png`});
+ await page.evaluate(()=>document.documentElement.dataset.theme='light');await page.screenshot({path:`artifacts/onboarding-${locale}-expanded-light.png`});await page.evaluate(()=>document.documentElement.dataset.theme='dark');
  await page.setViewportSize({width:360,height:800});await page.locator('#commandcodeLogin').scrollIntoViewIfNeeded();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  assert.equal(await page.locator('[data-account-platform]').evaluateAll(es=>es.every(e=>e.scrollWidth<=e.clientWidth)),true);

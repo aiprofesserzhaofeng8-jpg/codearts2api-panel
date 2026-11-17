@@ -13,7 +13,7 @@ export const extraPlatforms = brands.slice(11, 20);
 export const brandName = (id: string) => names[id] || id;
 const icons = import.meta.glob('../../assets/providers/*.{svg,png}', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 export function brandIcon(id: string) {
-  const name = ({chatgpt: 'openai', gemini: 'googlegemini'} as Record<string, string>)[id] || id;
+  const name = ({chatgpt: 'openai'} as Record<string, string>)[id] || id;
   return icons[`../../assets/providers/${name}.svg`] || icons[`../../assets/providers/${name}.png`] || icons['../../assets/providers/product.svg'];
 }
 export interface AccountType {
@@ -42,4 +42,12 @@ export function accountTypes(platform: string): AccountType[] {
   return [type(platform, 'default', brandName(platform), ['browser', 'import'])];
 }
 
-export const brandIconClass = (id: string) => ['codearts', 'mobileclaw', 'teleagent', 'typesafe'].includes(id) ? 'brand-icon-color' : '';
+// Soft presentation backgrounds complement original brand artwork in both themes.
+const iconTints: Record<string, string> = {
+  chatgpt: '#e5f4ed', claude: '#f8e8df', gemini: '#edf0ff', deepseek: '#e7efff',
+  zhipu: '#e9efff', kimi: '#e8f6ed', minimax: '#ffe8ef', grok: '#eef0f3',
+  codearts: '#f0edff', workbuddy: '#fff0dd', trae: '#dcf8ed', antigravity: '#eef0ff',
+  qoder: '#e3f5ed', kiro: '#f0e7ff', mobileclaw: '#eee8ff', teleagent: '#e5efff',
+  opencode: '#edf0f4', commandcode: '#f4eee6', cline: '#e7f1f5', typesafe: '#fce6f4',
+};
+export const brandIconStyle = (id: string) => ({'--brand-tint': iconTints[id] || '#eef0f3'});

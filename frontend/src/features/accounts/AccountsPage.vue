@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { t as tr } from '../../i18n';
-import { brands, commonPlatforms, extraPlatforms, brandIcon, brandIconClass } from './brands';
+import { brands, commonPlatforms, extraPlatforms, brandIcon, brandIconStyle } from './brands';
 
 import ProviderAuthorization from './providers/ProviderAuthorization.vue';
 import CodeArtsAuthorization from './providers/CodeArtsAuthorization.vue';
@@ -147,13 +147,13 @@ import CredentialImport from './providers/CredentialImport.vue';
     <div v-once id="accountChoose">
 
       <p class="account-field-label" id="accountPlatformLabel">{{tr('平台')}}</p>
-      <div role="radiogroup" aria-labelledby="accountPlatformLabel">
-      <div class="account-platforms">
-        <button v-for="brand in commonPlatforms" :key="brand.id" :id="brand.id === 'codearts' ? 'browserLogin' : brand.id + 'Login'" class="account-platform" :data-account-platform="brand.id" role="radio" aria-checked="false"><img :src="brandIcon(brand.id)" :class="brandIconClass(brand.id)" alt=""><span>{{brand.name}}</span><span class="platform-check" aria-hidden="true">✓</span></button>
+      <div class="account-platforms" role="radiogroup" aria-labelledby="accountPlatformLabel">
+      <div class="account-common-platforms">
+        <button v-for="brand in commonPlatforms" :key="brand.id" :id="brand.id === 'codearts' ? 'browserLogin' : brand.id + 'Login'" class="account-platform" :data-account-platform="brand.id" role="radio" aria-checked="false"><span class="platform-icon" :style="brandIconStyle(brand.id)"><img :src="brandIcon(brand.id)" alt=""></span><span>{{brand.name}}</span><span class="platform-check" aria-hidden="true">✓</span></button>
         <button id="accountPlatformsMore" class="account-platform platform-expand" aria-expanded="false" aria-controls="accountExtraPlatforms">{{tr('更多平台')}} <span aria-hidden="true">···</span></button>
       </div>
-      <div id="accountExtraPlatforms" class="account-platforms hidden">
-        <button v-for="brand in extraPlatforms" :key="brand.id" :id="brand.id + 'Login'" class="account-platform" :data-account-platform="brand.id" role="radio" aria-checked="false"><img :src="brandIcon(brand.id)" :class="brandIconClass(brand.id)" alt=""><span>{{brand.name}}</span><span class="platform-check" aria-hidden="true">✓</span></button>
+      <div id="accountExtraPlatforms" class="hidden">
+        <button v-for="brand in extraPlatforms" :key="brand.id" :id="brand.id + 'Login'" class="account-platform" :data-account-platform="brand.id" role="radio" aria-checked="false"><span class="platform-icon" :style="brandIconStyle(brand.id)"><img :src="brandIcon(brand.id)" alt=""></span><span>{{brand.name}}</span><span class="platform-check" aria-hidden="true">✓</span></button>
         <button id="accountPlatformsLess" class="account-platform platform-collapse" aria-expanded="true" aria-controls="accountExtraPlatforms">{{tr('收起')}} <span aria-hidden="true">⌃</span></button>
       </div>
       </div>

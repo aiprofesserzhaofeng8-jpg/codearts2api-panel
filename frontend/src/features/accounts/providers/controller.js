@@ -1,4 +1,4 @@
-import { accountTypes, brandName, brandIcon, brandIconClass, extraPlatforms } from '../brands';
+import { accountTypes, brandName, brandIcon, brandIconStyle, extraPlatforms } from '../brands';
 import { t as tr } from '../../../i18n';
 import { on } from '../../../components/controls';
 import { serverState } from '../../../shared/read-model';
@@ -57,8 +57,9 @@ function renderExpansion() {
     const summary = domState.$('#accountSelectedSummary');
     summary.classList.toggle('hidden', !extra || providersState.expanded);
     summary.replaceChildren();
-    const icon = document.createElement('img'); icon.src = brandIcon(providersState.accountCreateBrand); icon.alt = ''; icon.className = brandIconClass(providersState.accountCreateBrand);
-    summary.append(icon, document.createTextNode(tr('已选：') + accountPlatformLabel()));
+    const tile = document.createElement('span'); tile.className = 'platform-icon'; tile.style.setProperty('--brand-tint', brandIconStyle(providersState.accountCreateBrand)['--brand-tint']);
+    const icon = document.createElement('img'); icon.src = brandIcon(providersState.accountCreateBrand); icon.alt = ''; tile.append(icon);
+    summary.append(tile, document.createTextNode(tr('已选：') + accountPlatformLabel()));
 }
 function renderTypes() {
     const container = domState.$('#accountTypes'); container.replaceChildren();

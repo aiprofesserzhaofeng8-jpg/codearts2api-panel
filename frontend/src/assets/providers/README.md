@@ -2,8 +2,9 @@
 
 Bundled locally on 2026-11-17; no runtime CDN requests.
 
-- `claude.svg`, `googlegemini.svg`, `minimax.svg`: [Simple Icons 16.0.0](https://github.com/simple-icons/simple-icons/tree/16.0.0), CC0-1.0; see LICENSE-simple-icons.
-- `openai.svg`, `deepseek.svg`, `zhipu.svg`, `kimi.svg`, `grok.svg`, `workbuddy.svg`, `trae.svg`, `antigravity.svg`, `qoder.svg`, `kiro.svg`, `opencode.svg`, `commandcode.svg`, `cline.svg`: [Lobe Icons static SVG collection](https://github.com/lobehub/lobe-icons/tree/master/packages/static-svg/icons), MIT; see LICENSE-lobe-icons.
+- `openai.svg`, `grok.svg`, `opencode.svg`, `commandcode.svg`, `cline.svg`: monochrome originals from the [Lobe Icons static SVG collection](https://github.com/lobehub/lobe-icons/tree/master/packages/static-svg/icons), MIT; see LICENSE-lobe-icons.
+- `claude.svg`, `gemini.svg`, `deepseek.svg`, `zhipu.svg`, `kimi.svg`, `minimax.svg`, `workbuddy.svg`, `trae.svg`, `antigravity.svg`, `qoder.svg`, `kiro.svg`: corresponding `*-color.svg` originals from the same Lobe Icons collection, MIT, downloaded 2026-11-17. Renamed locally without altering artwork.
+- Icon tiles use light complementary backgrounds chosen for this interface; they are not official brand color specifications. Original monochrome marks remain monochrome, while all colored marks retain their original colors. Tiles stay light in both themes so neither monochrome nor colored artwork needs inversion.
 - `product.svg`: original generic terminal/product category fallback, under this repository's license. All 20 current platforms now have distinct brand assets.
 
 ## Official product marks (2026-11-17)
