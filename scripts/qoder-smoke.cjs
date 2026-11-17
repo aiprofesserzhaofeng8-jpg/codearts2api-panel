@@ -1,3 +1,4 @@
+const {installPromptFixture,checkPromptOverride}=require('./prompt-smoke-helpers.cjs');
 const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // UI fixtures only. Never authorize or import a real Qoder account.
 const {chromium} = require('playwright');
@@ -40,6 +41,7 @@ const fs = require('node:fs');
       if (url.pathname.endsWith('/settings') && req.method() === 'POST') savedSettings = req.postDataJSON();
       return route.fulfill({json:out});
     });
+    const getPrompts = await installPromptFixture(ctx, settings);
     await ctx.route('**/health', r => r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
     const ready = page.waitForResponse(r => r.url().endsWith('/admin/api/state'));
     await page.goto((process.env.CODEARTS_TEST_BASE || 'http://127.0.0.1:10088')+'/#accounts'); await ready;
@@ -63,14 +65,7 @@ const fs = require('node:fs');
     await page.locator('#nav-overview').click();
     await Promise.all([page.waitForResponse(r => r.url().includes('/usage?') && r.url().includes('provider=qoder')),page.locator('#usageProvider').selectOption('qoder')]);
     assert.ok(filters.includes('qoder'));
-    await page.locator('#nav-settings').click();
-    await page.locator('#sQDPromptText').waitFor({state:'visible'});
-    assert.equal(await page.locator('#sQDPromptTextInherit').isChecked(),true);
-    assert.equal(await page.locator('#sQDPromptText').inputValue(),'COMMON');
-    await page.locator('#sQDPromptTextInherit').uncheck(); await page.locator('#sQDPromptText').fill('QODER CUSTOM');
-    await Promise.all([page.waitForResponse(r => r.url().endsWith('/settings') && r.request().method()==='POST'),page.locator('#saveSettings').click()]);
-    assert.equal(savedSettings.qoder.prompt_overrides.prompt_text,'QODER CUSTOM');
-    assert.equal(savedSettings.qoder.search_enabled,false);
+    await checkPromptOverride(page,getPrompts,'qoder','QODER CUSTOM');
     await page.locator('#nav-accounts').click(); await page.locator('#addAccount').click();
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false);

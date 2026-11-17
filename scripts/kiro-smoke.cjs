@@ -1,3 +1,4 @@
+const {installPromptFixture,checkPromptOverride}=require('./prompt-smoke-helpers.cjs');
 const {selectPlatform}=require('./account-onboarding-helpers.cjs');
 // UI fixtures only. Never authorize or import a real Kiro account.
 const {chromium} = require('playwright');
@@ -40,6 +41,7 @@ const fs = require('node:fs');
       if (url.pathname.endsWith('/settings') && req.method() === 'POST') savedSettings = req.postDataJSON();
       return route.fulfill({json:out});
     });
+    const getPrompts = await installPromptFixture(ctx, settings);
     await ctx.route('**/health', r => r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
     const ready = page.waitForResponse(r => r.url().endsWith('/admin/api/state'));
     await page.goto((process.env.CODEARTS_TEST_BASE || 'http://127.0.0.1:10088')+'/#accounts'); await ready;
@@ -63,14 +65,7 @@ const fs = require('node:fs');
     await page.locator('#nav-overview').click();
     await Promise.all([page.waitForResponse(r => r.url().includes('/usage?') && r.url().includes('provider=kiro')),page.locator('#usageProvider').selectOption('kiro')]);
     assert.ok(filters.includes('kiro'));
-    await page.locator('#nav-settings').click();
-    await page.locator('#sKIPromptText').waitFor({state:'visible'});
-    assert.equal(await page.locator('#sKIPromptTextInherit').isChecked(),true);
-    assert.equal(await page.locator('#sKIPromptText').inputValue(),'COMMON');
-    await page.locator('#sKIPromptTextInherit').uncheck(); await page.locator('#sKIPromptText').fill('KIRO CUSTOM');
-    await Promise.all([page.waitForResponse(r => r.url().endsWith('/settings') && r.request().method()==='POST'),page.locator('#saveSettings').click()]);
-    assert.equal(savedSettings.kiro.prompt_overrides.prompt_text,'KIRO CUSTOM');
-    assert.equal(savedSettings.kiro.search_enabled,false);
+    await checkPromptOverride(page,getPrompts,'kiro','KIRO CUSTOM');
     await page.locator('#nav-accounts').click(); await page.locator('#addAccount').click();
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false);

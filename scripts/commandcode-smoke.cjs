@@ -10,7 +10,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  await ctx.route('**/admin/api/**',r=>{const path=new URL(r.request().url()).pathname;let out={ok:true};
  if(path.endsWith('/state'))out={accounts:[],keys:[],models:[],settings:{pool:{}},stats:{}};
  if(path.endsWith('/provider-login'))logins++;
- if(path.endsWith('/provider-import')){imports++;const b=r.request().postDataJSON();assert.ok(['commandcode'].includes(b.provider));assert.deepEqual(b.credentials,{api_key:'fixture-key',scope:'global',account_mode:expectedScope});if(fail)return r.fulfill({status:500,json:{error:{message:'fixture-save-failure'}}});}
+ if(path.endsWith('/provider-import')){imports++;const b=r.request().postDataJSON();assert.ok(['commandcode'].includes(b.provider));assert.deepEqual(b.credentials,{api_key:'fixture-key',api_protocol:'adaptive',scope:'global',account_mode:expectedScope});if(fail)return r.fulfill({status:500,json:{error:{message:'fixture-save-failure'}}});}
  return r.fulfill({json:out});});
  await ctx.route('**/health',r=>r.fulfill({json:{accounts:0,ready:0}}));
  const ready=page.waitForResponse(r=>r.url().endsWith('/admin/api/state'));await page.goto(process.env.CODEARTS_TEST_BASE+'/#accounts');await ready;

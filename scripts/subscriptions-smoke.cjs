@@ -1,3 +1,4 @@
+const {installPromptFixture,checkPromptOverride}=require('./prompt-smoke-helpers.cjs');
 // Isolated UI contracts: all provider/admin traffic is intercepted.
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{const browser=await chromium.launch({headless:true,channel:process.env.CODEARTS_TEST_BROWSER||'chrome'});try{
@@ -19,7 +20,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    if(url.pathname.endsWith('/settings')&&request.method()==='GET')out=settings;
    if(url.pathname.endsWith('/settings')&&request.method()==='POST')savedSettings=request.postDataJSON();return route.fulfill({json:out});
   });
-  await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
+  const getPrompts = await installPromptFixture(ctx, settings);
+    await ctx.route('**/health',r=>r.fulfill({json:{accounts:accounts.length,ready:accounts.length,models:0}}));
   const ready=page.waitForResponse(r=>r.url().endsWith('/admin/api/state'));await page.goto((process.env.CODEARTS_TEST_BASE||'http://127.0.0.1:10088')+'/#accounts');await ready;
   for(const name of ['chatgpt','claude']){
    const beforeStarts=starts,beforeSaves=saves;await page.locator('#addAccount').click();await page.locator('#'+name+'Login').click();assert.equal(starts,beforeStarts);
@@ -29,9 +31,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    await page.locator('#providerLoginCallback').fill(name==='chatgpt'?'http://localhost:1455/auth/callback?code=fixture&state=fixture':'fixture#fixture');await page.locator('#providerLoginCheck').click();await page.locator('#providerPreview').waitFor({state:'visible'});assert.equal(saves,beforeSaves);
    await page.locator('#providerLoginComplete').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});await page.locator('#accountProvider').selectOption(name);assert.equal(await page.locator('#accounts tr[data-state]').count(),1);
    await page.locator('#nav-overview').click();await Promise.all([page.waitForResponse(r=>r.url().includes('/usage?')&&r.url().includes('provider='+name)),page.locator('#usageProvider').selectOption(name)]);
-   await page.locator('#nav-settings').click();const prefix=name==='chatgpt'?'sCG':'sCL';assert.equal(await page.locator('#'+prefix+'PromptTextInherit').isChecked(),true);assert.equal(await page.locator('#'+prefix+'PromptText').inputValue(),'COMMON');
-   await page.locator('#'+prefix+'PromptTextInherit').uncheck();await page.locator('#'+prefix+'PromptText').fill(name+' CUSTOM');await Promise.all([page.waitForResponse(r=>r.url().endsWith('/settings')&&r.request().method()==='POST'),page.locator('#saveSettings').click()]);assert.equal(savedSettings[name].prompt_overrides.prompt_text,name+' CUSTOM');assert.equal(savedSettings[name].search_enabled,false);
-   await page.locator('#nav-accounts').click();await page.locator('#addAccount').click();await page.locator('#'+name+'Login').click();await page.locator('[data-account-type="api"]').click();await page.locator('#accountMethodImport').click();await page.locator('#accountCreateNext').click();assert.equal(await page.locator('#providerImportSection').isVisible(),true);
+   await checkPromptOverride(page,getPrompts,name,name+' CUSTOM');
+    await page.locator('#nav-accounts').click();await page.locator('#addAccount').click();await page.locator('#'+name+'Login').click();await page.locator('[data-account-type="api"]').click();await page.locator('#accountMethodImport').click();await page.locator('#accountCreateNext').click();assert.equal(await page.locator('#providerImportSection').isVisible(),true);
    await page.locator('#providerAPIKey').fill(name==='chatgpt'?'sk-fixture':'sk-ant-fixture');await page.locator('#providerImport').click();await page.locator('#addAccountDialog').waitFor({state:'hidden'});
   }
   await page.locator('#addAccount').click();await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.ok(await page.locator('#chatgptLogin').isVisible());assert.ok(await page.locator('#claudeLogin').isVisible());
