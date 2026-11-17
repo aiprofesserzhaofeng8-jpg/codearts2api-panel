@@ -20,7 +20,7 @@ import { api } from '../api/client';
 import { resumeLogin } from '../features/accounts/providers/codearts';
 import { refresh } from '../shared/refresh';
 export const routesState = {};
-routesState.TAB_IDS = { accounts: 1, groups: 1, users: 1, overview: 1, models: 1, keys: 1, logs: 1, audit: 1, settings: 1 };
+routesState.TAB_IDS = { accounts: 1, groups: 1, users: 1, overview: 1, models: 1, keys: 1, logs: 1, audit: 1, prompts: 1, settings: 1 };
 
 routesState.TAB_META = {
     overview: { title: tr("用量"), hint: tr("请求、Token 与耗时统计"), doc: tr("用量") },
@@ -31,6 +31,7 @@ routesState.TAB_META = {
     keys: { title: tr("API 密钥"), hint: tr("客户端接入与密钥管理"), doc: tr("API 密钥") },
     logs: { title: tr("运行日志"), hint: tr("请求记录与错误排查"), doc: tr("运行日志") },
     audit: { title: tr("管理审计"), hint: tr("管理操作、登录与敏感信息访问记录"), doc: tr("管理审计") },
+    prompts: { title: tr("提示词"), hint: tr("系统指令、追加与平台覆盖"), doc: tr("提示词") },
     settings: { title: tr("配置"), hint: tr("调度策略与运行参数"), doc: tr("配置") }
 };
 
@@ -80,6 +81,7 @@ export function activateTab(name, updateHash, warm) {
     }
     if (name === "accounts")
         loadCredits(false);
+    if (name === "prompts") window.dispatchEvent(new Event("prompts-refresh"));
     if (name === "settings")
         loadSettings();
 }

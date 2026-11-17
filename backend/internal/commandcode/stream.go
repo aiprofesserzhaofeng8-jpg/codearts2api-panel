@@ -13,6 +13,9 @@ import (
 )
 
 func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Request, emit func([]byte) error) error {
+	return c.streamProtocol(ctx, raw, r, false, emit)
+}
+func (c *Client) streamProtocol(ctx context.Context, raw json.RawMessage, r provider.Request, native bool, emit func([]byte) error) error {
 	b, _, err := c.Normalize(raw)
 	if err != nil {
 		return err
@@ -22,18 +25,39 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	if !validModel(r.Model) {
 		return providerhttp.Invalid("Command Code", "型号无效")
 	}
-	p := nativePath(r.Model)
-	if p == "" {
-		return providerhttp.Invalid("Command Code", "暂不支持该型号的原生协议")
+	inbound := r.InboundProtocol
+	if inbound == "" {
+		inbound = provider.ChatProtocol
+	}
+	if native {
+		inbound = r.Protocol
+	}
+	target, err := c.ResolveProtocol(b, provider.Model{ID: r.Model, UpstreamID: r.Model, SupportedProtocols: r.SupportedProtocols}, inbound)
+	if err != nil {
+		return err
+	}
+	if native && target != inbound {
+		return providerhttp.Invalid("commandcode", "账号协议已变化")
+	}
+	p := "/chat/completions"
+	switch target {
+	case provider.MessagesProtocol:
+		p = "/messages"
+	case provider.ResponsesProtocol:
+		p = "/responses"
 	}
 	var body any
-	switch p {
-	case "/chat/completions":
-		body, err = chatwire.EncodeQualified(r, "Command Code")
-	case "/responses":
-		body, err = responsewire.Encode(r, false, "Command Code")
-	case "/messages":
-		body, err = messagewire.Encode(r, "Command Code")
+	if native {
+		body, err = providerhttp.NativeBody(r, false)
+	} else {
+		switch p {
+		case "/chat/completions":
+			body, err = chatwire.EncodeQualified(r, "Command Code")
+		case "/responses":
+			body, err = responsewire.Encode(r, false, "Command Code")
+		case "/messages":
+			body, err = messagewire.Encode(r, "Command Code")
+		}
 	}
 	if err != nil {
 		return err
@@ -53,6 +77,9 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	typ, _, _ := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 	if typ != "text/event-stream" {
 		return providerhttp.Broken("Command Code")
+	}
+	if native {
+		return providerhttp.NativeSSE(ctx, resp.Body, target, "commandcode", emit)
 	}
 	switch p {
 	case "/chat/completions":

@@ -179,6 +179,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/pricing", s.withAdminAuth(s.handleAdminPricing))
 	mux.HandleFunc("/admin/api/stats", s.withAdminAuth(s.handleAdminStats))
 	mux.HandleFunc("/admin/api/version", s.withAdminAuth(s.handleVersion))
+	mux.HandleFunc("/admin/api/prompts", s.withAdminAuth(s.handlePrompts))
+	mux.HandleFunc("/admin/api/prompts/preview", s.withAdminAuth(s.handlePromptPreview))
 	mux.HandleFunc("/admin/api/settings", s.withAdminAuth(s.handleAdminSettings))
 	mux.HandleFunc("/admin/api/checkin", s.withAdminAuth(s.handleAdminCheckin))
 	mux.HandleFunc("/admin/api/credits", s.withAdminAuth(s.handleAdminCredits))

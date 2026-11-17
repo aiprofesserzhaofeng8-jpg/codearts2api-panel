@@ -55,6 +55,12 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 		if a.ProviderID() != provider.CodeArts && s.Providers != nil {
 			if adapter, ok := s.Providers.Get(a.ProviderID()); ok {
 				if raw, identity, err := adapter.Normalize(a.Credentials); err == nil {
+					if configurable, ok := adapter.(provider.ProtocolSettings); ok {
+						value, options := configurable.ProtocolOptions(raw)
+						if len(options) > 0 {
+							row["api_protocol"], row["api_protocol_options"] = value, options
+						}
+					}
 					if growth, ok := adapter.(provider.GrowthTasks); ok {
 						row["growth_tasks_supported"] = growth.SupportsGrowthTasks(raw)
 					}
@@ -107,16 +113,17 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Action        string `json:"action"`
-		ID            string `json:"id"`
-		Dir           string `json:"dir"`
-		Name          string `json:"name"`
-		AccessKey     string `json:"access_key"`
-		SecretKey     string `json:"secret_key"`
-		SecurityToken string `json:"security_token"`
-		SessionJSON   string `json:"session_json"`
-		ExpiresAt     int64  `json:"expires_at"`
-		MaxInFlight   *int   `json:"max_in_flight"`
+		Action        string            `json:"action"`
+		APIProtocol   provider.Protocol `json:"api_protocol"`
+		ID            string            `json:"id"`
+		Dir           string            `json:"dir"`
+		Name          string            `json:"name"`
+		AccessKey     string            `json:"access_key"`
+		SecretKey     string            `json:"secret_key"`
+		SecurityToken string            `json:"security_token"`
+		SessionJSON   string            `json:"session_json"`
+		ExpiresAt     int64             `json:"expires_at"`
+		MaxInFlight   *int              `json:"max_in_flight"`
 		// CredentialKind 显式声明凭据形态：留空或 "sts" 走临时凭据，
 		// "aksk" 表示 IAM 永久 AK/SK（不过期、不续期、不带 security_token）。
 		CredentialKind string `json:"credential_kind"`
@@ -127,6 +134,27 @@ func (s *Server) handleAdminAccounts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch body.Action {
+	case "protocol":
+		acct := s.Store.Account(body.ID)
+		if acct == nil {
+			writeErr(w, 404, "账号不存在", "invalid_request_error")
+			return
+		}
+		adapter, ok := s.Providers.Get(acct.ProviderID())
+		if !ok {
+			writeErr(w, 400, "平台不支持协议设置", "invalid_request_error")
+			return
+		}
+		configurable, ok := adapter.(provider.ProtocolSettings)
+		if !ok {
+			writeErr(w, 400, "账号不支持协议设置", "invalid_request_error")
+			return
+		}
+		if err := s.AccountManagement.SetProtocol(body.ID, body.APIProtocol, configurable); err != nil {
+			writeAccountManagementError(w, err)
+			return
+		}
+		writeJSON(w, 200, map[string]any{"ok": true, "id": body.ID, "api_protocol": body.APIProtocol})
 	case "concurrency":
 		if err := s.AccountManagement.SetConcurrency(body.ID, body.MaxInFlight); err != nil {
 			writeAccountManagementError(w, err)

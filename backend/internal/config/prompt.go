@@ -27,8 +27,8 @@ func DefaultPromptSettings() PromptSettings {
 	return PromptSettings{Mode: "passthrough"}
 }
 func (p PromptSettings) Validate() error {
-	if p.Mode != "custom" && p.Mode != "passthrough" {
-		return fmt.Errorf("提示词模式须为 custom 或 passthrough")
+	if p.Mode != "custom" && p.Mode != "passthrough" && p.Mode != "append" {
+		return fmt.Errorf("提示词模式须为 passthrough、append 或 custom")
 	}
 	if len(p.Text) > 64<<10 || !utf8.ValidString(p.Text) {
 		return fmt.Errorf("提示词须为有效 UTF-8 且不超过 64 KiB")

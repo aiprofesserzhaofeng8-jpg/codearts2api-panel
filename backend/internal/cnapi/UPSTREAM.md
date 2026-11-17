@@ -84,3 +84,12 @@ Official sources checked this batch:
 Current MiniMax response shape has not been authenticated/live-verified. Known
 model_remains/general fields are parsed; unrecognized response shapes stay
 unknown, with no legacy-host fallback or invented plan balance.
+
+## Protocol routing alignment
+
+`protocol.go` adapts `provider_profile.go`, `upstream_protocol_routing.go` and
+`domain_constants.go` at `ba81c7fd758e425d67f856d601147ef0c5263d3f`.
+The existing client owns account modes, transport and default origins. Missing
+api_protocol retains Chat; explicit adaptive selects the inbound native endpoint.
+MiniMax retains this project's existing api.minimax.cn origin. No credentials
+base_url overrides or second catalog/refresh loop were added.

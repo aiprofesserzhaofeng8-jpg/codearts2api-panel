@@ -1,3 +1,4 @@
+import { mountProtocolSettings, openProtocolSettings } from "./protocol-settings";
 import { brandName } from './brands';
 import { t as tr } from '../../i18n';
 import { copyText } from '../../shared/dom';
@@ -261,6 +262,7 @@ export function renderAccounts(d) {
             { label: a.enabled ? tr("停用") : tr("启用"), run: function () { return accountOp("toggle", { id: a.id }); } },
             { label: a.paused ? tr("恢复选号") : tr("暂停选号"), run: function () { return accountOp(a.paused ? "resume" : "pause", { id: a.id }); } }
         ];
+        if (a.api_protocol_options?.length) more.unshift({label: tr('API 协议'), run: () => openProtocolSettings(a)});
         if (a.daily_claim_supported !== false) {
             more.unshift({ label: tr('查询奖励'), run: () => queryRewards(a) });
             more.push({ label: tr('领取可领奖励'), run: async () => { rewardQueries.delete(a.id); await claim(a.id); } });
@@ -382,6 +384,7 @@ export function openModelHealth(a) {
 }
 
 export function mountAccounts() {
+mountProtocolSettings();
 mounted = true; lifetime++;
 cleanup(() => { mounted = false; lifetime++; selected.clear(); rewardQueries.clear(); bulkPlan = null; bulkBusy = false; accountPage = 1; accountFilterSignature = ''; });
 domState.$('#accountSort').value = preferences.sort;

@@ -78,3 +78,12 @@ Unrecorded drift still fails; do not rewrite provenance hashes to bless edits.
 
 `make check` runs `--local-only` without network access. CI and Release run the
 full pinned-source and regression check before artifacts can be published.
+
+## Native protocol routing alignment
+
+The existing converters and local fixes remain in use for cross-protocol calls.
+Same-protocol Messages/Responses now bypass them. Native transport is adapted
+to this project's providerhttp SSE parser, error types, prompt-policy hooks and
+usage ledger instead of importing Sub2API's Gin handlers. See
+../provider/protocol-UPSTREAM.md for selection/rule extraction and the protocol
+alignment plan for the preserved stateful API restrictions.

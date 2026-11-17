@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "backend/internal/webui/dist"
@@ -24,7 +25,7 @@ def main():
     assert any(name.endswith(".css") for name in resources)
     for name in resources:
         assert name.startswith("/") and not name.startswith("//")
-        file = DIST / name.lstrip("/")
+        file = DIST / urlsplit(name).path.lstrip("/")
         assert file.is_file() and file.stat().st_size > 0, name
         if file.suffix == ".js":
             subprocess.run(["node", "--check", str(file)], check=True)

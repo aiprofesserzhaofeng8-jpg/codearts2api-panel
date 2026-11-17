@@ -1,7 +1,7 @@
 package catalog
 
 import (
-	"encoding/json"
+	"codearts2api/internal/protocol"
 	"strings"
 
 	"codearts2api/internal/access"
@@ -14,41 +14,25 @@ func (p *ModelPlan) FilterCapabilities(body []byte) error {
 	if p == nil || (p.Selection.ID == "" && p.nativeContract() == nil) {
 		return nil
 	}
-	var request struct {
-		Tools    []json.RawMessage `json:"tools"`
-		Messages []struct {
-			Role      string            `json:"role"`
-			Content   json.RawMessage   `json:"content"`
-			ToolCalls []json.RawMessage `json:"tool_calls"`
-		} `json:"messages"`
-		MaxTokens           json.Number `json:"max_tokens"`
-		MaxCompletionTokens json.Number `json:"max_completion_tokens"`
+	requirements, err := protocol.InspectRequirements(body, string(provider.ChatProtocol))
+	if err != nil {
+		return config.ModelFailure(400, "model_capability_unavailable", err.Error())
 	}
-	if err := json.Unmarshal(body, &request); err != nil {
-		return config.ModelFailure(400, "model_capability_unavailable", "无法解析模型能力请求")
+	return p.FilterRequirements(requirements)
+}
+
+func (p *ModelPlan) FilterRequirements(requirements protocol.Requirements) error {
+	if p == nil || (p.Selection.ID == "" && p.nativeContract() == nil) {
+		return nil
 	}
-	image, tool := false, len(request.Tools) > 0
-	for _, message := range request.Messages {
-		tool = tool || message.Role == "tool" || len(message.ToolCalls) > 0
-		var parts []struct {
-			Type string `json:"type"`
-		}
-		if json.Unmarshal(message.Content, &parts) == nil {
-			for _, part := range parts {
-				image = image || part.Type == "image_url" || part.Type == "input_image" || part.Type == "image"
-			}
-		}
-	}
+	image, tool := requirements.Image, requirements.Tools
 	if contract := p.nativeContract(); contract != nil && ((image && contract.ImageInput == "unsupported") || (tool && contract.ToolCalling == "unsupported")) {
 		return config.ModelFailure(400, "native_model_capability_unsupported", "此原生型号不支持请求的图片或工具能力；请选择原生支持该能力的独立型号")
 	}
 	if p.Selection.ID == "" {
 		return nil // Preserve legacy source filtering; the native upper bound applies.
 	}
-	limit, _ := request.MaxTokens.Int64()
-	if x, err := request.MaxCompletionTokens.Int64(); err == nil && x > limit {
-		limit = x
-	}
+	limit := requirements.MaxOutput
 	ids := make([]string, 0, len(p.IDs))
 	for _, id := range p.IDs {
 		m := p.sourceCapabilities(p.Models[id])

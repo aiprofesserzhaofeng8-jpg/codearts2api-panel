@@ -40,7 +40,14 @@ func (s *Server) providerAttempt(ctx context.Context, acct *accounts.Account, mo
 	if !ok {
 		return upstream.StreamSession{}, fmt.Errorf("该平台不是聊天接口")
 	}
-	return upstream.BindStream(streamer, raw, session, requestID(ctx)), nil
+	inbound := provider.ChatProtocol
+	switch requestProtocol(ctx) {
+	case "messages":
+		inbound = provider.MessagesProtocol
+	case "responses":
+		inbound = provider.ResponsesProtocol
+	}
+	return upstream.BindStream(streamer, raw, session, requestID(ctx)).WithModel(model).WithProtocol(inbound), nil
 }
 
 func (s *Server) chatProvider(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte) ([]byte, error) {

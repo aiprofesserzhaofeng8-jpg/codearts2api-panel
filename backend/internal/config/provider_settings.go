@@ -37,8 +37,8 @@ func (w ProviderSettings) ValidateFor(name string) error {
 	if name != provider.WorkBuddy && name != provider.CodeArts && name != provider.Trae && name != provider.Qoder && name != provider.Kiro && name != provider.ChatGPT && name != provider.Claude && name != provider.TeleAgent && name != provider.MobileClaw && name != provider.DeepSeek && name != provider.Zhipu && name != provider.Kimi && name != provider.MiniMax && name != provider.Gemini && name != provider.Antigravity && name != provider.Grok && name != provider.OpenCode && name != provider.CommandCode && name != provider.Cline && name != provider.Bedrock && name != provider.Vertex {
 		return fmt.Errorf("未知平台配置")
 	}
-	if w.PromptMode != "custom" && w.PromptMode != "passthrough" {
-		return fmt.Errorf("%s 提示词模式须为 custom 或 passthrough", name)
+	if w.PromptMode != "custom" && w.PromptMode != "passthrough" && w.PromptMode != "append" {
+		return fmt.Errorf("%s 提示词模式须为 passthrough、append 或 custom", name)
 	}
 	if len(w.PromptText) > 64<<10 || !utf8.ValidString(w.PromptText) {
 		return fmt.Errorf("%s 提示词须为有效 UTF-8 且不超过 64 KiB", name)

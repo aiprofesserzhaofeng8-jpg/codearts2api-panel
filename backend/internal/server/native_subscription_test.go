@@ -79,6 +79,13 @@ func subscriptionEvent(w io.Writer, typ string, v any) {
 func subscriptionComplete(w http.ResponseWriter, name string, tools bool) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	if name == provider.ChatGPT {
+		subscriptionEvent(w, "response.created", map[string]any{"response": map[string]any{"id": "resp_fixture", "status": "in_progress"}})
+		var output []any
+		if tools {
+			output = []any{map[string]any{"type": "function_call", "id": "item1", "call_id": "call_fixture", "name": "lookup", "arguments": `{"id":9007199254740993}`}}
+		} else {
+			output = []any{map[string]any{"type": "message", "id": "msg_fixture", "role": "assistant", "content": []any{map[string]string{"type": "output_text", "text": "NATIVE_COMPLETE"}}}}
+		}
 		if tools {
 			subscriptionEvent(w, "response.output_item.added", map[string]any{"item": map[string]string{"type": "function_call", "id": "item1", "call_id": "call_fixture", "name": "lookup"}})
 			subscriptionEvent(w, "response.function_call_arguments.delta", map[string]string{"item_id": "item1", "delta": "{\"id\":9007199254740993}"})
@@ -86,7 +93,7 @@ func subscriptionComplete(w http.ResponseWriter, name string, tools bool) {
 		} else {
 			subscriptionEvent(w, "response.output_text.delta", map[string]string{"delta": "NATIVE_COMPLETE"})
 		}
-		subscriptionEvent(w, "response.completed", map[string]any{"response": map[string]any{"status": "completed", "usage": map[string]any{"input_tokens": 12, "output_tokens": 4, "input_tokens_details": map[string]int{"cached_tokens": 3}}}})
+		subscriptionEvent(w, "response.completed", map[string]any{"response": map[string]any{"id": "resp_fixture", "object": "response", "output": output, "status": "completed", "usage": map[string]any{"input_tokens": 12, "output_tokens": 4, "input_tokens_details": map[string]int{"cached_tokens": 3}}}})
 		return
 	}
 	subscriptionEvent(w, "message_start", map[string]any{"message": map[string]any{"id": "msg_fixture", "role": "assistant", "usage": map[string]int{"input_tokens": 7, "output_tokens": 0, "cache_read_input_tokens": 3, "cache_creation_input_tokens": 2}}})

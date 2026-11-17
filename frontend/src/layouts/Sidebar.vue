@@ -34,6 +34,7 @@ import { t as tr } from '../i18n';
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.2 3.3 7.4 8 9 4.7-1.6 8-4.8 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
         <span>{{tr('管理审计')}}</span>
       </button>
+      <button role="tab" id="nav-prompts" data-tab="prompts" aria-selected="false" aria-controls="tab-prompts"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/></svg><span>{{tr('提示词')}}</span></button>
       <button role="tab" id="nav-settings" data-tab="settings" aria-selected="false" aria-controls="tab-settings">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h8"/><path d="M16 8h4"/><path d="M4 16h4"/><path d="M12 16h8"/><circle cx="14" cy="8" r="2.2"/><circle cx="10" cy="16" r="2.2"/></svg>
         <span>{{tr('配置')}}</span>

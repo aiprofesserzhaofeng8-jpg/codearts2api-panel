@@ -11,6 +11,7 @@ import (
 // PromptPolicy is the inference-only projection of one platform's settings.
 // It does not contain storage, account or search configuration.
 type PromptPolicy struct {
+	Protocol           provider.Protocol
 	Mode, Text         string
 	Fallback, Sanitize bool
 }
@@ -35,7 +36,7 @@ func PromptBlocked(err error) bool {
 // including empty or usage-only frames retained by a non-streaming consumer.
 // The run callback must retain the selected model, credentials and account lease.
 func RunPromptPolicy(ctx context.Context, body []byte, policy PromptPolicy, recovery PromptRecovery, run func([]byte, func()) error) error {
-	prepared, err := requestpolicy.PrepareBody(body, policy.Mode, policy.Text, policy.Sanitize)
+	prepared, err := requestpolicy.PrepareProtocolBody(body, policy.Protocol, policy.Mode, policy.Text, policy.Sanitize)
 	if err != nil {
 		return &provider.Error{Status: 400, Message: err.Error()}
 	}
@@ -48,7 +49,7 @@ func RunPromptPolicy(ctx context.Context, body []byte, policy PromptPolicy, reco
 	if err = recovery.BeforeRetry(err); err != nil {
 		return err
 	}
-	prepared, err = requestpolicy.PrepareBody(body, "custom", requestpolicy.FallbackSystemPrompt, policy.Sanitize)
+	prepared, err = requestpolicy.PrepareProtocolBody(body, policy.Protocol, "custom", requestpolicy.FallbackSystemPrompt, policy.Sanitize)
 	if err != nil {
 		return &provider.Error{Status: 400, Message: err.Error()}
 	}

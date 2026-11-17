@@ -2,6 +2,7 @@ package opencode
 
 import (
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/provider"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -70,6 +71,14 @@ func TestPublicCatalogMetadataAndProtocolBoundaries(t *testing.T) {
 	models, err = c.Models(context.Background(), rawKey("go"))
 	if err != nil || len(models) != 3 || paths[0] != "/v1/models" || paths[1] != "/go/v1/models" {
 		t.Fatal(models, paths, err)
+	}
+	adaptive, err := c.SetProtocol(rawKey("zen"), provider.AdaptiveProtocol)
+	if err != nil {
+		t.Fatal(err)
+	}
+	models, err = c.Models(context.Background(), adaptive)
+	if err != nil || len(models) != 3 || models[2].ID != "protocol-changed" {
+		t.Fatal("adaptive catalog protocol not adopted", models, err)
 	}
 	for _, bad := range []string{`{}`, `{"data":null}`, `{"data":[{"id":"test","limit":{"context":-1}}]}`} {
 		body = bad

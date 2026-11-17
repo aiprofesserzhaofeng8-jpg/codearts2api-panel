@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onboardingIcons } from './onboarding-icons';
 import { t as tr } from '../../i18n';
 import { brands, commonPlatforms, extraPlatforms, brandIcon, brandIconStyle } from './brands';
 
@@ -128,6 +129,11 @@ import CredentialImport from './providers/CredentialImport.vue';
   <div class="modal-body"><p id="accountBulkSummary"></p><p class="hint">{{tr('仅处理下面列出的账号，逐个执行。关闭或切页不会撤销已提交的操作；失败项不会自动重试。')}}</p><ul id="accountBulkTargets"></ul><div id="accountBulkResults" role="status" aria-live="polite"></div></div>
   <div class="modal-actions"><button class="btn" id="accountBulkClose">{{tr('关闭')}}</button><button class="btn primary" id="accountBulkConfirm">{{tr('确认执行')}}</button></div>
 </dialog>
+<dialog v-once id="accountProtocolDialog" class="modal modal-small" aria-labelledby="accountProtocolTitle">
+  <div class="modal-head"><h2 id="accountProtocolTitle">{{tr('API 协议')}}</h2></div>
+  <div class="modal-body"><p id="accountProtocolName"></p><div class="field"><label for="accountProtocol">{{tr('上游协议')}}</label><select id="accountProtocol"></select></div><p class="hint">{{tr('使用平台官方地址。自适应优先使用同协议端点，需要时转换。')}}</p><p id="accountProtocolError" class="err-text" role="alert"></p></div>
+  <div class="modal-actions"><button class="btn" id="accountProtocolCancel">{{tr('取消')}}</button><button class="btn primary" id="accountProtocolSave">{{tr('保存')}}</button></div>
+</dialog>
 <dialog v-once id="accountConcurrencyDialog" class="modal modal-small" aria-labelledby="accountConcurrencyTitle">
   <div v-once class="modal-head"><h2 id="accountConcurrencyTitle">{{tr('账号并发设置')}}</h2><button class="btn ghost" id="accountConcurrencyClose">{{tr('关闭')}}</button></div>
   <div v-once class="modal-body">
@@ -162,8 +168,8 @@ import CredentialImport from './providers/CredentialImport.vue';
       <div id="accountTypes" class="account-types" role="radiogroup" aria-labelledby="accountTypeLabel"></div>
       <p class="account-field-label" id="accountMethodLabel">{{tr('添加方式')}}</p>
       <div v-once class="account-methods" role="group" aria-labelledby="accountMethodLabel">
-        <button id="accountMethodBrowser" class="account-method selected" data-account-method="browser" aria-pressed="true"><span class="method-symbol" aria-hidden="true">↗</span><span><strong>{{tr('浏览器授权')}}</strong><small id="accountBrowserHint">{{tr('通过官方页面登录并授权')}}</small></span></button>
-        <button id="accountMethodImport" class="account-method" data-account-method="import" aria-pressed="false"><span class="method-symbol" aria-hidden="true">＋</span><span><strong>{{tr('凭据导入')}}</strong><small id="accountImportHint">{{tr('本机客户端、STS / AK/SK 或 session JSON')}}</small></span></button>
+        <button id="accountMethodBrowser" class="account-method selected" data-account-method="browser" aria-pressed="true"><span class="method-symbol method-symbol-browser" aria-hidden="true"><img :src="onboardingIcons.browser" alt=""></span><span><strong>{{tr('浏览器授权')}}</strong><small id="accountBrowserHint">{{tr('通过官方页面登录并授权')}}</small></span></button>
+        <button id="accountMethodImport" class="account-method" data-account-method="import" aria-pressed="false"><span class="method-symbol method-symbol-import" aria-hidden="true"><img :src="onboardingIcons.import" alt=""></span><span><strong>{{tr('凭据导入')}}</strong><small id="accountImportHint">{{tr('本机客户端、STS / AK/SK 或 session JSON')}}</small></span></button>
       </div>
       <p class="hint account-choice-hint" id="accountChoiceHint">{{tr('选择平台和添加方式后继续，账号核对完成后再保存。')}}</p>
     </div>

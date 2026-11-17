@@ -1,5 +1,7 @@
 # 项目结构设计 v1
 
+协议后续改造：[对齐 Sub2API 的协议路由与转发计划](SUB2API-PROTOCOL-ALIGNMENT-PLAN.md)（待实施，保留现有模型融合与准入体系）。
+
 模型能力后续修复：[六类问题实施计划](MODEL-CAPABILITY-REPAIR-PLAN.md)（R1–R6，基线 v0.4.5，待分批实施）。
 
 日期：2026-11-02。状态：**M1–M7 已完成，M7 范围为单实例多用户**。

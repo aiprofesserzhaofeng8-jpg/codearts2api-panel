@@ -17,13 +17,8 @@ import (
 	"codearts2api/internal/registry"
 )
 
-// Anthropic Messages API 兼容层（HTTP 部分）。
-//
-// 上游（CodeArts inferhub）本身是 OpenAI 兼容协议，因此这里做的是
-// 「Anthropic 请求 → OpenAI 请求」与「OpenAI 响应/SSE → Anthropic 响应/SSE」
-// 的双向映射，覆盖 text / thinking / image / tool_use / tool_result。
-//
-// 纯数据转换在 internal/protocol；本文件只负责 HTTP 传输与 SSE 编码。
+// Messages retains native envelopes until account selection. Compatible native
+// transports preserve events; legacy transports use the existing Chat bridge.
 
 // handleAnthropicMessages 是 POST /v1/messages 的入口。
 func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request) {
@@ -73,39 +68,27 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	convert := protocol.ToOpenAI
-	nativeMessages := model.Provider == provider.Claude
 	if model.Source == "mapping" && protocol.RequiresNativeMessages(&req) {
 		if err := mappedPlan(r.Context()).FilterProvider(provider.Claude); err != nil {
 			reject(400, "invalid_request_error", err.Error(), apierr.Reason(err))
 			return
 		}
-		nativeMessages = true
 	}
-	if nativeMessages {
-		convert = protocol.ToOpenAINativeMessages
+	requirements, err := protocol.InspectRequirements(body, string(provider.MessagesProtocol))
+	if err == nil {
+		err = mappedPlan(r.Context()).FilterRequirements(requirements)
 	}
-	upReq, err := convert(&req, model.ID)
 	if err != nil {
-		reject(http.StatusBadRequest, "invalid_request_error", err.Error())
-		return
-	}
-	if err := filterMappedMessages(r.Context(), upReq["thinking"] != nil); err != nil {
 		reject(400, "invalid_request_error", err.Error(), apierr.Reason(err))
 		return
 	}
-	if model.Provider == provider.Trae && upReq["thinking"] != nil {
-		reject(http.StatusBadRequest, "invalid_request_error", "当前网关暂不支持 Trae 的 Messages 思考控制映射，请省略 thinking 参数")
+	if err := filterMappedMessages(r.Context(), len(req.Thinking) > 0 && string(req.Thinking) != "null"); err != nil {
+		reject(400, "invalid_request_error", err.Error(), apierr.Reason(err))
 		return
 	}
-	upBody, err := json.Marshal(upReq)
+	upBody, err := rewriteModel(body, model.ID, req.Stream)
 	if err != nil {
-		reject(http.StatusInternalServerError, "api_error", "请求体序列化失败")
-		return
-	}
-
-	if err := mappedPlan(r.Context()).FilterCapabilities(upBody); err != nil {
-		reject(apierr.From(err).Status, apierr.From(err).Anthropic, err.Error(), apierr.Reason(err))
+		reject(400, "invalid_request_error", err.Error())
 		return
 	}
 	key := extractKey(r)
@@ -130,7 +113,38 @@ func (s *Server) blockingAnthropic(w http.ResponseWriter, r *http.Request, body 
 		outLen int
 	)
 	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
-		res, err := s.chatOnce(ctx, acct, model, body)
+		collector := &protocol.MessagesCollector{}
+		if handled, err := s.tryNative(ctx, acct, model, body, provider.MessagesProtocol, collector.Consume); handled {
+			if err != nil {
+				return err
+			}
+			raw, err := collector.Result()
+			if err != nil {
+				return err
+			}
+			var payload map[string]any
+			decoder := json.NewDecoder(strings.NewReader(string(raw)))
+			decoder.UseNumber()
+			if err = decoder.Decode(&payload); err != nil {
+				return err
+			}
+			var message struct {
+				Content []struct{ Text, Thinking string }
+			}
+			_ = json.Unmarshal(raw, &message)
+			var text, thinking strings.Builder
+			for _, block := range message.Content {
+				text.WriteString(block.Text)
+				thinking.WriteString(block.Thinking)
+			}
+			out = protocol.Reply{Payload: payload, Text: text.String(), Thinking: thinking.String()}
+			return nil
+		}
+		chatBody, err := s.messagesChatBody(ctx, acct, model, body)
+		if err != nil {
+			return err
+		}
+		res, err := s.chatOnce(ctx, acct, model, chatBody)
 		if err != nil {
 			return err
 		}
@@ -168,8 +182,33 @@ func (s *Server) streamAnthropic(w http.ResponseWriter, r *http.Request, body []
 	)
 
 	acct, err := s.withAccountRetry(r.Context(), timeout, func(ctx context.Context, acct *accounts.Account) error {
+		if handled, err := s.tryNative(ctx, acct, model, body, provider.MessagesProtocol, func(raw []byte) error {
+			outLen += nativeDeltaLen(raw)
+			var event struct{ Type string }
+			if err := json.Unmarshal(raw, &event); err != nil {
+				return err
+			}
+			if !started {
+				w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+				w.Header().Set("Cache-Control", "no-cache")
+				w.Header().Set("X-Accel-Buffering", "no")
+				w.WriteHeader(200)
+				started = true
+			}
+			if _, err := fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event.Type, raw); err != nil {
+				return err
+			}
+			flusher.Flush()
+			return nil
+		}); handled {
+			return stopAfterOutput(err, started)
+		}
+		chatBody, err := s.messagesChatBody(ctx, acct, model, body)
+		if err != nil {
+			return err
+		}
 		st := newAnthropicStream(w, flusher, msgID, model.ID, promptLen)
-		err := s.streamOnce(ctx, acct, model, body, func(chunk []byte) error {
+		err = s.streamOnce(ctx, acct, model, chatBody, func(chunk []byte) error {
 			if !started {
 				h := w.Header()
 				h.Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -520,4 +559,23 @@ func writeAnthropicErr(w http.ResponseWriter, code int, typ, msg string, reason 
 		"type":  "error",
 		"error": err,
 	})
+}
+
+func (s *Server) messagesChatBody(ctx context.Context, acct *accounts.Account, model registry.Model, body []byte) ([]byte, error) {
+	var req protocol.Request
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	convert := protocol.ToOpenAI
+	if acct.ProviderID() == provider.Claude {
+		convert = protocol.ToOpenAINativeMessages
+	}
+	up, err := convert(&req, model.ID)
+	if err != nil {
+		return nil, &provider.Error{Status: 400, Message: err.Error()}
+	}
+	if acct.ProviderID() == provider.Trae && up["thinking"] != nil {
+		return nil, &provider.Error{Status: 400, Message: "当前网关暂不支持 Trae 的 Messages 思考控制映射，请省略 thinking 参数"}
+	}
+	return json.Marshal(up)
 }

@@ -1088,6 +1088,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/api/prompts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPrompts"];
+        put?: never;
+        post: operations["savePrompts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/api/prompts/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewPrompt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1171,6 +1203,9 @@ export interface components {
             last_claim_at?: number;
             next_claim_at?: number;
             cooldown_until?: number;
+            /** @description Stored protocol choice; empty preserves the legacy model route. */
+            api_protocol?: string;
+            api_protocol_options?: ("adaptive" | "chat_completions" | "responses" | "anthropic")[];
         } & {
             [key: string]: unknown;
         };
@@ -1274,7 +1309,7 @@ export interface components {
         };
         PromptSettings: {
             /** @enum {string} */
-            prompt_mode?: "custom" | "passthrough" | null;
+            prompt_mode?: "custom" | "passthrough" | null | "append";
             prompt_text?: string;
             prompt_fallback?: boolean;
             sanitize?: boolean;
@@ -1282,14 +1317,14 @@ export interface components {
         /** @description Null keeps legacy platform policy. {} inherits all common fields. Null/missing fields inherit; false and empty string explicitly override. */
         PromptOverrides: {
             /** @enum {string|null} */
-            prompt_mode?: "custom" | "passthrough" | null;
+            prompt_mode?: "custom" | "passthrough" | null | "append";
             prompt_text?: string | null;
             prompt_fallback?: boolean | null;
             sanitize?: boolean | null;
         } | null;
         ProviderSettings: {
             /** @enum {string} */
-            prompt_mode?: "custom" | "passthrough" | null;
+            prompt_mode?: "custom" | "passthrough" | null | "append";
             prompt_text?: string;
             prompt_fallback?: boolean;
             sanitize?: boolean;
@@ -1823,6 +1858,28 @@ export interface components {
             status: "ready" | "missing_limits" | "unsupported_purpose";
             reason: string;
             limits: components["schemas"]["ClientLimitEvidence"][];
+        };
+        PromptPolicy: {
+            /** @enum {string} */
+            prompt_mode: "passthrough" | "append" | "custom";
+            prompt_text: string;
+            prompt_fallback: boolean;
+            sanitize: boolean;
+        };
+        PlatformPrompt: components["schemas"]["PromptPolicy"] & {
+            overrides: {
+                /** @enum {string} */
+                prompt_mode?: "passthrough" | "append" | "custom";
+                prompt_text?: string;
+                prompt_fallback?: boolean;
+                sanitize?: boolean;
+            } | null;
+        };
+        PromptConfiguration: {
+            common: components["schemas"]["PromptPolicy"];
+            platforms: {
+                [key: string]: components["schemas"]["PlatformPrompt"];
+            };
         };
     };
     responses: never;
@@ -4922,6 +4979,111 @@ export interface operations {
                 };
             };
             /** @description Error; no partial writes */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPrompts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptConfiguration"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    savePrompts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected: components["schemas"]["PromptConfiguration"];
+                    configuration: components["schemas"]["PromptConfiguration"];
+                };
+            };
+        };
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptConfiguration"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    previewPrompt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        request: {
+                            [key: string]: unknown;
+                        };
+                        request_json: string;
+                    };
+                };
+            };
+            /** @description Error */
             default: {
                 headers: {
                     [name: string]: unknown;

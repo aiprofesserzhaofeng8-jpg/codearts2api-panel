@@ -1,3 +1,4 @@
+import { onboardingIcon } from "../onboarding-icons";
 import { accountTypes, brandName, brandIcon, brandIconStyle, extraPlatforms } from '../brands';
 import { t as tr } from '../../../i18n';
 import { on } from '../../../components/controls';
@@ -66,7 +67,7 @@ function renderTypes() {
     const types = accountTypes(providersState.accountCreateBrand);
     types.forEach(type => {
         const item = document.createElement(types.length === 1 ? 'p' : 'button');
-        item.textContent = tr(type.label);
+        item.append(onboardingIcon(type.key ? 'api' : type.methods.includes('browser') ? 'browser' : 'import'), document.createTextNode(tr(type.label)));
         if (types.length > 1) {
             item.className = 'account-type' + (type.id === providersState.accountCreateType ? ' selected' : '');
             item.dataset.accountType = type.id; item.setAttribute('role', 'radio');
@@ -88,6 +89,7 @@ async function switchChoice(brand, type, method) {
 }
 function applyChoice(brand, type, method) {
     clearAccountSensitiveFields(); preparedPath = '';
+    domState.$('#providerProtocol').value = 'adaptive';
     providersState.accountCreateBrand = brand; providersState.accountCreateType = type;
     providersState.accountCreatePlatform = selectedType().provider;
     providersState.accountCreateMethod = method;
@@ -103,7 +105,11 @@ async function releaseAuthorization() {
 }
 function configureType() {
     const type = selectedType();
-    ['geminiImportMode', 'codingImportMode', 'opencodeImportScope', 'commandcodeImportMode'].forEach(id => domState.$('#' + id + 'Field').classList.add('hidden'));
+    const multiProtocol = ['kimi', 'deepseek', 'minimax', 'zhipu', 'opencode', 'commandcode'].includes(type.provider);
+    domState.$('#providerProtocolField').classList.toggle('hidden', !multiProtocol);
+    domState.$('#providerProtocol option[value="responses"]').disabled = type.provider === 'zhipu';
+    if (type.provider === 'zhipu' && domState.$('#providerProtocol').value === 'responses') domState.$('#providerProtocol').value = 'adaptive';
+    ['geminiImportMode' , 'codingImportMode', 'opencodeImportScope', 'commandcodeImportMode'].forEach(id => domState.$('#' + id + 'Field').classList.add('hidden'));
     if (type.field) domState.$('#' + type.field).value = type.value;
     domState.$('#providerAPIKeyField').classList.toggle('hidden', !type.key);
     domState.$('#providerImportJSON').classList.toggle('hidden', !!type.key);
@@ -128,6 +134,7 @@ export function renderAccountChoices() {
         const selected = b.dataset.accountMethod === providersState.accountCreateMethod;
         b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected));
     });
+    domState.$('#accountMethodImport .method-symbol').replaceWith(onboardingIcon(selectedType().key ? 'api' : 'import'));
     domState.$('#accountMethodImport strong').textContent = selectedType().key ? 'API Key' : tr('凭据导入');
     domState.$("#accountBrowserHint").textContent = providersState.accountCreatePlatform === "teleagent" ? tr("通过本机登录助手完成官方网页登录，核对后保存。") : providersState.accountCreatePlatform === "kiro" ? tr("通过 AWS Builder ID 设备授权登录；其他登录方式请导入凭据。") : tr("通过 ") + accountPlatformLabel() + tr(" 官方页面登录并授权");
     domState.$('#accountImportHint').textContent = selectedType().key ? tr('使用对应账号类型的 API Key。') : providersState.accountCreatePlatform === 'vertex' ? tr('导入 Google 服务账号 JSON。') : providersState.accountCreatePlatform === 'bedrock' ? tr('导入 AWS 凭据 JSON。') : mobileclaw ? tr('从官方客户端导出个人免费 Token 凭据。') : teleagent ? tr('在官方客户端登录后，导入完整账号与设备凭据') : providersState.accountCreatePlatform === 'codearts' ? tr('本机客户端、STS / AK/SK 或 session JSON') : tr('从已有客户端导入完整凭据 JSON');
@@ -622,7 +629,9 @@ on("#providerImport", function () { return providerJob(function () { var credent
 }
 catch (e) {
     throw new Error(tr("请粘贴有效的 ") + providerLabel() + tr(" JSON 凭据"));
-} return api("/admin/api/provider-import", { method: "POST", body: { provider: providersState.activeProvider, credentials: credentials, replace_existing: domState.$("#providerImportReplace").checked, name: domState.$("#providerAccountName").value.trim() } }).then(refreshAfterProviderSave); }); });
+}
+if (['kimi', 'deepseek', 'minimax', 'zhipu', 'opencode', 'commandcode'].includes(providersState.activeProvider)) credentials.api_protocol = domState.$('#providerProtocol').value;
+return api("/admin/api/provider-import", { method: "POST", body: { provider: providersState.activeProvider, credentials: credentials, replace_existing: domState.$("#providerImportReplace").checked, name: domState.$("#providerAccountName").value.trim() } }).then(refreshAfterProviderSave); }); });
 on("#importLocal", function () { return addAccountCredentials("import", {}); });
 // 凭据类型切换：永久 AK/SK 不需要 security_token，隐藏该项并更新提示。
 // 注意 select 用 change 事件，不能复用只绑 onclick 的 on()。

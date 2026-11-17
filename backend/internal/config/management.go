@@ -149,28 +149,28 @@ func (m *Management) updateSettings(body SettingsUpdate, checked bool) error {
 			st.CommonPrompt = common
 		}
 		if config, ok := policies["workbuddy"]; ok {
-			st.WorkBuddy = config
+			st.WorkBuddy = mergeProviderPatch(st.WorkBuddy, config, body.WorkBuddy)
 		}
 		if config, ok := policies["codearts"]; ok {
-			st.CodeArts = config
+			st.CodeArts = mergeProviderPatch(st.CodeArts, config, body.CodeArts)
 		}
 		if config, ok := policies["trae"]; ok {
-			st.Trae = config
+			st.Trae = mergeProviderPatch(st.Trae, config, body.Trae)
 		}
 		if config, ok := policies["qoder"]; ok {
-			st.Qoder = config
+			st.Qoder = mergeProviderPatch(st.Qoder, config, body.Qoder)
 		}
 		if config, ok := policies["kiro"]; ok {
-			st.Kiro = config
+			st.Kiro = mergeProviderPatch(st.Kiro, config, body.Kiro)
 		}
 		if config, ok := policies["claude"]; ok {
-			st.Claude = config
+			st.Claude = mergeProviderPatch(st.Claude, config, body.Claude)
 		}
 		if config, ok := policies["chatgpt"]; ok {
-			st.ChatGPT = config
+			st.ChatGPT = mergeProviderPatch(st.ChatGPT, config, body.ChatGPT)
 		}
 		if config, ok := policies["teleagent"]; ok {
-			st.TeleAgent = config
+			st.TeleAgent = mergeProviderPatch(st.TeleAgent, config, body.TeleAgent)
 		}
 		if len(body.Pool) > 0 {
 			st.Pool = poolConfig
@@ -227,4 +227,38 @@ func setIf[T any](dst *T, src *T) {
 	if src != nil {
 		*dst = *src
 	}
+}
+
+// Keep independent editors from clobbering fields absent from their PATCH.
+func mergeProviderPatch(current, validated ProviderSettings, raw json.RawMessage) ProviderSettings {
+	var fields map[string]json.RawMessage
+	_ = json.Unmarshal(raw, &fields)
+	if _, ok := fields["prompt_mode"]; !ok {
+		validated.PromptMode = current.PromptMode
+	}
+	if _, ok := fields["prompt_text"]; !ok {
+		validated.PromptText = current.PromptText
+	}
+	if _, ok := fields["prompt_fallback"]; !ok {
+		validated.PromptFallback = current.PromptFallback
+	}
+	if _, ok := fields["sanitize"]; !ok {
+		validated.Sanitize = current.Sanitize
+	}
+	if _, ok := fields["prompt_overrides"]; !ok {
+		validated.PromptOverrides = current.Clone().PromptOverrides
+	}
+	if _, ok := fields["search_enabled"]; !ok {
+		validated.SearchEnabled = current.SearchEnabled
+	}
+	if _, ok := fields["search_scope"]; !ok {
+		validated.SearchScope = current.SearchScope
+	}
+	if _, ok := fields["search_backend"]; !ok {
+		validated.SearchBackend = current.SearchBackend
+	}
+	if _, ok := fields["search_url"]; !ok {
+		validated.SearchURL = current.SearchURL
+	}
+	return validated
 }

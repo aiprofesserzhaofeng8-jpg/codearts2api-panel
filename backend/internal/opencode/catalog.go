@@ -70,7 +70,15 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 		// Do not trust an upstream URL or advertise a route contradicted by its
 		// live metadata. Protocol changes need a reviewed table update, not a retry.
 		if _, ok = r.API[string(p)]; !ok {
-			continue
+			supported := false
+			for _, endpoint := range []string{"chat-completions", "responses", "messages"} {
+				if _, exists := r.API[endpoint]; exists {
+					supported = true
+				}
+			}
+			if !supported {
+				continue
+			}
 		}
 		if a.Scope == "zen" && (strings.HasSuffix(r.ID, "-free") || r.Cost.Text.Input.Price != nil && r.Cost.Text.Output.Price != nil && *r.Cost.Text.Input.Price == 0 && *r.Cost.Text.Output.Price == 0) {
 			continue
@@ -80,6 +88,14 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 			name = r.ID
 		}
 		m := provider.Model{ID: r.ID, UpstreamID: r.ID, Name: name, Provider: "opencode", Scope: a.Scope, Context: r.Limit.Context, MaxOutput: r.Limit.Output, StreamOnly: true, Source: c.base(a.Scope) + "/v1/models"}
+		for _, endpoint := range []string{"chat-completions", "responses", "messages"} {
+			if _, ok := r.API[endpoint]; ok {
+				m.SupportedProtocols = append(m.SupportedProtocols, provider.EndpointProtocols([]string{endpoint})...)
+			}
+		}
+		if _, err := c.ResolveProtocol(b, m, provider.ChatProtocol); err != nil {
+			continue
+		}
 		if r.Modalities.Input != nil {
 			m.ImageInput = "unsupported"
 			for _, typ := range r.Modalities.Input {

@@ -35,17 +35,18 @@ const Bedrock = "bedrock"
 const Vertex = "vertex"
 
 type Model struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Context    int    `json:"context"`
-	MaxOutput  int    `json:"max_output"`
-	Desc       string `json:"description"`
-	Source     string `json:"source"`
-	Credit     string `json:"credit,omitempty"`
-	StreamOnly bool   `json:"stream_only,omitempty"`
-	Provider   string `json:"provider,omitempty"`
-	Scope      string `json:"scope,omitempty"`
-	UpstreamID string `json:"upstream_id,omitempty"`
+	SupportedProtocols []Protocol `json:"supported_protocols,omitempty"`
+	ID                 string     `json:"id"`
+	Name               string     `json:"name"`
+	Context            int        `json:"context"`
+	MaxOutput          int        `json:"max_output"`
+	Desc               string     `json:"description"`
+	Source             string     `json:"source"`
+	Credit             string     `json:"credit,omitempty"`
+	StreamOnly         bool       `json:"stream_only,omitempty"`
+	Provider           string     `json:"provider,omitempty"`
+	Scope              string     `json:"scope,omitempty"`
+	UpstreamID         string     `json:"upstream_id,omitempty"`
 	// Empty means unknown; never infer image support from a model's name.
 	ImageInput  string `json:"image_input,omitempty"`
 	ToolCalling string `json:"tool_calling,omitempty"`
@@ -101,10 +102,13 @@ type Descriptor struct {
 	Reason    string   `json:"reason,omitempty"`
 }
 type Request struct {
-	Model     string
-	Body      []byte
-	SessionID string
-	RequestID string
+	InboundProtocol    Protocol
+	Protocol           Protocol
+	SupportedProtocols []Protocol
+	Model              string
+	Body               []byte
+	SessionID          string
+	RequestID          string
 }
 type Login struct {
 	QRCode    string

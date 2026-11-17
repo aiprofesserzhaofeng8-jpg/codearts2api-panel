@@ -8,13 +8,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
-	"mime"
 	"net/http"
 	"strings"
 
 	"codearts2api/internal/chatwire"
+	"codearts2api/internal/messagewire"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/providerhttp"
+	"codearts2api/internal/responsewire"
 )
 
 type Client struct {
@@ -62,11 +63,12 @@ func (c *Client) mode() string {
 }
 
 type credentials struct {
-	Key   string `json:"api_key"`
-	Name  string `json:"name,omitempty"`
-	Scope string `json:"scope"`
-	Mode  string `json:"account_mode"`
-	Auth  string `json:"auth_mode"`
+	Protocol provider.Protocol `json:"api_protocol,omitempty"`
+	Key      string            `json:"api_key"`
+	Name     string            `json:"name,omitempty"`
+	Scope    string            `json:"scope"`
+	Mode     string            `json:"account_mode"`
+	Auth     string            `json:"auth_mode"`
 }
 
 func (c *Client) Normalize(raw json.RawMessage) (json.RawMessage, provider.Identity, error) {
@@ -85,6 +87,9 @@ func (c *Client) Normalize(raw json.RawMessage) (json.RawMessage, provider.Ident
 	}
 	if a.Key == "" || strings.TrimSpace(a.Key) != a.Key || !providerhttp.Safe(a.Key, a.Name) || (a.Scope != "" && a.Scope != c.scope()) || (a.Mode != "" && a.Mode != c.mode()) || (a.Auth != "" && a.Auth != "api_key") {
 		return nil, provider.Identity{}, providerhttp.Invalid(c.Name, "API Key 或接入模式无效；仅支持该平台固定范围和所选套餐 / api_key")
+	}
+	if _, err := c.ResolveProtocol(raw, provider.Model{}, provider.ChatProtocol); err != nil {
+		return nil, provider.Identity{}, providerhttp.Invalid(c.Name, err.Error())
 	}
 	a.Scope = c.scope()
 	a.Mode = c.mode()
@@ -112,7 +117,7 @@ func (c *Client) request(ctx context.Context, raw json.RawMessage, method, url s
 	}
 	var a credentials
 	_ = json.Unmarshal(b, &a)
-	return providerhttp.Do(ctx, c.HTTP, c.Name, method, url, http.Header{"Authorization": {"Bearer " + a.Key}, "Accept": {"application/json, text/event-stream"}}, body)
+	return providerhttp.Do(ctx, c.HTTP, c.Name, method, url, http.Header{"Authorization": {"Bearer " + a.Key}, "Accept": {"application/json, text/event-stream"}, "anthropic-version": {"2023-06-01"}}, body)
 }
 func (c *Client) models(ctx context.Context, raw json.RawMessage) ([]provider.Model, bool, error) {
 	resp, e := c.request(ctx, raw, "GET", c.Base+"/models", nil)
@@ -201,23 +206,27 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	if p := c.profile(raw); p != c {
 		return p.Stream(ctx, raw, r, emit)
 	}
-	body, e := chatwire.Encode(r, c.Name)
-	if e != nil {
-		return e
+	inbound := r.InboundProtocol
+	if inbound == "" {
+		inbound = provider.ChatProtocol
 	}
-	resp, e := c.request(ctx, raw, "POST", c.Base+"/chat/completions", body)
-	if e != nil {
-		return e
+	target, err := c.ResolveProtocol(raw, provider.Model{SupportedProtocols: r.SupportedProtocols}, inbound)
+	if err != nil {
+		return err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return c.failure(resp)
+	var body any
+	switch target {
+	case provider.MessagesProtocol:
+		body, err = messagewire.Encode(r, c.Name)
+	case provider.ResponsesProtocol:
+		body, err = responsewire.Encode(r, false, c.Name)
+	default:
+		body, err = chatwire.Encode(r, c.Name)
 	}
-	typ, _, _ := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-	if typ != "text/event-stream" {
-		return providerhttp.Broken(c.Name)
+	if err != nil {
+		return err
 	}
-	return chatwire.Decode(ctx, resp.Body, c.Name, emit)
+	return c.protocolStream(ctx, raw, r, target, body, false, emit)
 }
 
 func (c *Client) failure(resp *http.Response) error {

@@ -25,6 +25,8 @@ func withRoutingSession(r *http.Request, body []byte) context.Context {
 		Model          string          `json:"model"`
 		ConversationID string          `json:"conversation_id"`
 		System         json.RawMessage `json:"system"`
+		Input          json.RawMessage `json:"input"`
+		Instructions   json.RawMessage `json:"instructions"`
 		Messages       []struct {
 			Role    string          `json:"role"`
 			Content json.RawMessage `json:"content"`
@@ -32,6 +34,19 @@ func withRoutingSession(r *http.Request, body []byte) context.Context {
 	}
 	if json.Unmarshal(body, &req) != nil {
 		return r.Context()
+	}
+	if len(req.Input) > 0 {
+		if len(req.Instructions) > 0 {
+			req.System = req.Instructions
+		}
+		if json.Unmarshal(req.Input, &req.Messages) != nil {
+			var text string
+			if json.Unmarshal(req.Input, &text) == nil {
+				var wrapper struct{ Messages json.RawMessage }
+				wrapper.Messages, _ = json.Marshal([]map[string]string{{"role": "user", "content": text}})
+				_ = json.Unmarshal(wrapper.Messages, &req.Messages)
+			}
+		}
 	}
 	id := r.Header.Get("X-Session-Id")
 	if id == "" {

@@ -9,20 +9,13 @@ import { adminLogin } from '../../app/session';
 import { listen } from '../../shared/lifecycle';
 import { refresh } from '../../shared/refresh';
 const settingsState = {};
-const promptFields = {PromptMode:'prompt_mode', PromptText:'prompt_text',PromptFallback:'prompt_fallback',Sanitize:'sanitize'};
-function readPrompt(prefix) { return Object.fromEntries(Object.entries(promptFields).map(([suffix,key])=>{const el=document.getElementById(prefix+suffix);return [key,el.type==='checkbox'?el.checked:el.value];})); }
-function applyInheritedPrompt(prefix) {
- const common=readPrompt('sCommon');
- Object.entries(promptFields).forEach(([suffix,key])=>{const el=document.getElementById(prefix+suffix),inherit=document.getElementById(prefix+suffix+'Inherit').checked;el.disabled=inherit;if(inherit){if(el.type==='checkbox')el.checked=common[key];else el.value=common[key];}});
-}
 settingsState.settingsDirty = false;
 
 settingsState.providerPolicyFields = [{ key: "codearts", prefix: "sCA" }, { key: "workbuddy", prefix: "sWB" }, { key: "trae", prefix: "sTR" }, { key: "qoder", prefix: "sQD" }, { key: "kiro", prefix: "sKI" }, { key: "chatgpt", prefix: "sCG" }, { key: "claude", prefix: "sCL" }, { key: "teleagent", prefix: "sTA" }];
 
-export function readProviderPolicy(key) {
-    var def = settingsState.providerPolicyFields.find(function (item) { return item.key === key; }), field = function (name) { return document.getElementById(def.prefix + name); };
-    var overrides={};Object.entries(promptFields).forEach(([suffix,key])=>{if(!field(suffix+'Inherit').checked){const el=field(suffix);overrides[key]=el.type==='checkbox'?el.checked:el.value;}});
-    return { prompt_overrides:Object.keys(overrides).length===4 ? null : overrides, prompt_mode: field("PromptMode").value, prompt_text: field("PromptText").value, prompt_fallback: field("PromptFallback").checked, sanitize: field("Sanitize").checked, search_enabled: ["qoder", "kiro", "chatgpt", "claude", "teleagent"].includes(key) ? false : field("Search").checked, search_scope: key === "workbuddy" ? field("SearchScope").value : "cn", search_backend: key === "workbuddy" ? "native" : "searxng", search_url: ["workbuddy", "qoder", "kiro", "chatgpt", "claude", "teleagent"].includes(key) ? "" : field("SearchURL").value.trim() };
+function readSearchPolicy(key) {
+ const def=settingsState.providerPolicyFields.find(item=>item.key===key), field=name=>document.getElementById(def.prefix+name);
+ return {search_enabled:field('Search').checked,search_scope:key==='workbuddy'?field('SearchScope').value:'cn',search_backend:key==='workbuddy'?'native':'searxng',search_url:key==='workbuddy'?'':field('SearchURL').value.trim()};
 }
 
 export function renderSettings(s) {
@@ -32,18 +25,9 @@ export function renderSettings(s) {
     if (settingsState.settingsDirty)
         return;
     settingsState.routingRevision = s.model_routing_revision;
-    const common=s.common_prompt || {prompt_mode:'passthrough',prompt_text:'',prompt_fallback:false,sanitize:false};
-    Object.entries(promptFields).forEach(([suffix,key])=>{const el=document.getElementById('sCommon'+suffix);if(el.type==='checkbox')el.checked=common[key];else el.value=common[key] || '';});
     settingsState.providerPolicyFields.forEach(function (def) {
+        if (!["codearts", "workbuddy", "trae"].includes(def.key)) return;
         var config = s[def.key] || {}, field = function (name) { return document.getElementById(def.prefix + name); };
-        field("PromptMode").value = config.prompt_mode || "passthrough";
-        field("PromptText").value = config.prompt_text || "";
-        field("PromptFallback").checked = config.prompt_fallback === true;
-        field("Sanitize").checked = config.sanitize === true;
-        const overrides=config.prompt_overrides;
-        Object.entries(promptFields).forEach(([suffix,key])=>{const el=field(suffix);field(suffix+'Inherit').checked=overrides!=null && overrides[key]==null;if(overrides?.[key]!=null){if(el.type==='checkbox')el.checked=overrides[key];else el.value=overrides[key];}});
-        applyInheritedPrompt(def.prefix);
-        if (["qoder", "kiro", "chatgpt", "claude", "teleagent"].includes(def.key)) return;
         field("Search").checked = def.key === "workbuddy" ? config.search_enabled !== false : !!config.search_enabled;
         if (def.key === "workbuddy")
             field("SearchScope").value = config.search_scope || "cn";
@@ -102,7 +86,7 @@ export function loadSettings() {
 function lockSettings(busy) {
     if(!document.querySelector('#tab-settings'))return;
     document.querySelectorAll('#tab-settings input,#tab-settings select,#tab-settings textarea,#tab-settings button').forEach(el=>el.disabled=busy);
-    if(!busy)settingsState.providerPolicyFields.forEach(def=>applyInheritedPrompt(def.prefix));
+
 }
 
 export function mountSettings() {
@@ -111,8 +95,6 @@ on('#reloadSettings',function(){
     lockSettings(true);
     return api('/admin/api/settings').then(function(s){clearSettingsDirty();domState.$('#sPw').value='';renderSettings(s);}).catch(function(e){if(!isAbortError(e))toast(tr('加载失败：')+e.message,'err');}).finally(()=>lockSettings(false));
 });
-settingsState.providerPolicyFields.forEach(def=>Object.keys(promptFields).forEach(suffix=>listen(document.getElementById(def.prefix+suffix+'Inherit'),'change',()=>applyInheritedPrompt(def.prefix))));
-Object.keys(promptFields).forEach(suffix=>listen(document.getElementById('sCommon'+suffix),'input',()=>settingsState.providerPolicyFields.forEach(def=>applyInheritedPrompt(def.prefix))));
 on("#saveSettings", function () {
     var aliases;
     try {
@@ -124,8 +106,7 @@ on("#saveSettings", function () {
     }
     var body = {
         expected_routing_revision: settingsState.routingRevision,
-        common_prompt:readPrompt("sCommon"),
-        codearts: readProviderPolicy("codearts"), workbuddy: readProviderPolicy("workbuddy"), trae: readProviderPolicy("trae"), qoder: readProviderPolicy("qoder"), kiro: readProviderPolicy("kiro"), chatgpt: readProviderPolicy("chatgpt"), claude: readProviderPolicy("claude"), teleagent: readProviderPolicy("teleagent"),
+        codearts: readSearchPolicy("codearts"), workbuddy: readSearchPolicy("workbuddy"), trae: readSearchPolicy("trae"),
         pool: {
             strategy: domState.$("#sPoolStrategy").value,
             max_in_flight: Number(domState.$("#sPoolConcurrency").value),

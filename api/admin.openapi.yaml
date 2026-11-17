@@ -4317,6 +4317,146 @@
           }
         }
       }
+    },
+    "/admin/api/prompts": {
+      "get": {
+        "operationId": "getPrompts",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptConfiguration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "savePrompts",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expected": {
+                    "$ref": "#/components/schemas/PromptConfiguration"
+                  },
+                  "configuration": {
+                    "$ref": "#/components/schemas/PromptConfiguration"
+                  }
+                },
+                "required": [
+                  "expected",
+                  "configuration"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptConfiguration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/prompts/preview": {
+      "post": {
+        "operationId": "previewPrompt",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "request_json": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request",
+                    "request_json"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4568,6 +4708,22 @@
           },
           "cooldown_until": {
             "type": "integer"
+          },
+          "api_protocol": {
+            "type": "string",
+            "description": "Stored protocol choice; empty preserves the legacy model route."
+          },
+          "api_protocol_options": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "adaptive",
+                "chat_completions",
+                "responses",
+                "anthropic"
+              ]
+            }
           }
         },
         "required": [
@@ -4898,7 +5054,8 @@
             "enum": [
               "custom",
               "passthrough",
-              null
+              null,
+              "append"
             ]
           },
           "prompt_text": {
@@ -4928,7 +5085,8 @@
             "enum": [
               "custom",
               "passthrough",
-              null
+              null,
+              "append"
             ]
           },
           "prompt_text": {
@@ -4962,7 +5120,8 @@
             "enum": [
               "custom",
               "passthrough",
-              null
+              null,
+              "append"
             ]
           },
           "prompt_text": {
@@ -7004,6 +7163,90 @@
           "status",
           "reason",
           "limits"
+        ]
+      },
+      "PromptPolicy": {
+        "type": "object",
+        "properties": {
+          "prompt_mode": {
+            "type": "string",
+            "enum": [
+              "passthrough",
+              "append",
+              "custom"
+            ]
+          },
+          "prompt_text": {
+            "type": "string"
+          },
+          "prompt_fallback": {
+            "type": "boolean"
+          },
+          "sanitize": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "prompt_mode",
+          "prompt_text",
+          "prompt_fallback",
+          "sanitize"
+        ]
+      },
+      "PlatformPrompt": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptPolicy"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "overrides": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "prompt_mode": {
+                    "type": "string",
+                    "enum": [
+                      "passthrough",
+                      "append",
+                      "custom"
+                    ]
+                  },
+                  "prompt_text": {
+                    "type": "string"
+                  },
+                  "prompt_fallback": {
+                    "type": "boolean"
+                  },
+                  "sanitize": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "required": [
+              "overrides"
+            ]
+          }
+        ]
+      },
+      "PromptConfiguration": {
+        "type": "object",
+        "properties": {
+          "common": {
+            "$ref": "#/components/schemas/PromptPolicy"
+          },
+          "platforms": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PlatformPrompt"
+            }
+          }
+        },
+        "required": [
+          "common",
+          "platforms"
         ]
       }
     },

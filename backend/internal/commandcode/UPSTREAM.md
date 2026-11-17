@@ -32,3 +32,12 @@ Local unauthenticated GET /provider/v1/models returned HTTP 403. No successful
 live catalog snapshot or credential validation was obtained. Fixtures are
 synthetic examples derived from documented fields, not recorded live success.
 Registered in app and API-key import UI. LICENSE, COPYING and this manifest are included in Linux/Windows/Docker packaging. Real-account acceptance remains pending.
+
+## Protocol routing alignment
+
+`native.go` / `stream.go` use the shared resolver adapted from Sub2API
+`upstream_protocol_routing.go` at `ba81c7fd758e425d67f856d601147ef0c5263d3f`.
+`protocol_rules` uses the pinned `opencode_go.go` pattern and ordered-set rules.
+`supported_endpoints` is retained in the existing directory and takes precedence
+above built-in preferences when adaptive is explicitly selected. Omitted
+api_protocol retains this project's former model-native route.

@@ -1,12 +1,12 @@
 # 各平台的提示词、清洗与联网搜索
 
-配置按平台独立保存，控制台「配置」提供对应区块。Qoder、Kiro、ChatGPT、Claude 与 [TeleAgent](TELEAGENT.md) 继承公共提示词，也可逐项覆盖；目前没有独立搜索实现。下表描述 CodeArts、WorkBuddy 与 Trae 的搜索能力。保存后对新请求生效。
+配置按平台独立保存，控制台「提示词」管理指令和兼容策略，「配置」管理独立搜索。Qoder、Kiro、ChatGPT、Claude 与 [TeleAgent](TELEAGENT.md) 继承公共提示词，也可逐项覆盖；目前没有独立搜索实现。下表描述 CodeArts、WorkBuddy 与 Trae 的搜索能力。保存后对新请求生效。
 
 | 能力 | CodeArts | WorkBuddy | Trae CN |
 |---|---|---|---|
-| custom / passthrough 系统提示词 | 支持，默认 passthrough | 支持，默认 custom | 支持，默认 passthrough |
-| 明确内容策略错误后中性提示词重试 | 支持，默认开启 | 支持，默认开启 | 支持，默认开启 |
-| 已知客户端文本指纹清洗 | 支持，默认开启 | 支持，默认开启 | 支持，默认开启 |
+| passthrough / append / custom 系统提示词 | 支持，默认 passthrough | 支持，默认 passthrough | 支持，默认 passthrough |
+| 明确内容策略错误后中性提示词重试 | 支持，新配置默认关闭 | 支持，新配置默认关闭 | 支持，新配置默认关闭 |
+| 已知客户端文本指纹清洗 | 支持，新配置默认关闭 | 支持，新配置默认关闭 | 支持，新配置默认关闭 |
 | 搜索后端 | 独立 SearXNG，配置后启用 | 原生 `/agenttool/v1/search` | 独立 SearXNG，配置后启用 |
 | 默认搜索状态 | 关闭，未配置搜索地址 | 开启 | 关闭，未配置搜索地址 |
 
@@ -14,10 +14,10 @@
 
 ## 提示词与清洗
 
-三个入口 `/v1/chat/completions`、`/v1/responses`、`/v1/messages` 都在协议转换后、发往各平台前应用同一套请求策略，但读取各平台自己的配置。
+三个入口 `/v1/chat/completions`、`/v1/responses`、`/v1/messages` 在发往上游前应用提示词策略：同协议路径直接处理原生指令字段，跨协议路径使用现有转换边界。各平台读取自己的有效配置。
 
-- `prompt_mode`：`custom` 替换全部 system/developer；`passthrough` 保留客户端提示词。
-- `prompt_text`：custom 模式使用的提示词；留空采用内置工程助手提示词，上限 64 KiB UTF-8。
+- `prompt_mode`：`custom` 替换全部 system/developer；`passthrough` 保留客户端提示词；`append` 保留原指令并补充配置文本。
+- `prompt_text`：custom/append 模式使用的提示词；custom 留空采用内置工程助手提示词，append 留空不增加内容，上限 64 KiB UTF-8。
 - `prompt_fallback`：仅 passthrough、没有消费任何分片、上游明确返回内容策略错误时，换中性提示词重试一次。保持账号、凭据、模型、租约和总超时，重新检查预算并记录尝试次数。第二次失败终止；认证、权限、设备、通道和普通参数错误不触发提示词重试。
 - 已识别的摘要请求保持摘要提示词，不执行 custom 替换或中性提示词重试；已有摘要策略照常工作。
 - `sanitize`：仅处理 system/developer 的 content 中两条明确客户端身份模板，以及独立的 `x-anthropic-billing-header:` 计费头行。用户消息、工具结果、历史工具参数及推理内容保持原样；不再删除裸 `cc_...` 赋值或改写 `11128`。透传模式没有实际修改时返回原请求字节，避免无谓重新编码。

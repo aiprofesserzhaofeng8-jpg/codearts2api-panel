@@ -17,10 +17,10 @@ const FallbackSystemPrompt = "You are a helpful assistant. Respond in the user's
 // restricted to system/developer content; business messages, reasoning and tool
 // arguments are opaque. An unchanged request returns its original bytes.
 func PrepareBody(body []byte, mode, prompt string, sanitize bool) ([]byte, error) {
-	if mode != "custom" && mode != "passthrough" {
+	if mode != "custom" && mode != "passthrough" && mode != "append" {
 		return nil, fmt.Errorf("提示词模式无效")
 	}
-	if mode == "passthrough" && !sanitize {
+	if (mode == "passthrough" || mode == "append" && prompt == "") && !sanitize {
 		return body, nil
 	}
 	var obj map[string]json.RawMessage
@@ -31,7 +31,7 @@ func PrepareBody(body []byte, mode, prompt string, sanitize bool) ([]byte, error
 	if err := json.Unmarshal(obj["messages"], &messages); err != nil {
 		return nil, fmt.Errorf("messages 格式无效")
 	}
-	changed := mode == "custom"
+	changed := mode == "custom" || mode == "append" && prompt != ""
 	kept := make([]json.RawMessage, 0, len(messages)+1)
 	if mode == "custom" {
 		if prompt == "" {
@@ -71,6 +71,27 @@ func PrepareBody(body []byte, mode, prompt string, sanitize bool) ([]byte, error
 			}
 		}
 		kept = append(kept, raw)
+	}
+	if mode == "append" && prompt != "" {
+		if sanitize {
+			prompt = sanitizeText(prompt)
+		}
+		added, _ := json.Marshal(struct {
+			Role    string `json:"role"`
+			Content string `json:"content"`
+		}{"system", prompt})
+		// Insert after existing instruction messages, before conversation content.
+		index := 0
+		for i, raw := range kept {
+			var h struct{ Role string }
+			_ = json.Unmarshal(raw, &h)
+			if h.Role == "system" || h.Role == "developer" {
+				index = i + 1
+			}
+		}
+		kept = append(kept, nil)
+		copy(kept[index+1:], kept[index:])
+		kept[index] = added
 	}
 	if !changed {
 		return body, nil

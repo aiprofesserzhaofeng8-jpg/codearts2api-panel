@@ -18,6 +18,8 @@ type Streamer interface {
 // StreamSession borrows resolved credentials and immutable request identifiers.
 // Binding and forwarding do not normalize, copy or serialize credentials.
 type StreamSession struct {
+	inbound              provider.Protocol
+	supported            []provider.Protocol
 	adapter              Streamer
 	credentials          json.RawMessage
 	sessionID, requestID string
@@ -30,6 +32,30 @@ func BindStream(adapter Streamer, credentials json.RawMessage, sessionID, reques
 func (s StreamSession) Stream(ctx context.Context, model string, body []byte, onChunk func([]byte) error) error {
 	_, _, upstreamModel := provider.ParseModel(model)
 	return s.adapter.Stream(ctx, s.credentials, provider.Request{
-		Model: upstreamModel, Body: body, SessionID: s.sessionID, RequestID: s.requestID,
+		Model: upstreamModel, Body: body, SupportedProtocols: s.supported, InboundProtocol: s.inbound, SessionID: s.sessionID, RequestID: s.requestID,
 	}, onChunk)
+}
+
+func (s StreamSession) WithModel(model provider.Model) StreamSession {
+	s.supported = model.SupportedProtocols
+	return s
+}
+
+func (s StreamSession) WithProtocol(p provider.Protocol) StreamSession { s.inbound = p; return s }
+
+// NativeSession binds the protocol-aware optional transport to the same gateway
+// single-attempt executor used by legacy streams.
+type NativeSession struct {
+	adapter     provider.NativeStreaming
+	credentials json.RawMessage
+	request     provider.Request
+}
+
+func BindNative(adapter provider.NativeStreaming, credentials json.RawMessage, request provider.Request) NativeSession {
+	return NativeSession{adapter, credentials, request}
+}
+func (s NativeSession) Stream(ctx context.Context, _ string, body []byte, emit func([]byte) error) error {
+	request := s.request
+	request.Body = body
+	return s.adapter.StreamNative(ctx, s.credentials, request, emit)
 }

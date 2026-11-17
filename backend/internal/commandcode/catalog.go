@@ -73,7 +73,7 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 				match = true
 			}
 		}
-		if !match {
+		if !match && len(provider.EndpointProtocols(r.Endpoints)) == 0 {
 			continue
 		}
 		name := r.Name
@@ -81,6 +81,7 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 			name = r.ID
 		}
 		m := provider.Model{ID: r.ID, UpstreamID: r.ID, Name: name, Provider: "commandcode", Scope: "global", Context: r.Context, MaxOutput: r.Output, StreamOnly: true, Source: c.Origin + "/provider/v1/models"}
+		m.SupportedProtocols = provider.EndpointProtocols(r.Endpoints)
 		if r.Modalities.Input != nil {
 			m.ImageInput = "unsupported"
 			for _, v := range r.Modalities.Input {

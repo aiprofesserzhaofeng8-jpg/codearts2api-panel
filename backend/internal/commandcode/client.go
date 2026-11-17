@@ -23,11 +23,13 @@ type Client struct {
 func New() *Client { return &Client{HTTP: providerhttp.New(), Origin: origin} }
 
 type credentials struct {
-	Key   string `json:"api_key"`
-	Scope string `json:"scope"`
-	Mode  string `json:"account_mode"`
-	Auth  string `json:"auth_mode"`
-	Name  string `json:"name,omitempty"`
+	Rules    []provider.ProtocolRule `json:"protocol_rules"`
+	Protocol provider.Protocol       `json:"api_protocol,omitempty"`
+	Key      string                  `json:"api_key"`
+	Scope    string                  `json:"scope"`
+	Mode     string                  `json:"account_mode"`
+	Auth     string                  `json:"auth_mode"`
+	Name     string                  `json:"name,omitempty"`
 }
 
 func (c *Client) Normalize(raw json.RawMessage) (json.RawMessage, provider.Identity, error) {
@@ -47,6 +49,12 @@ func (c *Client) Normalize(raw json.RawMessage) (json.RawMessage, provider.Ident
 		if b := fields[key]; len(b) > 0 && string(b) != "null" && string(b) != `""` {
 			return nil, provider.Identity{}, providerhttp.Invalid("Command Code", "不支持混合登录材料或自定义端点")
 		}
+	}
+	if a.Protocol != "" && a.Protocol != provider.AdaptiveProtocol && a.Protocol != provider.ChatProtocol && a.Protocol != provider.ResponsesProtocol && a.Protocol != provider.MessagesProtocol {
+		return nil, provider.Identity{}, providerhttp.Invalid("commandcode", "API 协议无效")
+	}
+	if err := provider.ValidateProtocolRules(a.Rules); err != nil {
+		return nil, provider.Identity{}, providerhttp.Invalid("commandcode", err.Error())
 	}
 	a.Auth = "api_key"
 	sum := sha256.Sum256([]byte("commandcode:" + a.Key))

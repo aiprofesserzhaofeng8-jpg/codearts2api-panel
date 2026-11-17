@@ -13,11 +13,12 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/protocol"
+	"codearts2api/internal/provider"
 	apicompat "codearts2api/internal/responsescompat"
 )
 
-// handleResponses uses Sub2API's Chat fallback converter while keeping this
-// gateway's authentication, leases, refresh, timeout, retry and accounting.
+// handleResponses retains the inbound request until account selection. Matching
+// upstreams preserve Responses events; other transports use the Sub2API bridge.
 func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST")
@@ -68,17 +69,6 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	key := extractKey(r)
 	scope := responsesCacheScope(key)
 	s.responsesReasoning.recacheInput(scope, req.Input)
-	chat, err := apicompat.ResponsesToChatCompletionsRequestWithOptions(&req, &apicompat.ResponsesToChatOptions{
-		ReasoningContentByID: func(id string) string { return s.responsesReasoning.get(scope, id, time.Now()) },
-	})
-	if err != nil {
-		reject(400, err.Error(), "invalid_request_error")
-		return
-	}
-	if len(chat.Messages) == 0 {
-		reject(400, "input 不能为空", "invalid_request_error")
-		return
-	}
 	settings := s.Store.Settings()
 	model, err := s.resolveModelForRequest(r, settings, requestedModel)
 	if err != nil {
@@ -99,20 +89,17 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	functions := apicompat.FunctionToolNames(tools)
 	namespaces := apicompat.NamespaceToolNames(tools)
 	toolSearch := apicompat.HasToolSearchTool(tools)
-	// CodeArts accepts max_tokens. The Sub2API converter uses max_completion_tokens.
-	chat.Model = model.ID
-	chat.MaxTokens, chat.MaxCompletionTokens = chat.MaxCompletionTokens, nil
-	// Always consume the upstream stream, including for buffered clients. This
-	// avoids the empty non-streaming rejection returned by some CodeArts models.
-	chat.Stream = true
-	chat.StreamOptions = &apicompat.ChatStreamOptions{IncludeUsage: true}
-	upBody, err := json.Marshal(chat)
+	requirements, err := protocol.InspectRequirements(body, string(provider.ResponsesProtocol))
+	if err == nil {
+		err = mappedPlan(r.Context()).FilterRequirements(requirements)
+	}
 	if err != nil {
-		reject(400, err.Error(), "invalid_request_error")
+		reject(400, err.Error(), "invalid_request_error", apierr.Reason(err))
 		return
 	}
-	if err := mappedPlan(r.Context()).FilterCapabilities(upBody); err != nil {
-		reject(apierr.From(err).Status, err.Error(), apierr.From(err).OpenAI, apierr.Reason(err))
+	upBody, err := rewriteModel(body, model.ID, req.Stream)
+	if err != nil {
+		reject(400, err.Error(), "invalid_request_error")
 		return
 	}
 	r = r.WithContext(withRoutingModel(withRoutingSession(r, upBody), model.ID))
@@ -133,6 +120,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 	var started bool
 	var state *apicompat.ChatCompletionsToResponsesStreamState
 	var final *apicompat.ResponsesResponse
+	var nativeFinal []byte
 	outLen := 0
 	writeEvents := func(events []apicompat.ResponsesStreamEvent) error {
 		for _, event := range events {
@@ -172,9 +160,65 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		state.CustomTools, state.FunctionTools = custom, functions
 		state.NamespaceTools, state.ToolSearchDeclared = namespaces, toolSearch
 		final = nil
+		nativeFinal = nil
 		outLen = 0
 		totalBytes := 0
-		err := s.streamOnce(ctx, acct, model, upBody, func(raw []byte) error {
+		if handled, err := s.tryNative(ctx, acct, model, upBody, provider.ResponsesProtocol, func(raw []byte) error {
+			totalBytes += len(raw)
+			if totalBytes > 32<<20 {
+				return fmt.Errorf("upstream response exceeds 32 MiB")
+			}
+			outLen += nativeDeltaLen(raw)
+			var event apicompat.ResponsesStreamEvent
+			if err := json.Unmarshal(raw, &event); err != nil {
+				return err
+			}
+			if event.Response != nil {
+				state.ResponseID = event.Response.ID
+				state.Created = event.Response.CreatedAt
+			}
+			state.SequenceNumber = event.SequenceNumber + 1
+			if event.Response != nil && event.Response.Status != "in_progress" {
+				final = event.Response
+				nativeFinal = append(nativeFinal[:0], raw...)
+			}
+			if event.Type == "response.output_item.done" && event.Item != nil {
+				s.responsesReasoning.rememberOutput(scope, []apicompat.ResponsesOutput{*event.Item})
+			}
+			if !req.Stream {
+				return nil
+			}
+			if !started {
+				w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+				w.Header().Set("Cache-Control", "no-cache")
+				w.Header().Set("X-Accel-Buffering", "no")
+				w.WriteHeader(200)
+				started = true
+			}
+			if _, err := fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event.Type, raw); err != nil {
+				return err
+			}
+			flusher.Flush()
+			return nil
+		}); handled {
+			return stopAfterOutput(err, started)
+		}
+		chat, err := apicompat.ResponsesToChatCompletionsRequestWithOptions(&req, &apicompat.ResponsesToChatOptions{ReasoningContentByID: func(id string) string { return s.responsesReasoning.get(scope, id, time.Now()) }})
+		if err != nil {
+			return &provider.Error{Status: 400, Message: err.Error()}
+		}
+		if len(chat.Messages) == 0 {
+			return &provider.Error{Status: 400, Message: "input 不能为空"}
+		}
+		chat.Model = model.ID
+		chat.MaxTokens, chat.MaxCompletionTokens = chat.MaxCompletionTokens, nil
+		chat.Stream = true
+		chat.StreamOptions = &apicompat.ChatStreamOptions{IncludeUsage: true}
+		chatBody, err := json.Marshal(chat)
+		if err != nil {
+			return err
+		}
+		err = s.streamOnce(ctx, acct, model, chatBody, func(raw []byte) error {
 			totalBytes += len(raw)
 			if totalBytes > 32<<20 {
 				return fmt.Errorf("upstream response exceeds 32 MiB")
@@ -227,11 +271,24 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.WriteString(w, "data: [DONE]\n\n")
 		flusher.Flush()
 	} else {
-		writeJSON(w, 200, final)
+		if len(nativeFinal) > 0 {
+			var envelope map[string]json.RawMessage
+			_ = json.Unmarshal(nativeFinal, &envelope)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			_, _ = w.Write(envelope["response"])
+		} else {
+			writeJSON(w, 200, final)
+		}
 	}
 }
 
 func validateResponsesRequest(body []byte, req *apicompat.ResponsesRequest) error {
+	input := strings.TrimSpace(string(req.Input))
+	if input == "" || input == "null" || input == "[]" || input == `""` {
+		return fmt.Errorf("input 不能为空")
+	}
+
 	if strings.TrimSpace(req.Model) == "" {
 		return fmt.Errorf("model is required")
 	}
