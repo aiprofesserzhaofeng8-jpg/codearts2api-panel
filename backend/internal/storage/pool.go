@@ -124,6 +124,9 @@ func (s *Store) acquireAccountForModels(session string, models []string, exclude
 	}
 	targetFor := func(a *accounts.Account) string {
 		for _, t := range targets {
+			if m, managed := s.published[t.id]; managed && !m.SyncedOwners[a.ID] {
+				continue
+			}
 			if a.ProviderID() == t.platform && (t.platform == provider.CodeArts || a.Scope == t.scope) {
 				return t.id
 			}

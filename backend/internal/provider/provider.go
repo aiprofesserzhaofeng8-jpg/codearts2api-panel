@@ -35,18 +35,20 @@ const Bedrock = "bedrock"
 const Vertex = "vertex"
 
 type Model struct {
-	SupportedProtocols []Protocol `json:"supported_protocols,omitempty"`
-	ID                 string     `json:"id"`
-	Name               string     `json:"name"`
-	Context            int        `json:"context"`
-	MaxOutput          int        `json:"max_output"`
-	Desc               string     `json:"description"`
-	Source             string     `json:"source"`
-	Credit             string     `json:"credit,omitempty"`
-	StreamOnly         bool       `json:"stream_only,omitempty"`
-	Provider           string     `json:"provider,omitempty"`
-	Scope              string     `json:"scope,omitempty"`
-	UpstreamID         string     `json:"upstream_id,omitempty"`
+	CatalogKind        string          `json:"-"` // Non-live catalog origin, when supplied by the adapter.
+	SyncedOwners       map[string]bool `json:"-"` // Immutable account IDs for administrator-published sources.
+	SupportedProtocols []Protocol      `json:"supported_protocols,omitempty"`
+	ID                 string          `json:"id"`
+	Name               string          `json:"name"`
+	Context            int             `json:"context"`
+	MaxOutput          int             `json:"max_output"`
+	Desc               string          `json:"description"`
+	Source             string          `json:"source"`
+	Credit             string          `json:"credit,omitempty"`
+	StreamOnly         bool            `json:"stream_only,omitempty"`
+	Provider           string          `json:"provider,omitempty"`
+	Scope              string          `json:"scope,omitempty"`
+	UpstreamID         string          `json:"upstream_id,omitempty"`
 	// Empty means unknown; never infer image support from a model's name.
 	ImageInput  string `json:"image_input,omitempty"`
 	ToolCalling string `json:"tool_calling,omitempty"`

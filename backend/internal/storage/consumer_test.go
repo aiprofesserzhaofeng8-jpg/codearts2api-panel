@@ -301,6 +301,82 @@ func TestConsumerSubscriptionQuotaRenewalExpiryAndTemplateIsolation(t *testing.T
 	}
 }
 
+func TestPlanLifecycleAndReferences(t *testing.T) {
+	s, u, _ := userFixture(t, KeyBudget{})
+	p, err := s.SavePlan(access.Plan{Name: "Monthly", GroupID: u.GroupID, Enabled: true, Days: 30, Period: "month"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := access.Redemption{Kind: "subscription", PlanID: p.ID, ExpiresAt: time.Now().Unix() + 86400}
+	codes, err := s.GenerateRedemptions(c, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := p
+	changed.Days = 7
+	if _, err = s.SavePlan(changed); err == nil {
+		t.Fatal("changed rights after issuing codes")
+	}
+	if err = s.DeletePlan(p.ID); err == nil {
+		t.Fatal("deleted a plan referenced by a code")
+	}
+	p.Enabled = false
+	p.Delisted = true
+	if _, err = s.SavePlan(p); err != nil {
+		t.Fatal(err)
+	}
+	if err = s.ManageSubscription(u.ID, p.ID, "assign", 30); err == nil {
+		t.Fatal("assigned a delisted plan")
+	}
+	if _, err = s.GenerateRedemptions(c, 1); err == nil {
+		t.Fatal("issued code after delisting")
+	}
+	if err = s.Redeem(u.ID, codes[0]); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := s.User(u.ID)
+	if err = s.ManageSubscription(u.ID, p.ID, "assign", 30); err == nil {
+		t.Fatal("manually renewed delisted plan")
+	}
+	if err = s.Redeem(u.ID, codes[1]); err != nil {
+		t.Fatal(err)
+	}
+	after, _ := s.User(u.ID)
+	if after.Subscription.ID != before.Subscription.ID || after.Subscription.ExpiresAt != before.Subscription.ExpiresAt+30*86400 {
+		t.Fatal("issued code did not extend subscription")
+	}
+	p.Delisted = false
+	if _, err = s.SavePlan(p); err != nil {
+		t.Fatal(err)
+	}
+	if err = s.Redeem(u.ID, codes[2]); err == nil {
+		t.Fatal("redeemed disabled plan")
+	}
+	got, _ := s.User(u.ID)
+	if got.Subscription != after.Subscription {
+		t.Fatal("disabling template changed subscription")
+	}
+	_, refs := s.PlanCatalog()
+	if refs[p.ID] != (PlanReferences{Subscriptions: 1, Codes: 3}) {
+		t.Fatal(refs)
+	}
+	if err = s.ManageSubscription(u.ID, "", "remove", 0); err != nil {
+		t.Fatal(err)
+	}
+	if err = s.DeletePlan(p.ID); err == nil {
+		t.Fatal("deleted referenced history")
+	}
+	p.ID = ""
+	p.Enabled = true
+	unused, err := s.SavePlan(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.DeletePlan(unused.ID); err != nil {
+		t.Fatal(err)
+	}
+}
+
 type fakeConsumerIdentityTransport struct {
 	Code    string
 	Subject string

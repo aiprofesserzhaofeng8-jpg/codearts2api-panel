@@ -7,9 +7,9 @@ type Configuration = components['schemas']['PromptConfiguration'];
 type Prompt = components['schemas']['PromptPolicy'];
 type Platform = components['schemas']['PlatformPrompt'];
 const platforms = [
-  {id:'common',name:'公共默认值'}, {id:'codearts',name:'CodeArts'}, {id:'workbuddy',name:'WorkBuddy'},
+  {id:'common',name:'公共配置'}, {id:'codearts',name:'CodeArts'}, {id:'workbuddy',name:'WorkBuddy'},
   {id:'trae',name:'Trae'}, {id:'qoder',name:'Qoder'}, {id:'kiro',name:'Kiro'},
-  {id:'chatgpt',name:'ChatGPT / Codex'}, {id:'claude',name:'Claude / Anthropic'}, {id:'teleagent',name:'TeleAgent'},
+  {id:'chatgpt',name:'ChatGPT'}, {id:'claude',name:'Claude'}, {id:'teleagent',name:'TeleAgent'},
 ];
 const draft=ref<Configuration>(), baseline=ref<Configuration>(), selected=ref('common'), busy=ref(false), loading=ref(false), error=ref(''), saved=ref('');
 const protocol=ref('chat_completions'), sample=ref(''), preview=ref(''), previewError=ref(''), previewBusy=ref(false);
@@ -46,7 +46,7 @@ function toggleInheritance(field:keyof Prompt,enabled:boolean){
 }
 const mode=computed(()=>value('prompt_mode') || 'passthrough');
 const text=computed(()=>value('prompt_text') || '');
-const description=computed(()=>mode.value==='append'?'保留客户端原有系统指令，补充下面的要求。':mode.value==='custom'?'替换客户端系统指令；普通聊天历史和工具定义保持。':'使用客户端自带的系统指令，下方保存的文本不参与正常请求。');
+const description=computed(()=>mode.value==='append'?'保留客户端原有系统指令，补充下面的要求。':mode.value==='custom'?'替换客户端系统指令；普通聊天历史和工具定义保持。':'');
 watch([mode,text,selected,protocol,sample,()=>value('sanitize')],()=>{previewSequence++;preview.value='';previewError.value='';});
 const bytes=computed(()=>new TextEncoder().encode(text.value).length);
 async function load(force=false){
@@ -86,34 +86,35 @@ onUnmounted(()=>{alive=false;sequence++;window.removeEventListener('prompts-refr
 <template>
 <section id="tab-prompts" role="tabpanel" aria-labelledby="nav-prompts">
  <div class="card">
-  <div class="card-head"><div><h2>{{tr('提示词管理')}}</h2><p class="card-sub">{{tr('保留客户端规则，或明确选择替换。保存后生效。')}}</p></div><div class="actions"><span v-if="dirty" class="badge warn">{{tr('有未保存的改动')}}</span><button class="btn" :disabled="busy || loading" @click="load(true)">{{tr('重新读取')}}</button><button id="savePrompts" class="btn primary" :disabled="!dirty || busy || loading" @click="save">{{busy?tr('保存中…'):tr('保存提示词')}}</button></div></div>
+  <div class="card-head"><div><h2>{{tr('提示词管理')}}</h2></div><div class="card-actions"><button class="btn" :disabled="busy || loading" @click="load(true)">{{tr('重新读取')}}</button><button id="savePrompts" class="btn primary" :disabled="!dirty || busy || loading" @click="save">{{busy?tr('保存中…'):tr('保存提示词')}}</button></div></div>
   <p v-if="error" class="err-text prompt-notice" role="alert">{{error}}</p><p v-if="saved" class="prompt-notice" role="status">{{saved}}</p>
   <p v-if="loading && !draft" class="prompt-notice">{{tr('读取中')}}</p>
   <div v-if="draft" class="prompt-workspace">
-   <nav class="prompt-scopes" :aria-label="tr('应用范围')"><button v-for="p in platforms" :key="p.id" class="prompt-scope" :class="{selected:selected===p.id}" :aria-pressed="selected===p.id" :disabled="busy" @click="selected=p.id;preview='';previewError=''">{{tr(p.name)}}<small v-if="p.id==='common'">{{tr('继承此配置的平台共用')}}</small></button></nav>
+   <nav class="prompt-scopes" :aria-label="tr('应用范围')"><button v-for="p in platforms" :key="p.id" class="prompt-scope" :class="{selected:selected===p.id}" :aria-pressed="selected===p.id" :disabled="busy" @click="selected=p.id;preview='';previewError=''">{{tr(p.name)}}</button></nav>
    <div class="prompt-editor">
     <h3>{{tr(platforms.find(p=>p.id===selected)!.name)}}</h3>
-    <p v-if="selected==='common'" class="hint">{{tr('平台启用继承的字段才采用公共值。其他已接入平台使用公共默认值。')}}</p>
     <fieldset :disabled="busy">
      <label v-if="selected!=='common'" class="check"><input type="checkbox" :checked="inherited('prompt_mode')" @change="toggleInheritance('prompt_mode',($event.target as HTMLInputElement).checked)">{{tr('继承公共模式')}}</label>
-     <div class="field"><label for="promptMode">{{tr('处理方式')}}</label><select id="promptMode" :value="mode" :disabled="inherited('prompt_mode')" @change="setValue('prompt_mode',($event.target as HTMLSelectElement).value as Prompt['prompt_mode'])"><option value="passthrough">{{tr('透传 · 保留客户端指令')}}</option><option value="append">{{tr('追加 · 保留原指令并补充')}}</option><option value="custom">{{tr('替换 · 使用自定义指令')}}</option></select><p class="hint" :class="{'prompt-replace-warning':mode==='custom'}">{{tr(description)}}</p></div>
+     <div class="field"><label for="promptMode">{{tr('处理方式')}}</label><select id="promptMode" :value="mode" :disabled="inherited('prompt_mode')" @change="setValue('prompt_mode',($event.target as HTMLSelectElement).value as Prompt['prompt_mode'])"><option value="passthrough">{{tr('透传 · 保留客户端指令')}}</option><option value="append">{{tr('追加 · 保留原指令并补充')}}</option><option value="custom">{{tr('替换 · 使用自定义指令')}}</option></select><p v-if="description" class="hint" :class="{'prompt-replace-warning':mode==='custom'}">{{tr(description)}}</p></div>
      <label v-if="selected!=='common'" class="check"><input type="checkbox" :checked="inherited('prompt_text')" @change="toggleInheritance('prompt_text',($event.target as HTMLInputElement).checked)">{{tr('继承公共文本')}}</label>
-     <div class="field"><label for="promptText">{{tr('提示词内容')}} <span v-if="mode==='passthrough'" class="muted">{{tr('（当前模式不使用）')}}</span></label><textarea id="promptText" rows="10" :value="text" :disabled="inherited('prompt_text')" @input="setValue('prompt_text',($event.target as HTMLTextAreaElement).value)" :placeholder="tr('例如：在满足需求和正确性的前提下，优先采用简单、易维护的方案。')"></textarea><div class="row between"><small :class="bytes>65536?'err-text':'muted'">{{bytes.toLocaleString()}} / 65,536 bytes</small><small class="muted">{{tr(mode==='custom'?'替换模式留空时使用内置工程助手指令。':'追加模式留空时不增加内容。')}}</small></div></div>
+     <div class="field"><label for="promptText">{{tr('提示词内容')}} <span v-if="mode==='passthrough'" class="muted">{{tr('（当前模式不使用）')}}</span></label><textarea id="promptText" rows="10" :value="text" :disabled="inherited('prompt_text')" @input="setValue('prompt_text',($event.target as HTMLTextAreaElement).value)" :placeholder="tr('例如：在满足需求和正确性的前提下，优先采用简单、易维护的方案。')"></textarea><div class="row between"><small :class="bytes>65536?'err-text':'muted'">{{bytes.toLocaleString()}} / 65,536 bytes</small><small v-if="mode!=='passthrough'" class="muted">{{tr(mode==='custom'?'替换模式留空时使用内置工程助手指令。':'追加模式留空时不增加内容。')}}</small></div></div>
      <details class="prompt-advanced"><summary>{{tr('兼容性设置')}}</summary><p class="hint">{{tr('保留原有兼容策略；拦截恢复只在透传模式下触发。')}}</p><label v-if="selected!=='common'" class="check"><input type="checkbox" :checked="inherited('prompt_fallback')" @change="toggleInheritance('prompt_fallback',($event.target as HTMLInputElement).checked)">{{tr('继承公共值 · 拦截恢复')}}</label><label class="check"><input type="checkbox" :checked="value('prompt_fallback')" :disabled="inherited('prompt_fallback')" @change="setValue('prompt_fallback',($event.target as HTMLInputElement).checked)">{{tr('透传遇明确拦截时重试一次')}}</label><label v-if="selected!=='common'" class="check"><input type="checkbox" :checked="inherited('sanitize')" @change="toggleInheritance('sanitize',($event.target as HTMLInputElement).checked)">{{tr('继承公共值 · 清洗')}}</label><label class="check"><input type="checkbox" :checked="value('sanitize')" :disabled="inherited('sanitize')" @change="setValue('sanitize',($event.target as HTMLInputElement).checked)">{{tr('仅清洗系统提示词中的客户端模板')}}</label></details>
     </fieldset>
    </div>
   </div>
  </div>
- <div v-if="draft" class="card"><div class="card-head"><div><h2>{{tr('注入预览')}}</h2><p class="card-sub">{{tr('使用当前编辑内容预览请求，不调用上游、不消耗模型额度。')}}</p></div><button id="previewPrompt" class="btn" :disabled="previewBusy || busy" @click="runPreview">{{tr('预览效果')}}</button></div><div class="card-body"><div class="field"><label for="promptProtocol">{{tr('API 协议')}}</label><select id="promptProtocol" v-model="protocol" @change="resetSample"><option value="chat_completions">Chat Completions</option><option value="responses">Responses</option><option value="anthropic">Anthropic Messages</option></select></div><div class="prompt-preview-grid"><div class="field"><label for="promptSample">{{tr('原始请求')}}</label><textarea id="promptSample" v-model="sample" rows="12" spellcheck="false" @input="preview=''"/></div><div class="field"><label for="promptOutput">{{tr('处理后的请求')}}</label><textarea id="promptOutput" :value="preview" rows="12" readonly spellcheck="false" :placeholder="tr('点击预览效果，查看指令变化')"/></div></div><p v-if="previewError" class="err-text" role="alert">{{previewError}}</p></div></div>
+ <div v-if="draft" class="card"><div class="card-head"><div><h2>{{tr('注入预览')}}</h2></div><button id="previewPrompt" class="btn" :disabled="previewBusy || busy" @click="runPreview">{{tr('预览效果')}}</button></div><div class="card-body"><div class="field"><label for="promptProtocol">{{tr('API 协议')}}</label><select id="promptProtocol" v-model="protocol" @change="resetSample"><option value="chat_completions">Chat Completions</option><option value="responses">Responses</option><option value="anthropic">Anthropic Messages</option></select></div><div class="prompt-preview-grid"><div class="field"><label for="promptSample">{{tr('原始请求')}}</label><textarea id="promptSample" v-model="sample" rows="12" spellcheck="false" @input="preview=''"/></div><div class="field"><label for="promptOutput">{{tr('处理后的请求')}}</label><textarea id="promptOutput" :value="preview" rows="12" readonly spellcheck="false" :placeholder="tr('点击预览效果，查看指令变化')"/></div></div><p v-if="previewError" class="err-text" role="alert">{{previewError}}</p></div></div>
 </section>
 </template>
 
 <style scoped>
-.prompt-workspace{display:grid;grid-template-columns:210px minmax(0,1fr);border-top:1px solid var(--line)}
+.card-head{align-items:center}
+@media(max-width:600px){.card-head>.card-actions{flex-basis:100%;margin-left:0}}
+.prompt-workspace{display:grid;grid-template-columns:210px minmax(0,1fr)}
 .prompt-scopes{display:flex;flex-direction:column;gap:4px;padding:16px;border-right:1px solid var(--line)}
-.prompt-scope{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:1px solid transparent;border-radius:8px;background:transparent;padding:11px 12px;font:inherit;color:var(--text-2);cursor:pointer;text-align:left}
-.prompt-scope small{font-size:12px;color:var(--text-3)}
+.prompt-scope{display:flex;align-items:center;border:1px solid transparent;border-radius:8px;background:transparent;padding:11px 12px;font:inherit;color:var(--text-2);cursor:pointer;text-align:left}
+
 .prompt-scope.selected{background:var(--accent-soft);border-color:var(--accent-line);color:var(--text)}
 .prompt-editor{padding:24px;min-width:0}.prompt-editor h3{margin:0 0 16px}.prompt-editor fieldset{border:0;padding:0;margin:0;min-width:0}.prompt-editor .field{margin:12px 0 18px}.prompt-editor .check{margin:8px 0}.prompt-editor textarea{min-height:220px;resize:vertical}.prompt-replace-warning{color:var(--accent-text)}.prompt-advanced{border-top:1px solid var(--line);padding-top:18px;margin-top:20px}.prompt-advanced summary{cursor:pointer}.prompt-notice{padding:0 24px}.prompt-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.prompt-preview-grid textarea{font-family:var(--font-mono,monospace);font-size:13px;resize:vertical}.prompt-preview-grid .field{min-width:0}
-@media(max-width:700px){.prompt-workspace{grid-template-columns:1fr}.prompt-scopes{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.prompt-scope{flex-shrink:0}.prompt-editor{padding:16px}.prompt-preview-grid{grid-template-columns:1fr}.prompt-scope small{display:none}}
+@media(max-width:700px){.prompt-workspace{grid-template-columns:1fr}.prompt-scopes{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.prompt-scope{flex-shrink:0}.prompt-editor{padding:16px}.prompt-preview-grid{grid-template-columns:1fr}}
 </style>

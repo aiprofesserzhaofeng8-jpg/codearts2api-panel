@@ -1,0 +1,26 @@
+.plan-more{position:relative}
+.consumer-admin .consumer-form select.plan-operations{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.plan-more:focus-within{outline:2px solid currentColor;outline-offset:1px}
+.plan-more:has(:disabled:is(select)){opacity:.5}
+.consumer-admin td .rights-actions{flex-wrap:nowrap;margin:0}
+.rights-tabs,.rights-actions,.rights-bar,.rights-heading{display:flex;align-items:center;gap:8px}
+.rights-tabs{overflow-x:auto;border-bottom:1px solid var(--line);gap:16px}
+.rights-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-2);font:inherit;white-space:nowrap;padding:8px 2px;cursor:pointer}
+.rights-tabs button[aria-current]{border-color:var(--accent);color:var(--text);font-weight:600}
+.consumer-admin .consumer-form{padding:18px 0 0;max-width:none;min-width:0}
+.consumer-admin .consumer-form h3{margin:0;font-size:15px}
+.rights-heading,.rights-bar{justify-content:space-between;flex-wrap:wrap}
+.rights-heading,.rights-actions,.rights-bar,.rights-amount,.consumer-admin .field-grid{margin:12px 0}
+.rights-actions{flex-wrap:wrap}
+.rights-picker{max-width:360px;display:block}
+.rights-stats{display:flex;flex-wrap:wrap;gap:14px 48px;padding:14px 0 18px;border-bottom:1px solid var(--line)}
+.rights-stats dt,.identity-section .rights-bar span{color:var(--text-2);font-size:13px}
+.rights-stats dd{margin:4px 0 0;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.rights-amount{display:grid;grid-template-columns:minmax(140px,200px) minmax(180px,1fr);gap:16px}
+.rights-fields{margin:0;padding:0;border:0;min-width:0}
+.identity-section{border-bottom:1px solid var(--line);padding:2px 0;overflow-wrap:anywhere}
+.identity-section:last-of-type{border:0}
+.identity-section .rights-bar>div{display:grid;gap:4px}
+.consumer-admin .field input,.consumer-admin .field select{display:block}
+.consumer-admin .table-wrap{margin-top:14px}
+@media(max-width:600px){.rights-amount,.consumer-admin .field-grid{grid-template-columns:1fr}.rights-picker{max-width:none}.rights-tabs{gap:14px}.rights-stats{gap:12px 20px}}

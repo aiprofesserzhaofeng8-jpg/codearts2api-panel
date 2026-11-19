@@ -129,6 +129,7 @@ func (c *Client) models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 		out := append([]provider.Model(nil), c.Fallback...)
 		for i := range out {
 			c.decorate(&out[i])
+			out[i].CatalogKind = "reference"
 		}
 		return out, true, nil
 	}

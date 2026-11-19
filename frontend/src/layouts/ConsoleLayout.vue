@@ -34,12 +34,12 @@ onUnmounted(() => { media.removeEventListener('change', resize); document.body.c
       <ConsoleBrand />
       <button class="btn ghost console-mobile-close" :aria-label="tr('关闭导航')" @click="closeMenu">{{tr('关闭')}}</button>
       <div class="sidebar-scroll">
-        <p class="sidebar-section-label">{{role === 'admin' ? tr('管理空间') : tr('个人空间')}}</p>
+        <p v-if="role === 'user'" class="sidebar-section-label">{{tr('个人空间')}}</p>
         <slot name="navigation"><Sidebar /></slot>
       </div>
       <div class="sidebar-foot">
         <slot name="status"><span v-once id="health" class="badge"><i class="dot"></i><span>{{tr('检测中…')}}</span></span></slot>
-        <button class="btn ghost console-collapse" :aria-label="collapsed ? tr('展开侧栏') : tr('收起侧栏')" :aria-expanded="!collapsed" aria-controls="consoleSidebar" @click="collapse"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path :d="collapsed ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'"/></svg><span>{{collapsed ? tr('展开侧栏') : tr('收起侧栏')}}</span></button>
+        <button class="btn ghost console-collapse" :aria-label="collapsed ? tr('展开侧栏') : tr('收起侧栏')" :title="collapsed ? tr('展开侧栏') : tr('收起侧栏')" :aria-expanded="!collapsed" aria-controls="consoleSidebar" @click="collapse"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path :d="collapsed ? 'm6 18 6-6-6-6 M13 18l6-6-6-6' : 'm18 18-6-6 6-6 M11 18l-6-6 6-6'"/></svg><span>{{collapsed ? tr('展开侧栏') : tr('收起侧栏')}}</span></button>
       </div>
     </aside>
     <button v-if="open" class="console-backdrop" :aria-label="tr('关闭侧栏')" tabindex="-1" @click="closeMenu"></button>

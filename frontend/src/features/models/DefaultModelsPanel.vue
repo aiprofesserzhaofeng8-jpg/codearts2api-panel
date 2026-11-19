@@ -48,13 +48,11 @@ async function apply() {
 }
 </script>
 <template>
-  <div class="card unified-panel">
+  <div class="card unified-panel default-models-panel">
     <div class="card-head">
-      <div><h2>{{tr('默认模型目录')}}</h2><p class="card-sub">{{tr('汇总所有已接入平台，一次配置用户可见的模型名称。')}}</p></div>
+      <h2>{{tr('默认模型目录')}}</h2>
       <button id="openDefaultModels" class="btn primary" :disabled="busy" @click="open">{{busy?tr('读取中…'):tr('归并同名模型')}}</button>
     </div>
-    <p class="unified-help hint">{{tr('按完整型号归并各平台来源，用户只看到一个模型名称。不同版本保留区别；auto 等平台专用入口单独展示。')}}</p>
-    <p class="unified-help hint">{{tr('统一模型能力受已核实的原生规格约束；平台额外提供的能力请使用完整来源名称。未核实的型号不推断原生能力。')}}</p>
     <p v-if="result" role="status" class="unified-help">{{result}}</p>
     <p v-if="error && !dialog?.open" class="err-text" role="alert">{{error}}</p>
   </div>

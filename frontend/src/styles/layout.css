@@ -1,6 +1,14 @@
 /* Shared admin/user shell. Feature cards and native DOM ownership stay local. */
-.console-layout{--sidebar-w:240px}
+.console-layout{--sidebar-w:240px;--shell-header-height:4rem}
 .console-layout .sidebar{z-index:30;gap:0;padding:0 12px 12px;min-height:0}
+.console-layout .sidebar>.brand,.console-layout .main>.topbar{
+  box-sizing:border-box;height:var(--shell-header-height);min-height:var(--shell-header-height);flex-shrink:0
+}
+.console-layout .sidebar>.brand{margin-inline:-12px;padding-inline:24px;gap:12px}
+.console-layout .main>.topbar{padding-block:0}
+.console-layout .sidebar .brand-mark{width:36px;height:36px}
+.console-layout .sidebar nav.tabs button,.console-layout .sidebar .console-collapse{gap:12px;min-height:40px;padding:10px 14px 10px 17px}
+.console-layout .sidebar nav.tabs .ico,.console-layout .sidebar .console-collapse .ico{width:20px;height:20px;flex:none}
 .sidebar-scroll{flex:1;min-height:0;overflow-y:auto;padding:16px 0}
 .sidebar-section-label{font-size:11px;letter-spacing:.06em;color:var(--text-3);margin:0 10px 10px}
 .console-layout nav.tabs{margin:0;gap:4px}
@@ -51,17 +59,17 @@
 #adminLoginDialog{padding:0;max-width:440px}
 @media(min-width:921px){
   .console-layout .sidebar{height:100dvh}
+  .sidebar-collapsed .sidebar>.brand,.sidebar-collapsed .sidebar nav.tabs button,.sidebar-collapsed .sidebar .console-collapse{justify-content:center;padding-inline:0}
 }
 @media(max-width:920px){
   body.console-menu-open{overflow:hidden}
   .console-layout{grid-template-columns:minmax(0,1fr)}
   .console-layout .sidebar{position:fixed;top:0;bottom:0;left:0;width:260px;max-width:calc(100vw - 48px);height:100dvh;align-items:stretch;flex-direction:column;flex-wrap:nowrap;padding:0 12px 12px;border-right:1px solid var(--line);border-bottom:0;transform:translateX(-100%);visibility:hidden;transition:transform .18s ease,visibility .18s}
   .console-layout.sidebar-open .sidebar{transform:none;visibility:visible;z-index:60}
-  .console-layout .sidebar .brand{height:64px;min-height:64px;justify-content:flex-start;padding:0 9px;border-bottom:1px solid var(--line)}
+  .console-layout .sidebar .brand{justify-content:flex-start;border-bottom:1px solid var(--line)}
   .console-layout .sidebar-scroll{width:100%}
   .console-layout nav.tabs{width:100%;flex-direction:column;overflow:visible;padding:0}
   .console-layout nav.tabs button{width:100%;padding:9px 10px;justify-content:flex-start;gap:10px}
-  .console-layout nav.tabs button .ico{width:16px;height:16px}
   .console-layout .sidebar-foot{margin:0;border-top:1px solid var(--line);align-items:stretch}
   .console-layout .console-spaces{flex-direction:row}
   .console-layout .console-collapse{display:none}

@@ -103,6 +103,8 @@ func (s *Store) RemoveAccountAndSave(id string) (bool, error) {
 		return false, nil
 	}
 	before := cloneAccounts(s.st.Accounts)
+	oldSnapshot := s.st.accountModelSnapshots[id]
+	delete(s.st.accountModelSnapshots, id)
 	s.st.Accounts = append(s.st.Accounts[:idx], s.st.Accounts[idx+1:]...)
 	raw, err := json.MarshalIndent(s.st, "", "  ")
 	if err == nil {
@@ -110,8 +112,12 @@ func (s *Store) RemoveAccountAndSave(id string) (bool, error) {
 	}
 	if err != nil {
 		s.st.Accounts = before
+		if oldSnapshot != nil {
+			s.st.accountModelSnapshots[id] = oldSnapshot
+		}
 		return false, err
 	}
+	s.rebuildPublishedLocked()
 	for key, b := range s.pool.bindings {
 		if b.id == id {
 			delete(s.pool.bindings, key)

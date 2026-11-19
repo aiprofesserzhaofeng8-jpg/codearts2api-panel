@@ -21,7 +21,7 @@ export function renderPricing() {
     tb.textContent = "";
     ids.sort().forEach(function (id) {
         var p = pricingState.priceCache[id], ops = cell("");
-        ops.appendChild(btn(tr("编辑"), "xs", function () { openPriceEditor(id); }));
+        ops.appendChild(btn(tr("编辑"), "xs row-action row-edit", function () { openPriceEditor(id); }));
         tb.appendChild(row([cell(id, "mono"), cell("USD", "mono"), cell(p ? String(p.input) : tr("未配置"), "mono"), cell(p ? String(p.output) : tr("未配置"), "mono"), cell(p ? String(p.cached) : tr("未配置"), "mono"), cell(p ? p.source + " · " + p.updated_at : tr("未核实官方单价，可自定义"), "muted pricing-source"), ops]));
     });
     if (!ids.length)

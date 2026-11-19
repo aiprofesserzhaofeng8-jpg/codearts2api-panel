@@ -52,7 +52,7 @@ export function modelRow(m) {
             actionCell
         ]);
     }
-    var btn = mk("button", "btn xs", tr("测活"));
+    var btn = mk("button", "btn xs row-action row-probe", tr("测活"));
     var st = modelsState.modelProbeState[m.id] || { state: "idle" };
     if (st.state === "busy") {
         btn.disabled = true;

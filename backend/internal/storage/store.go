@@ -11,6 +11,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
+	"codearts2api/internal/provider"
 	"codearts2api/internal/scheduler"
 	"codearts2api/internal/usage"
 )
@@ -36,10 +37,11 @@ const StateVersion = 11
 
 // State 是全部持久化状态。
 type State struct {
-	UnifiedModels        []config.UnifiedModel `json:"unified_models"`
-	ModelRoutingRevision uint64                `json:"model_routing_revision"`
-	Consumer             access.ConsumerState  `json:"consumer"`
-	Users                []access.User         `json:"users,omitempty"`
+	accountModelSnapshots map[string]*accounts.ModelSnapshot
+	UnifiedModels         []config.UnifiedModel `json:"unified_models"`
+	ModelRoutingRevision  uint64                `json:"model_routing_revision"`
+	Consumer              access.ConsumerState  `json:"consumer"`
+	Users                 []access.User         `json:"users,omitempty"`
 	// UsageSequence is the journal checkpoint included in this snapshot.
 	UsageSequence           uint64                            `json:"usage_sequence,omitempty"`
 	Groups                  []AccountGroup                    `json:"groups,omitempty"`
@@ -60,6 +62,7 @@ type State struct {
 
 // Store 是带锁的状态容器。
 type Store struct {
+	published map[string]provider.Model // immutable generation, replaced under mu
 	// mu 保护 st 里的字段（含账号指针指向的对象）。
 	mu sync.RWMutex
 	// saveMu 串行化落盘。
@@ -129,7 +132,9 @@ func (s *Store) RemoveAccount(id string) bool {
 	defer s.mu.Unlock()
 	for i, a := range s.st.Accounts {
 		if a.ID == id {
+			delete(s.st.accountModelSnapshots, id)
 			s.st.Accounts = append(s.st.Accounts[:i], s.st.Accounts[i+1:]...)
+			s.rebuildPublishedLocked()
 			return true
 		}
 	}

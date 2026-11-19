@@ -19,7 +19,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
           </div>
           <p class="hint model-catalog-status" id="modelHint" role="status" aria-live="polite"></p>
           <div v-once class="table-wrap">
-            <table>
+            <table class="admin-record-table">
               <thead><tr><th>ID</th><th>{{tr('名称')}}</th><th>{{tr('积分倍率')}}</th><th>{{tr('上下文')}}</th><th>{{tr('最大输出')}}</th><th>{{tr('说明')}}</th><th>{{tr('测活')}}</th></tr></thead>
               <tbody id="models"></tbody>
             </table>
@@ -27,7 +27,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
         </div>
         <div v-once class="card">
           <div v-once class="card-head"><div><h2>{{tr('Token 价格表')}}</h2></div><button class="btn" id="reloadPricing">{{tr('刷新价格')}}</button></div>
-          <div v-once class="table-wrap"><table class="pricing-table">
+          <div v-once class="table-wrap"><table class="pricing-table admin-record-table">
             <thead><tr><th>{{tr('模型')}}</th><th>{{tr('币种')}}</th><th>{{tr('输入（未缓存）')}}</th><th>{{tr('输出')}}</th><th>{{tr('缓存命中')}}</th><th>{{tr('来源 / 更新时间')}}</th><th>{{tr('操作')}}</th></tr></thead>
             <tbody id="pricingRows"></tbody>
           </table></div>
@@ -35,7 +35,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
         <div v-once class="card">
           <div v-once class="card-head"><div><h2>{{tr('客户端兼容与压缩策略')}}</h2></div><button class="btn" id="reloadModelPolicies">{{tr('刷新策略')}}</button></div>
           <p class="hint">{{tr('码道上游：Chat Completions。Responses / Messages 由网关转换。原生 Responses compact、WebSocket 和响应存储暂不支持。')}}</p>
-          <div v-once class="table-wrap"><table><thead><tr><th>{{tr('模型')}}</th><th>{{tr('模型用途')}}</th><th>{{tr('推荐上下文 / 输出')}}</th><th>{{tr('压缩触发 / 保留')}}</th><th>{{tr('摘要处理')}}</th><th>{{tr('来源')}}</th><th>{{tr('操作')}}</th></tr></thead><tbody id="modelPolicies"></tbody></table></div>
+          <div v-once class="table-wrap"><table class="admin-record-table"><thead><tr><th>{{tr('模型')}}</th><th>{{tr('模型用途')}}</th><th>{{tr('推荐上下文 / 输出')}}</th><th>{{tr('压缩触发 / 保留')}}</th><th>{{tr('摘要处理')}}</th><th>{{tr('来源')}}</th><th>{{tr('操作')}}</th></tr></thead><tbody id="modelPolicies"></tbody></table></div>
         </div>
       </section>
 <dialog v-once id="priceEditDialog" class="modal" aria-labelledby="priceEditTitle">

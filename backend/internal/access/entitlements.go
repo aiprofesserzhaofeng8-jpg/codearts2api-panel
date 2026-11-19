@@ -31,6 +31,7 @@ type LedgerEntry struct {
 	Note      string `json:"note"`
 }
 type Plan struct {
+	Delisted       bool      `json:"delisted,omitempty"`
 	ID             string    `json:"id"`
 	Name           string    `json:"name"`
 	GroupID        string    `json:"group_id"`
@@ -123,6 +124,9 @@ func CodeDigest(code string) string {
 	return hex.EncodeToString(h[:])
 }
 func (p Plan) Validate() error {
+	if p.Delisted && p.Enabled {
+		return fmt.Errorf("下架套餐不能同时在用")
+	}
 	if strings.TrimSpace(p.Name) == "" || len(p.Name) > 120 || p.Days < 1 || p.Days > 3650 {
 		return fmt.Errorf("套餐名称和有效天数（1–3650）无效")
 	}

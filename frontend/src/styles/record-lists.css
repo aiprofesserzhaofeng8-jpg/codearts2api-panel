@@ -1,0 +1,21 @@
+.record-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:14px 0}
+.record-search,.accounts-workspace .account-toolbar .account-search{flex:0 1 260px;min-width:0}
+.record-search{position:relative;display:block}
+.record-search>.ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
+.record-search input{width:100%;padding-inline-start:36px}
+.record-toolbar :is(input,select,.btn),.accounts-workspace .account-toolbar :is(input,select,.btn){height:36px}
+.record-toolbar select{width:auto;max-width:100%}
+.record-command{margin-inline-start:auto}
+.record-name{font-weight:600}
+.record-secondary{display:block;color:var(--text-3);font-size:12px;margin-top:2px}
+.record-status{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:500;color:var(--text-2)}
+.record-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--text-3);flex:none}
+.record-ready::before{background:var(--ok)}
+.record-paused::before,.record-cooling::before,.record-busy::before{background:var(--warn)}
+.account-last-error{color:var(--err)}
+:is(#userDialog,#groupDialog,#accountConcurrencyDialog,#deleteAccountDialog) .modal-head h2{margin:0;font-size:18px;line-height:28px;font-weight:600}
+:is(#userDialog,#groupDialog,#accountConcurrencyDialog,#deleteAccountDialog) .modal-actions{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:760px){
+  .record-toolbar .record-search,.accounts-workspace .account-toolbar .account-search{flex:1 0 100%;max-width:none}
+  .record-toolbar{gap:8px}
+}

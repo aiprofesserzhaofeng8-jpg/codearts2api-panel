@@ -31,6 +31,9 @@ type Routing struct {
 }
 
 func NewRouting(st RoutingStore, directory RoutingDirectory) *Routing {
+	if p, ok := st.(publishedStore); ok {
+		directory = publishedDirectory{directory, p}
+	}
 	return &Routing{store: st, directory: directory}
 }
 
@@ -53,14 +56,14 @@ func GroupDenied() error {
 	return config.ModelFailure(403, "model_permission_denied", "当前 API Key 的分组不允许调用此模型或没有对应账号")
 }
 func ScopeAllows(scope access.AccessScope, list []*accounts.Account, model provider.Model) bool {
-	if !scope.Restricted {
+	if !scope.Restricted && model.SyncedOwners == nil {
 		return true
 	}
 	if !scope.AllowsModel(model.ID) {
 		return false
 	}
 	for _, a := range list {
-		if scope.AccountIDs[a.ID] && a.Enabled && a.ProviderID() == ModelProvider(model) && (a.ProviderID() == provider.CodeArts || a.Scope == model.Scope) {
+		if (!scope.Restricted || scope.AccountIDs[a.ID]) && (model.SyncedOwners == nil || model.SyncedOwners[a.ID]) && a.Enabled && a.ProviderID() == ModelProvider(model) && (a.ProviderID() == provider.CodeArts || a.Scope == model.Scope) {
 			return true
 		}
 	}

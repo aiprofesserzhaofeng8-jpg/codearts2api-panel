@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RecordToolbar from '../../components/RecordToolbar.vue';
 import { computed, ref } from 'vue';
 import { api, isAbortError } from '../../api/client';
 import { serverState } from '../../shared/read-model';
@@ -8,6 +9,9 @@ import { canonicalSource, compatibilityAliases, rawSource, editError, reloadUnif
 import { groupModelAllowed } from './controller';
 const dialog = ref<HTMLDialogElement>(), draft = ref<Group>(), busy = ref(false), opening = ref(false), error = ref(''), listError = ref('');
 const groups = computed(() => serverState.data?.groups ?? []), accounts = computed(() => serverState.data?.accounts ?? []);
+const query=ref(''), binding=ref('');
+const keyCounts=computed(()=>{const counts=new Map<string,number>();for(const k of serverState.data?.keys??[]){if(k.group_id)counts.set(k.group_id,(counts.get(k.group_id)??0)+1);}return counts;});
+const visibleGroups=computed(()=>groups.value.filter(g=>g.name.toLowerCase().includes(query.value.trim().toLowerCase()) && (!binding.value || (bindingCount(g)>0?'bound':'unbound')===binding.value)));
 const selectableModels = computed(() => unifiedModels.value.filter(m => !compatibilityAliases.value[m.id] || draft.value?.unified_models.some(g => g.model_id === m.id)));
 const rawModels = computed(() => (serverState.data?.models ?? []).filter(m => m.source !== 'alias'));
 const rawChoices = computed(() => {
@@ -132,7 +136,7 @@ catch (e) {
 finally {
     busy.value = false;
 } }
-function bindingCount(g: Group) { return (serverState.data?.keys ?? []).filter(k => k.group_id === g.id).length; }
+function bindingCount(g: Group) { return keyCounts.value.get(g.id)??0; }
 async function reread() { if (draft.value && confirm(tr('重新读取将丢弃当前草稿，是否继续？')))
     await open(draft.value); }
 </script>
@@ -141,11 +145,14 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
     <div class="card">
       <div class="card-head">
         <h2>{{tr('账号分组')}}</h2>
-        <button id="addGroup" class="btn primary" :disabled="busy||opening" @click="open()">{{tr('创建分组')}}</button>
       </div>
+      <RecordToolbar v-model="query" :search-label="tr('搜索分组名称')">
+        <select v-model="binding" :aria-label="tr('密钥绑定状态')"><option value="">{{tr('全部分组')}}</option><option value="bound">{{tr('已绑定密钥')}}</option><option value="unbound">{{tr('未绑定密钥')}}</option></select>
+        <template #action><button id="addGroup" class="btn primary" :disabled="busy||opening" @click="open()">{{tr('创建分组')}}</button></template>
+      </RecordToolbar>
       <p v-if="listError" class="err-text" role="alert">{{listError}}</p>
       <div class="table-wrap">
-        <table>
+        <table class="admin-record-table">
           <thead>
             <tr>
               <th>{{tr('名称')}}</th>
@@ -156,18 +163,18 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
             </tr>
           </thead>
           <tbody id="groups">
-            <tr v-for="g in groups" :key="g.id">
-              <td>{{g.name}}</td>
+            <tr v-for="g in visibleGroups" :key="g.id">
+              <td><strong class="record-name">{{g.name}}</strong></td>
               <td>{{g.account_ids?.length??0}}</td>
               <td>{{(g.unified_models??[]).length}} {{tr('个统一模型')}}</td>
               <td>{{bindingCount(g)}}</td>
               <td class="actions-cell">
-                <button class="btn xs" :disabled="busy||opening" @click="open(g)">{{tr('编辑')}}</button>
-                <button class="btn xs danger" :disabled="busy||bindingCount(g)>0" @click="remove(g)">{{tr('删除')}}</button>
+                <button class="btn xs row-action row-edit" :disabled="busy||opening" @click="open(g)">{{tr('编辑')}}</button>
+                <button class="btn xs danger row-action row-delete" :disabled="busy||bindingCount(g)>0" @click="remove(g)">{{tr('删除')}}</button>
               </td>
             </tr>
-            <tr v-if="!groups.length">
-              <td colspan="5" class="empty">{{tr('尚未创建分组')}}</td>
+            <tr v-if="!visibleGroups.length">
+              <td colspan="5" class="empty">{{tr(groups.length?'没有匹配的分组':'尚未创建分组')}}</td>
             </tr>
           </tbody>
         </table>

@@ -1,5 +1,7 @@
 # 项目结构设计 v1
 
+账号池模型发现：[按账号同步上游模型](ACCOUNT-MODEL-SYNC.md)（Qoder 首批；实施顺序、验证结果与路由边界）。
+
 协议后续改造：[对齐 Sub2API 的协议路由与转发计划](SUB2API-PROTOCOL-ALIGNMENT-PLAN.md)（待实施，保留现有模型融合与准入体系）。
 
 模型能力后续修复：[六类问题实施计划](MODEL-CAPABILITY-REPAIR-PLAN.md)（R1–R6，基线 v0.4.5，待分批实施）。

@@ -16,9 +16,31 @@ import (
 // concrete CodeArts value once on load, preserving pointer generation checks.
 type accountJSON struct {
 	accounts.Account
-	Session *codearts.Session `json:"session,omitempty"`
+	Session       *codearts.Session       `json:"session,omitempty"`
+	ModelSnapshot *accounts.ModelSnapshot `json:"model_snapshot,omitempty"`
 }
 
+// Keep optional observations inside account records for schema-11 readers.
+func (s State) MarshalJSON() ([]byte, error) {
+	type plain State
+	if len(s.accountModelSnapshots) == 0 {
+		return json.Marshal((*plain)(&s))
+	}
+	type record struct {
+		*accounts.Account
+		Snapshot *accounts.ModelSnapshot `json:"model_snapshot,omitempty"`
+	}
+	records := make([]*record, len(s.Accounts))
+	for i, a := range s.Accounts {
+		if a != nil {
+			records[i] = &record{a, s.accountModelSnapshots[a.ID]}
+		}
+	}
+	return json.Marshal(struct {
+		*plain
+		Accounts []*record `json:"accounts"`
+	}{(*plain)(&s), records})
+}
 func (s *State) UnmarshalJSON(raw []byte) error {
 	var header struct {
 		Version int `json:"version"`
@@ -93,6 +115,12 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 		} else {
 			// Do not put a typed nil pointer into the interface.
 			record.Account.NativeCredential = nil
+		}
+		if v := record.ModelSnapshot; v != nil && v.List.AccountID == record.ID && v.List.Provider == record.ProviderID() && v.List.Scope == record.Scope {
+			if s.accountModelSnapshots == nil {
+				s.accountModelSnapshots = make(map[string]*accounts.ModelSnapshot)
+			}
+			s.accountModelSnapshots[record.ID] = v
 		}
 		s.Accounts[i] = &record.Account
 	}

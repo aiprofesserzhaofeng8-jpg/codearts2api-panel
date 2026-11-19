@@ -18,10 +18,10 @@ const fs=require('node:fs');
   await ap.locator('#addUser').waitFor();
   assert.equal(await ap.getByRole('link',{name:'用户登录入口',exact:true}).count(),0);
   assert.equal(await ap.locator('#tab-users a[href="/user"]').count(),0);
-  assert.equal(await ap.getByRole('columnheader',{name:'累计费用 / 上限（USD）',exact:true}).count(),1);
+  assert.equal(await ap.getByRole('columnheader',{name:'账户余额',exact:true}).count(),1);
   for(const width of [1440,390]){
    await ap.setViewportSize({width,height:1000});
-   const head=await ap.locator('#tab-users .card-head').filter({has:ap.locator('#addUser')}).boundingBox(),button=await ap.locator('#addUser').boundingBox();
+   const head=await ap.locator('#tab-users .record-toolbar').filter({has:ap.locator('#addUser')}).boundingBox(),button=await ap.locator('#addUser').boundingBox();
    assert(button.x>head.x+head.width/2,'create user must be on the right');
    assert(head.x+head.width-button.x-button.width<25,'create user must align to the right edge');
    assert.equal(await ap.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

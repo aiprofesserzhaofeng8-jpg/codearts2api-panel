@@ -42,6 +42,26 @@ func TestReviewedSourcesCloseExactHistoricalGaps(t *testing.T) {
 	}
 }
 
+func TestVerifiedSingleSourceToolRoutes(t *testing.T) {
+	for _, source := range []string{
+		"codearts/GLM-5.2", "codearts/glm-5.3", "codearts/glm-5.3-flash", "codearts/kimi-k3.1-pro",
+		"trae/cn/DeepSeek-V4-Flash", "trae/cn/DeepSeek-V4-Pro", "trae/cn/glm-5.2", "trae/cn/glm-5.3",
+		"trae/cn/glm-5.3-flash", "trae/cn/mimo-v2.6-pro", "trae/cn/minimax-m3.1-flash", "trae/cn/step-5-preview",
+	} {
+		t.Run(source, func(t *testing.T) {
+			platform, scope, id := provider.ParseModel(source)
+			m := provider.Model{ID: source, Provider: platform, Scope: scope, UpstreamID: id, Name: id, Source: "upstream"}
+			p := &ModelPlan{Public: strings.ToLower(id), Selection: access.UnifiedSelection{ID: "fixture"}, IDs: []string{source}, Models: map[string]provider.Model{source: m}}
+			if err := p.FilterCapabilities([]byte(`{"messages":[{"role":"user","content":"Call read_marker"}],"tools":[{"type":"function","function":{"name":"read_marker","parameters":{"type":"object"}}}],"max_tokens":16}`)); err != nil {
+				t.Fatal(err)
+			}
+			if len(p.IDs) != 1 || p.IDs[0] != source || p.PublicModel().ToolCalling != "supported" {
+				t.Fatal("tool request must keep its only source and advertise tool support", p.IDs)
+			}
+		})
+	}
+}
+
 func TestReviewedSourceFallbackPreservesUnknownNegativeAndIdentity(t *testing.T) {
 	for _, model := range []provider.Model{
 		{ID: "trae/cn/glm-5", Name: "glm-5", ToolCalling: "unsupported"},

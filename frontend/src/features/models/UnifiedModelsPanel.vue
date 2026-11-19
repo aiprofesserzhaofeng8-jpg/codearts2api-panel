@@ -176,11 +176,8 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
   <DefaultModelsPanel @applied="load" />
   <div class="card unified-panel">
     <div class="card-head">
-      <div>
-        <h2>{{tr('统一模型')}}</h2>
-        <p class="card-sub">{{tr('在此定义公开名称，再到分组页分配权限。')}}</p>
-      </div>
-      <div class="actions">
+      <h2>{{tr('统一模型')}}</h2>
+      <div class="card-actions">
         <button id="reloadUnifiedModels" class="btn" :disabled="loading||busy" @click="load">{{tr('重新读取')}}</button>
         <button id="addUnifiedModel" class="btn primary" :disabled="loading||busy" @click="open()">{{tr('创建统一模型')}}</button>
       </div>
@@ -192,7 +189,7 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
     </div>
     <p v-if="listError" class="err-text" role="alert">{{listError}}</p>
     <div class="table-wrap">
-      <table>
+      <table class="admin-record-table">
         <thead>
           <tr>
             <th>{{tr('公开名称')}}</th>
@@ -210,8 +207,8 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
               <span :class="['badge',model.enabled?'ok':'warn']">{{model.enabled?tr('启用'):tr('停用')}}</span>
             </td>
             <td class="actions-cell">
-              <button class="btn xs" :disabled="busy||loading" @click="open(model)">{{tr('编辑')}}</button>
-              <button class="btn xs danger" :disabled="busy||loading" @click="remove(model)">{{tr('删除')}}</button>
+              <button class="btn xs row-action row-edit" :disabled="busy||loading" @click="open(model)">{{tr('编辑')}}</button>
+              <button class="btn xs row-action row-delete danger" :disabled="busy||loading" @click="remove(model)">{{tr('删除')}}</button>
             </td>
           </tr>
           <tr v-if="!filtered.length">

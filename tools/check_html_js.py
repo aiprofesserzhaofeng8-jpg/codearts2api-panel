@@ -31,7 +31,12 @@ def main():
             subprocess.run(["node", "--check", str(file)], check=True)
         if file.suffix == ".css":
             css = file.read_text()
-            assert not re.search(r"@import\b|url\(", css), "CSS must remain offline/same-origin"
+            def local_icon(match):
+                path = match.group(1)
+                assert (DIST / path.lstrip("/")).is_file(), path
+                return ""
+            remaining = re.sub(r"""url\(["']?(/assets/[\w-]+\.svg)["']?\)""", local_icon, css)
+            assert not re.search(r"@import\b|url\(", remaining, re.I), "CSS must remain offline/same-origin"
     for entry in manifest.values():
         assert (DIST / entry["file"]).is_file()
         for name in entry.get("css", []): assert (DIST / name).is_file()

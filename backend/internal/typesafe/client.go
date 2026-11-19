@@ -183,6 +183,19 @@ func (c *Client) Refresh(_ context.Context, raw json.RawMessage) (json.RawMessag
 	return b, err
 }
 
+// AccountCatalog lists decision models for inspection only.
+func (c *Client) AccountCatalog(ctx context.Context, raw json.RawMessage) ([]provider.Model, error) {
+	rows, err := c.DecisionModels(ctx, raw)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]provider.Model, 0, len(rows))
+	for _, m := range rows {
+		out = append(out, provider.Model{ID: m.Name, Name: m.Name, CatalogKind: "decision"})
+	}
+	return out, nil
+}
+
 // No decision model is advertised as a Chat model.
 func (c *Client) Models(context.Context, json.RawMessage) ([]provider.Model, error) {
 	return []provider.Model{}, nil

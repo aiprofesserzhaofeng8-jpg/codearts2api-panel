@@ -200,7 +200,7 @@ export function renderAccounts(d) {
         var statusCell = cell("");
         const state = accountState(a);
         const labels = { ready: tr('可调度'), paused: tr('已暂停选号'), cooling: tr('冷却中'), busy: tr('并发已满'), disabled: tr('已停用'), unknown: tr('待检查') };
-        statusCell.appendChild(pill(labels[state] || tr('待检查'), state === 'ready' ? 'ok' : 'warn'));
+        statusCell.appendChild(mk('span', 'record-status record-' + (Object.hasOwn(labels,state)?state:'unknown'), labels[state] || tr('待检查')));
         if (a.pool?.cooldown_remaining_sec > 0) statusCell.appendChild(mk('div', 'sub', tr('剩余 ') + fmtDur(a.pool.cooldown_remaining_sec)));
         if (a.last_err) statusCell.appendChild(mk('div', 'sub err-text account-last-error', a.last_err));
         else if (a.status === 'error') statusCell.appendChild(mk('div', 'sub err-text', tr('最近检查失败')));
@@ -262,6 +262,7 @@ export function renderAccounts(d) {
             { label: a.enabled ? tr("停用") : tr("启用"), run: function () { return accountOp("toggle", { id: a.id }); } },
             { label: a.paused ? tr("恢复选号") : tr("暂停选号"), run: function () { return accountOp(a.paused ? "resume" : "pause", { id: a.id }); } }
         ];
+        more.unshift({label: tr('同步上游模型'), run: () => window.dispatchEvent(new CustomEvent('account-model-list', { detail: { id: a.id, name: a.name || a.id, enabled: a.enabled } }))});
         if (a.api_protocol_options?.length) more.unshift({label: tr('API 协议'), run: () => openProtocolSettings(a)});
         if (a.daily_claim_supported !== false) {
             more.unshift({ label: tr('查询奖励'), run: () => queryRewards(a) });
@@ -274,7 +275,7 @@ export function renderAccounts(d) {
         if (a.failures > 0 || (a.pool && a.pool.cooldown_remaining_sec > 0) || Object.keys(a.model_health || {}).some(function (m) { return a.model_health[m].failures > 0; }))
             more.push({ label: tr("解除冷却 / 清错"), run: function () { return accountOp("clear-errors", { id: a.id }); } });
         more.push({ label: tr("删除"), danger: true, run: function () { showDeleteAccount(a); } });
-        actions.appendChild(accountIconButton(tr("删除"), "M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6", () => showDeleteAccount(a), true));
+        actions.appendChild(btn(tr("删除"), "xs account-icon-action danger row-action row-delete", () => showDeleteAccount(a)));
         const menuButton = accountMenuButton(tr("更多"), a, more); menuButton.classList.add("account-icon-action"); actions.appendChild(menuButton);
         if (bulkBusy) actions.querySelectorAll('button').forEach(b => { b.disabled = true; });
         ops.appendChild(actions);

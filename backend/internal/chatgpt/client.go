@@ -19,8 +19,9 @@ import (
 
 const clientID = "app_EMoamEEZ73f0CkXaXp7hrann"
 
-// codexProtocolVersion is the minimum catalog contract in the pinned Sub2API reference.
-const codexProtocolVersion = "0.144.0"
+// The manifest is negotiated by client version. Use one release for both
+// the query and its headers; the server's minimum accepted version is not it.
+const codexCatalogVersion = "0.169.1"
 const redirectURI = "http://localhost:1455/auth/callback"
 
 type Credentials struct {
@@ -242,10 +243,15 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 		return nil, e
 	}
 	endpoint := c.API + "/models"
+	h := headers(a)
 	if a.AuthMode == "codex" {
-		endpoint = c.Backend + "/models?client_version=" + codexProtocolVersion
+		endpoint = c.Backend + "/models?client_version=" + codexCatalogVersion
+		h.Set("Accept", "application/json")
+		h.Set("Originator", "codex_cli_rs")
+		h.Set("Version", codexCatalogVersion)
+		h.Set("User-Agent", "codex_cli_rs/"+codexCatalogVersion)
 	}
-	resp, e := providerhttp.Do(ctx, c.HTTP, "ChatGPT", http.MethodGet, endpoint, headers(a), nil)
+	resp, e := providerhttp.Do(ctx, c.HTTP, "ChatGPT", http.MethodGet, endpoint, h, nil)
 	if e != nil {
 		return nil, e
 	}

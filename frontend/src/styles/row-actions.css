@@ -1,0 +1,29 @@
+.console-layout .btn.row-action {
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;min-width:36px;height:42px;padding:4px 6px;vertical-align:middle;
+  border:0;background:transparent;box-shadow:none;color:var(--text-2);
+  font-size:12px;line-height:16px;font-weight:500;
+}
+.btn.row-action::before {
+  content:"";width:16px;height:16px;flex:none;
+  background-color:currentColor;mask:var(--row-icon) center/contain no-repeat;
+}
+.row-copy{--row-icon:url('../assets/row-actions/copy.svg?no-inline')}
+#keys .key-field{display:flex;align-items:center;gap:2px}
+#keys .key-input-wrap{position:relative;flex:1;min-width:0}
+#keys .key-input-wrap input{box-sizing:border-box;min-width:0;width:100%;padding-inline-end:40px}
+#keys .key-tool{display:grid;place-items:center;flex:none;width:32px;height:32px;padding:0;border:0;background:transparent;color:var(--text-2)}
+#keys .key-tool:hover{background:var(--surface-2);color:var(--text)}
+#keys .key-tool::before{content:"";width:16px;height:16px;background:currentColor;mask:var(--row-icon) center/contain no-repeat}
+#keys .key-eye{position:absolute;inset-inline-end:3px;top:50%;transform:translateY(-50%);height:28px;--row-icon:url('../assets/row-actions/eye.svg?no-inline')}
+#keys input[type=text]+.key-eye{--row-icon:url('../assets/row-actions/eye-off.svg?no-inline')}
+#keys .key-more{position:relative}
+#keys .key-more select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+#keys .key-more:focus-within{outline:2px solid currentColor;outline-offset:1px}
+.row-more{--row-icon:url('../assets/row-actions/more.svg?no-inline')}
+.row-edit{--row-icon:url('../assets/row-actions/edit.svg?no-inline')}
+.row-disable{--row-icon:url('../assets/row-actions/disable.svg?no-inline')}
+.row-delete{--row-icon:url('../assets/row-actions/delete.svg?no-inline')}
+.row-probe{--row-icon:url('../assets/row-actions/probe.svg?no-inline')}
+.console-layout .btn.row-action:not(:disabled):is(:hover,:focus-visible){background:var(--surface-2);color:var(--text)}
+.console-layout .btn.row-delete:not(:disabled):is(:hover,:focus-visible){background:var(--err-soft);color:var(--err)}

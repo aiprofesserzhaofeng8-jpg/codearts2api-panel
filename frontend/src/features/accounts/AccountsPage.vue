@@ -3,6 +3,7 @@ import { onboardingIcons } from './onboarding-icons';
 import { t as tr } from '../../i18n';
 import { brands, commonPlatforms, extraPlatforms, brandIcon, brandIconStyle } from './brands';
 
+import AccountModelDialog from './AccountModelDialog.vue';
 import ProviderAuthorization from './providers/ProviderAuthorization.vue';
 import CodeArtsAuthorization from './providers/CodeArtsAuthorization.vue';
 import CredentialImport from './providers/CredentialImport.vue';
@@ -47,8 +48,8 @@ import CredentialImport from './providers/CredentialImport.vue';
           </div>
 
           <div v-once class="account-toolbar">
-            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option v-for="brand in brands" :key="brand.id" :value="brand.id">{{brand.name}}</option></select></label>
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" :placeholder="tr('搜索账号名称或来源')" :aria-label="tr('搜索账号')"></label>
+            <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option v-for="brand in brands" :key="brand.id" :value="brand.id">{{brand.name}}</option></select></label>
             <select id="accountStatusFilter" :aria-label="tr('账号状态筛选')"><option value="all">{{tr('全部状态')}}</option><option value="ready">{{tr('可调度')}}</option><option value="cooling">{{tr('冷却中')}}</option><option value="paused">{{tr('已暂停')}}</option><option value="disabled">{{tr('已停用')}}</option></select>
             <label>{{tr('排序')}} <select id="accountSort"><option value="default">{{tr('默认顺序')}}</option><option value="name">{{tr('账号名称')}}</option><option value="lastUsed">{{tr('最近使用优先')}}</option><option value="expires">{{tr('即将过期优先')}}</option></select></label>
           </div>
@@ -63,7 +64,7 @@ import CredentialImport from './providers/CredentialImport.vue';
             <button class="btn xs" id="accountBulkStart">{{tr('操作所选账号')}}</button>
           </div>
           <div v-once class="table-wrap account-table-wrap" tabindex="0" role="region" :aria-label="tr('账号管理 ')">
-            <table class="account-table">
+            <table class="account-table admin-record-table">
               <thead><tr><th data-column="select"><input type="checkbox" id="accountSelectAll" :aria-label="tr('选择本页账号')"></th><th data-column="identity">{{tr('名称')}}</th><th data-column="platform">{{tr('平台')}}</th><th data-column="status">{{tr('状态')}}</th><th data-column="capacity">{{tr('并发')}}</th><th data-column="quota">{{tr('额度与用量')}}</th><th data-column="credential">{{tr('凭据有效期')}}</th><th data-column="reward">{{tr('奖励')}}</th><th data-column="lastUsed">{{tr('最近使用')}}</th><th data-column="actions">{{tr('操作')}}</th></tr></thead>
               <tbody id="accounts"></tbody>
             </table>
@@ -124,6 +125,7 @@ import CredentialImport from './providers/CredentialImport.vue';
         </div>
 
       </section>
+<AccountModelDialog />
 <dialog v-once id="accountBulkDialog" class="modal" aria-labelledby="accountBulkTitle">
   <div class="modal-head"><h2 id="accountBulkTitle">{{tr('批量操作')}}</h2></div>
   <div class="modal-body"><p id="accountBulkSummary"></p><p class="hint">{{tr('仅处理下面列出的账号，逐个执行。关闭或切页不会撤销已提交的操作；失败项不会自动重试。')}}</p><ul id="accountBulkTargets"></ul><div id="accountBulkResults" role="status" aria-live="polite"></div></div>

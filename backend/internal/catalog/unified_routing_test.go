@@ -70,6 +70,27 @@ func TestUnifiedCapabilityFiltersDoNotModifyRequest(t *testing.T) {
 		t.Fatal("request filter leaked")
 	}
 }
+func TestUnifiedCodeArtsFlashWithTools(t *testing.T) {
+	r, s := unifiedRouter()
+	m := &s.snapshot.Models[0]
+	m.Name = "deepseek-v4.1-flash"
+	source := "codearts/" + m.Name
+	m.Sources = []config.ModelSource{{ID: source, Enabled: true}}
+	s.accounts = []*accounts.Account{{ID: "native", Provider: provider.CodeArts, Enabled: true}}
+	s.scope = access.AccessScope{Restricted: true, RawModelMode: "qualified_only", AccountIDs: map[string]bool{"native": true},
+		UnifiedModels: []access.UnifiedGrant{{ModelID: m.ID, Callable: true, Visible: true, SourceMode: "all"}}}
+	_, p, err := r.Resolve("key", s.settings, m.Name)
+	if err != nil || p == nil || p.Selection.ID != m.ID {
+		t.Fatalf("expected unified route for %s: %v", m.Name, err)
+	}
+	if err := p.FilterCapabilities([]byte(`{"messages":[{"role":"user","content":"Call read_marker"}],"tools":[{"type":"function","function":{"name":"read_marker","parameters":{"type":"object"}}}],"max_tokens":16}`)); err != nil {
+		t.Fatal(err)
+	}
+	if len(p.IDs) != 1 || config.CanonicalSource(p.IDs[0]) != source {
+		t.Fatalf("unexpected sources: %v", p.IDs)
+	}
+}
+
 func TestUnifiedCheckRevalidatesUngroupedRevision(t *testing.T) {
 	r, s := unifiedRouter()
 	_, p, _ := r.Resolve("key", s.settings, "deepseek-4.1-flash")

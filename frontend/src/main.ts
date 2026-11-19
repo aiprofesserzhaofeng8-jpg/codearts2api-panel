@@ -5,4 +5,7 @@ import './styles/console.css';
 import './styles/layout.css';
 import './styles/user.css';
 import './styles/unified-models.css';
+import './styles/typography.css';
+import './styles/row-actions.css';
 createApp(ConsoleApplication).mount('#console-root');
+import './styles/record-lists.css';

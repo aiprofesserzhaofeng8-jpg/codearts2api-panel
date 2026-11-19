@@ -229,6 +229,9 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 		for _, id := range a.Models {
 			add(id, id, false)
 		}
+		for i := range out {
+			out[i].CatalogKind = "configured"
+		}
 		return out, nil
 	}
 	base := "https://bedrock." + a.Region + ".amazonaws.com"

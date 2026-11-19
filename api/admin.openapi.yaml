@@ -6,6 +6,120 @@
     "description": "Same-origin management contract; inference bodies are not filtered by this schema. Variant operations are intentionally extensible. Query parameters and opaque provider payloads retain their existing handler validation."
   },
   "paths": {
+    "/admin/api/accounts/models": {
+      "get": {
+        "operationId": "get__admin_api_accounts_models",
+        "description": "Read last successful account catalog; never contacts upstream.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Last successful snapshot (null before first sync)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "snapshot"
+                  ],
+                  "properties": {
+                    "snapshot": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/AccountModelSnapshot"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request failed; stored snapshot is unchanged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__admin_api_accounts_models",
+        "description": "Sync the account catalog and atomically publish newly discovered sources under existing group permissions.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Last successful snapshot (null before first sync)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "snapshot"
+                  ],
+                  "properties": {
+                    "snapshot": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/AccountModelSnapshot"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request failed; stored snapshot is unchanged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/api/providers": {
       "get": {
         "operationId": "get__admin_api_providers",
@@ -3031,6 +3145,11 @@
       }
     },
     "/admin/api/consumer/plans": {
+      "delete": {
+        "operationId": "delete__admin_api_consumer_plans",
+        "requestBody": {"required":true,"content":{"application/json":{"schema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}}}}},
+        "responses":{"200":{"description":"Unused plan deleted.","content":{"application/json":{"schema":{"type":"object","required":["ok"],"properties":{"ok":{"type":"boolean"}}}}}},"default":{"description":"Authentication, reference, or persistence error.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}}
+      },
       "get": {
         "operationId": "get__admin_api_consumer_plans",
         "responses": {
@@ -3041,6 +3160,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "references":{"type":"object","additionalProperties":{"type":"object","required":["subscriptions","codes"],"properties":{"subscriptions":{"type":"integer"},"codes":{"type":"integer"}}}},
                     "plans": {
                       "type": "array",
                       "items": {
@@ -4461,6 +4581,108 @@
   },
   "components": {
     "schemas": {
+      "AccountModelSnapshot": {
+        "type": "object",
+        "required": [
+          "list",
+          "first",
+          "delta"
+        ],
+        "properties": {
+          "list": {
+            "type": "object",
+            "required": [
+              "account_id",
+              "provider",
+              "scope",
+              "observed_at",
+              "models"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              },
+              "kind": {"type":"string","enum":["live","reference","configured","decision"]},
+              "observed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "models": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "context",
+                    "max_output"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "context": {
+                      "type": "integer"
+                    },
+                    "max_output": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "delta": {
+            "type": "object",
+            "required": [
+              "added",
+              "missing",
+              "retained"
+            ],
+            "properties": {
+              "added": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "missing": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "retained": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -5641,6 +5863,7 @@
       "ConsumerPlan": {
         "type": "object",
         "properties": {
+          "delisted": {"type":"boolean"},
           "id": {
             "type": "string"
           },

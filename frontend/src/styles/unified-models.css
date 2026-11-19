@@ -1,9 +1,11 @@
 .unified-modal{width:min(900px,calc(100vw - 32px));max-height:90vh;padding:0;overflow:auto}
 .unified-fieldset{border:0;padding:0;margin:0;min-width:0}
-.unified-panel .card-head{flex-wrap:wrap}
-.unified-panel .card-sub{margin:5px 0 0}
-.unified-toolbar{display:flex;gap:12px;align-items:center;padding:14px 20px}
-.unified-toolbar input{max-width:360px;min-width:0}
+.unified-panel .card-head{align-items:center;justify-content:space-between}
+.card.default-models-panel{padding:0}
+.default-models-panel>.card-head{margin:0;border-bottom:0}
+.unified-toolbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:14px}
+.unified-toolbar input[type=search]{flex:0 1 360px;min-width:0}
+.unified-toolbar>.hint,.unified-toolbar>.check{margin:0}
 .unified-source,.unified-issue{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:14px;margin:12px 0;overflow-wrap:anywhere}
 .unified-source>.actions{margin-top:10px;flex-wrap:wrap;gap:12px}
 .unified-source>strong{display:block;margin-bottom:7px;overflow-wrap:anywhere}
@@ -19,7 +21,7 @@
 .unified-modal .check{margin:7px 0}
 .unified-modal input[type=checkbox]{flex-shrink:0}
 .unified-modal .table-wrap select{min-width:90px}
-@media(max-width:600px){.unified-modal{width:calc(100vw - 20px);max-height:94vh}.unified-modal .field-grid{grid-template-columns:1fr}.unified-panel .card-head>.actions{width:100%;justify-content:flex-end}.unified-source{padding:11px}.unified-toolbar{padding:12px 16px}.unified-source .actions .check{width:100%}.unified-help{padding:12px 16px}.unified-modal td.mono{min-width:170px}}
+@media(max-width:600px){.unified-modal{width:calc(100vw - 20px);max-height:94vh}.unified-modal .field-grid{grid-template-columns:1fr}.unified-source{padding:11px}.unified-toolbar input[type=search]{flex-basis:100%}.unified-source .actions .check{width:100%}.unified-help{padding:12px 16px}.unified-modal td.mono{min-width:170px}}
 .default-models-table{max-height:48vh;overflow:auto;margin-top:14px}
 .default-models-table td{vertical-align:top;overflow-wrap:anywhere}
 .default-models-table .mono{font-size:12px}

@@ -62,7 +62,18 @@ func (s *Server) handleAdminWallet(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleAdminPlans(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		writeJSON(w, 200, map[string]any{"plans": s.Store.Plans()})
+		plans, refs := s.Store.PlanCatalog()
+		writeJSON(w, 200, map[string]any{"plans": plans, "references": refs})
+		return
+	}
+	if r.Method == "DELETE" {
+		var b struct {
+			ID string `json:"id"`
+		}
+		if !decodeUserBody(w, r, &b) {
+			return
+		}
+		consumerResult(w, s.Store.DeletePlan(b.ID))
 		return
 	}
 	if !consumerMethod(w, r, "POST") {

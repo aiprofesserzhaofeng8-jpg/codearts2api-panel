@@ -27,32 +27,53 @@ export function renderKeys(d) {
         keyInput.setAttribute("aria-label", tr("API 密钥 ") + (k.name || k.key));
         keyInput.autocomplete = "off";
         keyInput.addEventListener("click", function () { keyInput.select(); });
-        keyCell.appendChild(keyInput);
+        var field = mk("div", "key-field");
+        keyCell.appendChild(field);
+        var inputWrap = mk("div", "key-input-wrap");
+        field.appendChild(inputWrap);
+        inputWrap.appendChild(keyInput);
         var st = cell("");
         st.appendChild(pill(k.enabled ? tr("启用") : tr("停用"), k.enabled ? "ok" : ""));
         var ops = cell("", "actions-cell");
         function fetchKey() { return api("/admin/api/keys/reveal", { method: "POST", body: { key: k.ref || k.key } }).then(function (d) { if (!d.value)
             throw new Error(tr("密钥不存在")); return d.value; }); }
-        ops.appendChild(btn(tr("复制"), "xs primary", function () {
+        var copy = btn("", "key-tool row-copy", function () {
             return fetchKey().then(function (value) { return copyText(value, tr("密钥已复制")); }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
-        }));
-        var reveal = btn(tr("显示"), "xs", function () {
+        });
+        copy.setAttribute("aria-label", copy.title = tr("复制"));
+        var reveal = btn("", "key-tool key-eye", function () {
             if (keyInput.type === "text") {
                 keyInput.type = "password";
                 keyInput.value = k.key;
-                reveal.textContent = tr("显示");
+                reveal.setAttribute("aria-label", reveal.title = tr("显示"));
                 return;
             }
-            return fetchKey().then(function (value) { keyInput.value = value; keyInput.type = "text"; reveal.textContent = tr("隐藏"); }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
+            return fetchKey().then(function (value) { keyInput.value = value; keyInput.type = "text"; reveal.setAttribute("aria-label", reveal.title = tr("隐藏")); }).catch(function (e) { if (isAbortError(e)) return; toast(e.message, "err"); });
         });
-        ops.appendChild(reveal);
-        ops.appendChild(btn(tr("预算"), "xs", function () { openKeyBudget(k); }));
-        if (!k.user_id) ops.appendChild(btn(tr("分组"), "xs", function () { openKeyGroup(k); }));
-        ops.appendChild(btn(k.enabled ? tr("停用") : tr("启用"), "xs", function () { keyOp("toggle", k.ref || k.key); }));
-        ops.appendChild(btn(tr("删除"), "xs danger", function () {
+        reveal.setAttribute("aria-label", reveal.title = tr("显示"));
+        inputWrap.appendChild(reveal);
+        field.appendChild(copy);
+        var more = mk("label", "btn xs row-action row-more key-more", tr("更多"));
+        var actions = mk("select");
+        actions.setAttribute("aria-label", tr("更多"));
+        actions.add(new Option(tr("更多"), ""));
+        actions.options[0].disabled = true;
+        actions.add(new Option(tr("预算"), "budget"));
+        if (!k.user_id) actions.add(new Option(tr("分组"), "group"));
+        actions.value = "";
+        actions.onchange = function () {
+            var action = actions.value;
+            actions.value = "";
+            if (action === "budget") openKeyBudget(k);
+            else if (action === "group" && !k.user_id) openKeyGroup(k);
+        };
+        more.appendChild(actions);
+        ops.appendChild(btn(k.enabled ? tr("停用") : tr("启用"), k.enabled ? "xs row-action row-disable" : "xs", function () { keyOp("toggle", k.ref || k.key); }));
+        ops.appendChild(btn(tr("删除"), "xs danger row-action row-delete", function () {
             if (confirm(tr("确定删除该密钥？")))
                 keyOp("key", k.ref || k.key);
         }));
+        ops.appendChild(more);
         tb.appendChild(row([
             keyCell, keyGroupCell(k), st, cell(k.requests, "mono"),
             cell(fmtTime(k.created_at), "muted"), cell(fmtTime(k.last_used), "muted"), ops

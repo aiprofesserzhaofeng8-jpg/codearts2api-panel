@@ -14,7 +14,7 @@ it('preserves legacy mode, inherited text and unsaved edits across refresh',asyn
  window.dispatchEvent(new Event('prompts-refresh'));await flushPromises();expect((page.get('#promptText').element as HTMLTextAreaElement).value).toBe('EXTRA');
  const wb=page.findAll('.prompt-scope').find(b=>b.text()==='WorkBuddy')!;await wb.trigger('click');
  expect((page.get('#promptMode').element as HTMLSelectElement).value).toBe('custom');expect((page.get('#promptText').element as HTMLTextAreaElement).value).toBe('LEGACY');
- await page.findAll('.prompt-scope').find(b=>b.text()==='ChatGPT / Codex')!.trigger('click');
+ await page.findAll('.prompt-scope').find(b=>b.text()==='ChatGPT')!.trigger('click');
  expect((page.get('#promptMode').element as HTMLSelectElement).value).toBe('append');expect(page.get('#promptMode').attributes('disabled')).toBeDefined();
  page.unmount();
 });

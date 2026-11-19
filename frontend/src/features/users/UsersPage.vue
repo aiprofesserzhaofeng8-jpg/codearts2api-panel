@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { t as tr } from '../../i18n';
 
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import RecordToolbar from '../../components/RecordToolbar.vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { api, isAbortError } from '../../api/client';
 import type { components } from '../../api/generated/admin';
+import { credits } from './consumer-format';
 import ConsumerAdmin from './ConsumerAdmin.vue';
 type User = components['schemas']['User'];
 const users = ref<User[]>([]);
@@ -11,6 +13,10 @@ const groups = ref<components['schemas']['Group'][]>([]);
 const dialog = ref<HTMLDialogElement>();
 const busy = ref(false), error = ref(''), loadError = ref('');
 const draft = reactive({id:'',username:'',password:'',group_id:'',enabled:true,max_concurrency:5,max_requests:0,max_tokens:0,max_usd:0,reset_budget:false});
+const query=ref(''), status=ref('');
+const visibleUsers=computed(()=>{const term=query.value.trim().toLowerCase();return users.value.filter(u=>
+  (!status.value || (u.enabled?'enabled':'disabled')===status.value) &&
+  [u.username,u.display_name].some(name=>name?.toLowerCase().includes(term)));});
 let epoch = 0;
 async function load() {
   const current=++epoch;
@@ -37,12 +43,15 @@ onUnmounted(()=>{epoch++;window.removeEventListener('users-refresh',load);draft.
 <template>
 <section id="tab-users" role="tabpanel" aria-labelledby="nav-users">
   <div class="card">
-    <div class="card-head"><div><h2>{{tr('用户管理')}}</h2></div><button class="btn primary" id="addUser" @click="edit()">{{tr('创建用户')}}</button></div>
-    <p class="hint">{{tr('用户仅可管理自己的密钥与用量。分组和跨密钥共享预算由管理员设置；0 表示不限。')}}</p>
+    <div class="card-head"><h2>{{tr('用户管理')}}</h2></div>
+    <RecordToolbar v-model="query" :search-label="tr('搜索用户名或昵称')">
+      <select v-model="status" :aria-label="tr('用户状态')"><option value="">{{tr('全部状态')}}</option><option value="enabled">{{tr('启用')}}</option><option value="disabled">{{tr('停用')}}</option></select>
+      <template #action><button class="btn primary" id="addUser" @click="edit()">{{tr('创建用户')}}</button></template>
+    </RecordToolbar>
     <p v-if="loadError" class="err-text" role="alert">{{loadError}}</p>
-    <div class="table-wrap"><table><thead><tr><th>{{tr('用户名')}}</th><th>{{tr('分组')}}</th><th>{{tr('状态')}}</th><th>{{tr('在途 / 并发上限')}}</th><th>{{tr('已用请求 / 预算')}}</th><th>{{tr('Token / 预算')}}</th><th>{{tr('累计费用 / 上限（USD）')}}</th><th>{{tr('操作')}}</th></tr></thead>
-    <tbody id="users"><tr v-for="u in users" :key="u.id"><td>{{u.username}}<span v-if="u.display_name" class="hint"> · {{u.display_name}}</span></td><td>{{groups.find(g=>g.id===u.group_id)?.name??tr('分组不存在')}}</td><td><span :class="['badge',u.enabled?'ok':'']">{{u.enabled?tr('启用'):tr('停用')}}</span></td><td>{{u.in_flight}} / {{u.max_concurrency||tr('不限')}}</td><td>{{u.budget_usage.requests}} / {{u.budget.max_requests||tr('不限')}}</td><td>{{u.budget_usage.tokens}} / {{u.budget.max_tokens||tr('不限')}}</td><td>${{u.budget_usage.usd.toFixed(6)}} / {{u.budget.max_usd||tr('不限')}}</td><td><button class="btn xs" @click="edit(u)">{{tr('编辑')}}</button></td></tr>
-    <tr v-if="!users.length"><td colspan="8" class="empty">{{tr('暂无用户。创建后，用户通过统一登录页登录。')}}</td></tr></tbody></table></div>
+    <div class="table-wrap"><table class="admin-record-table"><thead><tr><th>{{tr('用户名')}}</th><th>{{tr('分组')}}</th><th>{{tr('状态')}}</th><th>{{tr('当前并发')}}</th><th>{{tr('已用请求')}}</th><th>{{tr('已用 Token')}}</th><th>{{tr('账户余额')}}</th><th>{{tr('操作')}}</th></tr></thead>
+    <tbody id="users"><tr v-for="u in visibleUsers" :key="u.id"><td><strong class="record-name">{{u.username}}</strong><small v-if="u.display_name" class="record-secondary">{{u.display_name}}</small></td><td>{{groups.find(g=>g.id===u.group_id)?.name??tr('分组不存在')}}</td><td><span :class="['record-status',u.enabled?'record-ready':'record-disabled']">{{u.enabled?tr('启用'):tr('停用')}}</span></td><td>{{u.in_flight}}</td><td>{{u.budget_usage.requests.toLocaleString()}}</td><td>{{u.budget_usage.tokens.toLocaleString()}}</td><td>{{u.wallet?.balance == null ? '—' : '$'+credits(u.wallet.balance)}}</td><td><button class="btn xs row-action row-edit" @click="edit(u)">{{tr('编辑')}}</button></td></tr>
+    <tr v-if="!visibleUsers.length"><td colspan="8" class="empty">{{tr(users.length?'没有匹配的用户':'暂无用户。创建后，用户通过统一登录页登录。')}}</td></tr></tbody></table></div>
   </div>
   <ConsumerAdmin :users="users" :groups="groups" @changed="load" />
   <dialog ref="dialog" id="userDialog" class="modal" aria-labelledby="userTitle" @cancel.prevent="close">

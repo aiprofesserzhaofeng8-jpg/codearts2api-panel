@@ -1,0 +1,56 @@
+/* Shared console type scale. Usage reports retain their chart and table typography. */
+.console-layout {
+  --type-caption: .75rem;
+  --type-body: .875rem;
+  --type-section: 1.125rem;
+  --type-brand: 1.125rem;
+  --type-title: 1.125rem;
+}
+.console-layout .sidebar .brand-name {
+  font-size: var(--type-brand);
+  font-weight: 700;
+  line-height: 1.75rem;
+  letter-spacing: 0;
+}
+.console-layout .sidebar nav.tabs button,
+.console-layout .sidebar .console-collapse {
+  font-size: var(--type-body);
+  font-weight: 500;
+  line-height: 1.25rem;
+}
+.console-layout .sidebar nav.tabs button.on { font-weight: 500; }
+.console-layout .page-head h1 {
+  font-size: var(--type-title);
+  font-weight: 600;
+  line-height: 1.75rem;
+  letter-spacing: 0;
+}
+.console-layout .topbar .page-hint {
+  font-size: var(--type-caption);
+  line-height: 1rem;
+  margin-block: 0;
+}
+.console-layout .console-content [role=tabpanel]:not([id=tab-overview]),
+.console-layout .user-main > :not(#userUsage) {
+  & h2:not(.portal-welcome h2, .portal-account-name h2) {
+    font-size: var(--type-section);
+    font-weight: 600;
+    line-height: 1.75rem;
+    letter-spacing: 0;
+  }
+  & h3 { font-size: var(--type-body); font-weight: 600; line-height: 1.5; }
+  & thead th {
+    font-size: var(--type-caption);
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+  & .admin-record-table > thead > tr > th {
+    font-size: var(--type-body);
+  }
+  & tbody td {
+    font-size: var(--type-body);
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+}

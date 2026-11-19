@@ -35,6 +35,7 @@ import (
 
 // Server 是网关 HTTP 服务。
 type Server struct {
+	modelSyncLocks      accounts.OperationLocks
 	UnifiedModels       *catalog.Management
 	ReleaseInfo         *releaseinfo.Checker
 	Admission           *gateway.Admission
@@ -186,6 +187,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/credits", s.withAdminAuth(s.handleAdminCredits))
 	mux.HandleFunc("/admin/api/models/probe", s.withAdminAuth(s.handleAdminModelProbe))
 	mux.HandleFunc("/admin/api/models/refresh", s.withAdminAuth(s.handleAdminRefreshModels))
+	mux.HandleFunc("/admin/api/accounts/models", s.withAdminAuth(s.handleAccountModels))
 	mux.HandleFunc("/admin/api/claim", s.withAdminAuth(s.handleAdminClaim))
 	mux.HandleFunc("/admin/api/welfare", s.withAdminAuth(s.handleAdminWelfare))
 	mux.HandleFunc("/admin/api/workbuddy/tasks", s.withAdminAuth(s.handleGrowthTasks))

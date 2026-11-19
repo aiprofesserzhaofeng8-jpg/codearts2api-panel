@@ -34,7 +34,7 @@ export function renderModelPolicies() {
         var p = policiesState.modelPolicies[id], ops = cell("");
         var metadata=policiesState.clientCompatibility[id];
         var purpose={chat:'通用聊天',auto:'平台自动路由',completion:'专用补全',jump:'代码跳转',rewrite:'代码重写',image_generation:'图片生成',agent:'平台专用智能体',summary:'平台摘要',unknown:'用途未确认',mixed:'来源用途不一致'};
-        ops.appendChild(btn(tr("编辑"), "xs", function () { openModelPolicy(id); }));
+        ops.appendChild(btn(tr("编辑"), "xs row-action row-edit", function () { openModelPolicy(id); }));
         tb.appendChild(row([
             cell(id, "mono"), cell(tr(purpose[metadata?.purpose]||'用途未确认')), cell(p ? p.context_window + " / " + p.max_output_tokens : tr("未配置"), "mono"), cell(p ? p.trigger_tokens + " / " + p.keep_recent_tokens : "—", "mono"),
             cell(p && p.summary_enabled ? (p.summary_retry ? tr("完整性保护 · 最多 2 次") : tr("完整性保护 · 单次")) : tr("关闭"), "muted"), cell(p ? p.source : tr("先验证模型能力，再配置"), "muted pricing-source"), ops

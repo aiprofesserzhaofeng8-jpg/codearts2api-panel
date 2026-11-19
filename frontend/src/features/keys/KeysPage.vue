@@ -14,12 +14,12 @@ import { t as tr } from '../../i18n';
             </div>
           </div>
           <div v-once class="table-wrap">
-            <table>
+            <table class="admin-record-table">
               <thead><tr><th>{{tr('密钥')}}</th><th>{{tr('备注')}}</th><th>{{tr('状态')}}</th><th>{{tr('请求数')}}</th><th>{{tr('创建时间')}}</th><th>{{tr('最近使用')}}</th><th>{{tr('操作')}}</th></tr></thead>
               <tbody id="keys"></tbody>
             </table>
           </div>
-          <p class="hint">{{tr(' 点击「复制」获取完整密钥；点击「显示」可查看或手动选中复制。')}}<br>{{tr(' 未签发任何密钥时，')}}<code>/v1/*</code>{{tr(' 仅允许')}}<b>{{tr('本机直连')}}</b>{{tr('（可在「设置 → 访问控制」里放开）。 ')}}</p>
+          <p class="hint">{{tr(' 未签发任何密钥时，')}}<code>/v1/*</code>{{tr(' 仅允许')}}<b>{{tr('本机直连')}}</b>{{tr('（可在「设置 → 访问控制」里放开）。 ')}}</p>
         </div>
       </section>
 <dialog v-once id="keyBudgetDialog" class="modal" aria-labelledby="keyBudgetTitle">

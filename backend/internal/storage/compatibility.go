@@ -118,6 +118,7 @@ func openState(path string, allowMigration bool) (*Store, error) {
 			return nil, err
 		}
 	}
+	s.rebuildPublishedLocked()
 	return s, nil
 }
 

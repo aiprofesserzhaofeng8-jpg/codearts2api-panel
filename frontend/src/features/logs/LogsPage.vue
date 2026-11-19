@@ -20,7 +20,7 @@ import { t as tr } from '../../i18n';
             </div>
           </div>
           <div v-once class="table-wrap">
-            <table>
+            <table class="admin-record-table">
               <thead><tr><th>{{tr('时间')}}</th><th>{{tr('模型')}}</th><th>{{tr('流式')}}</th><th>{{tr('状态')}}</th><th :title="tr('上游首个有效分片 / 请求总耗时')">{{tr('首段 / 总耗时')}}</th><th>{{tr('入/出')}}</th><th>{{tr('账号')}}</th><th>{{tr('密钥')}}</th><th>{{tr('错误')}}</th></tr></thead>
               <tbody id="logs"></tbody>
             </table>

@@ -235,9 +235,100 @@
   ],
   "source_capabilities": [
     {
+      "id": "codearts/GLM-5.2",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/glm-5.3",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/glm-5.3-flash",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/kimi-k3.1-pro",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/DeepSeek-V4-Flash",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/DeepSeek-V4-Pro",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/glm-5.2",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/glm-5.3",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/glm-5.3-flash",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/mimo-v2.6-pro",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/minimax-m3.1-flash",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "trae/cn/step-5-preview",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
       "id": "codearts/Qwen3-VL-235B",
       "verified_at": "2026-11-06",
       "reference": "docs/acceptance/MODEL-CAPABILITIES-2026-11-06.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
+      "id": "codearts/deepseek-v4.1-flash",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-FLASH-TOOLS-2026-11-19.md",
       "basis": "exact_source_live_roundtrip",
       "tool_calling": "supported"
     },

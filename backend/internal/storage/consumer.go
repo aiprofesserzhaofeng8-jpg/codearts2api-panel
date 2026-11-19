@@ -107,6 +107,51 @@ func (s *Store) planLocked(id string) *access.Plan {
 	}
 	return nil
 }
+
+type PlanReferences struct {
+	Subscriptions int `json:"subscriptions"`
+	Codes         int `json:"codes"`
+}
+
+func (s *Store) planReferencesLocked() map[string]PlanReferences {
+	refs := make(map[string]PlanReferences)
+	for _, u := range s.st.Users {
+		if u.Subscription.ID != "" {
+			id := u.Subscription.Plan.ID
+			r := refs[id]
+			r.Subscriptions++
+			refs[id] = r
+		}
+	}
+	for _, c := range s.st.Consumer.Redemptions {
+		if c.Kind == "subscription" {
+			r := refs[c.PlanID]
+			r.Codes++
+			refs[c.PlanID] = r
+		}
+	}
+	return refs
+}
+
+func (s *Store) PlanCatalog() ([]access.Plan, map[string]PlanReferences) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return append([]access.Plan{}, s.st.Consumer.Plans...), s.planReferencesLocked()
+}
+
+func (s *Store) DeletePlan(id string) error {
+	return s.consumerTransaction(func() error {
+		i := slices.IndexFunc(s.st.Consumer.Plans, func(p access.Plan) bool { return p.ID == id })
+		if i < 0 {
+			return fmt.Errorf("套餐不存在")
+		}
+		if r := s.planReferencesLocked()[id]; r != (PlanReferences{}) {
+			return fmt.Errorf("不能删除：仍关联 %d 个订阅、%d 张兑换码", r.Subscriptions, r.Codes)
+		}
+		s.st.Consumer.Plans = slices.Delete(s.st.Consumer.Plans, i, i+1)
+		return nil
+	})
+}
 func (s *Store) SavePlan(p access.Plan) (access.Plan, error) {
 	if err := p.Validate(); err != nil {
 		return p, err
@@ -126,6 +171,9 @@ func (s *Store) SavePlan(p access.Plan) (access.Plan, error) {
 			p.ID = rand.Text()
 			s.st.Consumer.Plans = append(s.st.Consumer.Plans, p)
 		} else {
+			if (old.GroupID != p.GroupID || old.Days != p.Days || old.MaxConcurrency != p.MaxConcurrency || old.Budget != p.Budget || old.Period != p.Period) && s.planReferencesLocked()[p.ID] != (PlanReferences{}) {
+				return fmt.Errorf("已有订阅或兑换码引用，修改权益请复制为新套餐")
+			}
 			*old = p
 		}
 		return nil
@@ -152,7 +200,7 @@ func subscriptionUsage(sub access.Subscription, now int64) BudgetUsage {
 	return sub.Usage
 }
 func (s *Store) assignSubscriptionLocked(u *access.User, p access.Plan, days int) error {
-	if !p.Enabled || !s.groupExistsLocked(p.GroupID) {
+	if (!p.Enabled && !p.Delisted) || !s.groupExistsLocked(p.GroupID) {
 		return fmt.Errorf("套餐已停用或分组不存在")
 	}
 	now := time.Now().Unix()
@@ -185,6 +233,9 @@ func (s *Store) ManageSubscription(id, planID, action string, days int) error {
 			p := s.planLocked(planID)
 			if p == nil {
 				return fmt.Errorf("套餐不存在")
+			}
+			if !p.Enabled {
+				return fmt.Errorf("套餐已下架或停用，不能分配或手动续期")
 			}
 			if days == 0 {
 				days = p.Days
