@@ -88,7 +88,10 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 		return invalid("请求序列化失败")
 	}
 
-	base := c.maasBase(cred)
+	base, err := c.maasBase(cred)
+	if err != nil {
+		return err
+	}
 	chatURL := base + "/chat/completions"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, chatURL, bytes.NewReader(reqBytes))

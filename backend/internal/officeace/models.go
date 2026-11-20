@@ -40,17 +40,15 @@ var UnavailableIDs = map[string]bool{
 	"deepseek-v4-pro":          true,
 }
 
-func (c *Client) maasBase(cred Credentials) string {
-	raw := strings.TrimSpace(cred.MaaSBaseURL)
-	if raw == "" {
-		return c.MaaSBase + "/v2"
+func (c *Client) maasBase(cred Credentials) (string, error) {
+	raw := strings.TrimSuffix(strings.TrimSpace(cred.MaaSBaseURL), "/")
+	host := strings.TrimPrefix(DefaultMaaSBase, "https://")
+	switch raw {
+	case "", DefaultMaaSBase, DefaultMaaSBase + "/v2", host, host + "/v2":
+		return c.MaaSBase + "/v2", nil
+	default:
+		return "", invalid("模型网关地址不是受信任的官方端点")
 	}
-	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
-		return strings.TrimSuffix(raw, "/")
-	}
-	raw = strings.TrimSuffix(raw, "/")
-	raw = strings.TrimSuffix(raw, "/v2")
-	return "https://" + raw + "/v2"
 }
 
 func basicAuthHeader(appKey, appSecret string) string {
@@ -252,7 +250,10 @@ func (c *Client) Models(ctx context.Context, raw json.RawMessage) ([]provider.Mo
 		}
 	}
 
-	base := c.maasBase(cred)
+	base, err := c.maasBase(cred)
+	if err != nil {
+		return nil, err
+	}
 	modelsURL := base + "/models"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, modelsURL, nil)

@@ -66,14 +66,7 @@ func Supported(a *accounts.Account, registry *provider.Registry) bool {
 func (s *Rewards) Status(ctx context.Context, a *accounts.Account, ops RewardOperations) (provider.RewardResult, error) {
 	today := DateFor(a, time.Now())
 	if a.LastClaimDate == today {
-		// A date is written only for a confirmed claim, so the stored message is
-		// the one that describes it: keeping it shows what was earned instead of
-		// a generic confirmation the operator has to decode.
-		message := "今日签到已在本网关确认"
-		if a.LastClaimMsg != "" {
-			message = a.LastClaimMsg
-		}
-		return provider.RewardResult{State: "already_claimed", Message: message}, nil
+		return provider.RewardResult{State: "already_claimed", Message: "今日签到已在本网关确认"}, nil
 	}
 	adapter, raw, err := ops.Provider(ctx, a)
 	if err != nil {
@@ -129,11 +122,6 @@ func (s *Rewards) claimProviderDaily(ctx context.Context, a *accounts.Account, t
 		confirmed = result.Confirmed()
 		if confirmed {
 			next = 0
-		} else if state == "unavailable" {
-			// Neither the 30-minute transient lock nor no lock at all: the state
-			// clears upstream, and the daily loop must not poll an unprovisioned
-			// account every tick while a freshly activated one stays responsive.
-			next = time.Now().Add(time.Hour).Unix()
 		}
 	}
 	if saveErr := s.store.SaveDailyReward(a.ID, today, state, message, confirmed, next); saveErr != nil {

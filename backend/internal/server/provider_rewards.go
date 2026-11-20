@@ -25,12 +25,6 @@ func (s *Server) handleProviderWelfare(w http.ResponseWriter, r *http.Request, a
 		writeErr(w, 502, err.Error(), "upstream_error")
 		return
 	}
-	// Status persists a confirmed claim. The response must report the stored
-	// generation, not the snapshot read before that write, or the card keeps
-	// advertising a retry window that no longer exists.
-	if latest := s.Store.Account(a.ID); latest != nil {
-		a = latest
-	}
 	count := 0
 	if result.State == "claimable" {
 		count = 1

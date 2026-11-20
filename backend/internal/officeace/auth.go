@@ -129,6 +129,9 @@ func (c *Client) Normalize(raw json.RawMessage) (json.RawMessage, provider.Ident
 	modelAppKey := firstString(m, "model_app_key", "modelAppKey")
 	modelAppSecret := firstString(m, "model_app_secret", "modelAppSecret")
 	maasBaseURL := firstString(m, "maas_base_url", "maasBaseUrl", "baseUrl")
+	if _, err := c.maasBase(Credentials{MaaSBaseURL: maasBaseURL}); err != nil {
+		return nil, provider.Identity{}, err
+	}
 	projectID := firstString(m, "project_id", "projectId")
 	oauthClient := firstString(m, "oauth_client", "oauthClient")
 

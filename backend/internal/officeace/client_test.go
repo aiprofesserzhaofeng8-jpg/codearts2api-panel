@@ -104,7 +104,7 @@ func TestBrowserLoginAndPolling(t *testing.T) {
 						"model_app_key": "app_key_test",
 						"model_app_secret": "app_secret_test"
 					},
-					"model_api_url_base": "maas-gw.test.com"
+					"model_api_url_base": "api.modelarts-maas.com"
 				}
 			}`))
 		default:
@@ -207,13 +207,14 @@ func TestStreamChatCompletions(t *testing.T) {
 
 	c := New()
 	c.HTTP = server.Client()
+	c.MaaSBase = server.URL
 	cred := Credentials{
 		AccessKeyID:     "AK_STREAM",
 		SecretAccessKey: "SK_STREAM",
 		SecurityToken:   "TOKEN_STREAM",
 		ModelAppKey:     "app_k",
 		ModelAppSecret:  "app_s",
-		MaaSBaseURL:     server.URL + "/v2",
+		MaaSBaseURL:     DefaultMaaSBase + "/v2",
 	}
 	credRaw, _ := json.Marshal(cred)
 

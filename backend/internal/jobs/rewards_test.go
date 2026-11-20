@@ -198,28 +198,6 @@ func TestRewardDateAndWindowPreserveProviderSemantics(t *testing.T) {
 	}
 }
 
-func TestUnavailableRewardUsesHourlyBackoff(t *testing.T) {
-	// An unprovisioned upstream is neither a transient limit nor a free retry:
-	// the daily loop backs off an hour, so a freshly activated account stays
-	// responsive while an un-provisioned one is not polled on every tick.
-	st, r, _ := rewardFixture(t)
-	ops := RewardOperations{Provider: func(context.Context, *accounts.Account) (provider.Adapter, json.RawMessage, error) {
-		return rewardAdapter{claim: func(context.Context) (provider.RewardResult, error) {
-			return provider.RewardResult{State: "unavailable", Message: "服务未开通"}, nil
-		}}, nil, nil
-	}}
-	if _, err := r.Claim(t.Context(), st.Account("wb"), "", ops); err == nil {
-		t.Fatal("unavailable read as a successful claim")
-	}
-	a := st.Account("wb")
-	if a.LastClaimDate != "" {
-		t.Fatal("unavailable wrote a claim date")
-	}
-	if got := a.NextClaimAt - time.Now().Unix(); got < 3500 || got > 3700 {
-		t.Fatalf("backoff %ds is not the hourly window", got)
-	}
-}
-
 func TestQoderTenAMRewardWindow(t *testing.T) {
 	a := &accounts.Account{Provider: provider.Qoder}
 	for _, tc := range []struct {
