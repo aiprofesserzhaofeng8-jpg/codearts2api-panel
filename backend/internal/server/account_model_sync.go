@@ -69,7 +69,13 @@ func (s *Server) handleAccountModels(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		msg := "上游目录读取失败"
-		if errors.Is(err, context.DeadlineExceeded) {
+		// A platform may answer with an actionable reason (for example an account
+		// that is authorized but not provisioned yet). Showing it is the point of
+		// the button; a generic sentence leaves the operator with no next step.
+		var upstream *provider.Error
+		if errors.As(err, &upstream) && upstream.Message != "" {
+			msg = upstream.Message
+		} else if errors.Is(err, context.DeadlineExceeded) {
 			msg = "上游目录读取超时"
 		}
 		writeErr(w, 502, msg, "upstream_error")

@@ -33,6 +33,8 @@ const Cline = "cline"
 const TypeSafe = "typesafe"
 const Bedrock = "bedrock"
 const Vertex = "vertex"
+const OfficeAce = "officeace"
+
 
 type Model struct {
 	CatalogKind        string          `json:"-"` // Non-live catalog origin, when supplied by the adapter.

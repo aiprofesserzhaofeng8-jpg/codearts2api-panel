@@ -3,13 +3,13 @@ const names: Record<string, string> = {
   chatgpt: 'OpenAI', claude: 'Claude', gemini: 'Gemini', deepseek: 'DeepSeek',
   zhipu: 'Zhipu', kimi: 'Kimi', minimax: 'MiniMax', grok: 'Grok',
   codearts: 'CodeArts', workbuddy: 'WorkBuddy', trae: 'Trae', antigravity: 'Antigravity',
-  qoder: 'Qoder', kiro: 'Kiro', mobileclaw: 'MobileClaw', teleagent: 'TeleAgent',
+  qoder: 'Qoder', kiro: 'Kiro', mobileclaw: 'MobileClaw', officeace: '云果办', teleagent: 'TeleAgent',
   opencode: 'OpenCode', commandcode: 'Command Code', cline: 'Cline', typesafe: 'TypeSafe',
   bedrock: 'AWS Bedrock', vertex: 'Vertex AI',
 };
 export const brands = Object.entries(names).map(([id, name]) => ({id, name}));
 export const commonPlatforms = brands.slice(0, 11);
-export const extraPlatforms = brands.slice(11, 20);
+export const extraPlatforms = brands.slice(11, 21);
 export const brandName = (id: string) => names[id] || id;
 const icons = import.meta.glob('../../assets/providers/*.{svg,png}', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 export function brandIcon(id: string) {
@@ -47,7 +47,7 @@ const iconTints: Record<string, string> = {
   chatgpt: '#e5f4ed', claude: '#f8e8df', gemini: '#edf0ff', deepseek: '#e7efff',
   zhipu: '#e9efff', kimi: '#e8f6ed', minimax: '#ffe8ef', grok: '#eef0f3',
   codearts: '#f0edff', workbuddy: '#fff0dd', trae: '#dcf8ed', antigravity: '#eef0ff',
-  qoder: '#e3f5ed', kiro: '#f0e7ff', mobileclaw: '#eee8ff', teleagent: '#e5efff',
+  qoder: '#e3f5ed', kiro: '#f0e7ff', mobileclaw: '#eee8ff', officeace: '#e7efff', teleagent: '#e5efff',
   opencode: '#edf0f4', commandcode: '#f4eee6', cline: '#e7f1f5', typesafe: '#fce6f4',
 };
 export const brandIconStyle = (id: string) => ({'--brand-tint': iconTints[id] || '#eef0f3'});

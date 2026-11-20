@@ -73,7 +73,11 @@ export function appendQuota(parent: HTMLElement, info: Snapshot, now = Date.now(
   }
   if (info.kind !== 'credits' && info.kind !== 'windows') return false;
   if (!info.available) {
-    parent.append(node('span', 'muted', tr('用量未返回')));
+    // An authorized-but-unprovisioned upstream is a distinct account state: it
+    // has no balance to report yet, and saying "usage unavailable" would read as
+    // a query failure the operator cannot act on.
+    const unsubscribed = info.status === 'unsubscribed';
+    parent.append(node('span', 'muted', tr(unsubscribed ? '未开通订阅' : '用量未返回')));
     if (info.reason) parent.append(node('span', 'sub quota-query-error', tr(info.reason)));
     return true;
   }

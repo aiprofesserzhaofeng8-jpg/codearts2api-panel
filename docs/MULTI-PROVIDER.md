@@ -32,6 +32,7 @@
 | `kiro/eu-central-1/<modelId>` | Kiro 欧洲地区账号 |
 | `chatgpt/global/<model-id>` | ChatGPT / Codex 或官方 OpenAI API Key |
 | `claude/global/<model-id>` | Claude OAuth 或官方 Anthropic API Key |
+| `officeace/cn/<model-id>` | 华为云 OfficeAce（云果办 / AgentArts）；[接入说明](OFFICEACE.md) |
 | `teleagent/cn/<model-id>` | 电信 TeleAgent；[本机浏览器登录、凭据导入与范围](TELEAGENT.md) |
 | `trae/global/...` | 国际版尚未接入，拒绝调用 |
 

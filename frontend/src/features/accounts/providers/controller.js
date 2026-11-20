@@ -333,7 +333,7 @@ export function selectProvider(name) {
     domState.$("#providerTeleAgentHelper").classList.toggle("hidden", name !== "teleagent");
     domState.$("#providerBrowserSteps").textContent = name === "mobileclaw" ? tr("生成二维码或复制登录链接 → 使用手机蜂窝网络确认 → 自动显示账号预览 → 确认保存。无需粘贴回调地址。") : name === "teleagent" ? tr("点击浏览器登录 → 完成官方认证 → 自动显示账号预览 → 确认保存。") : tr("生成链接 → 在另一浏览器授权 → 检查账号预览 → 确认保存。关闭窗口不会自动保存账号。");
     domState.$("#providerLoginCallback").type = name === "trae" || name === "teleagent" ? "password" : "text";
-    domState.$("#providerLoginCallback").parentElement.classList.toggle("hidden", ["qoder", "kiro", "teleagent", "mobileclaw"].includes(name));
+    domState.$("#providerLoginCallback").parentElement.classList.toggle("hidden", ["qoder", "kiro", "teleagent", "mobileclaw", "officeace"].includes(name));
     domState.$("#providerLoginURL").parentElement.classList.toggle("hidden", name === "teleagent");
     domState.$("#providerLoginStart").textContent = name === "teleagent" ? tr("浏览器登录") : tr("生成登录链接");
     domState.$("#providerLoginCopy").classList.toggle("hidden", name === "teleagent");
@@ -359,7 +359,7 @@ export function selectProvider(name) {
     var scopeSelect = domState.$("#providerScope");
     var scopeValue = scopeSelect.value;
     scopeSelect.textContent = "";
-    var scopes = name === "vertex" ? [["global", "Global"], ["us-central1", "us-central1"], ["europe-west4", "europe-west4"]] : name === "bedrock" ? [["us-east-1", "us-east-1"], ["us-west-2", "us-west-2"], ["eu-west-1", "eu-west-1"]] : ["typesafe", "cline", "commandcode"].includes(name) ? [["global", "Global"]] : name === "opencode" ? [["zen", "Zen / Pay as you go"], ["go", "Go / Subscription"]] : name === "grok" ? [["build", "Build OAuth"]] : name === "gemini" ? (providersState.accountCreateMethod === "browser" ? [["cli", "CLI / Code Assist"]] : [["api", "AI Studio API"]]) : ["teleagent", "mobileclaw", ...Object.keys(officialAPI)].includes(name) ? [["cn", tr("国内版")]] : ["chatgpt", "claude", "antigravity"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
+    var scopes = name === "vertex" ? [["global", "Global"], ["us-central1", "us-central1"], ["europe-west4", "europe-west4"]] : name === "bedrock" ? [["us-east-1", "us-east-1"], ["us-west-2", "us-west-2"], ["eu-west-1", "eu-west-1"]] : ["typesafe", "cline", "commandcode"].includes(name) ? [["global", "Global"]] : name === "opencode" ? [["zen", "Zen / Pay as you go"], ["go", "Go / Subscription"]] : name === "grok" ? [["build", "Build OAuth"]] : name === "gemini" ? (providersState.accountCreateMethod === "browser" ? [["cli", "CLI / Code Assist"]] : [["api", "AI Studio API"]]) : ["teleagent", "mobileclaw", "officeace", ...Object.keys(officialAPI)].includes(name) ? [["cn", tr("国内版")]] : ["chatgpt", "claude", "antigravity"].includes(name) ? [["global", tr("国际版")]] : name === "kiro" ? [["us-east-1", "us-east-1"], ["eu-central-1", "eu-central-1"]] : [["cn", tr("国内版")], ["global", tr("国际版")]];
     scopes.forEach(function (entry) { var option = document.createElement("option"); option.value = entry[0]; option.textContent = entry[1]; option.disabled = name === "trae" && entry[0] === "global"; scopeSelect.appendChild(option); });
     if (scopes.some(function (entry) { return entry[0] === scopeValue && !(name === "trae" && scopeValue === "global"); })) scopeSelect.value = scopeValue;
     const hints = {
@@ -372,6 +372,7 @@ claude: "支持 access_token、account_uuid、expires_at 和可选 refresh_token
         trae: "支持 Trae 国内版扁平或 auth/account 嵌套凭据，需包含 access_token、uid、expires_at、machine_id、device_id；国际版尚未接入。",
         workbuddy: "支持已有 WorkBuddy 导出的扁平或 auth/account 嵌套 JSON。导入前会向上游核对身份。",
         kiro: "Kiro 支持 Builder ID 设备授权；也可导入 api_key（ksk_ 开头）或完整 OAuth JSON。region 默认 us-east-1；导入前校验上游模型访问。",
+        officeace: "云果办支持华为云浏览器授权；也可导入包含 access_key_id、secret_access_key、security_token 的凭据 JSON。导入前核对云端权限并获取模型网关。",
         qoder: "Qoder 凭据需包含 access_token、uid、expires_at、machine_id 和 scope（cn / global）。导入前会向上游核对身份。"
     };
     domState.$("#providerImportHint").textContent = tr(name === "vertex" ? "服务账号 JSON：service_account 内粘贴 Google 服务账号，location 指定区域，model_ids 填写已授权 Gemini 型号。校验会发送一次短推理请求，可能产生费用。" : name === "bedrock" ? "AWS 凭据 JSON：aws_access_key_id、aws_secret_access_key、aws_region；临时凭据另需 aws_session_token 和 expires_at。可用 model_ids 指定已授权 Claude 型号。校验会发送一次短推理请求，可能产生费用。" : name === "typesafe" ? "TypeSafe 使用独立的 /v1/systemone 决策接口，不是聊天模型。使用 API Key 校验模型访问，不发送付费决策请求。" : name === "cline" ? "使用 Cline API Key；账号校验不发送推理请求。按量、ClinePass 和免费模型分别计量，登录成功不代表所有模型有权限。" : name === "commandcode" ? "需要支持外部 API 的 Command Code 套餐或 Provider 按量账号；Go 套餐不适用。校验会发送一次短推理请求，可能消耗额度。" : name === "opencode" ? "Zen 按量与 Go 订阅分别导入。校验会发送一次短推理请求，可能消耗额度；公开目录不代表密钥有效。" : name === "gemini" ? "导入使用 AI Studio API Key；浏览器授权使用 Gemini CLI / Code Assist，两个通道独立。" : apiOnly ? "使用所选模式对应的 API Key。Kimi、Zhipu 个人版及 MiniMax 支持套餐选项；目录不可用时，导入校验会发送一次短请求，可能消耗额度。" : hints[name]);
@@ -422,11 +423,11 @@ export function providerCall(action, extra) { return api("/admin/api/provider-lo
 
 export function refreshAfterProviderSave() { resetProviderLogin(); domState.$("#providerImportJSON").value = ""; finishAccountCreation(); toast(providerLabel() + tr(" 账号已保存，正在刷新模型目录"), "ok"); return api("/admin/api/models/refresh", { method: "POST" }).catch(function (e) { if (isAbortError(e)) return; toast(tr("账号已保存，模型目录刷新失败：") + e.message, "err"); }).then(refresh); }
 
-export function trustedProviderURL(raw) { try {
+export function trustedProviderURL(raw, provider = providersState.activeProvider) { try {
     var u = new URL(raw);
-    if (providersState.activeProvider === "mobileclaw") return u.protocol === "https:" && u.host === "www.cmpassport.com" && !u.username && !u.password && !u.hash && u.pathname === "/h5/js/jssdk_yw_auth/auth/scanAuth.html";
-    if (providersState.activeProvider === "teleagent") return u.protocol === "https:" && u.hostname === "www.teleai.com.cn" && !u.port && !u.username && !u.password && u.pathname === "/teleai-api/upms/public/auth/authorize";
-    return u.protocol === "https:" && !u.username && !u.password && (providersState.activeProvider === "grok" ? ["auth.x.ai"] : providersState.activeProvider === "trae" ? ["trae.cn"] : ["gemini", "antigravity"].includes(providersState.activeProvider) ? ["accounts.google.com"] : providersState.activeProvider === "chatgpt" ? ["auth.openai.com"] : providersState.activeProvider === "claude" ? ["claude.com"] : providersState.activeProvider === "kiro" ? ["view.awsapps.com", "device.sso.us-east-1.amazonaws.com", "device.sso.eu-central-1.amazonaws.com"] : providersState.activeProvider === "qoder" ? ["qoder.com", "qoder.com.cn", "qoder.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
+    if (provider === "mobileclaw") return u.protocol === "https:" && u.host === "www.cmpassport.com" && !u.username && !u.password && !u.hash && u.pathname === "/h5/js/jssdk_yw_auth/auth/scanAuth.html";
+    if (provider === "teleagent") return u.protocol === "https:" && u.hostname === "www.teleai.com.cn" && !u.port && !u.username && !u.password && u.pathname === "/teleai-api/upms/public/auth/authorize";
+    return u.protocol === "https:" && !u.username && !u.password && (provider === "officeace" ? ["auth.huaweicloud.com", "huaweicloud.com"] : provider === "grok" ? ["auth.x.ai"] : provider === "trae" ? ["trae.cn"] : ["gemini", "antigravity"].includes(provider) ? ["accounts.google.com"] : provider === "chatgpt" ? ["auth.openai.com"] : provider === "claude" ? ["claude.com"] : provider === "kiro" ? ["view.awsapps.com", "device.sso.us-east-1.amazonaws.com", "device.sso.eu-central-1.amazonaws.com"] : provider === "qoder" ? ["qoder.com", "qoder.com.cn", "qoder.cn"] : ["workbuddy.cn", "workbuddy.ai", "codebuddy.cn", "codebuddy.ai", "tencent.com", "qq.com"]).some(function (h) { return u.hostname === h || u.hostname.endsWith("." + h); });
 }
 catch (e) {
     return false;
