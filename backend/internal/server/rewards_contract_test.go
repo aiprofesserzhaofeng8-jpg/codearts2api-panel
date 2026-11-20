@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/trae"
+	"codearts2api/internal/upstream/trae"
 )
 
 // This exact fixture runs against the frozen baseline and the current source.

@@ -16,7 +16,7 @@ import (
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 func recoveryBody(path string, stream bool) string {

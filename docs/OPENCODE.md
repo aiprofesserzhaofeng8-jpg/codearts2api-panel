@@ -22,4 +22,4 @@ Go 显示上游滚动、周、月窗口及重置时间；未返回的值显示�
 
 第三方客户端能否调用、套餐是否允许及真实图片/工具表现最终以上游结果为准。真实账号验收尚未完成，不能将公开目录 HTTP 200 当作密钥认证成功。
 
-来源及许可见 [OpenCode 来源清单](../backend/internal/opencode/UPSTREAM.md)。官方文档：[推理接口](https://opencode.ai/docs/console/api/inference/)、[Go 套餐](https://opencode.ai/docs/console/go/)。
+来源及许可见 [OpenCode 来源清单](../backend/internal/upstream/opencode/UPSTREAM.md)。官方文档：[推理接口](https://opencode.ai/docs/console/api/inference/)、[Go 套餐](https://opencode.ai/docs/console/go/)。

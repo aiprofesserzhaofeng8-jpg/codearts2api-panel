@@ -14,4 +14,4 @@ Claude 使用 Messages，GPT 使用 Responses，其余已声明支持的对话�
 
 源码和隔离验收不能证明真实套餐可用。目前未使用真实 Command Code 密钥测试；本机无凭据读取公开目录返回 403，原因未确认。运行服务尚未升级。
 
-来源：[官方接口](https://commandcode.ai/docs/provider)、[来源及许可](../backend/internal/commandcode/UPSTREAM.md)。
+来源：[官方接口](https://commandcode.ai/docs/provider)、[来源及许可](../backend/internal/upstream/commandcode/UPSTREAM.md)。

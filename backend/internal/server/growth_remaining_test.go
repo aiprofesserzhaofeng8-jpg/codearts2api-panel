@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"codearts2api/internal/provider"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 func TestGrowthRemainingActivitiesAndExpertUseAccounting(t *testing.T) {

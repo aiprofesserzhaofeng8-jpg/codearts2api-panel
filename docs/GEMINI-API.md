@@ -38,7 +38,7 @@ Chat Completions、Responses、Messages 的网关工具元数据往返已通过�
 
 API Key/CLI 的真实 Google 授权、真实推理、识图、工具、配额和持续续期尚需用户自己的账号完成验收。不要把凭据发到聊天中。
 
-参考与证据：[P2b 验收](acceptance/SUB2API-PLATFORM-P2B-2026-11-15.md)、[签名与 Pi 验证](acceptance/GEMINI-SIGNED-TOOLS-2026-11-15.md)、[Sub2API 复用及修改记录](../backend/internal/gemini/UPSTREAM.md)。
+参考与证据：[P2b 验收](acceptance/SUB2API-PLATFORM-P2B-2026-11-15.md)、[签名与 Pi 验证](acceptance/GEMINI-SIGNED-TOOLS-2026-11-15.md)、[Sub2API 复用及修改记录](../backend/internal/upstream/gemini/UPSTREAM.md)。
 
 官方协议依据：[Google OpenAI 兼容文档](https://ai.google.dev/gemini-api/docs/openai)、[原生模型目录](https://ai.google.dev/api/models)、[固定 Gemini CLI Code Assist 实现](https://github.com/google-gemini/gemini-cli/blob/4ed06ed0ddc523a6d356a4ad35ddfea331041888/packages/core/src/code_assist/server.ts)。
 

@@ -17,7 +17,7 @@ import (
 
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 type growthActionFixture struct {

@@ -12,7 +12,7 @@ v0.3.14 本地包只实现元数据自动读取和文件交接。后续实现使
 
 ## 已确认的协议差异
 
-- WorkBuddy 在 `backend/internal/workbuddy/client.go` 的 `BeginLogin` 中请求官方 `/v2/plugin/auth/state`，取得授权 URL 和 state；`CheckLogin` 请求 `/v2/plugin/auth/token?state=…` 检查结果，再核对账号。凭据可由面板服务器直接取得。
+- WorkBuddy 在 `backend/internal/upstream/workbuddy/client.go` 的 `BeginLogin` 中请求官方 `/v2/plugin/auth/state`，取得授权 URL 和 state；`CheckLogin` 请求 `/v2/plugin/auth/token?state=…` 检查结果，再核对账号。凭据可由面板服务器直接取得。
 - TeleAgent 当前接入的 UPMS 授权回到官方 `cowork/auth`，再通过桌面深链交付账号令牌。现有助手使用独立浏览器接收本次授权，面板不支持将官方回调替换为自己的地址。尚未核实与 WorkBuddy 等价的远程授权结果查询接口。
 - TeleAgent 网关元数据可从用户本机安装的官方客户端及设备级 `device-meta.json` 只读取得。本机 3.0.0-rc.4 已验证这一步；新账号令牌仍由官方登录产生。
 

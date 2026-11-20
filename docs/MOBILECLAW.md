@@ -29,7 +29,7 @@
 - 原生模型名和每个来源支持的功能分别处理，不因名称相同就宣称支持图片或工具。
 - 接入没有文件存储服务或新的后台常驻进程。
 
-协议证据见 [UPSTREAM.md](../backend/internal/mobileclaw/UPSTREAM.md)。
+协议证据见 [UPSTREAM.md](../backend/internal/upstream/mobileclaw/UPSTREAM.md)。
 
 2026-11-14 用户反馈：手机扫码登录已成功，但需使用对应手机号的蜂窝网络。续期使用官方 `/auth/refresh` 协议，模拟测试已覆盖成功及失败分支；当前尚未完成真实令牌轮转验证。
 

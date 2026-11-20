@@ -13,7 +13,7 @@ import (
 
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/trae"
+	"codearts2api/internal/upstream/trae"
 )
 
 // The identical fixture also runs against the frozen pre-migration checkout.

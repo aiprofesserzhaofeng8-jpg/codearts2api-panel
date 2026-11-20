@@ -13,8 +13,8 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/config"
-	"codearts2api/internal/mobileclaw"
 	"codearts2api/internal/provider"
+	"codearts2api/internal/upstream/mobileclaw"
 )
 
 // Both HTTP conversions and the MobileClaw transport run; only the upstream

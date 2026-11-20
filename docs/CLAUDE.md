@@ -60,6 +60,6 @@ curl -fsS http://127.0.0.1:10087/v1/messages \
 
 ## 结构与来源
 
-`backend/internal/claude` 只拥有认证、目录、Messages 转换与流解析；账号池、分组、提示词、凭据条件提交、预算、租约和账本沿用现有实现。refresh token 轮转后不追加 profile 或目录查询才提交；已轮转凭据不因保存失败恢复旧值。
+`backend/internal/upstream/claude` 只拥有认证、目录、Messages 转换与流解析；账号池、分组、提示词、凭据条件提交、预算、租约和账本沿用现有实现。refresh token 轮转后不追加 profile 或目录查询才提交；已轮转凭据不因保存失败恢复旧值。
 
 认证端点与字段参考 [Sub2API 固定版本 OAuth](https://github.com/Wei-Shaw/sub2api/blob/4a4a83ee5ec86b19d3a2dd9b6471de5128963bec/backend/internal/pkg/oauth/oauth.go) 及同版本 `claude_oauth_service.go`；新增适配器为独立实现。Messages/SSE 和模型目录核对 [Anthropic 官方流式文档](https://platform.claude.com/docs/en/build-with-claude/streaming) 与 [Models API](https://platform.claude.com/docs/en/api/models/list)。参考源码不等于官方第三方 OAuth 支持承诺。

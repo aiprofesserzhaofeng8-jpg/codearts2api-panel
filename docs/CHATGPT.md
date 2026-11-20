@@ -63,7 +63,7 @@ curl -fsS http://127.0.0.1:10087/v1/chat/completions \
 
 ## 实现与参考
 
-`backend/internal/chatgpt` 负责凭据、官方端点和 Responses 转换；`backend/internal/providerhttp` 只提供有界 HTTP/SSE 与 PKCE。账号池、权限、提示词、刷新互斥、CAS 保存、重试和计量沿用现有模块。
+`backend/internal/upstream/chatgpt` 负责凭据、官方端点和 Responses 转换；`backend/internal/providerhttp` 只提供有界 HTTP/SSE 与 PKCE。账号池、权限、提示词、刷新互斥、CAS 保存、重试和计量沿用现有模块。
 
 认证与订阅转发参考 [Sub2API 固定版本](https://github.com/Wei-Shaw/sub2api/tree/4a4a83ee5ec86b19d3a2dd9b6471de5128963bec/backend/internal/pkg/openai) 和同版本的 `openai_codex_models_service.go`。这里为独立适配实现，没有复制其服务、调度器或身份伪装代码。
 

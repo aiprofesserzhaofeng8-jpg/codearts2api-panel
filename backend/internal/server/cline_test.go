@@ -2,11 +2,11 @@ package server
 
 import (
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/cline"
 	"codearts2api/internal/config"
 	"codearts2api/internal/protocol"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/upstream/cline"
 	"context"
 	"encoding/json"
 	"fmt"

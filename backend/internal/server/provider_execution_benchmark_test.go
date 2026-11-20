@@ -18,7 +18,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/trae"
+	"codearts2api/internal/upstream/trae"
 )
 
 // The same fixture is copied into a temporary baseline checkout for comparison.

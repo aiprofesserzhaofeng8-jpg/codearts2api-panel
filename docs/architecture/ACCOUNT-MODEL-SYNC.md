@@ -4,7 +4,7 @@
 
 ## 当前基线
 
-[全局刷新](../../backend/internal/catalog/refresh.go)按平台和区域选取成功的结果，供平台目录使用。[Qoder 适配器](../../backend/internal/qoder/models.go)已支持用账号凭据查询目录，并过滤禁用、不支持的来源。直接复用其结果，保留原始 ID；显示名、积分倍率以及统一模型别名都不能作为比较键。
+[全局刷新](../../backend/internal/catalog/refresh.go)按平台和区域选取成功的结果，供平台目录使用。[Qoder 适配器](../../backend/internal/upstream/qoder/models.go)已支持用账号凭据查询目录，并过滤禁用、不支持的来源。直接复用其结果，保留原始 ID；显示名、积分倍率以及统一模型别名都不能作为比较键。
 
 参考 Sub2API 的[账号模型选择器](https://github.com/Wei-Shaw/sub2api/blob/main/frontend/src/components/account/ModelWhitelistSelector.vue)：同步入口放在账号操作里。本项目已用分组和统一模型管理授权，因此不把同步结果直接写进白名单。
 
@@ -16,7 +16,7 @@
 
 [隔离性测试](../../backend/internal/catalog/account_discovery_test.go)覆盖同区不同账号、失败不换号、错误账号不查询、按 ID 比较及平台目录不变。在 backend/ 下运行：
 ```sh
-go test ./internal/catalog ./internal/qoder
+go test ./internal/catalog ./internal/upstream/qoder
 ```
 
 ## 2. 保存最近成功快照，接入管理员接口（已实现）

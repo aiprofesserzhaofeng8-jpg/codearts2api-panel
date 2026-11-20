@@ -1,6 +1,6 @@
 # Kiro 上游
 
-Kiro 作为独立平台接入现有账号池、分组统一模型、公共/平台提示词和三个客户端接口。协议实现位于 `backend/internal/kiro`；协议来源和许可见 [UPSTREAM.md](../backend/internal/kiro/UPSTREAM.md)。不启动官方 CLI，也不执行模型返回的工具。
+Kiro 作为独立平台接入现有账号池、分组统一模型、公共/平台提示词和三个客户端接口。协议实现位于 `backend/internal/upstream/kiro`；协议来源和许可见 [UPSTREAM.md](../backend/internal/upstream/kiro/UPSTREAM.md)。不启动官方 CLI，也不执行模型返回的工具。
 
 ## 添加账号
 

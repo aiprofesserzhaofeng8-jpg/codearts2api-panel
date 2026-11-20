@@ -14,4 +14,4 @@
 
 目前完成源码及隔离接入，没有真实 API Key 验收；运行服务未升级。
 
-[验收记录](acceptance/SUB2API-PLATFORM-P4C-2026-11-16.md) · [来源与许可](../backend/internal/cline/UPSTREAM.md)
+[验收记录](acceptance/SUB2API-PLATFORM-P4C-2026-11-16.md) · [来源与许可](../backend/internal/upstream/cline/UPSTREAM.md)

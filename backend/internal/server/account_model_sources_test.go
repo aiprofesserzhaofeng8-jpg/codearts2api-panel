@@ -3,8 +3,8 @@ package server
 import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/typesafe"
-	"codearts2api/internal/vertex"
+	"codearts2api/internal/upstream/typesafe"
+	"codearts2api/internal/upstream/vertex"
 	"encoding/json"
 	"fmt"
 	"net/http"

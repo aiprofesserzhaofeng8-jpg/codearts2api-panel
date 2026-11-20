@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/gemini"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/upstream/gemini"
 )
 
 func TestCLIConcurrentRenewalUsesSingleCASOwner(t *testing.T) {

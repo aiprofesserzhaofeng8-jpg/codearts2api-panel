@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"codearts2api/internal/codearts"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 func growthRequest(s *Server, method, path, body string) *httptest.ResponseRecorder {

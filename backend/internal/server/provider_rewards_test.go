@@ -2,7 +2,7 @@ package server
 
 import (
 	"codearts2api/internal/storage"
-	"codearts2api/internal/trae"
+	"codearts2api/internal/upstream/trae"
 	"context"
 	"io"
 	"net/http"

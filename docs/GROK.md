@@ -38,4 +38,4 @@ EOF、空响应、业务错误不当作成功。显式长度截断保留 length�
 
 本地假上游已覆盖 OAuth、刷新、目录、生成、图片/工具、错误流、用量、保存失败、并发续期、三个 API 协议、权限及浏览器流程。未使用真实 xAI 账号；未验证真实套餐权限、完整多轮工具、图片及自然续期。Linux/Windows 构建不等于已部署，Windows 未实际运行、Docker 未构建运行。
 
-[验收记录](acceptance/SUB2API-PLATFORM-P3B-2026-11-16.md) · [来源与许可](../backend/internal/grok/UPSTREAM.md)
+[验收记录](acceptance/SUB2API-PLATFORM-P3B-2026-11-16.md) · [来源与许可](../backend/internal/upstream/grok/UPSTREAM.md)

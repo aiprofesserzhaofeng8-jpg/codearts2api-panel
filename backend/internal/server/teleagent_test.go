@@ -13,7 +13,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/teleagent"
+	"codearts2api/internal/upstream/teleagent"
 )
 
 func teleagentFixture() map[string]any {

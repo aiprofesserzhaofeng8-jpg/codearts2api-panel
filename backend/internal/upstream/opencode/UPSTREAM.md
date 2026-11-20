@@ -37,7 +37,7 @@ Zen balance is unsupported, not fabricated from Go subscription usage.
 
 Generation uses shared stateless Chat/Messages/Responses converters. Verify performs one short authenticated inference after catalog discovery, with no fallback retry; public Models success alone never passes verification. No real account has been tested.
 Registered in the application. The import UI separates Zen/Go scopes and discloses the short inference and possible quota consumption.
-Linux/Windows packaging and Docker include these licenses/notices. Test from backend: go test -race ./internal/opencode.
+Linux/Windows packaging and Docker include these licenses/notices. Test from backend: go test -race ./internal/upstream/opencode.
 
 ## Protocol routing alignment
 

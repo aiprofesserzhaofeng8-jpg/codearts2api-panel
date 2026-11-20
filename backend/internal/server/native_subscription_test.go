@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/chatgpt"
-	"codearts2api/internal/claude"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/upstream/chatgpt"
+	"codearts2api/internal/upstream/claude"
 )
 
 func subscriptionServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *chatgpt.Client, *claude.Client) {
