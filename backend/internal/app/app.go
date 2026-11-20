@@ -28,7 +28,7 @@ import (
 	"codearts2api/internal/kiro"
 	"codearts2api/internal/minimax"
 	"codearts2api/internal/mobileclaw"
-	"codearts2api/internal/officeace"
+	"codearts2api/internal/upstream/officeace"
 	"codearts2api/internal/opencode"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/qoder"

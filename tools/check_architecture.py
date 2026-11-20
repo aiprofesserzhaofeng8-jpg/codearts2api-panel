@@ -25,6 +25,15 @@ def neutral(relative):
     return top in NEUTRAL and (top != "upstream" or relative == "upstream")
 
 
+def platform_owner(relative):
+    if not relative:
+        return None
+    top, _, rest = relative.partition("/")
+    if top == "upstream" and rest:
+        return rest.partition("/")[0]
+    return top if top in PLATFORMS else None
+
+
 def violations(packages):
     errors = []
     for pkg in packages:
@@ -49,11 +58,9 @@ def violations(packages):
             pure_conversion = relative == "protocol" and local == "responsescompat"
             if owner in PURE and local and not pure_conversion:
                 reason = "value/algorithm module must remain independent of other internal modules"
-            platform = relative.split("/")[-1] if relative.startswith("upstream/") else relative
-            if platform in PLATFORMS and (top in PLATFORMS or (local and local.startswith("upstream/"))):
-                target = local.split("/")[-1]
-                if target in PLATFORMS and target != platform:
-                    reason = "platforms must not import each other"
+            platform, target = platform_owner(relative), platform_owner(local)
+            if platform and target and platform != target:
+                reason = "platforms must not import each other"
             if relative != "app" and top in {"app", "server", "httpapi"} and relative not in {"server", "httpapi"}:
                 reason = "lower modules must not import application or HTTP assembly"
             if top == "store" and owner != "store":

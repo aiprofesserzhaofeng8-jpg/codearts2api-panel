@@ -34,6 +34,17 @@ class ArchitectureRulesTest(unittest.TestCase):
             self.check_edge(source, PREFIX + target, False)
         self.check_edge("upstream/codearts", "net/http", False)
 
+    def test_platform_ownership_in_nested_and_legacy_paths(self):
+        for source in ("workbuddy", "workbuddy/login", "upstream/workbuddy/login"):
+            for target in ("upstream/officeace", "upstream/officeace/auth", "officeace/auth"):
+                self.check_edge(source, PREFIX + target, True)
+            self.check_edge(source, PREFIX + "upstream/workbuddy/session", False)
+        self.check_edge("gateway", PREFIX + "upstream/officeace", True)
+        self.check_edge("upstream/codearts", PREFIX + "codearts", False)
+        graph = [{"ImportPath": PREFIX + "gateway", "Imports": [PREFIX + "bridge"]},
+                 {"ImportPath": PREFIX + "bridge", "Imports": [PREFIX + "upstream/officeace"]}]
+        self.assertTrue(any("indirect" in error for error in violations(graph)))
+
     def test_new_runtime_owners_and_facade_direction(self):
         self.check_edge("storage", "net/http", True)
         self.check_edge("store", PREFIX + "gateway", True)

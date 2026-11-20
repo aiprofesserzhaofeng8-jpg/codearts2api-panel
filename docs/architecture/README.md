@@ -1,5 +1,7 @@
 # 项目结构设计 v1
 
+上游代码放哪里：[后端 internal 目录与平台迁移设计](INTERNAL-UPSTREAM-LAYOUT.md)（目标布局、导入边界和 OfficeAce 首批范围）。
+
 账号池模型发现：[按账号同步上游模型](ACCOUNT-MODEL-SYNC.md)（Qoder 首批；实施顺序、验证结果与路由边界）。
 
 协议后续改造：[对齐 Sub2API 的协议路由与转发计划](SUB2API-PROTOCOL-ALIGNMENT-PLAN.md)（待实施，保留现有模型融合与准入体系）。
