@@ -164,7 +164,11 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.image.outputs.name }}:${{ github.ref_name }}
+          # latest is safe here: the tag was validated above as a stable vX.Y.Z,
+          # so prereleases never move it.
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.ref_name }}
+            ${{ steps.image.outputs.name }}:latest
           build-args: VERSION=${{ github.ref_name }}
           labels: |
             org.opencontainers.image.version=${{ github.ref_name }}

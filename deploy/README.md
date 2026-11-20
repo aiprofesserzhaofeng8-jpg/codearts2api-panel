@@ -122,7 +122,7 @@ docker compose --env-file .env -f compose.production.yml pull
 docker compose --env-file .env -f compose.production.yml up -d
 ```
 
-不要使用 `latest`。生产模板不会从工作区源码构建；GHCR 包首次发布后的可见性也需在 GitHub 核实。镜像使用 UID/GID 10001 和命名数据卷。改为 bind mount 时，先为专用目录设置该用户可写权限，不要用 `chmod 777`。
+需要固定版本时填写 `vX.Y.Z` 或 digest。`latest` 随每个稳定版标签（`vX.Y.Z`）移动，仅适合 Watchtower 等自动更新场景：容器重新拉取后会直接升级，升级前请备份数据卷。生产模板不会从工作区源码构建；GHCR 包首次发布后的可见性也需在 GitHub 核实。镜像使用 UID/GID 10001 和命名数据卷。改为 bind mount 时，先为专用目录设置该用户可写权限，不要用 `chmod 777`。
 
 打开面板完成首次安装；v0.3.8 起无需手动读取初始化文件。
 
