@@ -122,7 +122,7 @@ docker compose --env-file .env -f compose.production.yml pull
 docker compose --env-file .env -f compose.production.yml up -d
 ```
 
-需要固定版本时填写 `vX.Y.Z` 或 digest。`latest` 随每个稳定版标签（`vX.Y.Z`）移动，仅适合 Watchtower 等自动更新场景：容器重新拉取后会直接升级，升级前请备份数据卷。生产模板不会从工作区源码构建；GHCR 包首次发布后的可见性也需在 GitHub 核实。镜像使用 UID/GID 10001 和命名数据卷。改为 bind mount 时，先为专用目录设置该用户可写权限，不要用 `chmod 777`。
+需要固定版本时填写 `vX.Y.Z` 或 digest。正式 Release 发布后，`latest` 指向已公开稳定版本中版本号最高的固定镜像，仅适合 Watchtower 等自动更新场景：容器重新拉取后会直接升级，升级前请备份数据卷。生产模板不会从工作区源码构建；GHCR 包首次发布后的可见性也需在 GitHub 核实。镜像使用 UID/GID 10001 和命名数据卷。改为 bind mount 时，先为专用目录设置该用户可写权限，不要用 `chmod 777`。
 
 打开面板完成首次安装；v0.3.8 起无需手动读取初始化文件。
 
@@ -264,7 +264,7 @@ python3 deploy/tests/d1_compose_acceptance.py --image 本地构建的测试镜�
 python3 deploy/tests/managed_acceptance.py --first 旧测试版本包.tar.gz --second 新测试版本包.tar.gz --failure-cases
 ```
 
-发布包构建需要当前提交的前端资源。工作流会先运行完整检查，再构建两个架构；执行 amd64 隔离安装/备份恢复、Caddy 流式和生产 Compose 验收，随后发布固定版本 GHCR 镜像、创建 GitHub Release **草稿**。维护者检查后发布草稿；不会创建 `latest`。推送 `vX.Y.Z` 标签才触发，本地编辑或测试不会发布。工作流不代表 ARM 真机、云安全组或公网证书已验收。
+发布包构建需要当前提交的前端资源。工作流会先运行完整检查，再构建两个架构；执行 amd64 隔离安装/备份恢复、Caddy 流式和生产 Compose 验收，随后发布固定版本 GHCR 镜像、创建 GitHub Release **草稿**。维护者公开正式 Release 后，提升工作流复用最高稳定版本镜像的 digest 更新 `latest`；草稿和预发布不会触发提升。推送 `vX.Y.Z` 标签才触发，本地编辑或测试不会发布。工作流不代表 ARM 真机、云安全组或公网证书已验收。
 
 打包先在临时目录完成归档与 SHA-256，再以不覆盖方式发布文件；写入中断不会留下半成品归档，已有包或摘要会拒绝覆盖。两个文件不能保证跨文件原子提交；断电后若只有包没有摘要，需要重新核验来源和内容，不能当作完整发布。正式附件包含两个架构的版本包、独立 `install.sh`、`panelctl.py` 与覆盖四个附件的 `SHA256SUMS`。
 
