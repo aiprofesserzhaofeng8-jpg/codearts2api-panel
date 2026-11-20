@@ -225,7 +225,7 @@ func (m *Management) defaultModelsPlan() (DefaultModelsPreview, map[string]confi
 	digestData, _ := json.Marshal(fingerprint)
 	digest := sha256.Sum256(digestData)
 	out := DefaultModelsPreview{Version: defaultCatalog.Version, CatalogRevision: hex.EncodeToString(digest[:]), RoutingRevision: snap.Revision,
-		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw, provider.DeepSeek, provider.Zhipu, provider.Kimi, provider.MiniMax, provider.Gemini, provider.Antigravity, provider.Grok, provider.OpenCode, provider.CommandCode, provider.Cline, provider.Bedrock, provider.Vertex}, Models: []DefaultModelEntry{}}
+		Providers: []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw, provider.OfficeAce, provider.DeepSeek, provider.Zhipu, provider.Kimi, provider.MiniMax, provider.Gemini, provider.Antigravity, provider.Grok, provider.OpenCode, provider.CommandCode, provider.Cline, provider.Bedrock, provider.Vertex}, Models: []DefaultModelEntry{}}
 	proposals := map[string]config.UnifiedModel{}
 	policies := map[string]config.ModelPolicy{}
 	existing := map[string]config.UnifiedModel{}

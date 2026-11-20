@@ -35,11 +35,11 @@ for(const locale of ['zh-CN','en-US']){
   await page.screenshot({path:`artifacts/onboarding-${locale}-${width}-${theme}.png`});
  }
  await page.setViewportSize({width:1280,height:1000});
- await page.locator('#accountPlatformsMore').click();assert.equal(await page.locator('[data-account-platform]:visible').count(),20);
+ await page.locator('#accountPlatformsMore').click();assert.equal(await page.locator('[data-account-platform]:visible').count(),21);
  assert.equal(await page.locator('#accountPlatformsMore').getAttribute('aria-expanded'),'true');
  const grid=await page.locator('[data-account-platform]:visible').evaluateAll(es=>es.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
- assert.equal(new Set(grid.map(p=>p.y)).size,5);
- for(let i=0;i<20;i++){assert.equal(grid[i].x,grid[i%4].x);assert.equal(grid[i].y,grid[Math.floor(i/4)*4].y);}
+ assert.equal(new Set(grid.map(p=>p.y)).size,6);
+ for(let i=0;i<21;i++){assert.equal(grid[i].x,grid[i%4].x);assert.equal(grid[i].y,grid[Math.floor(i/4)*4].y);}
  await page.waitForFunction(()=>[...document.querySelectorAll('.platform-icon img')].every(e=>e.complete && e.naturalWidth>0));
  assert.equal(await page.locator('.platform-icon').first().evaluate(e=>getComputedStyle(e).backgroundColor==='rgba(0, 0, 0, 0)'),false);
  assert.equal(await page.locator('#accountPlatformsMore').isVisible(),false);

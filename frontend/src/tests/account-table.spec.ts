@@ -16,6 +16,14 @@ describe('account quota projection', () => {
     expect(el.textContent).toContain('用量未知');expect(el.textContent).toContain('额度未设上限');expect(el.textContent).toContain('123.4567890123456789');
   });
 });
+describe('trustedProviderURL', () => {
+  it('accepts official Huawei Cloud authorization domains for officeace', async () => {
+    const { trustedProviderURL } = await import('../features/accounts/providers/controller');
+    expect(trustedProviderURL('https://auth.huaweicloud.com/authui/login.html?service=test', 'officeace')).toBe(true);
+    expect(trustedProviderURL('https://subdomain.huaweicloud.com/path', 'officeace')).toBe(true);
+    expect(trustedProviderURL('https://evil.com/fake', 'officeace')).toBe(false);
+  });
+});
 describe('table preferences and bulk scope', () => {
   beforeEach(() => localStorage.clear());
   it('persists only optional columns and known sort settings', () => {
