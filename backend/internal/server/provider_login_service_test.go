@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/officeace"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/upstream/officeace"
 )
 
 func TestProviderLoginHTTPErrorAndRequestBoundaries(t *testing.T) {

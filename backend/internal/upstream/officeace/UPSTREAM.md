@@ -1,6 +1,6 @@
 # Huawei Cloud OfficeAce (云果办 / AgentArts) protocol
 
-`backend/internal/officeace` implements the Huawei Cloud OfficeAce (云果办 / AgentArts, provider ID `officeace`) upstream channel.
+`backend/internal/upstream/officeace` implements the Huawei Cloud OfficeAce (云果办 / AgentArts, provider ID `officeace`) upstream channel.
 
 Protocol references and implementation verified against `/tmp/officeace2api` (MIT) and `/tmp/magpie-codearts-index.mjs` (OfficeAce provider implementation):
 - `POST https://agentarts.cn-southwest-2.myhuaweicloud.com/v1/claw/auth/state`
