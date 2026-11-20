@@ -11,28 +11,28 @@ import (
 )
 
 const (
-	ProviderID           = "officeace"
-	ProviderName         = "云果办"
-	Region               = "cn-southwest-2"
-	Service              = "apic"
-	DefaultCloudBase     = "https://agentarts.cn-southwest-2.myhuaweicloud.com"
-	DefaultAuthBase      = "https://auth.huaweicloud.com"
-	DefaultRedirectURI   = "https://agentarts.cn-southwest-2.myhuaweicloud.com/v1/claw/auth/callback"
-	DefaultTokenURL      = "https://sts.cn-north-4.myhuaweicloud.com/v1/oauth2/tokens"
-	DefaultSubBase       = "https://officeace.cn-southwest-2.huaweicloud-agentarts.com"
-	DefaultMaaSBase      = "https://api.modelarts-maas.com"
-	DefaultClientID      = "pdp5_for_agentarts"
-	CodeArtsClientID     = "codearts-agent"
-	LoginTTL             = 10 * time.Minute
-	RatesTTL             = 20 * time.Minute
-	PermissionPath       = "/v1/claw/client-permission-validate"
-	AuthStatePath        = "/v1/claw/auth/state"
-	AuthCodePath         = "/v1/claw/auth/code"
-	SubscriptionPath     = "/v1/subscription"
-	TokenRatesPath       = "/v1/model-token-rates"
-	BonusClaimPath       = "/v1/subscription/bonus/claim"
-	ModelsPath           = "/v2/models"
-	ChatPath             = "/v2/chat/completions"
+	ProviderID         = "officeace"
+	ProviderName       = "云果办"
+	Region             = "cn-southwest-2"
+	Service            = "apic"
+	DefaultCloudBase   = "https://agentarts.cn-southwest-2.myhuaweicloud.com"
+	DefaultAuthBase    = "https://auth.huaweicloud.com"
+	DefaultRedirectURI = "https://agentarts.cn-southwest-2.myhuaweicloud.com/v1/claw/auth/callback"
+	DefaultTokenURL    = "https://sts.cn-north-4.myhuaweicloud.com/v1/oauth2/tokens"
+	DefaultSubBase     = "https://officeace.cn-southwest-2.huaweicloud-agentarts.com"
+	DefaultMaaSBase    = "https://api.modelarts-maas.com"
+	DefaultClientID    = "pdp5_for_agentarts"
+	CodeArtsClientID   = "codearts-agent"
+	LoginTTL           = 10 * time.Minute
+	RatesTTL           = 20 * time.Minute
+	PermissionPath     = "/v1/claw/client-permission-validate"
+	AuthStatePath      = "/v1/claw/auth/state"
+	AuthCodePath       = "/v1/claw/auth/code"
+	SubscriptionPath   = "/v1/subscription"
+	TokenRatesPath     = "/v1/model-token-rates"
+	BonusClaimPath     = "/v1/subscription/bonus/claim"
+	ModelsPath         = "/v2/models"
+	ChatPath           = "/v2/chat/completions"
 )
 
 // Internal unified credential representation stored in Account.Credentials.

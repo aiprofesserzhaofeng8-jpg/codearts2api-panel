@@ -35,7 +35,6 @@ const Bedrock = "bedrock"
 const Vertex = "vertex"
 const OfficeAce = "officeace"
 
-
 type Model struct {
 	CatalogKind        string          `json:"-"` // Non-live catalog origin, when supplied by the adapter.
 	SyncedOwners       map[string]bool `json:"-"` // Immutable account IDs for administrator-published sources.
