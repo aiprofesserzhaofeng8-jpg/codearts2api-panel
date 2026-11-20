@@ -44,50 +44,50 @@ Unmodified bwrap-userns-restrict from Ubuntu apparmor-profiles, GPL-2.0-or-later
 See scripts/apparmor/COPYRIGHT and scripts/apparmor/LICENSE.
 
 Native WorkBuddy adapter:
-Endpoint shapes and authentication/header semantics in internal/workbuddy were
+Endpoint shapes and authentication/header semantics in internal/upstream/workbuddy were
 implemented with reference to linguo2625469/workbuddy2api-panel revision
 73a7560efc7a88ebd9865db4c71ae7f6d85859f8 (MIT). See LICENSE.workbuddy and
-internal/workbuddy/UPSTREAM.md. The upstream's authors retain their attribution.
+internal/upstream/workbuddy/UPSTREAM.md. The upstream's authors retain their attribution.
 
 Trae CN/SOLO adapter:
 Protocol shapes are adapted with reference to connectedGraph/trae2api-web
 (3aabdaa5b02037469a8b019cf1c41d6261a87f49, based on Sliverkiss/traework2api)
 and autumnsentiment/Trae2api-cn (bb7b659bdad50ecec9f5eb7686a265d98984b387).
-MIT notices: internal/trae/LICENSE.reference and LICENSE.cn-reference.
-See internal/trae/UPSTREAM.md for the supported channel and verification limits.
+MIT notices: internal/upstream/trae/LICENSE.reference and LICENSE.cn-reference.
+See internal/upstream/trae/UPSTREAM.md for the supported channel and verification limits.
 
 Official domestic API protocol material in backend/internal/cnapi reuses
 Sub2API (Wei-Shaw and contributors), revision 530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484,
 under LGPL-3.0. See cnapi/UPSTREAM.md, LICENSE, COPYING and upstream.json.
 
 Gemini CLI constants, Code Assist types, reference catalog and tool schema helpers
-are derived from Wei-Shaw/sub2api under LGPL-3.0; see backend/internal/gemini/UPSTREAM.md.
+are derived from Wei-Shaw/sub2api under LGPL-3.0; see backend/internal/upstream/gemini/UPSTREAM.md.
 
 Antigravity and shared Google native wire mappings include LGPL-3.0-only
-Sub2API-derived code. See internal/antigravity and internal/googlewire
+Sub2API-derived code. See internal/upstream/antigravity and internal/googlewire
 UPSTREAM.md, upstream.json, LICENSE and COPYING, included in distributions.
 
 Grok Build OAuth, CLI transport and billing mappings adapt LGPL-3.0-only
-Sub2API code. See internal/grok/UPSTREAM.md, upstream.json, LICENSE and COPYING.
+Sub2API code. See internal/upstream/grok/UPSTREAM.md, upstream.json, LICENSE and COPYING.
 
 OpenCode Zen/Go protocol and quota mappings adapt LGPL-3.0-only Sub2API code.
-See internal/opencode/UPSTREAM.md, upstream.json, LICENSE and COPYING.
+See internal/upstream/opencode/UPSTREAM.md, upstream.json, LICENSE and COPYING.
 
 Command Code protocol and quota mappings adapt LGPL-3.0-only Sub2API code.
-See internal/commandcode/UPSTREAM.md, upstream.json, LICENSE and COPYING.
+See internal/upstream/commandcode/UPSTREAM.md, upstream.json, LICENSE and COPYING.
 
 Cline endpoint, quota and error mappings adapt LGPL-3.0-only Sub2API code.
-See internal/cline/UPSTREAM.md, upstream.json, LICENSE and COPYING.
+See internal/upstream/cline/UPSTREAM.md, upstream.json, LICENSE and COPYING.
 
 TypeSafe native decision validation/transport adapt LGPL-3.0-only Sub2API code.
-See internal/typesafe/UPSTREAM.md, upstream.json, LICENSE and COPYING.
+See internal/upstream/typesafe/UPSTREAM.md, upstream.json, LICENSE and COPYING.
 
 Bedrock wire foundation contains adapted LGPL-3.0-only portions from Sub2API
 (revision 530c5e3a4f9c73ca2b0881191d0ef8e0d82c5484). See
-backend/internal/bedrock/UPSTREAM.md and accompanying LICENSE/COPYING.
+backend/internal/upstream/bedrock/UPSTREAM.md and accompanying LICENSE/COPYING.
 AWS SDK for Go v2 v1.41.5 and smithy-go v1.24.2 are Apache-2.0 dependencies;
 license and attribution notices are included in the same directory and packages.
 
 Vertex AI service-account authentication and regional endpoint rules are adapted
-from Wei-Shaw/sub2api (LGPL-3.0-only). See backend/internal/vertex/UPSTREAM.md,
+from Wei-Shaw/sub2api (LGPL-3.0-only). See backend/internal/upstream/vertex/UPSTREAM.md,
 upstream.json and accompanying LICENSE/COPYING for provenance and local changes.

@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/mobileclaw"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/teleagent"
+	"codearts2api/internal/upstream/mobileclaw"
+	"codearts2api/internal/upstream/teleagent"
 )
 
 // Exercise the real adapters through the shared lock/CAS/storage path. A

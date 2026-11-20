@@ -5,7 +5,7 @@ import (
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/vertex"
+	"codearts2api/internal/upstream/vertex"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"

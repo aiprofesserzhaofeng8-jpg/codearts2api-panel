@@ -14,7 +14,7 @@ import (
 
 	"codearts2api/internal/requestpolicy"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 const searchBody = `{"model":"workbuddy/cn/web-search","tools":[{"type":"web_search_20250305","name":"web_search"}],"messages":[{"role":"user","content":"old question"},{"role":"user","content":[{"type":"text","text":"Perform a web search for the query: 测试搜索"}]},{"role":"assistant","content":"do not search this reply"}]}`

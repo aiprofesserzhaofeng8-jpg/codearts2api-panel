@@ -29,7 +29,7 @@ generation/quota/gateway acceptance.
 No live xAI account was used. Linux/Windows packaging and Dockerfile carry these component notices/licenses.
 
 upstream.json records upstream SHA-256 and local file digests. Tests run from
-backend with go test -race ./internal/grok. Build the application with make build
+backend with go test -race ./internal/upstream/grok. Build the application with make build
 once the adapter is complete and registered.
 
 2026-11-16 native generation: stream.go uses the Build /responses endpoint and

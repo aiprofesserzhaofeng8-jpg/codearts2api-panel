@@ -33,7 +33,7 @@
 
 真实 Google 登录、账号权限、不同型号、图片与工具、自然续期尚未实测。上述支持范围由隔离测试证明实现行为，不代表已证明所有上游型号和客户端组合可用。
 
-[验收记录](acceptance/SUB2API-PLATFORM-P3A-2026-11-15.md) · [复用来源](../backend/internal/antigravity/UPSTREAM.md)
+[验收记录](acceptance/SUB2API-PLATFORM-P3A-2026-11-15.md) · [复用来源](../backend/internal/upstream/antigravity/UPSTREAM.md)
 
 ## OAuth 客户端配置
 

@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/kiro"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/kiro"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 func nativeKiroServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *kiro.Client) {

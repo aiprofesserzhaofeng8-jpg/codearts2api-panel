@@ -2,10 +2,10 @@ package server
 
 import (
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/bedrock"
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/upstream/bedrock"
 	"encoding/binary"
 	"encoding/json"
 	"hash/crc32"

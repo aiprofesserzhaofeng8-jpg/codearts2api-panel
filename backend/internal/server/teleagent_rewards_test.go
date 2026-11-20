@@ -14,7 +14,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/teleagent"
+	"codearts2api/internal/upstream/teleagent"
 )
 
 func teleagentRewardServer(t *testing.T, confirmed bool) (*Server, string, *atomic.Int32) {

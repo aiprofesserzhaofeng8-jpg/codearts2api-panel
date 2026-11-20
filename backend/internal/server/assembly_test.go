@@ -16,11 +16,11 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/trae"
 	codeartsup "codearts2api/internal/upstream/codearts"
+	"codearts2api/internal/upstream/trae"
+	"codearts2api/internal/upstream/workbuddy"
 	"codearts2api/internal/usage"
 	"codearts2api/internal/websearch"
-	"codearts2api/internal/workbuddy"
 )
 
 // Tests in package server cannot import app (it consumes server). Supply

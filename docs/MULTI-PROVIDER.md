@@ -53,7 +53,7 @@ WorkBuddy 的个人积分包可读取；企业积分和达到查询分页上限�
 ## 开发边界
 
 - `internal/provider`：上游无关的模型、身份、请求、错误和 Adapter / BrowserLogin 接口。
-- `internal/workbuddy`：原生 HTTP、授权、续期、模型目录、流式响应与积分读取；固定官方端点，不接受凭据 JSON 指定任意请求主机，拒绝携带凭据的重定向。
+- `internal/upstream/workbuddy`：原生 HTTP、授权、续期、模型目录、流式响应与积分读取；固定官方端点，不接受凭据 JSON 指定任意请求主机，拒绝携带凭据的重定向。
 - `internal/server/providers.go`：适配器注册、凭据续期协调、统一转发及模型刷新。
 - `internal/store`：按 provider/scope/external_id 区分账号；新 credentials 为独立不透明 JSON，不把 WorkBuddy token 填进码道 AK/SK。
 - 码道沿用已验证的签名、桌面登录态及 Manager 路径；旧账号结构所在包名暂时保留，以减少迁移改动。

@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"codearts2api/internal/trae"
+	"codearts2api/internal/upstream/trae"
 )
 
 func (s *Server) handleTraeDevice(w http.ResponseWriter, r *http.Request) {

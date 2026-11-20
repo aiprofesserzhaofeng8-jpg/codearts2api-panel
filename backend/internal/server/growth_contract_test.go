@@ -3,7 +3,7 @@ package server
 import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/workbuddy"
 	"encoding/json"
 	"fmt"
 	"io"

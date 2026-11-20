@@ -1,6 +1,6 @@
 # 后端目录设计：上游按平台归档
 
-审查基线：`b0c172f`（OfficeAce 已合入）。状态：设计已审查，平台尚未按本方案迁移。
+审查基线：`b0c172f`（OfficeAce 已合入）。本分支已完成目录迁移；CodeArts 保留旧客户端桥接。
 
 新增渠道时，把只属于该平台的客户端、登录、模型发现、额度和协议实现放在 `backend/internal/upstream/<平台>/`，测试和来源说明随包放置。多个平台共同实现的接口归 `provider/`，在 `app/` 显式装配。维护者应能在一个目录里找到某个平台的实现，又能从导入关系看出哪些业务不能依赖它。
 
@@ -19,7 +19,7 @@
 
 ## 第二层：哪些目录真的要移动
 
-下图以 OfficeAce 为首批样板。WorkBuddy、Trae 表示后续归属，不表示首批一起搬。未列出的非平台包不移动。
+下图展示实际布局。OfficeAce 是首批样板，WorkBuddy、Trae 等其他平台在后续提交中归档。未列出的非平台包保持原位。
 
 ```text
 backend/internal/
@@ -28,8 +28,8 @@ backend/internal/
 ├── upstream/
 │   ├── stream.go         # 根包：用已选账号绑定单次请求，不导入下方平台
 │   ├── officeace/        # 首批：客户端、登录、模型、额度、测试和 UPSTREAM.md
-│   ├── workbuddy/        # 后续：含该平台的签到、成长奖励实现
-│   ├── trae/             # 后续：含该平台的登录和设备信息
+│   ├── workbuddy/        # 含该平台的签到、成长奖励实现
+│   ├── trae/             # 含该平台的登录和设备信息
 │   └── codearts/         # 已有：适配层，继续借用既有签名客户端
 ├── codearts/             # 旧签名客户端；保留，不能与同名适配层直接合并
 ├── server/               # HTTP 入口和协议处理接入点
@@ -43,11 +43,11 @@ backend/internal/
 └── responsewire/
 ```
 
-其余待分批归档的平台：`antigravity`、`bedrock`、`chatgpt`、`claude`、`cline`、`commandcode`、`deepseek`、`gemini`、`grok`、`kimi`、`kiro`、`minimax`、`mobileclaw`、`opencode`、`qoder`、`teleagent`、`typesafe`、`vertex`、`zhipu`。具体批次按实际导入者、构建依赖和来源文件决定。共享传输包如 `providerhttp`、`cnapi`、`googlewire` 不因为被某个平台使用就归到该平台。
+同目录下的其他平台：`antigravity`、`bedrock`、`chatgpt`、`claude`、`cline`、`commandcode`、`deepseek`、`gemini`、`grok`、`kimi`、`kiro`、`minimax`、`mobileclaw`、`opencode`、`qoder`、`teleagent`、`typesafe`、`vertex`、`zhipu`。共享传输包如 `providerhttp`、`cnapi`、`googlewire` 不因为被某个平台使用就归到该平台。
 
 ## 第三层：一个平台内部怎么排
 
-OfficeAce 首批采用**一个 Go 包，按行为分文件**。下列是目标路径；文件名来自基线的 `internal/officeace/`。迁移只改变父目录。
+OfficeAce 首批采用**一个 Go 包，按行为分文件**。下列是实际路径；文件名来自基线的 `internal/officeace/`。迁移只改变父目录。
 
 ```text
 upstream/officeace/
@@ -84,9 +84,9 @@ upstream/officeace/
 
 [现有架构检查](../../tools/check_architecture.py)把 `provider` 及其子包视为中立业务代码，禁止依赖 HTTP 或具体平台；它明确区分中立的 `upstream` 根包与具体适配器。这是选用 `upstream/<平台>` 而不是 `provider/<平台>` 或通用 `pkg/` 的依据。
 
-检查器目前用**路径最后一段**识别上游平台。用基线检查器构造生产导入边，得到如下结果（下表省略 `internal/` 前缀）：
+迁移前的检查器用**路径最后一段**识别上游平台。用基线检查器构造生产导入边，得到如下结果（下表省略 `internal/` 前缀）：
 
-| 导入关系 | 当前结果 | 迁移要求 |
+| 导入关系 | 基线结果 | 当前规则 |
 |---|---|---|
 | `gateway → upstream/officeace` | 拒绝 | 继续拒绝，包括经中间包间接导入 |
 | `upstream/workbuddy → upstream/officeace` | 拒绝 | 继续拒绝 |
@@ -96,7 +96,7 @@ upstream/officeace/
 
 首批 PR 在[现有规则测试](../../tools/test_check_architecture.py)里固化这些反例：对导入两端都按 `upstream/` 后的**第一段**判定平台，旧顶层路径仍按已知平台名识别。同平台内拆子包应能通过，迁移中途新旧平台之间也不能互导。不要靠删除 HTTP 或中立包的限制让构建通过。
 
-## 首批 PR 如何落地
+## 迁移边界与验收
 
 1. **以含 OfficeAce 的主线为起点。** 从 `internal/officeace` 整包移到 `internal/upstream/officeace`，保留包名、平台 ID、文件和测试。基线中旧路径的直接文本引用只有三处：`app/app.go` 的生产导入、`server/provider_login_service_test.go` 的测试导入、包内 `UPSTREAM.md` 的路径。注册仍由 `app` 完成。
 2. **验证移动，而不是重做平台。** 运行架构规则测试、实际 Go 生产依赖检查及后端测试。用已有的登录、模型映射和路由用例核对行为：同一账号配置无需重录，同一模型与入站协议仍走原来的直通或转换路径。选号、凭据刷新、重试、流式输出与结算边界不随路径调整。迁移提交应可单独回退，无数据迁移。

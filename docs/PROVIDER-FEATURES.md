@@ -92,9 +92,9 @@ URL 不接受用户密码、查询参数或片段，不支持通过地址内嵌 
 | `internal/store/provider_settings.go` | 三个平台独立配置、默认值及校验；旧 WorkBuddy 配置兼容 |
 | `internal/requestpolicy/` | 纯请求变换、共享提示词、仅系统提示词适用的清洗规则；不读取账号或发网络请求 |
 | `internal/server/request_policy.go` | 统一应用策略、摘要豁免、一次重试和预算/尝试记录 |
-| `internal/codearts/content_error.go`、`internal/trae/client.go`、`internal/workbuddy/client.go` | 各自解释原生错误，避免把设备或认证错误当成内容拦截 |
+| `internal/codearts/content_error.go`、`internal/upstream/trae/client.go`、`internal/upstream/workbuddy/client.go` | 各自解释原生错误，避免把设备或认证错误当成内容拦截 |
 | `internal/server/search.go` | 搜索协议、明确路由、分组/预算及并发边界 |
-| `internal/workbuddy/search.go` | WorkBuddy 原生搜索 |
+| `internal/upstream/workbuddy/search.go` | WorkBuddy 原生搜索 |
 | `internal/websearch/searxng.go` | 外部搜索传输，不依赖任何模型凭据 |
 
 若将来取得 CodeArts/Trae 的原生搜索协议，应在对应适配器添加实现并增加显式 backend 配置及测试，不让外部后端借用模型 Token，也不在搜索处理器猜测原生 URL。

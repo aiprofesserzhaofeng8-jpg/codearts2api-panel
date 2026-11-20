@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/kiro"
-	"codearts2api/internal/qoder"
+	"codearts2api/internal/upstream/kiro"
+	"codearts2api/internal/upstream/qoder"
 )
 
 func TestProviderQuotaWindowsCreditsCacheAndAdminBoundary(t *testing.T) {

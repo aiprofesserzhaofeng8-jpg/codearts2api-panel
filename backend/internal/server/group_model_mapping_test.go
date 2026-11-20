@@ -17,8 +17,8 @@ import (
 	"codearts2api/internal/provider"
 	"codearts2api/internal/requestpolicy"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/trae"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/trae"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 const mappedPublic = "deepseek-4.1-flash"

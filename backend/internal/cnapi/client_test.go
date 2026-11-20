@@ -16,11 +16,11 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/cnapi"
-	"codearts2api/internal/deepseek"
-	"codearts2api/internal/kimi"
-	"codearts2api/internal/minimax"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/zhipu"
+	"codearts2api/internal/upstream/deepseek"
+	"codearts2api/internal/upstream/kimi"
+	"codearts2api/internal/upstream/minimax"
+	"codearts2api/internal/upstream/zhipu"
 )
 
 var key = json.RawMessage(`{"api_key":"fixture-key"}`)

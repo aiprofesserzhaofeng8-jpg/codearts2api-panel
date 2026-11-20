@@ -23,8 +23,8 @@ import (
 	"codearts2api/internal/config"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/trae"
-	"codearts2api/internal/workbuddy"
+	"codearts2api/internal/upstream/trae"
+	"codearts2api/internal/upstream/workbuddy"
 )
 
 // Opt-in only. Reads the source bytes without Open/Save or credential refresh.

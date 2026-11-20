@@ -3,9 +3,9 @@ package cnapi_test
 import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/cnapi"
-	"codearts2api/internal/minimax"
 	"codearts2api/internal/provider"
-	"codearts2api/internal/zhipu"
+	"codearts2api/internal/upstream/minimax"
+	"codearts2api/internal/upstream/zhipu"
 	"encoding/json"
 	"io"
 	"net/http"

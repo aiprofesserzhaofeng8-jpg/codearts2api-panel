@@ -5,7 +5,7 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
-	"codearts2api/internal/typesafe"
+	"codearts2api/internal/upstream/typesafe"
 	"encoding/json"
 	"io"
 	"net/http"

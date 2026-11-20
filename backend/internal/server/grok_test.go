@@ -5,7 +5,7 @@ import (
 
 	"codearts2api/internal/config"
 
-	"codearts2api/internal/grok"
+	"codearts2api/internal/upstream/grok"
 
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"

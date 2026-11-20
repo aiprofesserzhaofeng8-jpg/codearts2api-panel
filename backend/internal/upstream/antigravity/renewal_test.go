@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"codearts2api/internal/accounts"
-	"codearts2api/internal/antigravity"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/upstream/antigravity"
 )
 
 func TestCLIConcurrentRenewalUsesSingleCASOwner(t *testing.T) {

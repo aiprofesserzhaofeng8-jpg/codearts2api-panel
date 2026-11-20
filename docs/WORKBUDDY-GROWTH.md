@@ -77,13 +77,13 @@
 | 文件 | 职责 |
 | --- | --- |
 | `internal/provider/growth.go` | 可选能力、任务及奖励结构 |
-| `internal/workbuddy/growth.go` | WorkBuddy 查询/领奖协议、响应校验与进度解析 |
-| `internal/workbuddy/growth_actions.go` | 本地执行白名单、官方操作指引、接取协议、真实对话及相应报告 |
-| `internal/workbuddy/growth_catalog.go` | 本地任务白名单、能力、专家名称、次数上限和界面描述 |
-| `internal/workbuddy/growth_desktop.go` / `growth_desktop_events.go` | 独立桌面/Web 请求头、事件模板和活动执行 |
-| `internal/workbuddy/growth_experts.go` / `growth_desktop_chat.go` | 专家资源核对、任务专用真实对话、完整流核验及使用报告 |
-| `internal/workbuddy/growth_activity.go` | 活动事件格式与维护请求头，仅发往 billing 域，不调用模型 |
-| `internal/workbuddy/growth_buddy.go` | WorkBuddy Buddy 档案、协议与领养协议调用及严格状态校验 |
+| `internal/upstream/workbuddy/growth.go` | WorkBuddy 查询/领奖协议、响应校验与进度解析 |
+| `internal/upstream/workbuddy/growth_actions.go` | 本地执行白名单、官方操作指引、接取协议、真实对话及相应报告 |
+| `internal/upstream/workbuddy/growth_catalog.go` | 本地任务白名单、能力、专家名称、次数上限和界面描述 |
+| `internal/upstream/workbuddy/growth_desktop.go` / `growth_desktop_events.go` | 独立桌面/Web 请求头、事件模板和活动执行 |
+| `internal/upstream/workbuddy/growth_experts.go` / `growth_desktop_chat.go` | 专家资源核对、任务专用真实对话、完整流核验及使用报告 |
+| `internal/upstream/workbuddy/growth_activity.go` | 活动事件格式与维护请求头，仅发往 billing 域，不调用模型 |
+| `internal/upstream/workbuddy/growth_buddy.go` | WorkBuddy Buddy 档案、协议与领养协议调用及严格状态校验 |
 | `internal/server/growth.go` | 查询/领奖 HTTP、账号和平台守卫、期限、锁内重读与凭据入口 |
 | `internal/server/growth_actions.go` / `growth_operations.go` | 接取/执行 HTTP、业务投影和错误映射；保留原付费准入、租约及正常用量记录 |
 | `internal/jobs/growth.go` / `growth_actions.go` | 成长结果、账号锁、查询/接取/领奖确认与有界动作编排 |
