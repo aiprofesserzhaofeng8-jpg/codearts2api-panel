@@ -83,7 +83,7 @@ func TestHTTPStreamFailureNeverReplaysVisibleOutput(t *testing.T) {
 			r := httptest.NewRequest("POST", path, strings.NewReader(`{"model":"test-model","stream":true,"max_tokens":32,"messages":[{"role":"user","content":"hello"}]}`))
 			r.RemoteAddr = "127.0.0.1:1234"
 			r.Host = "localhost"
- r.Header.Set("Authorization","Bearer "+s.Store.Keys()[0].Key)
+			r.Header.Set("Authorization", "Bearer "+s.Store.Keys()[0].Key)
 			w := httptest.NewRecorder()
 			s.Handler().ServeHTTP(w, r)
 			if w.Code != 200 || calls != 1 || strings.Count(w.Body.String(), "only-once") != 1 || !strings.Contains(w.Body.String(), "error") {
