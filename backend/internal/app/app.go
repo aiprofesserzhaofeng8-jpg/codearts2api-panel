@@ -28,6 +28,7 @@ import (
 	"codearts2api/internal/kiro"
 	"codearts2api/internal/minimax"
 	"codearts2api/internal/mobileclaw"
+	"codearts2api/internal/officeace"
 	"codearts2api/internal/opencode"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/qoder"
@@ -51,7 +52,7 @@ func Build(st *storage.Store) (*server.Server, error) {
 	}
 	up := codearts.NewClient()
 	adapters := provider.NewRegistry()
-	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New(), qoder.New(), kiro.New(), chatgpt.New(), claude.New(), teleagent.New(), mobileclaw.New(), deepseek.New(), zhipu.New(), kimi.New(), minimax.New(), gemini.New(), antigravity.New(), grok.New(), opencode.New(), commandcode.New(), cline.New(), typesafe.New(), bedrock.New(), vertex.New()} {
+	for _, adapter := range []provider.Adapter{workbuddy.New(), trae.New(), qoder.New(), kiro.New(), chatgpt.New(), claude.New(), teleagent.New(), mobileclaw.New(), officeace.New(), deepseek.New(), zhipu.New(), kimi.New(), minimax.New(), gemini.New(), antigravity.New(), grok.New(), opencode.New(), commandcode.New(), cline.New(), typesafe.New(), bedrock.New(), vertex.New()} {
 		if err := adapters.Register(adapter); err != nil {
 			return nil, fmt.Errorf("register %s: %w", adapter.Describe().ID, err)
 		}

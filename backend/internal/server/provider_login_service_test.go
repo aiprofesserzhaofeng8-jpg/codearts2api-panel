@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"codearts2api/internal/accounts"
+	"codearts2api/internal/officeace"
 	"codearts2api/internal/storage"
 )
 
@@ -126,5 +127,32 @@ func TestProviderLoginPersistenceFailureCanRetryWithoutExchange(t *testing.T) {
 	reloaded, err := storage.Open(s.Store.Path())
 	if err != nil || len(reloaded.Accounts()) != 1 {
 		t.Fatal("saved account not recoverable", err)
+	}
+}
+
+func TestOfficeAceProviderLoginStartThroughAdminAPI(t *testing.T) {
+	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	st.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin-fixture" })
+	s := newConfiguredServer(st)
+	if err := s.Providers.Register(officeace.New()); err != nil {
+		t.Fatal(err)
+	}
+	start := providerAdmin(s, `{"action":"start","provider":"officeace","scope":"cn"}`)
+	if start.Code != 200 {
+		t.Fatalf("officeace start failed: %d %s", start.Code, start.Body.String())
+	}
+	var res map[string]any
+	if err := json.Unmarshal(start.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+	urlStr, _ := res["url"].(string)
+	if !strings.HasPrefix(urlStr, "https://auth.huaweicloud.com/authui/login.html?") {
+		t.Fatalf("unexpected authorization URL: %s", urlStr)
+	}
+	if res["provider"] != "officeace" || res["scope"] != "cn" {
+		t.Fatalf("unexpected start response: %+v", res)
 	}
 }

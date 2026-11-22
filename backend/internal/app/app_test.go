@@ -36,7 +36,7 @@ func TestAssemblyRestoresAndGuardsCredentialGenerations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, id := range []string{provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw, provider.DeepSeek, provider.Zhipu, provider.Kimi, provider.MiniMax, provider.Gemini, provider.Antigravity, provider.Grok, provider.OpenCode, provider.CommandCode, provider.Cline, provider.TypeSafe, provider.Bedrock, provider.Vertex} {
+	for _, id := range []string{provider.WorkBuddy, provider.Trae, provider.Qoder, provider.Kiro, provider.ChatGPT, provider.Claude, provider.TeleAgent, provider.MobileClaw, provider.OfficeAce, provider.DeepSeek, provider.Zhipu, provider.Kimi, provider.MiniMax, provider.Gemini, provider.Antigravity, provider.Grok, provider.OpenCode, provider.CommandCode, provider.Cline, provider.TypeSafe, provider.Bedrock, provider.Vertex} {
 		if _, ok := srv.Providers.Get(id); !ok {
 			t.Fatalf("missing platform %s", id)
 		}

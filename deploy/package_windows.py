@@ -18,7 +18,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def sha256(path):
     with path.open('rb') as stream:
-        return hashlib.file_digest(stream, 'sha256').hexdigest()
+        if hasattr(hashlib, 'file_digest'):
+            return hashlib.file_digest(stream, 'sha256').hexdigest()
+        h = hashlib.sha256()
+        while chunk := stream.read(65536):
+            h.update(chunk)
+        return h.hexdigest()
 
 
 def build(version, output, go):

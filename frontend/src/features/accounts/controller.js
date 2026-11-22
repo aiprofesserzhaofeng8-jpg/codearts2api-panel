@@ -294,7 +294,7 @@ export function renderAccounts(d) {
         var info = mk("div", "account-name");
         info.appendChild(mk("strong", "account-title", a.name || tr("未命名账号")));
         const platform = cell("", "account-platform-cell");
-        platform.appendChild(pill(brandName(a.provider || 'codearts') + (a.scope ? ' · ' + (a.provider === 'opencode' ? (a.scope === 'go' ? 'Go' : 'Zen') : ['workbuddy', 'qoder', 'trae', 'teleagent', 'mobileclaw'].includes(a.provider) ? (a.scope === 'global' ? tr('国际') : tr('国内')) : a.scope) : '')));
+        platform.appendChild(pill(brandName(a.provider || 'codearts') + (a.scope ? ' · ' + (a.provider === 'opencode' ? (a.scope === 'go' ? 'Go' : 'Zen') : ['workbuddy', 'qoder', 'trae', 'teleagent', 'mobileclaw', 'officeace'].includes(a.provider) ? (a.scope === 'global' ? tr('国际') : tr('国内')) : a.scope) : '')));
         info.appendChild(mk("span", "account-caption", sourceName(a.source)));
         who.appendChild(info);
         identity.appendChild(who);

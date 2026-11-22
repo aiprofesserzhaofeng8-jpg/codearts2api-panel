@@ -43,7 +43,7 @@ func TestDefaultModelsAllProvidersAtomicIdempotentAndReopen(t *testing.T) {
 		s.Reg.ReplaceProvider(p, "cn", []provider.Model{{ID: id}})
 	}
 	preview := defaultPreview(t, s)
-	if len(preview.Providers) != 21 {
+	if len(preview.Providers) != 22 {
 		t.Fatal(preview)
 	}
 	names := []string{}

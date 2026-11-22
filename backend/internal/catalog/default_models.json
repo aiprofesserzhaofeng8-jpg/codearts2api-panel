@@ -263,6 +263,13 @@
       "tool_calling": "supported"
     },
     {
+      "id": "codearts/openpangu-2.1-pro",
+      "verified_at": "2026-11-19",
+      "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",
+      "basis": "exact_source_live_roundtrip",
+      "tool_calling": "supported"
+    },
+    {
       "id": "trae/cn/DeepSeek-V4-Flash",
       "verified_at": "2026-11-19",
       "reference": "docs/acceptance/CODEARTS-TRAE-TOOLS-2026-11-19.md",

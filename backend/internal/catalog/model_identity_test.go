@@ -8,7 +8,7 @@ import (
 )
 
 func TestPublicModelIdentityAcrossAllProvidersPreservesVersion(t *testing.T) {
-	for _, p := range []string{"codearts", "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude", "teleagent"} {
+	for _, p := range []string{"codearts", "workbuddy", "trae", "qoder", "kiro", "chatgpt", "claude", "teleagent", "officeace"} {
 		for _, id := range []string{"glm-5.3-flash", "kimi-k3.1-pro", "mimo-v2.6-pro", "claude-sonnet-4.5", "gpt-5.6-sol"} {
 			name, _ := defaultModelName(provider.Model{ID: provider.ModelID(p, "region", id)})
 			if name != id {
