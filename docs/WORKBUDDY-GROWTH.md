@@ -94,6 +94,6 @@
 
 前端复用现有主题变量，新增 CSS 限定在成长弹窗，不替换账号、分组、用量或登录页面。没有在正常推理路由与 SSE 处理中加入任务轮询或文件读取；公共日志函数仅增加错误返回值供执行器停止后续消费。模型、专家和技能任务会占用账号正常并发；活动执行、主动查询和领奖会产生上游管理请求，不能保证任意负载下零影响。
 
-协议参考 [workbuddy2api-panel tasks.go](https://github.com/linguo2625469/workbuddy2api-panel/blob/73a7560efc7a88ebd9865db4c71ae7f6d85859f8/internal/upstream/tasks.go)，保留 MIT 许可和版权说明于 `LICENSE.workbuddy`。不依赖该项目的账号池、调度器或前端。
+协议参考 [workbuddy2api-panel tasks.go](https://github.com/linguo2625469/workbuddy2api-panel/blob/73a7560efc7a88ebd9865db4c71ae7f6d85859f8/internal/upstream/tasks.go)，保留 MIT 许可和版权说明于 `licenses/THIRD-PARTY-MIT.txt`。不依赖该项目的账号池、调度器或前端。
 
 普通活跃上报固定发往 WorkBuddy billing 域；桌面事件走 copilot，资料库事件走 WorkBuddy Web，三种请求头分别维护。Buddy 档案、协议和领养发往 copilot 域；维护请求使用参考项目的独立请求头，不改普通推理、每日签到或其他平台协议。只有明确匹配 `first_buddy task not completed yet` 的业务错误才显示领养门槛提示；其他失败保留 HTTP/业务码，不把所有拒绝都解释为前置条件不足。协议与活跃执行还参考同一提交的 `report.go`、`travel.go`、`autotask.go`。

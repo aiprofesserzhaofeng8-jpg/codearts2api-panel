@@ -14,7 +14,7 @@
 
 代码按职责拆分：`growth_catalog.go` 管理白名单及上限；`growth_desktop.go` / `growth_desktop_events.go` 管理独立桌面/Web 请求和事件；`growth_experts.go` 管理专家资源与使用报告；`growth_desktop_chat.go` 仅处理任务专用的完整短对话。服务端继续复用账号锁、双执行名额、原子付费检查点和用量记账。没有在正常推理、SSE 转发、CodeArts 或 Trae 路径加入任务逻辑。
 
-参考版本固定为 [workbuddy2api-panel 73a7560](https://github.com/linguo2625469/workbuddy2api-panel/tree/73a7560efc7a88ebd9865db4c71ae7f6d85859f8) 的 `internal/upstream/desktop.go` 和 `internal/panel/autotask.go`，原 MIT 许可说明保留在 `LICENSE.workbuddy`。当前官方任务表已有该参考版本未列出的指定专家和公众号任务；不能照抄其旧的 17/18 总数。
+参考版本固定为 [workbuddy2api-panel 73a7560](https://github.com/linguo2625469/workbuddy2api-panel/tree/73a7560efc7a88ebd9865db4c71ae7f6d85859f8) 的 `internal/upstream/desktop.go` 和 `internal/panel/autotask.go`，原 MIT 许可说明保留在 `licenses/THIRD-PARTY-MIT.txt`。当前官方任务表已有该参考版本未列出的指定专家和公众号任务；不能照抄其旧的 17/18 总数。
 
 ## 逐项真实结果
 

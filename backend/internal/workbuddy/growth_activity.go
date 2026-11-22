@@ -1,6 +1,6 @@
 package workbuddy
 
-// Activity wire format references workbuddy2api-panel (MIT; LICENSE.workbuddy).
+// Activity wire format references workbuddy2api-panel (MIT; licenses/THIRD-PARTY-MIT.txt).
 // Only explicit growth actions use this maintenance protocol. No model request
 // is made, and an acknowledged report never proves progress or a reward.
 import (

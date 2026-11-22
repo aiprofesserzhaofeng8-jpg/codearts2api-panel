@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-// DefaultSystemPrompt is adapted from workbuddy2api-panel (MIT; LICENSE.workbuddy).
+// DefaultSystemPrompt is adapted from workbuddy2api-panel (MIT; licenses/THIRD-PARTY-MIT.txt).
 //
 //go:embed defaultprompt.md
 var DefaultSystemPrompt string

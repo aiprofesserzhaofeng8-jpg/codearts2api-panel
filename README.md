@@ -341,7 +341,7 @@ MobileClaw（中国移动云）个人免费 Token 账号的导入与限制见 [�
 
 ## 许可证
 
-基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](LICENSE.workbuddy)，[Qoder 接入](docs/QODER.md)的协议参考来源保留 [MIT 声明](LICENSE.qoder)，[Kiro 接入](docs/KIRO.md)的协议参考来源保留 [MIT 声明](LICENSE.kiro)，协议转换库 `backend/internal/responsescompat` 与模型参数库 `backend/internal/catalog/modelmeta` 中的复用代码采用 LGPL-3.0（[协议库许可](backend/internal/responsescompat/LICENSE)、[参数库许可](backend/internal/catalog/modelmeta/LICENSE)），附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
+基础项目采用 [Apache-2.0](LICENSE)。WorkBuddy 相关设计来源保留 [MIT 声明](licenses/THIRD-PARTY-MIT.txt)，[Qoder 接入](docs/QODER.md)的协议参考来源保留 [MIT 声明](licenses/THIRD-PARTY-MIT.txt)，[Kiro 接入](docs/KIRO.md)的协议参考来源保留 [MIT 声明](licenses/THIRD-PARTY-MIT.txt)，协议转换库 `backend/internal/responsescompat` 与模型参数库 `backend/internal/catalog/modelmeta` 中的复用代码采用 LGPL-3.0（[协议库许可](backend/internal/responsescompat/LICENSE)、[参数库许可](backend/internal/catalog/modelmeta/LICENSE)），附带的 Ubuntu AppArmor profile 保留其 GPL-2.0-or-later 声明。
 
 各组件的来源、修改声明和许可证边界见 [NOTICE](NOTICE)。本项目为独立社区项目。
 

@@ -11,7 +11,7 @@
 
 API Key 的 Q 服务根路径与两个不同操作 target 另核对 MIT 项目 [satiyap/pi-kiro-api](https://github.com/satiyap/pi-kiro-api/tree/86c8f2da604fb6b0ee141b52ccc1fc540d4bb430) 的 `src/kiro/discover.ts` 与 `stream.ts`，固定提交 `86c8f2da604fb6b0ee141b52ccc1fc540d4bb430`。两类凭据不混用元数据端点。
 
-参考项目的 MIT 许可保留在 [LICENSE.kiro](../../../LICENSE.kiro)，随 Linux / Windows 附件和镜像分发。此处的协议转换代码由本项目实现；没有采用参考项目的指纹伪装、模型猜测、字符估算计费或跨端点推理重试。
+参考项目的 MIT 许可保留在 [licenses/THIRD-PARTY-MIT.txt](../../../licenses/THIRD-PARTY-MIT.txt)，随 Linux / Windows 附件和镜像分发。此处的协议转换代码由本项目实现；没有采用参考项目的指纹伪装、模型猜测、字符估算计费或跨端点推理重试。
 
 标准认证契约另核对 AWS 官方的 [RegisterClient](https://docs.aws.amazon.com/singlesignon/latest/OIDCAPIReference/API_RegisterClient.html)、[StartDeviceAuthorization](https://docs.aws.amazon.com/singlesignon/latest/OIDCAPIReference/API_StartDeviceAuthorization.html) 与 [CreateToken](https://docs.aws.amazon.com/singlesignon/latest/OIDCAPIReference/API_CreateToken.html)。登录选项见 [Kiro 认证说明](https://kiro.dev/docs/getting-started/authentication/) 与 [CLI 命令说明](https://kiro.dev/docs/cli/reference/cli-commands/)。
 

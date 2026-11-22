@@ -1,7 +1,7 @@
 package workbuddy
 
 // Enrollment/report wire shapes reference workbuddy2api-panel (MIT;
-// LICENSE.workbuddy). Model-task reports require a successful real chat;
+// licenses/THIRD-PARTY-MIT.txt). Model-task reports require a successful real chat;
 // activity-only tasks use the separate growth_activity.go protocol.
 import (
 	"context"

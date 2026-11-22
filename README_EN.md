@@ -23,7 +23,7 @@ The source tree includes [TeleAgent (TeleAI)](docs/TELEAGENT.md): a local browse
 
 Source adapters for [ChatGPT / Codex and OpenAI API](docs/CHATGPT.md) and [Claude / Anthropic](docs/CLAUDE.md) add browser OAuth, official API key import, refresh, dynamic models, existing group mappings and three client protocols. Isolated regression checks pass; real-upstream validation is pending.
 
-An initial [Kiro adapter](docs/KIRO.md) adds Builder ID device authorization, API key / OAuth import, token refresh, dynamic models and existing group mappings. Real-upstream validation is pending. See the guide for unsupported native controls and output-limit restrictions. Protocol reference attribution is retained in [LICENSE.kiro](LICENSE.kiro).
+An initial [Kiro adapter](docs/KIRO.md) adds Builder ID device authorization, API key / OAuth import, token refresh, dynamic models and existing group mappings. Real-upstream validation is pending. See the guide for unsupported native controls and output-limit restrictions. Protocol reference attribution is retained in [licenses/THIRD-PARTY-MIT.txt](licenses/THIRD-PARTY-MIT.txt).
 
 ## Overview
 
@@ -300,7 +300,7 @@ AI attribution records the use of OpenAI tools for assisted development. It does
 
 ## License
 
-The base project uses [Apache-2.0](LICENSE). WorkBuddy-related design references retain their [MIT notices](LICENSE.workbuddy). Reused code under `backend/internal/responsescompat` uses [LGPL-3.0](backend/internal/responsescompat/LICENSE), and the bundled Ubuntu AppArmor profile retains its GPL-2.0-or-later notices.
+The base project uses [Apache-2.0](LICENSE). WorkBuddy-related design references retain their [MIT notices](licenses/THIRD-PARTY-MIT.txt). Reused code under `backend/internal/responsescompat` uses [LGPL-3.0](backend/internal/responsescompat/LICENSE), and the bundled Ubuntu AppArmor profile retains its GPL-2.0-or-later notices.
 
 See [NOTICE](NOTICE) for component origins, modification notices, and license boundaries. This is an independent community project.
 

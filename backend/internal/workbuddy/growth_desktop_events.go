@@ -1,7 +1,7 @@
 package workbuddy
 
 // Event shapes adapted from workbuddy2api-panel desktop.go at 73a7560 (MIT;
-// LICENSE.workbuddy). These helpers are used only by explicit growth actions.
+// licenses/THIRD-PARTY-MIT.txt). These helpers are used only by explicit growth actions.
 import "time"
 
 type growthDesktopEvent map[string]any

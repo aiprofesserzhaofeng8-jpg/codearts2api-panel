@@ -1,6 +1,6 @@
 package workbuddy
 
-// Buddy endpoints reference workbuddy2api-panel (MIT; LICENSE.workbuddy).
+// Buddy endpoints reference workbuddy2api-panel (MIT; licenses/THIRD-PARTY-MIT.txt).
 // Status is authoritative; a successful write alone never proves adoption.
 import (
 	"bytes"

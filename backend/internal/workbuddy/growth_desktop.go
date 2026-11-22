@@ -1,7 +1,7 @@
 package workbuddy
 
 // Desktop/web maintenance wire follows workbuddy2api-panel desktop.go (MIT;
-// LICENSE.workbuddy). No ordinary request headers or inference code is changed.
+// licenses/THIRD-PARTY-MIT.txt). No ordinary request headers or inference code is changed.
 import (
 	"context"
 	"crypto/sha256"

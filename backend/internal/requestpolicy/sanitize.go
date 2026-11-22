@@ -1,5 +1,5 @@
 // Fixed client-template rewrites adapted from workbuddy2api-panel (MIT;
-// LICENSE.workbuddy). Only system/developer text is eligible. These are
+// licenses/THIRD-PARTY-MIT.txt). Only system/developer text is eligible. These are
 // compatibility transforms, not a general secret scrubber.
 package requestpolicy
 

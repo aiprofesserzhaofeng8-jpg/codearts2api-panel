@@ -10,7 +10,7 @@
 2. 活动报告使用完整事件字段和实际账号 UID，发往 `www.codebuddy.cn/v2/report`。Buddy 查询、协议和领养仍使用 `copilot.tencent.com`，这四类维护请求使用独立维护请求头；指定模型任务的报告也修正到 billing 域。普通推理和每日签到协议未修改。
 3. 第一次真实测试已获得首只奖励 +300，但页面仍显示领养待确认。随后只读查询确认当前 Buddy 档案返回 `instance_id`，原代码只识别旧 `id`。现兼容两个字段，仍要求有效正整数；空对象及无效标识不视为拥有 Buddy。
 
-参考版本固定为 [workbuddy2api-panel 73a7560](https://github.com/linguo2625469/workbuddy2api-panel/tree/73a7560efc7a88ebd9865db4c71ae7f6d85859f8)，主要对应 `internal/panel/autotask.go` 的 `runFirstBuddy`、`runChat5`，以及 `internal/upstream/report.go`、`travel.go`。MIT 许可说明保持在 `LICENSE.workbuddy`。
+参考版本固定为 [workbuddy2api-panel 73a7560](https://github.com/linguo2625469/workbuddy2api-panel/tree/73a7560efc7a88ebd9865db4c71ae7f6d85859f8)，主要对应 `internal/panel/autotask.go` 的 `runFirstBuddy`、`runChat5`，以及 `internal/upstream/report.go`、`travel.go`。MIT 许可说明保持在 `licenses/THIRD-PARTY-MIT.txt`。
 
 ## 真实验证
 

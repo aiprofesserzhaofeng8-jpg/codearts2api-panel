@@ -35,9 +35,10 @@ def build(version, arch, output, go):
                        env={**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'linux', 'GOARCH': arch}, check=True)
         for name in ('panelctl.py', 'install.sh', 'healthcheck.sh', 'Caddyfile', 'compose.production.yml', '.env.example', 'README.md', 'UNIFIED-MODELS.md'):
             (staging / name).write_bytes((ROOT / 'deploy' / name).read_bytes())
-        for name in ('LICENSE', 'NOTICE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
+        for name in ('LICENSE', 'NOTICE'):
             (staging / name).write_bytes((ROOT / name).read_bytes())
         for name, source in (
+            ('THIRD-PARTY-MIT.txt', 'licenses/THIRD-PARTY-MIT.txt'),
             ('LICENSE.sub2api', 'backend/internal/catalog/modelmeta/LICENSE'),
             ('COPYING.sub2api', 'backend/internal/catalog/modelmeta/COPYING'),
             ('SUB2API-METADATA.md', 'backend/internal/catalog/modelmeta/UPSTREAM.md'),

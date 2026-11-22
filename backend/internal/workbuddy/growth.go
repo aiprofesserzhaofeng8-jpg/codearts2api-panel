@@ -1,7 +1,7 @@
 package workbuddy
 
 // Wire contract adapted from workbuddy2api-panel internal/upstream/tasks.go
-// (MIT; LICENSE.workbuddy). Only default personal CN tasks are supported here.
+// (MIT; licenses/THIRD-PARTY-MIT.txt). Only default personal CN tasks are supported here.
 import (
 	"bytes"
 	"context"

@@ -1,4 +1,4 @@
-// Search Messages protocol adapted from workbuddy2api-panel (MIT; LICENSE.workbuddy).
+// Search Messages protocol adapted from workbuddy2api-panel (MIT; licenses/THIRD-PARTY-MIT.txt).
 package protocol
 
 import (

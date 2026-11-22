@@ -1,4 +1,4 @@
-// Search wire contract follows workbuddy2api-panel (MIT; LICENSE.workbuddy).
+// Search wire contract follows workbuddy2api-panel (MIT; licenses/THIRD-PARTY-MIT.txt).
 package workbuddy
 
 import (

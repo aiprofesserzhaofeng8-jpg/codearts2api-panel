@@ -1,6 +1,6 @@
 # WorkBuddy 搜索、提示词与出站清洗
 
-这三项只作用于 WorkBuddy，参考本机 `workbuddy2api-panel` 的搜索协议、提示词替换和指纹清洗实现；来源许可为 MIT，见 `LICENSE.workbuddy`。码道与 Trae 的请求不应用这组设置；它们有自己的提示词/清洗配置及独立搜索后端，见 [平台能力与维护边界](PROVIDER-FEATURES.md)。
+这三项只作用于 WorkBuddy，参考本机 `workbuddy2api-panel` 的搜索协议、提示词替换和指纹清洗实现；来源许可为 MIT，见 `licenses/THIRD-PARTY-MIT.txt`。码道与 Trae 的请求不应用这组设置；它们有自己的提示词/清洗配置及独立搜索后端，见 [平台能力与维护边界](PROVIDER-FEATURES.md)。
 
 图片转发、客户端能力声明与网络恢复见 [专项说明](WORKBUDDY-MULTIMODAL.md)。
 

@@ -45,9 +45,10 @@ def build(version, output, go):
                        cwd=ROOT / 'backend', check=True,
                        env={**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'windows', 'GOARCH': 'amd64'})
         # An explicit allowlist keeps runtime state and credentials out of packages.
-        for name in ('LICENSE', 'NOTICE', 'LICENSE.workbuddy', 'LICENSE.qoder', 'LICENSE.kiro', 'LICENSE.teleagent'):
+        for name in ('LICENSE', 'NOTICE'):
             (staging / name).write_bytes((ROOT / name).read_bytes())
         for name, source in (
+            ('THIRD-PARTY-MIT.txt', 'licenses/THIRD-PARTY-MIT.txt'),
             ('LICENSE.sub2api', 'backend/internal/catalog/modelmeta/LICENSE'),
             ('COPYING.sub2api', 'backend/internal/catalog/modelmeta/COPYING'),
             ('SUB2API-METADATA.md', 'backend/internal/catalog/modelmeta/UPSTREAM.md'),
