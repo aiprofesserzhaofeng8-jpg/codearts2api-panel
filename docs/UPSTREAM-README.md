@@ -34,7 +34,7 @@
 > 逆向过程与全部证据见 [`docs/RECON.md`](docs/RECON.md)（历史快照）。
 > **当前**上游协议事实见 [`docs/UPSTREAM.md`](docs/UPSTREAM.md)，
 > 报错处置见 [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)，
-> 安全模型见 [`SECURITY.md`](SECURITY.md)，文档总览见 [`docs/index.md`](docs/index.md)。
+> 安全模型见 [`SECURITY.md`](../.github/SECURITY.md)，文档总览见 [`docs/index.md`](docs/index.md)。
 
 **目录**：[一、快速开始](#一快速开始) ·
 [二、支持的模型与计费](#二支持的模型与计费) · [三、凭据与续期](#三凭据与续期) ·
@@ -44,7 +44,7 @@
 
 **其它文档**：[文档导航](docs/index.md) · [产品目标](goal-and-requirements.md) ·
 [架构与不变量](architecture.md) · [上游协议](docs/UPSTREAM.md) ·
-[故障排查](docs/TROUBLESHOOTING.md) · [安全策略](SECURITY.md) · [逆向勘察](docs/RECON.md)
+[故障排查](docs/TROUBLESHOOTING.md) · [安全策略](../.github/SECURITY.md) · [逆向勘察](docs/RECON.md)
 
 ---
 
@@ -685,7 +685,7 @@ go test -race ./...
   否则会持续撞上游「每账号 3 个并发会话」的上限。
 - 网关默认只监听 `127.0.0.1`。要对外提供服务请显式设置管理密码与
   `CORS 允许来源`，并在反向代理层再做一层鉴权。
-- 完整的威胁模型、残余风险与部署前加固清单见 [`SECURITY.md`](SECURITY.md)。
+- 完整的威胁模型、残余风险与部署前加固清单见 [`SECURITY.md`](../.github/SECURITY.md)。
 - 本项目仅供本机个人复用已授权的账号权益，请遵守华为云服务条款。
 
 ---

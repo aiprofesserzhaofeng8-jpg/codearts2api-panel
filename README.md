@@ -182,7 +182,7 @@ docker compose down
 
 可使用 `用户 → HTTPS 域名 → Nginx/Caddy → 中转服务` 的部署方式。同机反向代理场景下，网关继续监听 `127.0.0.1:10087` 即可；反代需保留原始 Host、关闭响应缓冲并提供足够的流式读取超时。
 
-服务本身不提供 HTTPS。控制台需要管理员登录。客户端调用模型需要绑定有效分组的 API 密钥。反代终止 TLS 时，应由可信反代为管理会话 Cookie 添加 Secure 属性。更多边界见 [安全说明](SECURITY.md) 和 [管理说明](docs/MANAGEMENT.md)。
+服务本身不提供 HTTPS。控制台需要管理员登录。客户端调用模型需要绑定有效分组的 API 密钥。反代终止 TLS 时，应由可信反代为管理会话 Cookie 添加 Secure 属性。更多边界见 [安全说明](.github/SECURITY.md) 和 [管理说明](docs/MANAGEMENT.md)。
 
 ### 升级与备份
 
@@ -290,7 +290,7 @@ python3 scripts/connect-client.py claude --url http://127.0.0.1:10087
 | [Sub2API 设计参考](docs/SUB2API-ALIGNMENT.md) | 已实现能力及未覆盖部分 |
 | [项目结构设计 v1](docs/architecture/README.md) | 当前迁移进度、目标目录、模块边界与验收 |
 | [质量验收](docs/acceptance/QUALITY-PLAN.md) | 验收方法、门槛及复跑步骤 |
-| [安全策略](SECURITY.md) | 漏洞反馈、部署边界与数据保护 |
+| [安全策略](.github/SECURITY.md) | 漏洞反馈、部署边界与数据保护 |
 
 ## 开发与贡献
 
@@ -308,7 +308,7 @@ node scripts/pi/codearts-compaction.test.mjs
 
 Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查另外需要 Playwright 和浏览器。真实上游验收会消耗账号额度，执行方法见验收文档。
 
-欢迎提交 Issue 和 Pull Request。每次修改的原因、行为变化、测试结果和已知限制写入提交说明；README 维护当前使用方法。规范见 [CONTRIBUTING.md](CONTRIBUTING.md)，历史见 [Git 提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/)。
+欢迎提交 Issue 和 Pull Request。每次修改的原因、行为变化、测试结果和已知限制写入提交说明；README 维护当前使用方法。规范见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)，历史见 [Git 提交记录](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/)。
 
 ## 贡献者与致谢
 
@@ -320,7 +320,7 @@ Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查
       项目维护
     </td>
     <td align="center">
-      <a href="CONTRIBUTORS.md#ai-辅助开发贡献"><img src="https://github.com/openai.png?size=80" width="64" height="64" alt="OpenAI 工具标识"></a><br>
+      <a href=".github/CONTRIBUTORS.md#ai-辅助开发贡献"><img src="https://github.com/openai.png?size=80" width="64" height="64" alt="OpenAI 工具标识"></a><br>
       OpenAI ChatGPT / Codex<br>
       AI 辅助开发工具署名
     </td>
@@ -335,7 +335,7 @@ Go 服务仅依赖标准库。Pi 适配测试使用 Node.js 24；浏览器检查
 | [WorkBuddy2API Panel](https://github.com/linguo2625469/workbuddy2api-panel) 及原作者 | 账号管理产品思路和面板视觉参考 |
 | [Sub2API](https://github.com/Wei-Shaw/sub2api) 及其贡献者 | Responses / Messages 转换核心、模型参数合并与公开资料解析复用；见 [协议来源](backend/internal/responsescompat/UPSTREAM.md)与[参数来源](backend/internal/catalog/modelmeta/UPSTREAM.md) |
 
-AI 署名记录使用 OpenAI 工具进行辅助开发的事实，不表示 OpenAI 公司参与维护、官方合作或背书。更多贡献说明见 [CONTRIBUTORS.md](CONTRIBUTORS.md)。
+AI 署名记录使用 OpenAI 工具进行辅助开发的事实，不表示 OpenAI 公司参与维护、官方合作或背书。更多贡献说明见 [CONTRIBUTORS.md](.github/CONTRIBUTORS.md)。
 
 MobileClaw（中国移动云）个人免费 Token 账号的导入与限制见 [接入说明](docs/MOBILECLAW.md)。
 

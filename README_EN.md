@@ -157,7 +157,7 @@ docker compose down
 
 A public deployment can use `Client → HTTPS domain → Nginx/Caddy → Gateway`. With a reverse proxy on the same host, the gateway can keep listening on `127.0.0.1:10087`. Preserve the original Host header, disable response buffering, and allow sufficient read timeouts for streaming responses.
 
-The service does not provide HTTPS itself. The console requires administrator sign-in. Model requests require an API key assigned to a valid group. When TLS terminates at the proxy, configure the trusted proxy to add the Secure attribute to administrator and user session cookies. See [Security](SECURITY.md) and [Management](docs/MANAGEMENT.md) for deployment boundaries.
+The service does not provide HTTPS itself. The console requires administrator sign-in. Model requests require an API key assigned to a valid group. When TLS terminates at the proxy, configure the trusted proxy to add the Secure attribute to administrator and user session cookies. See [Security](.github/SECURITY.md) and [Management](docs/MANAGEMENT.md) for deployment boundaries.
 
 ### Updates and backups
 
@@ -251,7 +251,7 @@ The detailed documents and management interface are currently primarily in Chine
 | [Protocol compatibility](docs/RESPONSES.md) | Responses translation, tools, and reasoning history |
 | [Sub2API design references](docs/SUB2API-ALIGNMENT.md) | Implemented capabilities and remaining gaps |
 | [Quality acceptance plan](docs/acceptance/QUALITY-PLAN.md) | Methods, acceptance criteria, and repeatable checks |
-| [Security policy](SECURITY.md) | Vulnerability reporting, deployment boundaries, and data protection |
+| [Security policy](.github/SECURITY.md) | Vulnerability reporting, deployment boundaries, and data protection |
 
 ## Development and contributions
 
@@ -269,7 +269,7 @@ node scripts/pi/codearts-compaction.test.mjs
 
 The Go service uses only the standard library. Pi adapter tests use Node.js 24; browser checks additionally require Playwright and a browser. Live upstream acceptance tests consume real account quota; consult the acceptance plan before running them.
 
-Issues and pull requests are welcome. Record each change's motivation, resulting behavior, validation, and limitations in its commit description. Keep the README focused on current usage. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/).
+Issues and pull requests are welcome. Record each change's motivation, resulting behavior, validation, and limitations in its commit description. Keep the README focused on current usage. See [CONTRIBUTING.md](.github/CONTRIBUTING.md) and the [commit history](https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/commits/main/).
 
 ## Contributors and acknowledgments
 
@@ -281,7 +281,7 @@ Issues and pull requests are welcome. Record each change's motivation, resulting
       Project maintenance
     </td>
     <td align="center">
-      <a href="CONTRIBUTORS.md#ai-辅助开发贡献"><img src="https://github.com/openai.png?size=80" width="64" height="64" alt="OpenAI tool identifier"></a><br>
+      <a href=".github/CONTRIBUTORS.md#ai-辅助开发贡献"><img src="https://github.com/openai.png?size=80" width="64" height="64" alt="OpenAI tool identifier"></a><br>
       OpenAI ChatGPT / Codex<br>
       AI-assisted development attribution
     </td>
@@ -296,7 +296,7 @@ Issues and pull requests are welcome. Record each change's motivation, resulting
 | [WorkBuddy2API Panel](https://github.com/linguo2625469/workbuddy2api-panel) and its original authors | Account management concepts and visual design references |
 | [Sub2API](https://github.com/Wei-Shaw/sub2api) and its contributors | Responses conversion library, management design, and README organization references |
 
-AI attribution records the use of OpenAI tools for assisted development. It does not imply maintenance by OpenAI, an official partnership, or endorsement. See [CONTRIBUTORS.md](CONTRIBUTORS.md) for details.
+AI attribution records the use of OpenAI tools for assisted development. It does not imply maintenance by OpenAI, an official partnership, or endorsement. See [CONTRIBUTORS.md](.github/CONTRIBUTORS.md) for details.
 
 ## License
 

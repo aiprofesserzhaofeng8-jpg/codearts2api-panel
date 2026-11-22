@@ -5,9 +5,9 @@
 | [../README.md](../README.md) | 项目是什么、怎么跑起来、有哪些接口 | 所有人 |
 | [UPSTREAM.md](UPSTREAM.md) | **当前**上游协议事实：端点、身份头、通道、签名、错误码 | 改上游层的人 |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 报错了怎么办（症状 → 原因 → 处置） | 使用者 / 运维 |
-| [../SECURITY.md](../SECURITY.md) | 威胁模型、已实施防护、残余风险、加固清单 | 部署者 / 安全审阅 |
-| [../goal-and-requirements.md](../goal-and-requirements.md) | 产品是什么、为什么、明确不做什么 | 所有人 |
-| [../architecture.md](../architecture.md) | 模块边界、依赖边、不变量、已知限制 | 改代码的人 |
+| [../SECURITY.md](../.github/SECURITY.md) | 威胁模型、已实施防护、残余风险、加固清单 | 部署者 / 安全审阅 |
+| [../goal-and-requirements.md](goal-and-requirements.md) | 产品是什么、为什么、明确不做什么 | 所有人 |
+| [../architecture.md](architecture.md) | 模块边界、依赖边、不变量、已知限制 | 改代码的人 |
 | `internal/*/SPEC.md` | 每个模块的职责与边界 | 改那个模块的人 |
 | [adr/](adr/) | 关键架构决策（为什么这样写、为什么有些事没做） | 维护者 |
 | [RECON.md](RECON.md) | 逆向过程与证据位置（**历史快照**，不代表现状） | 想理解「为什么这么实现」的人 |
@@ -29,7 +29,7 @@
 
 ### 要改代码
 
-1. [`goal-and-requirements.md`](../goal-and-requirements.md) 与 [`architecture.md`](../architecture.md)
+1. [`goal-and-requirements.md`](goal-and-requirements.md) 与 [`architecture.md`](architecture.md)
    （产品边界与模块不变量）
 2. 要动哪个包，就读那个包的 `SPEC.md`
 3. `README.md` 的「六、工程结构」与「七、开发与自检」
