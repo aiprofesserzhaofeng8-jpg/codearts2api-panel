@@ -60,7 +60,7 @@ func (s *Store) QueryUserUsage(id string, q UsageQuery) UsagePage {
 				entry.Err = "请求失败"
 			}
 			if c := entry.EstimatedCost; c != nil {
-				entry.EstimatedCost = &usage.RequestCost{Currency: c.Currency, Amount: c.Amount, Partial: c.Partial}
+				entry.EstimatedCost = &usage.RequestCost{PriceKind: c.PriceKind, Currency: c.Currency, Amount: c.Amount, Partial: c.Partial}
 			}
 			records = append(records, entry)
 		}

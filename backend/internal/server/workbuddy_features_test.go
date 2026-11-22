@@ -146,6 +146,7 @@ func TestSearchRotationCoolingAndRefresh(t *testing.T) {
 	second.ExternalID = "second"
 	second.Credentials = mustJSON(workbuddy.Credentials{AccessToken: "second", RefreshToken: "refresh", UID: "second", Realm: "cn", ExpiresAt: time.Now().Add(time.Hour).Unix()})
 	s.Store.UpsertAccount(second)
+	grantFixtureAccounts(t, s.Store)
 	s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 2 })
 	w := responseRequest(s, key, "/v1/search/messages", searchBody)
 	if w.Code != 200 || calls != 2 {

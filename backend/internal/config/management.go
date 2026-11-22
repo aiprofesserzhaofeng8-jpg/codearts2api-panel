@@ -189,7 +189,6 @@ func (m *Management) updateSettings(body SettingsUpdate, checked bool) error {
 		setIf(&st.CORSOrigin, body.CORSOrigin)
 		setIf(&st.AutoRefresh, body.AutoRefresh)
 		setIf(&st.AllowCreditModels, body.AllowCreditModels)
-		setIf(&st.AllowAnonymous, body.AllowAnonymous)
 		setIf(&st.RateLimitEnabled, body.RateLimitEnabled)
 		setIf(&st.RateLimitQPS, body.RateLimitQPS)
 		setIf(&st.RateLimitBurst, body.RateLimitBurst)

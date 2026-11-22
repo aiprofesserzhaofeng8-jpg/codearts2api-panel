@@ -20,6 +20,7 @@ func nativeProfileGET(s *Server, key, path string) *httptest.ResponseRecorder {
 func TestNativeModelListAndProfilesShareUpperBound(t *testing.T) {
 	s, key := unifiedAPIFixture(t)
 	createUnifiedHTTP(t, s, "glm-5.3")
+	grantFixtureAccounts(t, s.Store)
 	assert := func(payload map[string]any) {
 		t.Helper()
 		native, ok := payload["native_model"].(map[string]any)
@@ -63,6 +64,7 @@ func TestNativeModelListAndProfilesShareUpperBound(t *testing.T) {
 func TestNativeModelImagesRejectedAcrossProtocolsAndProviderServiceExplicit(t *testing.T) {
 	s, key := unifiedAPIFixture(t)
 	createUnifiedHTTP(t, s, "glm-5.3")
+	grantFixtureAccounts(t, s.Store)
 	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/messages"} {
 		body := map[string]any{"model": "glm-5.3", "max_tokens": 64}
 		switch path {

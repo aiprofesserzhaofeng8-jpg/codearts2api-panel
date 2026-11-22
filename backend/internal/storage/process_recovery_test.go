@@ -20,7 +20,7 @@ func TestUsageJournalRecoversAfterProcessDeath(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		k := s.AddKey("crash fixture")
+		k := groupedTestKey(t, s, "crash fixture")
 		if err := s.SetKeyBudgetAndSave(k.Key, KeyBudget{MaxRequests: 1}, false); err != nil {
 			t.Fatal(err)
 		}

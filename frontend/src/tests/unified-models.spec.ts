@@ -45,7 +45,9 @@ it('keeps selected empty grants denied and separates raw rules from unified perm
  }));
  wrapper=mount(GroupsPage,{attachTo:document.body});await wrapper.get('#addGroup').trigger('click');await flushPromises();
  await wrapper.get('#groupName').setValue('fixed');await wrapper.get('[aria-label="授权 shared-public-1"]').setValue(true);
- const sourceBoxes=wrapper.findAll('#groupUnifiedGrants details input[type=checkbox]');for(const box of sourceBoxes)await box.setValue(false);
+ await wrapper.get('#groupRawVisible').setValue(false);
+ await wrapper.get('[aria-label="shared-public-1 来源限制"]').trigger('click');
+ const sourceBoxes=wrapper.findAll('#groupUnifiedGrants .source-editor input[type=checkbox]');expect(sourceBoxes).toHaveLength(model.sources.length);for(const box of sourceBoxes)await box.setValue(false);
  await wrapper.get('form').trigger('submit');await flushPromises();
  expect(bodies[0]).not.toHaveProperty('model_mappings');expect(bodies[0]).toMatchObject({raw_model_mode:'qualified_only',raw_models_visible_default:false,unified_models:[{model_id:model.id,visible:true,callable:true,source_mode:'selected',source_ids:[]}]});
 });

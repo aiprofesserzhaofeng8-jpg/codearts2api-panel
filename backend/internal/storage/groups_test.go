@@ -42,20 +42,14 @@ func TestGroupScopeNeverFallsBackOutsideMembers(t *testing.T) {
 		r()
 		t.Fatal("empty group fell back")
 	}
-	if err = s.DeleteGroup(g.ID); err == nil {
-		t.Fatal("bound group deleted")
-	}
-	if err = s.SetKeyGroupAndSave(k.Key, ""); err != nil {
-		t.Fatal(err)
-	}
-	if a, r, e := s.AcquireAccountForKey("", "other", nil, k.Key); e != nil || a == nil || a.ID != "1" {
-		r()
-		t.Fatal("explicit ungroup did not restore legacy routing", e)
-	} else {
-		r()
-	}
 	if err = s.DeleteGroup(g.ID); err != nil {
 		t.Fatal(err)
+	}
+	if err = s.SetKeyGroupAndSave(k.Key, ""); err == nil {
+		t.Fatal("deleted group key escaped to global permissions")
+	}
+	if a, _, e := s.AcquireAccountForKey("", "other", nil, k.Key); e == nil || a != nil {
+		t.Fatal("deleted group key acquired an outside account")
 	}
 }
 
@@ -81,6 +75,10 @@ func TestGroupPersistenceAndFailedWritesRollBack(t *testing.T) {
 	if r.Groups()[0].AccountIDs[0] != "0" {
 		t.Fatal("mutable group snapshot")
 	}
+	other, err := s.SaveGroup(AccountGroup{Name: "other"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	blocker := filepath.Join(t.TempDir(), "file")
 	if err = os.WriteFile(blocker, []byte("x"), 0600); err != nil {
 		t.Fatal(err)
@@ -93,10 +91,10 @@ func TestGroupPersistenceAndFailedWritesRollBack(t *testing.T) {
 	if len(s.Groups()[0].AccountIDs) != 1 {
 		t.Fatal("failed write changed live scope")
 	}
-	if err = s.SetKeyGroupAndSave(k.Key, ""); err == nil || s.Keys()[0].GroupID != g.ID {
+	if err = s.SetKeyGroupAndSave(k.Key, other.ID); err == nil || s.Keys()[0].GroupID != g.ID {
 		t.Fatal("failed key write changed binding")
 	}
-	if _, err = s.AddKeyInGroupAndSave("new", ""); err == nil || len(s.Keys()) != 1 {
+	if _, err = s.AddKeyInGroupAndSave("new", other.ID); err == nil || len(s.Keys()) != 1 {
 		t.Fatal("failed new key remained active")
 	}
 }
@@ -126,5 +124,8 @@ func TestMissingGroupAndEmptyWhitelistDeny(t *testing.T) {
 	}
 	if _, err = s.AddKeyInGroupAndSave("new", "missing"); err == nil {
 		t.Fatal("unknown group created unrestricted key")
+	}
+	if _, err = s.AddKeyInGroupAndSave("new", ""); err == nil {
+		t.Fatal("empty group created unrestricted key")
 	}
 }

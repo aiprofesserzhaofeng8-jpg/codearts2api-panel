@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"codearts2api/internal/usage"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"codearts2api/internal/access"
+	"codearts2api/internal/config"
 )
 
 type KeyBudget = access.KeyBudget
@@ -16,8 +18,14 @@ type BudgetError = access.BudgetError
 
 func budgetCheck(b KeyBudget, u BudgetUsage) error { return access.CheckBudget(b, u) }
 
-// One active inference for keys with metered limits bounds soft-budget overrun
-// to one request. Request reservations also prevent concurrent count overruns.
+func budgetOwnerError(err error) error {
+	if err == access.ErrGroupUnavailable {
+		return config.ModelFailure(403, "group_unavailable", err.Error())
+	}
+	return &BudgetError{Message: err.Error()}
+}
+
+// Count in-flight requests toward request-count limits until settlement.
 func (s *Store) BeginKeyBudget(key string) (func(), error) { return s.beginKeyBudget(key, nil) }
 func (s *Store) BeginRequestBudget(key string) (func(), bool, error) {
 	var metered bool
@@ -36,7 +44,7 @@ func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 				return nil, &BudgetError{Message: "密钥已停用"}
 			}
 			if err := s.keyOwnerLocked(k); err != nil {
-				return nil, &BudgetError{Message: err.Error()}
+				return nil, budgetOwnerError(err)
 			}
 			if err := budgetCheck(k.Budget, k.BudgetUsage); err != nil {
 				return nil, err
@@ -45,9 +53,7 @@ func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 			if k.Budget.MaxRequests > 0 && k.BudgetUsage.Requests+int64(active) >= k.Budget.MaxRequests {
 				return nil, &BudgetError{Message: "请求次数预算已被在途请求预留"}
 			}
-			if active > 0 && (k.Budget.MaxTokens > 0 || k.Budget.MaxUSD > 0) {
-				return nil, &BudgetError{Message: "该密钥正在结算一个请求，请稍后再试"}
-			}
+
 			if s.budgetActive == nil {
 				s.budgetActive = map[string]int{}
 			}
@@ -95,6 +101,9 @@ func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 func (s *Store) CheckKeyBudgetProgress(key, model string, attempts []RequestAttempt) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	return s.checkProgressLocked(key, s.priceLocked(model), attempts)
+}
+func (s *Store) checkProgressLocked(key string, price usage.AttemptPrice, attempts []RequestAttempt) error {
 	if s.journalErr != nil {
 		return ErrUsagePersistence
 	}
@@ -104,19 +113,16 @@ func (s *Store) CheckKeyBudgetProgress(key, model string, attempts []RequestAtte
 				return &BudgetError{Message: "密钥已停用"}
 			}
 			if err := s.keyOwnerLocked(k); err != nil {
-				return &BudgetError{Message: err.Error()}
+				return budgetOwnerError(err)
 			}
 			usage := k.BudgetUsage
 			for _, a := range attempts {
 				usage.Tokens += a.Usage.InputTokens + a.Usage.OutputTokens
-				if !a.Usage.Known {
-					usage.Incomplete = true
-				}
-				if c := s.estimateModelLocked(a.Model, a.Usage); c != nil {
+				if c := s.attemptCostLocked(a); c != nil {
 					usage.USD += c.Amount
 				}
 			}
-			if k.Budget.MaxUSD > 0 && s.estimateModelLocked(model, TokenUsage{Known: true}) == nil {
+			if k.Budget.MaxUSD > 0 && price.Price == nil {
 				return &BudgetError{Message: "该模型未配置 USD 价格，无法执行费用预算；请先设置价格"}
 			}
 			// The current request already owns its request-count reservation.
@@ -130,14 +136,11 @@ func (s *Store) CheckKeyBudgetProgress(key, model string, attempts []RequestAtte
 				b, total := u.Budget, u.BudgetUsage
 				for _, a := range attempts {
 					total.Tokens += a.Usage.InputTokens + a.Usage.OutputTokens
-					if !a.Usage.Known {
-						total.Incomplete = true
-					}
-					if c := s.estimateModelLocked(a.Model, a.Usage); c != nil {
+					if c := s.attemptCostLocked(a); c != nil {
 						total.USD += c.Amount
 					}
 				}
-				if b.MaxUSD > 0 && s.estimateModelLocked(model, TokenUsage{Known: true}) == nil {
+				if b.MaxUSD > 0 && price.Price == nil {
 					return &BudgetError{Message: "该模型缺少价格，无法执行用户费用预算"}
 				}
 				b.MaxRequests = 0
@@ -188,7 +191,7 @@ func (s *Store) CheckSearchBudget(key string) error {
 	for _, k := range s.st.Keys {
 		if k.Key == key {
 			if err := s.keyOwnerLocked(k); err != nil {
-				return &BudgetError{Message: err.Error()}
+				return budgetOwnerError(err)
 			}
 			metered := k.Budget.MaxTokens > 0 || k.Budget.MaxUSD > 0
 			if k.UserID != "" {
@@ -216,9 +219,7 @@ func checkUserReservation(b KeyBudget, u BudgetUsage, active int) error {
 	if b.MaxRequests > 0 && u.Requests+int64(active) >= b.MaxRequests {
 		return &BudgetError{Message: "用户请求预算已被在途请求预留"}
 	}
-	if active > 0 && (b.MaxTokens > 0 || b.MaxUSD > 0) {
-		return &BudgetError{Message: "该用户正在结算请求，请稍后再试"}
-	}
+
 	return nil
 }
 func addBudgetUsage(u *BudgetUsage, e LogEntry) {

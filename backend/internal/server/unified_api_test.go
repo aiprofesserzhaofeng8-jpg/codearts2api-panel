@@ -21,12 +21,16 @@ import (
 
 func unifiedAPIFixture(t *testing.T) (*Server, string) {
 	t.Helper()
-	s := poolServer(t, 0)
+	s := poolServer(t, 0, "unified")
+	for _, platform := range []string{provider.WorkBuddy, provider.Trae, provider.Qoder, provider.MobileClaw, provider.TeleAgent, provider.CodeArts} {
+		catalogFixtureAccount(t, s, platform, "cn")
+	}
+	grantFixtureAccounts(t, s.Store)
 	s.UnifiedModels = catalog.NewManagement(s.Store, s.Reg, s.ModelPolicies)
 	s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "verified-v1", Context: 65536, MaxOutput: 8192, ImageInput: "supported", ToolCalling: "supported"}})
 	s.Reg.ReplaceProvider(provider.Trae, "cn", []provider.Model{{ID: "verified-v1", Context: 32768, MaxOutput: 4096, ImageInput: "unsupported", ToolCalling: "supported"}})
 	markModelsFresh(s)
-	return s, s.Store.AddKey("unified-api-fixture").Key
+	return s, s.Store.Keys()[0].Key
 }
 
 func TestUnifiedAPIListProfileAndSixSuccessfulResponses(t *testing.T) {
@@ -61,6 +65,7 @@ func TestUnifiedAPIListProfileAndSixSuccessfulResponses(t *testing.T) {
 func TestUnifiedAPIPolicyBoundsAndNamespaceConflicts(t *testing.T) {
 	s, key := unifiedAPIFixture(t)
 	detail := createUnifiedHTTP(t, s, "verified-public-1")
+	grantFixtureAccounts(t, s.Store)
 	_, _, p, err := s.Routing.Profile(key, detail.Model.Name, s.ModelPolicies)
 	if err != nil {
 		t.Fatal(err)
@@ -166,6 +171,7 @@ func checkModelError(t *testing.T, w *httptest.ResponseRecorder, status int, rea
 func TestUnifiedAPIConsistentListProfileAndNoAccounts(t *testing.T) {
 	s, key := unifiedAPIFixture(t)
 	detail := createUnifiedHTTP(t, s, "verified-public-1")
+	grantFixtureAccounts(t, s.Store)
 	w := scopedModelRequest(s, key)
 	var list struct {
 		Data []map[string]any `json:"data"`
@@ -326,7 +332,7 @@ func TestUnifiedAPIGroupCASAndUserProjection(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
-	g := s.Store.CanonicalGroups()[0]
+	g := fixtureGroup(t, s.Store.CanonicalGroups(), "selected-empty")
 	if g.RawModelMode != "qualified_only" || g.RawModelsVisibleDefault || g.ModelMappings != nil {
 		t.Fatal(g)
 	}
@@ -363,6 +369,7 @@ func TestUnifiedAPIGroupCASAndUserProjection(t *testing.T) {
 func TestUnifiedAPIProfileMissingMetadataAndExactNames(t *testing.T) {
 	s, key := unifiedAPIFixture(t)
 	m := createUnifiedHTTP(t, s, "verified-public-1").Model
+	grantFixtureAccounts(t, s.Store)
 	s.Reg.ReplaceProvider(provider.Trae, "cn", nil)
 	request := func(name string) *httptest.ResponseRecorder {
 		r := httptest.NewRequest("GET", "/v1/client-profile?model="+name, nil)
@@ -482,7 +489,7 @@ func TestUnifiedAPIProtocolReasonsAndUpstreamIsolation(t *testing.T) {
 			for _, stream := range []bool{false, true} {
 				checkModelError(t, responseRequest(s, key, path, mappedBody(path, stream, "unknown-public-1")), 404, "model_not_found")
 			}
-			g := s.Store.CanonicalGroups()[0]
+			g := fixtureGroup(t, s.Store.CanonicalGroups(), "mapped")
 			g.UnifiedModels[0].Callable = false
 			if _, err := s.Store.SaveUnifiedGroup(g, g.Revision); err != nil {
 				t.Fatal(err)
@@ -501,6 +508,7 @@ func TestUnifiedAPIProtocolReasonsAndUpstreamIsolation(t *testing.T) {
 	}
 	s, key := unifiedAPIFixture(t)
 	m := createUnifiedHTTP(t, s, "verified-public-1").Model
+	grantFixtureAccounts(t, s.Store)
 	s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "verified-v1", ToolCalling: "unsupported"}})
 	s.Reg.ReplaceProvider(provider.Trae, "cn", []provider.Model{{ID: "verified-v1", ToolCalling: "unsupported"}})
 	body := `{"model":"` + m.Name + `","messages":[{"role":"user","content":"hi"}],"tools":[{"type":"function","function":{"name":"read","parameters":{"type":"object"}}}]}`

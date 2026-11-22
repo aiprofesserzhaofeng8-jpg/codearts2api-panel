@@ -30,10 +30,7 @@ type Settings struct {
 	// 免费权益通道已于 2026-10 下线，现在**所有**模型都计费，
 	// 因此关闭它等于拒绝一切上游调用（默认开启）。
 	AllowCreditModels bool `json:"allow_credit_models"`
-	// AllowAnonymous 允许在尚未签发任何 API 密钥时，从非本机来源匿名调用 /v1/*。
-	//
-	// 默认关闭：没密钥时只放行本机直连。置真等于把账号额度开放给能访问到
-	// 这个端口的所有人，仅在你确定端口没有对外暴露时才开启。
+	// AllowAnonymous is retained only for decoding historical settings.
 	AllowAnonymous bool `json:"allow_anonymous"`
 
 	// RateLimitEnabled 开启按密钥的自我保护型限流。

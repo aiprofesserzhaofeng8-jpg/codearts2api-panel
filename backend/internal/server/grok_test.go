@@ -43,7 +43,7 @@ func TestGrokProtocolAccounting(t *testing.T) {
 								io.WriteString(w, "data: "+`{"type":"response.completed","response":{"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"API_FIXTURE_OK"}]}],"usage":{"input_tokens":12,"output_tokens":4,"input_tokens_details":{"cached_tokens":3}}}}`+"\n\n")
 							}))
 							defer up.Close()
-							s := newAdminTestServer(t)
+							s := adminTestServerWithKeys(t, []string{"fixture"})
 							c := factory()
 							c.BaseURL = up.URL
 							s.Providers = provider.NewRegistry()
@@ -66,7 +66,8 @@ func TestGrokProtocolAccounting(t *testing.T) {
 								}
 								model = "shared-fixture-v1"
 							}
-							key := s.Store.AddKey("fixture").Key
+							grantFixtureAccounts(t, s.Store)
+							key := s.Store.Keys()[0].Key
 							_ = s.Handler()
 							markModelsFresh(s)
 							body := map[string]any{"model": model, "stream": stream, "max_tokens": 64, "messages": []map[string]string{{"role": "user", "content": "fixture"}}}

@@ -41,7 +41,7 @@ func TestGeminiCLIProtocolAccounting(t *testing.T) {
 								io.WriteString(w, "data: "+`{"response":{"candidates":[{"content":{"parts":[{"text":"API_FIXTURE_OK"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":12,"candidatesTokenCount":4,"cachedContentTokenCount":3}}}`+"\n\n")
 							}))
 							defer up.Close()
-							s := newAdminTestServer(t)
+							s := adminTestServerWithKeys(t, []string{"fixture"})
 							c := factory()
 							c.CLIBase = up.URL
 							s.Providers = provider.NewRegistry()
@@ -64,7 +64,8 @@ func TestGeminiCLIProtocolAccounting(t *testing.T) {
 								}
 								model = "shared-fixture-v1"
 							}
-							key := s.Store.AddKey("fixture").Key
+							grantFixtureAccounts(t, s.Store)
+							key := s.Store.Keys()[0].Key
 							_ = s.Handler()
 							markModelsFresh(s)
 							body := map[string]any{"model": model, "stream": stream, "max_tokens": 64, "messages": []map[string]string{{"role": "user", "content": "fixture"}}}
@@ -126,7 +127,7 @@ func geminiCLISignedFixture(t *testing.T) (*Server, string, *int) {
 		}
 	}))
 	t.Cleanup(up.Close)
-	s := newAdminTestServer(t)
+	s := adminTestServerWithKeys(t, []string{"fixture"})
 	t.Setenv("GEMINI_CLI_OAUTH_CLIENT_ID", "fixture-client")
 	t.Setenv("GEMINI_CLI_OAUTH_CLIENT_SECRET", "fixture-secret")
 	c := gemini.New()
@@ -143,7 +144,8 @@ func geminiCLISignedFixture(t *testing.T) (*Server, string, *int) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := s.Store.AddKey("fixture").Key
+	grantFixtureAccounts(t, s.Store)
+	key := s.Store.Keys()[0].Key
 	_ = s.Handler()
 	markModelsFresh(s)
 

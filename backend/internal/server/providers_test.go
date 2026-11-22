@@ -23,7 +23,7 @@ import (
 
 func nativeWBServer(t *testing.T, fn http.HandlerFunc) (*Server, string, *workbuddy.Client) {
 	t.Helper()
-	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := openTestState(t, filepath.Join(t.TempDir(), "state.json"), "client")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func nativeWBServer(t *testing.T, fn http.HandlerFunc) (*Server, string, *workbu
 	if err = s.Providers.Register(client); err != nil {
 		t.Fatal(err)
 	}
-	return s, st.AddKey("client").Key, client
+	return s, st.Keys()[0].Key, client
 }
 func addWB(t *testing.T, s *Server, scope string, expires int64) {
 	t.Helper()
@@ -54,6 +54,7 @@ func addWB(t *testing.T, s *Server, scope string, expires int64) {
 		t.Fatal(err)
 	}
 	s.Reg.ReplaceProvider("workbuddy", scope, []provider.Model{{ID: "shared", StreamOnly: true}})
+	grantFixtureAccounts(t, s.Store)
 }
 func TestWorkBuddyThreeProtocolsAndProviderUsage(t *testing.T) {
 	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/messages"} {

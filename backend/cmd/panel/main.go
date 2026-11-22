@@ -38,7 +38,7 @@ func main() {
 		noImport        = flag.Bool("no-import", false, "启动时不自动导入桌面端登录态")
 		noRefresh       = flag.Bool("no-refresh", false, "禁止网关自行续期（只读 IDE 会话）")
 		adminPw         = flag.String("admin-password", envOr("CODEARTS_ADMIN_PASSWORD", ""), "管理密码（非空时覆盖状态文件中的设置）")
-		anon            = flag.Bool("allow-anonymous", envBool("CODEARTS_ALLOW_ANONYMOUS"), "未签发密钥时允许非本机来源匿名调用 /v1/*（默认仅本机直连）")
+		anon            = flag.Bool("allow-anonymous", envBool("CODEARTS_ALLOW_ANONYMOUS"), "已弃用：所有模型请求均须有效分组密钥")
 		showVer         = flag.Bool("version", false, "打印版本后退出")
 		checkMigration  = flag.String("check-state-migration", "", "只读检查状态迁移后退出")
 		migrateDir      = flag.String("migrate-state-dir", "", "离线迁移已停写的数据目录")
@@ -136,8 +136,7 @@ func main() {
 		log.Printf("已关闭网关自行续期，仅读取 IDE 会话")
 	}
 	if *anon {
-		st.UpdateSettings(func(s *storage.Settings) { s.AllowAnonymous = true })
-		log.Printf("⚠️  已允许匿名调用 /v1/*（未签发密钥时任何能访问本端口的人都可以消耗账号额度）")
+		log.Printf("已忽略旧版匿名调用配置；请使用绑定有效分组的 API 密钥")
 	}
 
 	if st.Settings().AdminPassword == "" {

@@ -147,6 +147,8 @@ func TestUserConcurrencyCancellationReleasesAllProtocolSlots(t *testing.T) {
 				}
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
+				ctx, deadlineCancel := context.WithTimeout(ctx, 300*time.Millisecond)
+				defer deadlineCancel()
 				r := httptest.NewRequest("POST", path, strings.NewReader(mappedBody(path, stream, mappedPublic))).WithContext(ctx)
 				r.Header.Set("Authorization", "Bearer "+k.Key)
 				done := make(chan struct{})
@@ -175,5 +177,89 @@ func TestUserConcurrencyCancellationReleasesAllProtocolSlots(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestMeteredParallelHTTPCallsRespectUserSlots(t *testing.T) {
+	for _, split := range []bool{false, true} {
+		t.Run(fmt.Sprintf("split-keys=%t", split), func(t *testing.T) {
+			arrived := make(chan struct{}, 6)
+			gate := make(chan struct{})
+			defer close(gate)
+			s, _, g := mappedFixture(t, func(platform string, w http.ResponseWriter, r *http.Request) {
+				arrived <- struct{}{}
+				select {
+				case <-gate:
+				case <-r.Context().Done():
+					return
+				}
+				policySuccess(w, platform, false)
+			})
+			onlyMappedPlatform(s, provider.CodeArts)
+			u := createTestUser(t, s, "alice", g.ID)
+			limit := 5
+			budget := access.KeyBudget{MaxRequests: 20, MaxTokens: 100000, MaxUSD: 10}
+			if _, err := s.Store.SaveUser(access.UserUpdate{ID: u.ID, Username: u.Username, GroupID: g.ID, MaxConcurrency: &limit, Budget: &budget}, ""); err != nil {
+				t.Fatal(err)
+			}
+			var keys []string
+			for _, name := range []string{"one", "two"} {
+				k, err := s.Store.AddUserKeyAndSave(u.ID, name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err = s.Store.SetKeyBudgetAndSave(k.Key, budget, false); err != nil {
+					t.Fatal(err)
+				}
+				keys = append(keys, k.Key)
+			}
+			if err := s.Store.UpdateSettings(func(st *storage.Settings) { st.Pool.MaxInFlight = 8 }); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.Store.SetDefaultPriceAndSave(&storage.ModelPrice{Currency: "USD", Input: 1, Output: 1}); err != nil {
+				t.Fatal(err)
+			}
+			const path = "/v1/chat/completions"
+			body := mappedBody(path, false, mappedPublic)
+			results := make(chan *httptest.ResponseRecorder, 6)
+			for i := range 5 {
+				key := keys[0]
+				if split {
+					key = keys[i%2]
+				}
+				go func() { results <- responseRequest(s, key, path, body) }()
+			}
+			for range 5 {
+				select {
+				case <-arrived:
+				case early := <-results:
+					t.Fatalf("early response %d: %s", early.Code, early.Body.String())
+				case <-time.After(3 * time.Second):
+					t.Fatal("five calls did not reach upstream")
+				}
+			}
+			go func() { results <- responseRequest(s, keys[0], path, body) }()
+			select {
+			case extra := <-results:
+				if extra.Code != 429 || !strings.Contains(extra.Body.String(), "rate_limit_error") {
+					t.Fatalf("sixth response %d: %s", extra.Code, extra.Body.String())
+				}
+			case <-arrived:
+				t.Fatal("sixth reached upstream")
+			case <-time.After(3 * time.Second):
+				t.Fatal("sixth call blocked")
+			}
+			for range 5 {
+				gate <- struct{}{}
+			}
+			for range 5 {
+				if result := <-results; result.Code != 200 {
+					t.Fatalf("completion %d: %s", result.Code, result.Body.String())
+				}
+			}
+			if got := s.Store.Users()[0]; got.InFlight != 0 || got.BudgetUsage.Requests != 5 {
+				t.Fatalf("slots=%d charged requests=%d", got.InFlight, got.BudgetUsage.Requests)
+			}
+		})
 	}
 }

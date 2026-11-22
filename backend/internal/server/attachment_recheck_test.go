@@ -27,10 +27,7 @@ func TestR1RecheckImagesToolsAndNumbersReachUpstream(t *testing.T) {
 					policySuccess(w, platform, true)
 				})
 				s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "shared", ImageInput: "supported", ToolCalling: "supported", Context: 65536, MaxOutput: 8192}})
-				key, err := s.Store.AddKeyInGroupAndSave("r1-recheck", "")
-				if err != nil {
-					t.Fatal(err)
-				}
+				key := s.Store.Keys()[0]
 				var body string
 				switch path {
 				case "/v1/chat/completions":

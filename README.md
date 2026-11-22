@@ -182,7 +182,7 @@ docker compose down
 
 可使用 `用户 → HTTPS 域名 → Nginx/Caddy → 中转服务` 的部署方式。同机反向代理场景下，网关继续监听 `127.0.0.1:10087` 即可；反代需保留原始 Host、关闭响应缓冲并提供足够的流式读取超时。
 
-服务本身不提供 HTTPS。保持管理员登录、API Key 校验，并关闭匿名调用（本机自动解锁已移除）。反代终止 TLS 时，应由可信反代为管理会话 Cookie 添加 Secure 属性。更多边界见 [安全说明](SECURITY.md) 和 [管理说明](docs/MANAGEMENT.md)。
+服务本身不提供 HTTPS。控制台需要管理员登录。客户端调用模型需要绑定有效分组的 API 密钥。反代终止 TLS 时，应由可信反代为管理会话 Cookie 添加 Secure 属性。更多边界见 [安全说明](SECURITY.md) 和 [管理说明](docs/MANAGEMENT.md)。
 
 ### 升级与备份
 

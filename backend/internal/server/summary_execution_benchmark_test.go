@@ -28,7 +28,7 @@ func BenchmarkSummaryExecution(b *testing.B) {
 		for _, retry := range []bool{false, true} {
 			for _, stream := range []bool{false, true} {
 				b.Run(fmt.Sprintf("size=%d/retry=%v/stream=%v", size, retry, stream), func(b *testing.B) {
-					st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
+					st, err := openTestState(b, filepath.Join(b.TempDir(), "state.json"), "summary-benchmark")
 					if err != nil {
 						b.Fatal(err)
 					}
@@ -44,11 +44,12 @@ func BenchmarkSummaryExecution(b *testing.B) {
 						}
 						return responseUpstream(r, summaryFixture("COMPLETE_SUMMARY", "stop", 4, 2)), nil
 					})}
-					key := st.AddKey("summary-benchmark").Key
+					key := st.Keys()[0].Key
 					handler := s.Handler()
 					body := fmt.Sprintf(`{"model":"deepseek-v4.1-flash","stream":%v,"max_tokens":512,"messages":[{"role":"system","content":"You are a context summarization assistant."},{"role":"user","content":%q}]}`, stream, strings.Repeat("h", size))
 					b.ReportAllocs()
 					b.SetBytes(int64(len(body)))
+					grantFixtureAccounts(b, st)
 					b.ResetTimer()
 					for range b.N {
 						req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(body))

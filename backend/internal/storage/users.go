@@ -49,6 +49,9 @@ func (s *Store) Users() []access.UserView {
 // A user's entitlement is checked under the same lock as physical selection,
 // budgets and credential state. Missing users/groups fail closed.
 func (s *Store) keyOwnerLocked(k *APIKey) error {
+	if !s.groupExistsLocked(k.GroupID) {
+		return access.ErrGroupUnavailable
+	}
 	if k.UserID == "" {
 		return nil
 	}
@@ -162,7 +165,7 @@ func (s *Store) UserProfile(id string) (access.UserView, string, error) {
 			return s.userViewLocked(*u), g.Name, nil
 		}
 	}
-	return access.UserView{}, "", fmt.Errorf("用户分组权限无效")
+	return s.userViewLocked(*u), "", nil
 }
 
 // Patch only profile fields against the current user, preserving concurrent
@@ -241,8 +244,11 @@ func (s *Store) AddUserKeyAndSave(id, name string) (APIKey, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	u := s.userLocked(id)
-	if u == nil || !u.Enabled || u.GroupID == "" || !s.groupExistsLocked(u.GroupID) {
-		return APIKey{}, fmt.Errorf("用户或分组权限无效")
+	if u == nil || !u.Enabled {
+		return APIKey{}, access.ErrUserAuthentication
+	}
+	if !s.groupExistsLocked(u.GroupID) {
+		return APIKey{}, access.ErrGroupUnavailable
 	}
 	n := 0
 	for _, k := range s.st.Keys {
@@ -320,5 +326,5 @@ func (s *Store) UserScope(id string) (AccessScope, string, error) {
 		p := groupScopeLocked(s.projectGroupLocked(g))
 		return p, g.Name, nil
 	}
-	return AccessScope{}, "", fmt.Errorf("用户绑定分组不存在")
+	return AccessScope{}, "", access.ErrGroupUnavailable
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/codearts"
 	"codearts2api/internal/gateway"
 	"codearts2api/internal/provider"
 	"codearts2api/internal/storage"
@@ -108,13 +109,18 @@ func finishAttempt(ctx context.Context, err error) {
 		var upstream *provider.Error
 		if errors.As(err, &upstream) {
 			c.upstreamStatus = upstream.Status
+		} else {
+			var native *codearts.UpstreamError
+			if errors.As(err, &native) {
+				c.upstreamStatus = native.Status
+			}
 		}
 	}
 	c.attemptErrorKind = failureKind(ctx, err)
 }
 
 func (c *usageCapture) attemptDetail() storage.RequestAttempt {
-	return storage.RequestAttempt{Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage,
+	return storage.RequestAttempt{Quote: c.attemptPrice, Number: c.attempts, Account: c.account, Model: c.model, FinishReason: c.finish, Usage: c.usage,
 		DurationMS: c.attemptDurationMS, FirstTokenMS: c.attemptFirstMS, Status: c.attemptStatus, UpstreamStatus: c.upstreamStatus, ErrorKind: c.attemptErrorKind}
 }
 

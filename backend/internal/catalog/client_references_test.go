@@ -34,7 +34,8 @@ func TestReferencesEnrichOnlyExistingModelsAndAreCachedOffInferencePath(t *testi
 	if calls != 1 || !reflect.DeepEqual(before, st.ModelPolicies()) {
 		t.Fatal("reference refresh bypassed TTL or changed persistent policies", calls)
 	}
-	r.RefreshIfStale(time.Minute, ops)
+	r.BindRefreshContext(t.Context())
+	r.SignalIfStale(time.Minute, ops)
 	if calls != 1 {
 		t.Fatal("fresh catalog called registry")
 	}

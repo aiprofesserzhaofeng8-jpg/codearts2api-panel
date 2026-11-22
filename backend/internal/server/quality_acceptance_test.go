@@ -22,11 +22,11 @@ import (
 // Uses signed gateway requests and a controlled upstream. These measurements are
 // gateway overhead under this fixture, not Huawei latency/capacity claims.
 func TestAcceptanceGatewayLatencyAndCapacity(t *testing.T) {
-	s := poolServer(t, 1)
+	s := poolServer(t, 1, "acceptance fixture")
 	s.Reg.Replace([]registry.Model{{ID: "test-model"}})
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.RateLimitEnabled = false; c.MaxRetries = 1 })
 	s.ApplyRateLimit()
-	key := s.Store.AddKey("acceptance fixture").Key
+	key := s.Store.Keys()[0].Key
 	var active, peak atomic.Int32
 	s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		n := active.Add(1)
@@ -126,7 +126,7 @@ func TestAcceptanceConcurrencyLadder(t *testing.T) {
 	for _, stream := range []bool{false, true} {
 		for _, limit := range []int{1, 4, 16} {
 			t.Run(fmt.Sprintf("stream=%t/concurrency=%d", stream, limit), func(t *testing.T) {
-				s := poolServer(t, 1)
+				s := poolServer(t, 1, "controlled capacity")
 				s.Reg.Replace([]registry.Model{{ID: "test-model"}})
 				s.Store.UpdateSettings(func(c *storage.Settings) {
 					c.RateLimitEnabled = false
@@ -134,7 +134,7 @@ func TestAcceptanceConcurrencyLadder(t *testing.T) {
 					c.Pool.MaxInFlight = limit
 				})
 				s.ApplyRateLimit()
-				key := s.Store.AddKey("controlled capacity").Key
+				key := s.Store.Keys()[0].Key
 				var active, peak, calls atomic.Int32
 				upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					calls.Add(1)
@@ -256,14 +256,14 @@ func TestAcceptanceConcurrencyLadder(t *testing.T) {
 	}
 }
 func TestAcceptanceCapacityRejectsAndRecovers(t *testing.T) {
-	s := poolServer(t, 1)
+	s := poolServer(t, 1, "fixture")
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.MaxRetries = 1 })
 	a, r1 := s.Store.AcquireAccountForModel("", "test-model", nil)
 	b, r2 := s.Store.AcquireAccountForModel("", "test-model", nil)
 	if a == nil || b == nil {
 		t.Fatal("fixture capacity not available")
 	}
-	w := responseRequest(s, s.Store.AddKey("fixture").Key, "/v1/chat/completions", `{"model":"test-model","messages":[{"role":"user","content":"hello"}]}`)
+	w := responseRequest(s, s.Store.Keys()[0].Key, "/v1/chat/completions", `{"model":"test-model","messages":[{"role":"user","content":"hello"}]}`)
 	if w.Code != 503 {
 		t.Fatalf("overflow=%d", w.Code)
 	}

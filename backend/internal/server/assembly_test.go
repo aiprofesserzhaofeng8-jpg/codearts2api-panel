@@ -100,7 +100,7 @@ func attachChatExecution(s *Server) *Server {
 }
 
 func attachAccountManagement(s *Server) {
-	s.AccountProbes = accounts.NewProbes(s.Store, s.Reg, log.Printf)
+	s.AccountProbes = accounts.NewProbes(s.Store, s.Catalog, log.Printf)
 	s.AccountManagement = accounts.NewManagement(s.Store, &codeartsup.AccountManagement{Manager: s.Cred, Options: s.resolveOptions}, s.Cred.Invalidate, log.Printf)
 }
 

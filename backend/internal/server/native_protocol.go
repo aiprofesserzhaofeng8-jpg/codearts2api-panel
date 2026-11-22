@@ -147,6 +147,10 @@ func (n *nativeUsage) capture(ctx context.Context, raw []byte) {
 	if event.Type == "message_start" {
 		if json.Unmarshal(event.Message.Usage, &u) == nil && u.Input != nil {
 			n.input, n.cached, n.creation, n.hasInput = max(0, *u.Input), max(0, u.Cached), max(0, u.Creation), true
+			c.usage = storage.TokenUsage{Partial: true, InputTokens: n.input + n.cached + n.creation, CachedTokens: n.cached}
+			if u.Output != nil {
+				c.usage.OutputTokens = max(0, *u.Output)
+			}
 		}
 		return
 	}

@@ -17,8 +17,8 @@ import (
 	"codearts2api/internal/storage"
 )
 
-func poolServer(t *testing.T, n int) *Server {
-	s := newTestServer(t, n, 3)
+func poolServer(t *testing.T, n int, legacyKeys ...string) *Server {
+	s := newTestServer(t, n, 3, legacyKeys...)
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.Pool = storage.DefaultPoolSettings() })
 	s = newConfiguredServer(s.Store)
 	s.Reg.Replace([]registry.Model{{ID: "test-model", StreamOnly: true}})
@@ -31,8 +31,8 @@ func poolServer(t *testing.T, n int) *Server {
 }
 
 func TestHTTPPoolPreservesPromptToolsAndSignedRequest(t *testing.T) {
-	s := poolServer(t, 1)
-	key := s.Store.AddKey("test").Key
+	s := poolServer(t, 1, "test")
+	key := s.Store.Keys()[0].Key
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "administrator" })
 	var received map[string]any
 	s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
@@ -73,7 +73,7 @@ func TestHTTPPoolPreservesPromptToolsAndSignedRequest(t *testing.T) {
 func TestHTTPStreamFailureNeverReplaysVisibleOutput(t *testing.T) {
 	for _, path := range []string{"/v1/chat/completions", "/v1/messages"} {
 		t.Run(path, func(t *testing.T) {
-			s := poolServer(t, 2)
+			s := poolServer(t, 2, "stream")
 			calls := 0
 			s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 				calls++
@@ -83,6 +83,7 @@ func TestHTTPStreamFailureNeverReplaysVisibleOutput(t *testing.T) {
 			r := httptest.NewRequest("POST", path, strings.NewReader(`{"model":"test-model","stream":true,"max_tokens":32,"messages":[{"role":"user","content":"hello"}]}`))
 			r.RemoteAddr = "127.0.0.1:1234"
 			r.Host = "localhost"
+ r.Header.Set("Authorization","Bearer "+s.Store.Keys()[0].Key)
 			w := httptest.NewRecorder()
 			s.Handler().ServeHTTP(w, r)
 			if w.Code != 200 || calls != 1 || strings.Count(w.Body.String(), "only-once") != 1 || !strings.Contains(w.Body.String(), "error") {

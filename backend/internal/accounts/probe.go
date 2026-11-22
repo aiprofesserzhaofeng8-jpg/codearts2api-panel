@@ -16,7 +16,7 @@ type ProbeStore interface {
 }
 
 type ProbeDirectory interface {
-	ReplaceProvider(string, string, []provider.Model)
+	CommitProbePartition(*Account, []provider.Model) error
 }
 
 // ProbeCredentialInfo contains only the native session's existing admin hints.
@@ -33,9 +33,9 @@ type ProbeOperations struct {
 }
 
 type ProbeResult struct {
-	ID, Name, Error string
-	OK              bool
-	Credentials     *ProbeCredentialInfo
+	ID, Name, Error, CatalogError string
+	OK                            bool
+	Credentials                   *ProbeCredentialInfo
 }
 
 // Probes owns the legacy administrative connectivity check, not model inference
@@ -65,13 +65,13 @@ func (p *Probes) Run(ctx context.Context, id string, ops ProbeOperations) ([]Pro
 	results := make([]ProbeResult, 0, len(targets))
 	for _, a := range targets {
 		var info *ProbeCredentialInfo
-		var err error
+		var err, catalogErr error
 		if a.ProviderID() != provider.CodeArts {
 			callCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			var models []provider.Model
 			models, err = ops.Provider(callCtx, a)
 			if err == nil {
-				p.directory.ReplaceProvider(a.ProviderID(), a.Scope, models)
+				catalogErr = p.directory.CommitProbePartition(a, models)
 			}
 			cancel()
 		} else {
@@ -85,7 +85,11 @@ func (p *Probes) Run(ctx context.Context, id string, ops ProbeOperations) ([]Pro
 			note = err.Error()
 		}
 		p.store.MarkAccountResult(a.ID, err == nil, note)
-		results = append(results, ProbeResult{ID: a.ID, Name: a.DisplayName(), OK: err == nil, Error: note, Credentials: info})
+		catalogNote := ""
+		if catalogErr != nil {
+			catalogNote = catalogErr.Error()
+		}
+		results = append(results, ProbeResult{CatalogError: catalogNote, ID: a.ID, Name: a.DisplayName(), OK: err == nil, Error: note, Credentials: info})
 	}
 	if err := p.store.Save(); err != nil {
 		if p.logf != nil {

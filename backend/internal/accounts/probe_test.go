@@ -40,7 +40,8 @@ type probeDirectory struct {
 	store *probeStore
 }
 
-func (d probeDirectory) ReplaceProvider(p, scope string, list []provider.Model) {
+func (d probeDirectory) CommitProbePartition(a *Account, list []provider.Model) error {
+	p, scope := a.ProviderID(), a.Scope
 	if d.store.current.Err() != nil {
 		d.t.Fatal("catalog replaced after cancellation")
 	}
@@ -48,6 +49,7 @@ func (d probeDirectory) ReplaceProvider(p, scope string, list []provider.Model) 
 		d.t.Fatal("wrong catalog partition", p, scope, list)
 	}
 	d.store.events = append(d.store.events, "replace:"+p+":"+scope)
+	return nil
 }
 
 func TestProbesPreserveSequenceDeadlinesPartialResultsAndSaveFailure(t *testing.T) {

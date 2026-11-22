@@ -35,7 +35,7 @@ func TestSystemOneNativeAccountingAndPermissions(t *testing.T) {
 				io.WriteString(w, `{"model":"jev-1.14.0","answers":{"q":{"type":"noul","noul":0.8}},"usage":`+usage+`}`)
 			}))
 			defer up.Close()
-			s := newAdminTestServer(t)
+			s := adminTestServerWithKeys(t, []string{"fixture"})
 			c := typesafe.New()
 			c.Origin = up.URL
 			s.Providers = provider.NewRegistry()
@@ -46,7 +46,8 @@ func TestSystemOneNativeAccountingAndPermissions(t *testing.T) {
 				t.Fatal(err)
 			}
 			s.Store.UpsertAccount(&accounts.Account{ID: "decision", Provider: provider.TypeSafe, Scope: "global", ExternalID: id.ID, Credentials: raw, Enabled: true})
-			key := s.Store.AddKey("fixture").Key
+			grantFixtureAccounts(t, s.Store)
+			key := s.Store.Keys()[0].Key
 			_ = s.Handler()
 			group, err := s.Store.SaveGroup(storage.AccountGroup{Name: "decision allowed", AccountIDs: []string{"decision"}})
 			if err != nil {
@@ -91,7 +92,7 @@ func TestSystemOneErrorsReleaseLeaseAndNeverRetry(t *testing.T) {
 				io.WriteString(w, `{"error":"secret"}`)
 			}))
 			defer up.Close()
-			s := newAdminTestServer(t)
+			s := adminTestServerWithKeys(t, []string{"test"})
 			c := typesafe.New()
 			c.Origin = up.URL
 			s.Providers = provider.NewRegistry()
@@ -99,7 +100,8 @@ func TestSystemOneErrorsReleaseLeaseAndNeverRetry(t *testing.T) {
 			raw := json.RawMessage(`{"api_key":"fixture"}`)
 			_, id, _ := c.Normalize(raw)
 			s.Store.UpsertAccount(&accounts.Account{ID: "decision", Provider: provider.TypeSafe, Scope: "global", ExternalID: id.ID, Credentials: raw, Enabled: true})
-			key := s.Store.AddKey("test").Key
+			grantFixtureAccounts(t, s.Store)
+			key := s.Store.Keys()[0].Key
 			w := responseRequest(s, key, "/v1/systemone", `{"model":"jev-latest","state":"x","questions":{"q":{"type":"noul"}}}`)
 			expected := 502
 			if status == 429 {

@@ -17,6 +17,10 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
             <div v-once class="model-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input id="modelSearch" type="search" :placeholder="tr('搜索模型')" :aria-label="tr('搜索模型名称或 ID')" autocomplete="off"></div>
             <select id="modelsGroupFilter" :aria-label="tr('按分组查看模型')"><option value="">{{tr('全部分组')}}</option></select>
           </div>
+          <details id="catalogSyncDetails" hidden>
+            <summary id="catalogSyncStatus"></summary>
+            <ul id="catalogSyncRows"></ul>
+          </details>
           <p class="hint model-catalog-status" id="modelHint" role="status" aria-live="polite"></p>
           <div v-once class="table-wrap">
             <table class="admin-record-table">
@@ -26,7 +30,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
           </div>
         </div>
         <div v-once class="card">
-          <div v-once class="card-head"><div><h2>{{tr('Token 价格表')}}</h2></div><button class="btn" id="reloadPricing">{{tr('刷新价格')}}</button></div>
+          <div v-once class="card-head"><div><h2>{{tr('Token 价格表')}}</h2><p class="card-sub" id="defaultPriceSummary"></p></div><div class="row"><button class="btn" id="editDefaultPrice">{{tr('全站默认价')}}</button><button class="btn" id="reloadPricing">{{tr('刷新价格')}}</button></div></div>
           <div v-once class="table-wrap"><table class="pricing-table admin-record-table">
             <thead><tr><th>{{tr('模型')}}</th><th>{{tr('币种')}}</th><th>{{tr('输入（未缓存）')}}</th><th>{{tr('输出')}}</th><th>{{tr('缓存命中')}}</th><th>{{tr('来源 / 更新时间')}}</th><th>{{tr('操作')}}</th></tr></thead>
             <tbody id="pricingRows"></tbody>
@@ -47,7 +51,7 @@ import UnifiedModelsPanel from './UnifiedModelsPanel.vue';
         <div v-once class="field"><label for="priceEditCached">{{tr('缓存命中')}}</label><input id="priceEditCached" type="number" min="0" max="1000000" step="any" :placeholder="tr('未配置')" required></div>
       </div>
       <p class="hint" id="priceEditError" role="alert"></p>
-      <div v-once class="row"><button class="btn" id="priceEditCancel">{{tr('取消')}}</button><button class="btn primary" id="priceEditSave">{{tr('保存价格')}}</button></div>
+      <div v-once class="row"><button class="btn" id="priceEditClear" hidden>{{tr('清除默认价')}}</button><button class="btn" id="priceEditCancel">{{tr('取消')}}</button><button class="btn primary" id="priceEditSave">{{tr('保存价格')}}</button></div>
     </dialog>
 <dialog v-once id="policyDialog" class="modal" aria-labelledby="policyTitle">
       <div v-once class="card-head"><div><h2 id="policyTitle">{{tr('模型兼容策略')}}</h2><p class="card-sub" id="policyModel"></p></div><button class="btn xs" id="policyClose">{{tr('关闭')}}</button></div>

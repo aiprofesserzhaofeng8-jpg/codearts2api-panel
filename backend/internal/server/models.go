@@ -15,7 +15,7 @@ import (
 
 // RefreshModels borrows the existing credential and platform operations.
 func (s *Server) RefreshModels(ctx context.Context) error {
-	return s.Catalog.Refresh(ctx, s.catalogRefreshOperations())
+	return s.Catalog.JoinRefresh(ctx, s.catalogRefreshOperations())
 }
 func (s *Server) catalogRefreshOperations() catalog.RefreshOperations {
 	return catalog.RefreshOperations{
@@ -33,7 +33,7 @@ func (s *Server) catalogRefreshOperations() catalog.RefreshOperations {
 	}
 }
 func (s *Server) refreshModelsIfStale(maxAge time.Duration) {
-	s.Catalog.RefreshIfStale(maxAge, s.catalogRefreshOperations())
+	s.Catalog.SignalIfStale(maxAge, s.catalogRefreshOperations())
 }
 
 // handleModels 实现 GET /v1/models。
@@ -99,17 +99,17 @@ func (s *Server) handleAdminRefreshModels(w http.ResponseWriter, r *http.Request
 		writeErr(w, http.StatusMethodNotAllowed, "仅支持 POST", "invalid_request_error")
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
-	defer cancel()
-	if err := s.RefreshModels(ctx); err != nil {
-		writeErr(w, http.StatusBadGateway, "刷新失败: "+err.Error(), "upstream_error")
+	report, err := s.Catalog.WaitRefresh(r.Context(), s.catalogRefreshOperations())
+	if r.Context().Err() != nil {
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":              true,
-		"models":          s.Reg.List(s.Store.Settings().ModelAliases),
-		"provider_errors": s.providerModelErrors(),
-	})
+	payload := map[string]any{"ok": report.Status == "success" || report.Status == "partial", "models": s.Reg.List(s.Store.Settings().ModelAliases), "provider_errors": s.providerModelErrors(), "refresh": report}
+	if err != nil && report.Status != "partial" && report.Status != "empty" {
+		payload["error"] = map[string]any{"message": "刷新失败: " + err.Error(), "type": "upstream_error", "code": 502}
+		writeJSON(w, http.StatusBadGateway, payload)
+		return
+	}
+	writeJSON(w, http.StatusOK, payload)
 }
 
 // upstreamErrorPayload 尝试从上游错误响应里提取可读信息。

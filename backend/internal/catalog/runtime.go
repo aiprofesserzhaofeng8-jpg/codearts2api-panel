@@ -38,9 +38,14 @@ type ProbeOperations struct {
 }
 
 type Runtime struct {
+	report         RefreshReport
+	process        context.Context
+	round          *refreshRound
 	store          AccountStore
 	directory      Directory
 	mu             sync.RWMutex
+	commitMu       sync.Mutex
+	revisions      map[string]uint64
 	refreshMu      sync.Mutex
 	probeMu        sync.Mutex
 	providerErrors map[string]string

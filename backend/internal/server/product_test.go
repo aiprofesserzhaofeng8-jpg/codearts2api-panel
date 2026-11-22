@@ -72,12 +72,12 @@ func TestProductPresetsPartialGroupUpdateAndClientPreference(t *testing.T) {
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"version":1`) || !reflect.DeepEqual(original, s.Store.Groups()) {
 		t.Fatal(w.Code, w.Body.String())
 	}
-	body := map[string]any{"id": g.ID, "name": "updated", "account_ids": g.AccountIDs, "model_ids": g.ModelIDs, "allowlist_enabled": g.AllowlistEnabled, "expected_revision": s.Store.CanonicalGroups()[0].Revision}
+	body := map[string]any{"id": g.ID, "name": "updated", "account_ids": g.AccountIDs, "model_ids": g.ModelIDs, "allowlist_enabled": g.AllowlistEnabled, "expected_revision": fixtureGroup(t, s.Store.CanonicalGroups(), "mapped").Revision}
 	w = adminProbeRequest(t, s, "POST", "/admin/api/groups", string(mustJSON(body)))
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
-	saved := s.Store.Groups()[0]
+	saved := fixtureGroup(t, s.Store.Groups(), "updated")
 	if saved.DefaultModel != mappedPublic || saved.ClientDefaultModel != mappedPublic || !reflect.DeepEqual(saved.ModelRules, g.ModelRules) {
 		t.Fatal(saved)
 	}
@@ -100,9 +100,9 @@ func TestProductPresetsPartialGroupUpdateAndClientPreference(t *testing.T) {
 	body["default_model"] = ""
 	body["client_default_model"] = ""
 	body["model_rules"] = []any{}
-	body["expected_revision"] = s.Store.CanonicalGroups()[0].Revision
+	body["expected_revision"] = fixtureGroup(t, s.Store.CanonicalGroups(), "updated").Revision
 	w = adminProbeRequest(t, s, "POST", "/admin/api/groups", string(mustJSON(body)))
-	if w.Code != 200 || len(s.Store.Groups()[0].ModelRules) != 0 || s.Store.Groups()[0].DefaultModel != "" {
+	if w.Code != 200 || len(fixtureGroup(t, s.Store.Groups(), "updated").ModelRules) != 0 || fixtureGroup(t, s.Store.Groups(), "updated").DefaultModel != "" {
 		t.Fatal(w.Code, w.Body.String())
 	}
 }

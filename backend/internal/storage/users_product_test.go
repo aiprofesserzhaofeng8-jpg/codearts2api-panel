@@ -181,3 +181,42 @@ func TestUserProductSchemaMigrationPreservesExistingUsers(t *testing.T) {
 		t.Fatal("negative persisted limit accepted")
 	}
 }
+
+func TestMeteredKeyUserAndSubscriptionRespectFiveSlots(t *testing.T) {
+	for _, split := range []bool{false, true} {
+		budget := KeyBudget{MaxTokens: 10000, MaxUSD: 10, MaxRequests: 20}
+		s, u, k := userFixture(t, budget)
+		second, err := s.AddUserKeyAndSave(u.ID, "two")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, key := range []string{k.Key, second.Key} {
+			if err := s.SetKeyBudgetAndSave(key, budget, false); err != nil {
+				t.Fatal(err)
+			}
+		}
+		p, err := s.SavePlan(access.Plan{Name: "metered", GroupID: u.GroupID, Enabled: true, Days: 30, MaxConcurrency: 5, Budget: budget, Period: "lifetime"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.ManageSubscription(u.ID, p.ID, "assign", 0); err != nil {
+			t.Fatal(err)
+		}
+		for i := range 5 {
+			key := k.Key
+			if split && i%2 == 1 {
+				key = second.Key
+			}
+			release, err := s.BeginKeyBudget(key)
+			if err != nil {
+				t.Fatalf("split=%t request %d: %v", split, i+1, err)
+			}
+			t.Cleanup(release)
+		}
+		_, err = s.BeginKeyBudget(k.Key)
+		var full *access.UserConcurrencyError
+		if !errors.As(err, &full) {
+			t.Fatalf("sixth request: %v", err)
+		}
+	}
+}

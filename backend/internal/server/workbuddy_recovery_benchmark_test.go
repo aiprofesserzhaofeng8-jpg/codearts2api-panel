@@ -22,7 +22,7 @@ import (
 func BenchmarkWorkBuddyRecoverySuccess(b *testing.B) {
 	for _, stream := range []bool{false, true} {
 		b.Run(fmt.Sprintf("stream=%v", stream), func(b *testing.B) {
-			st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
+			st, err := openTestState(b, filepath.Join(b.TempDir(), "state.json"), "benchmark")
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -31,7 +31,7 @@ func BenchmarkWorkBuddyRecoverySuccess(b *testing.B) {
 			st.UpsertAccount(&codearts.Account{ID: "bench", Enabled: true, Provider: provider.WorkBuddy, Scope: "cn", ExternalID: "bench", Credentials: raw})
 			s := newConfiguredServer(st)
 			s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "shared", StreamOnly: true}})
-			key := st.AddKey("benchmark").Key
+			key := st.Keys()[0].Key
 			fixture := strings.Repeat("data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"text\"}}]}\n\n", 100) + "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":4}}\n\ndata: [DONE]\n\n"
 			client := workbuddy.New()
 			client.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return responseUpstream(r, fixture), nil })}
@@ -42,6 +42,7 @@ func BenchmarkWorkBuddyRecoverySuccess(b *testing.B) {
 			h := s.Handler()
 			body := fmt.Sprintf(`{"model":"workbuddy/cn/shared","stream":%v,"messages":[{"role":"user","content":"hi"}]}`, stream)
 			b.ReportAllocs()
+			grantFixtureAccounts(b, st)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(body))

@@ -52,4 +52,8 @@ func TestBootstrapAccess(t *testing.T) {
 	if loaded.Settings().WriteBackToIDE || loaded.Settings().AutoClaim {
 		t.Fatal("background mutations require explicit settings")
 	}
+	scope, err := loaded.AccessScope(access["api_key"])
+	if err != nil || !scope.Restricted || len(scope.AccountIDs) != 0 || loaded.Keys()[0].GroupID == "" {
+		t.Fatal("bootstrap key must be bound to an empty group", err)
+	}
 }

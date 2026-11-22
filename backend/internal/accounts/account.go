@@ -14,6 +14,8 @@ var ErrCredentialChanged = errors.New("账号凭据已更新或账号已删除�
 
 // Account owns shared account metadata; platform credentials remain opaque.
 type Account struct {
+	// Incarnation identifies a stored account across credential renewals in this process.
+	Incarnation *byte           `json:"-"`
 	Provider    string          `json:"provider,omitempty"`
 	Scope       string          `json:"scope,omitempty"`
 	ExternalID  string          `json:"external_id,omitempty"`

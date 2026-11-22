@@ -35,10 +35,19 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   failed=false;await page.locator('#refreshCredits').click();await row('GPT quota fixture').locator('[data-quota-window]').first().waitFor();assert.ok(requests>=3);
   fs.mkdirSync('artifacts',{recursive:true});await page.screenshot({path:'artifacts/quota-'+locale+'-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});await page.locator('#consoleSidebar').waitFor({state:'hidden'});
+  const disclosure=row('GPT quota fixture').locator('.account-summary-toggle');
+  assert.equal(await row('GPT quota fixture').locator('[data-column="quota"]').isVisible(),false);
+  await disclosure.click();
+  assert.equal(await disclosure.getAttribute('aria-expanded'),'true');
   await row('GPT quota fixture').locator('[data-quota-window]').first().scrollIntoViewIfNeeded();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   const bounds=await row('GPT quota fixture').locator('[data-quota-window]').first().boundingBox();assert.ok(bounds&&bounds.x>=0&&bounds.x+bounds.width<=390);
   await page.screenshot({path:'artifacts/quota-'+locale+'-mobile.png'});
+  await Promise.all([page.waitForResponse(r=>r.url().includes('/admin/api/credits')),page.locator('#refreshCredits').click()]);
+  assert.equal(await disclosure.getAttribute('aria-expanded'),'true');
+  await disclosure.click();assert.equal(await row('GPT quota fixture').locator('[data-column="quota"]').isVisible(),false);
+  await row('GPT quota fixture').scrollIntoViewIfNeeded();
+  await page.screenshot({path:'/tmp/account-summary-'+locale+'.png'});
   assert.deepEqual(errors,[]);await ctx.close();
  }
  console.log('PASS: provider credits and subscription windows, exact balances, zero vs unknown, reset times, query failures, refresh, legacy rendering, English/Chinese and mobile.');

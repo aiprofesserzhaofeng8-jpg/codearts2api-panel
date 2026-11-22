@@ -4,6 +4,8 @@ package usage
 // TokenUsage holds measured upstream usage. Input includes cached tokens;
 // output includes reasoning tokens. Known distinguishes missing data from zero.
 type TokenUsage struct {
+	// Partial records measured components when the final usage receipt is missing.
+	Partial         bool  `json:"partial,omitempty"`
 	Known           bool  `json:"known"`
 	InputTokens     int64 `json:"input_tokens"`
 	OutputTokens    int64 `json:"output_tokens"`
@@ -11,18 +13,21 @@ type TokenUsage struct {
 	ReasoningTokens int64 `json:"reasoning_tokens"`
 }
 
+func (u TokenUsage) HasMeasurements() bool { return u.Known || u.Partial }
+
 // LogEntry 是一条请求日志（只记元信息，不落对话内容）。
 type RequestAttempt struct {
-	DurationMS    *int64       `json:"duration_ms,omitempty"`
-	FirstTokenMS  *int64       `json:"first_token_ms,omitempty"`
-	Status        int          `json:"status,omitempty"`
-	ErrorKind     string       `json:"error_kind,omitempty"`
-	EstimatedCost *RequestCost `json:"estimated_cost,omitempty"`
-	Number        int          `json:"number"`
-	Account       string       `json:"account"`
-	Model         string       `json:"model"`
-	FinishReason  string       `json:"finish_reason,omitempty"`
-	Usage         TokenUsage   `json:"usage"`
+	Quote         *AttemptPrice `json:"-"` // transient until the measured cost is recorded
+	DurationMS    *int64        `json:"duration_ms,omitempty"`
+	FirstTokenMS  *int64        `json:"first_token_ms,omitempty"`
+	Status        int           `json:"status,omitempty"`
+	ErrorKind     string        `json:"error_kind,omitempty"`
+	EstimatedCost *RequestCost  `json:"estimated_cost,omitempty"`
+	Number        int           `json:"number"`
+	Account       string        `json:"account"`
+	Model         string        `json:"model"`
+	FinishReason  string        `json:"finish_reason,omitempty"`
+	Usage         TokenUsage    `json:"usage"`
 
 	// Adapter status before public error mapping; absent on success/older logs.
 	UpstreamStatus int `json:"upstream_status,omitempty"`

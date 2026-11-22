@@ -10,11 +10,16 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   const grouped=key=>{const map=new Map();for(const row of rows){const name=row[key];if(!map.has(name))map.set(name,[]);map.get(name).push(row);}return [...map].map(([name,entries])=>({name,stats:statsFor(entries)}));};
   const days=new Map();for(const row of rows){const date=Math.floor((row.time+8*3600)/86400)*86400-8*3600;if(!days.has(date))days.set(date,[]);days.get(date).push(row);}
   const trend=[];if(rows.length){const start=Math.min(...days.keys()),end=Math.max(...days.keys());for(let date=start;date<=end;date+=86400)trend.push({time:date,stats:statsFor(days.get(date)||[])});}
+  if (trend.length > 3) {
+    trend[1].stats.total_requests = 8;
+    trend[0].stats.total_requests += 2;
+  }
   return {models:grouped('model'),providers:grouped('provider'),protocols:grouped('protocol'),trend,bucket_days:1,time_zone:'Asia/Shanghai'};
  }
  const prices={'deepseek-v4.1-flash':{currency:'USD',input:.3,output:1.2,cached:.006,source:'官方参考价',updated_at:'2026-10-26'}};
  let saves=0,failSave=false,usageCalls=0,failUsage=false;
- await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,local_compatibility:false}}));
+ await context.route('**/setup/status',r=>r.fulfill({json:{ready:true,needs_setup:false}}));
+ await context.route('**/auth/session',r=>r.fulfill({json:{authenticated:true,user:{id:'builtin:admin',username:'admin',role:'admin'}}}));
 await context.route('**/admin/api/**',async route=>{const u=new URL(route.request().url()),path=u.pathname;
   if(path.endsWith('/state'))return route.fulfill({json:{accounts:[],keys:[],stats:{total_requests:99999},settings:{pool:{}},models:[{id:'deepseek-v4.1-flash',source:'upstream'},{id:'glm-5.3',source:'upstream'}]}});
   if(path.endsWith('/usage')){
@@ -30,10 +35,18 @@ await context.route('**/admin/api/**',async route=>{const u=new URL(route.reques
  await context.route('**/health',r=>r.fulfill({json:{accounts:0,ready:0}}));
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto((process.env.CODEARTS_TEST_BASE||'http://127.0.0.1:10087')+'/#overview');
- const ready=()=>page.waitForFunction(()=>document.querySelector('#usageLogs').getAttribute('aria-busy')==='false');await ready();
+ const ready=()=>page.waitForFunction(()=>document.querySelector('#usageLogs')?.getAttribute('aria-busy')==='false');await ready();
  assert.equal(await page.locator('.usage-kpi.requests .usage-value').textContent(),'125');
  assert.equal(await page.locator('#usageLogs tr').count(),20);
  assert.equal(await page.locator('.usage-charts-grid .usage-chart').count(),4);
+ const trendChart=page.locator('#usageTrendChart');
+ assert.equal(await trendChart.locator('.usage-gap-band').count(),0);
+ assert.equal(await trendChart.locator('.usage-trend-line').count(),3);
+ assert.equal(await page.locator('#usageLogs button').count(),0);
+ assert.equal(await trendChart.locator('.usage-trend-hover').count(),3);
+ await Promise.all([page.waitForRequest(r=>new URL(r.url()).searchParams.get('granularity')==='hour'),page.locator('#usageGranularity').selectOption('hour')]);
+ await ready();
+ await trendChart.screenshot({path:'artifacts/usage-range-preview.png'});
  assert.equal(await page.locator('#usageModelsChart .usage-chart-legend-item').count(),4);
  const chartTotal=await page.locator('#usageModelsChart .usage-donut-center strong').textContent();
  const summary=await page.locator('.usage-kpi.tokens .usage-value').textContent();
@@ -59,8 +72,8 @@ await context.route('**/admin/api/**',async route=>{const u=new URL(route.reques
  assert.equal(await page.locator('.usage-kpi.requests .usage-value').textContent(),String(logs.filter(l=>l.model===models[0]&&l.protocol==='responses'&&l.status>=400).length));
  await page.locator('#resetUsageFilters').click();await ready();
  await page.locator('#usageDateToggle').click();await page.locator('#usageStart').fill('2000-01-01');await page.locator('.usage-chart-head').nth(1).click();assert.equal(await page.locator('#usageDatePopover').isVisible(),false);await page.locator('#usageDateToggle').click();assert.equal(await page.locator('#usageStart').inputValue(),'');await page.keyboard.press('Escape');
- failUsage=true;await page.locator('#reloadUsage').click();await ready();assert.match(await page.locator('#usageLogs').textContent(),/fixture history failure/);assert.equal(await page.locator('#usageModelsChart svg').count(),0);
- failUsage=false;await page.locator('#reloadUsage').click();await ready();
+ failUsage=true;await page.locator('#reloadUsage').click();await ready();assert.match(await page.locator('#usageNoticeMessage').innerText(),/fixture history failure/);assert.equal(await page.locator('#kpis').isVisible(),false);
+ failUsage=false;await page.locator('#usageNoticeAction').click();await ready();
  await page.locator('#usagePageSize').selectOption('20');await ready();
  if(await page.locator('#toast').isVisible())await page.locator('#toast').click();
  await page.evaluate(()=>{document.documentElement.dataset.theme='light';window.scrollTo(0,0)});fs.mkdirSync('artifacts',{recursive:true});await page.screenshot({path:'artifacts/usage-sub2api-light.png',animations:'disabled'});await page.locator('#usageDateToggle').click();await page.screenshot({path:'artifacts/usage-date-picker.png'});await page.keyboard.press('Escape');await page.screenshot({path:'artifacts/usage-time-pagination-light.png',fullPage:true,animations:'disabled'});

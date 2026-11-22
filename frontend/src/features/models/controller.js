@@ -9,7 +9,31 @@ import { groupModelAllowed } from '../groups/controller';
 import { api } from '../../api/client';
 import { refresh } from '../../shared/refresh';
 const modelsState = {};
+const syncStates = {
+    success: "同步成功", partial: "部分同步成功", failed: "同步失败", empty: "无可同步账号",
+    timeout: "超时", not_started: "未执行", metadata_failed: "参考信息更新失败"
+};
+function showCatalogReport(report) {
+    const details = domState.$("#catalogSyncDetails");
+    details.hidden = !report?.status;
+    if (details.hidden) return;
+    domState.$("#catalogSyncStatus").textContent = tr(syncStates[report.status]);
+    const rows = domState.$("#catalogSyncRows");
+    rows.replaceChildren();
+    for (const [key, item] of Object.entries(report.partitions || {}).sort(([a], [b]) => a.localeCompare(b))) {
+        const when = item.last_success ? tr("上次成功") + " " + new Date(item.last_success).toLocaleString() : tr("尚无成功记录");
+        const li = document.createElement("li");
+        li.textContent = [key, tr(syncStates[item.status]), item.count + tr(" 个模型"), when, item.error].filter(Boolean).join(" · ");
+        rows.appendChild(li);
+    }
+    if (report.reconcile_error) {
+        const li = document.createElement("li");
+        li.textContent = tr("统一模型更新失败") + " · " + report.reconcile_error;
+        rows.appendChild(li);
+    }
+}
 export function renderOverview(d) {
+    showCatalogReport(d.catalog_refresh);
     var tb = domState.$("#models");
     tb.textContent = "";
     var models = d.models || [];
@@ -129,9 +153,10 @@ export function mountModels() {
 on("#refreshModels", function () {
     toast(tr("正在从上游刷新模型清单…"));
     api("/admin/api/models/refresh", { method: "POST" }).then(function (r) {
-        toast(tr("已刷新，共 ") + (r.models || []).length + tr(" 个模型") + (Object.keys(r.provider_errors || {}).length ? tr("；部分上游刷新失败，请查看状态") : ""), Object.keys(r.provider_errors || {}).length ? "err" : "ok");
+        showCatalogReport(r.refresh);
+        toast(tr(syncStates[r.refresh.status]), r.refresh.status === "partial" ? "err" : "ok");
         return refresh();
-    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("刷新失败：") + e.message, "err"); });
+    }).catch(function (e) { if (isAbortError(e)) return; toast(tr("刷新失败：") + e.message, "err"); return refresh(); });
 });
 on("#probeAllModels", function () {
     var ids = Object.keys(modelsState.lastModels).filter(function (id) {

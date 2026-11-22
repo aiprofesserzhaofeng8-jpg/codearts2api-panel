@@ -69,7 +69,7 @@ func (s *Store) Record(e LogEntry, outChars int, keys ...string) error {
 			}
 		}
 	}
-	if e.Usage.Known {
+	if e.Usage.HasMeasurements() {
 		// Own the attempt slice before attaching historical price snapshots.
 		e.AttemptDetails = append([]RequestAttempt(nil), e.AttemptDetails...)
 		e.EstimatedCost = s.costForEntryLocked(&e)

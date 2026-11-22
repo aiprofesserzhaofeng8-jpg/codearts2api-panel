@@ -22,7 +22,7 @@ import (
 
 func subscriptionServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *chatgpt.Client, *claude.Client) {
 	t.Helper()
-	st, e := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, e := openTestState(t, filepath.Join(t.TempDir(), "state.json"), "fixture")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -43,7 +43,7 @@ func subscriptionServer(t *testing.T, handler http.HandlerFunc) (*Server, string
 	s.Providers = provider.NewRegistry()
 	_ = s.Providers.Register(g)
 	_ = s.Providers.Register(a)
-	return s, st.AddKey("fixture").Key, g, a
+	return s, st.Keys()[0].Key, g, a
 }
 func addSubscription(t *testing.T, s *Server, p provider.Adapter, key bool, expiry time.Time) {
 	t.Helper()
@@ -72,6 +72,7 @@ func addSubscription(t *testing.T, s *Server, p provider.Adapter, key bool, expi
 		t.Fatal(e)
 	}
 	s.Reg.ReplaceProvider(name, "global", []provider.Model{{ID: "actual-model", StreamOnly: true}})
+	grantFixtureAccounts(t, s.Store)
 }
 func subscriptionEvent(w io.Writer, typ string, v any) {
 	fmt.Fprintf(w, "event: %s\ndata: %s\n\n", typ, mustJSON(v))
@@ -438,6 +439,7 @@ func TestSubscriptionTruncatedStreamsFailAndRespectRetryBudget(t *testing.T) {
 				if e != nil {
 					t.Fatal(e)
 				}
+				grantFixtureAccounts(t, s.Store)
 				s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = 2 })
 				w := responseRequest(s, key, "/v1/chat/completions", string(mustJSON(map[string]any{"model": name + "/global/actual-model", "messages": []map[string]string{{"role": "user", "content": "hi"}}, "stream": stream})))
 				if !stream && w.Code != 502 || stream && !strings.Contains(w.Body.String(), `"error"`) {

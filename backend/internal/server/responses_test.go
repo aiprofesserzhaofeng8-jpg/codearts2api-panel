@@ -18,11 +18,11 @@ import (
 
 func responseTestServer(t *testing.T, upstream func(*http.Request) (*http.Response, error)) (*Server, string) {
 	t.Helper()
-	s := newTestServer(t, 1, 2)
+	s := newTestServer(t, 1, 2, "responses")
 	s.Cred = codearts.NewManager(s.Up)
 	s.Reg.Replace([]registry.Model{{ID: "test-model"}})
 	s.Store.SetAccountSession("a", &codearts.Session{AccessKey: "ak", SecretKey: "sk", SecurityToken: "st", ExpiresAt: time.Now().Add(time.Hour)})
-	key := s.Store.AddKey("responses test").Key
+	key := s.Store.Keys()[0].Key
 	s.Up.HTTP = &http.Client{Transport: roundTripFunc(upstream)}
 	return s, key
 }

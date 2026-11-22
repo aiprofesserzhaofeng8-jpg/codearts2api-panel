@@ -64,7 +64,7 @@ func geminiSignedFixture(t *testing.T, requireImage bool) (*Server, string, *int
 		io.WriteString(w, "data: "+`{"choices":[],"usage":{"prompt_tokens":20,"completion_tokens":7,"prompt_tokens_details":{"cached_tokens":5},"completion_tokens_details":{"reasoning_tokens":3}}}`+"\n\ndata: [DONE]\n\n")
 	}))
 	t.Cleanup(up.Close)
-	s := newAdminTestServer(t)
+	s := adminTestServerWithKeys(t, []string{"fixture"})
 	t.Setenv("GEMINI_CLI_OAUTH_CLIENT_ID", "fixture-client")
 	t.Setenv("GEMINI_CLI_OAUTH_CLIENT_SECRET", "fixture-secret")
 	c := gemini.New()
@@ -81,7 +81,8 @@ func geminiSignedFixture(t *testing.T, requireImage bool) (*Server, string, *int
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := s.Store.AddKey("fixture").Key
+	grantFixtureAccounts(t, s.Store)
+	key := s.Store.Keys()[0].Key
 	_ = s.Handler()
 	markModelsFresh(s)
 

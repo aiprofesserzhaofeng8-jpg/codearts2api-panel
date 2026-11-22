@@ -40,7 +40,7 @@ func TestCommandCodeProtocolAccounting(t *testing.T) {
 								io.WriteString(w, "data: [DONE]\n\n")
 							}))
 							defer up.Close()
-							s := newAdminTestServer(t)
+							s := adminTestServerWithKeys(t, []string{"fixture"})
 							c := commandcode.New()
 							c.Origin = up.URL
 							s.Providers = provider.NewRegistry()
@@ -63,7 +63,8 @@ func TestCommandCodeProtocolAccounting(t *testing.T) {
 								}
 								model = "shared-fixture-v1"
 							}
-							key := s.Store.AddKey("fixture").Key
+							grantFixtureAccounts(t, s.Store)
+							key := s.Store.Keys()[0].Key
 							_ = s.Handler()
 							markModelsFresh(s)
 							body := map[string]any{"model": model, "stream": stream, "max_tokens": 64, "messages": []map[string]string{{"role": "user", "content": "fixture"}}}

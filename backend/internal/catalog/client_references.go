@@ -30,7 +30,9 @@ func (s *Runtime) refreshReferences(ctx context.Context) {
 	if err != nil {
 		return
 	}
+	s.commitMu.Lock()
 	s.references = references
+	s.commitMu.Unlock()
 	s.referenceRetry = time.Now().Add(6 * time.Hour)
 }
 

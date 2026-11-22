@@ -106,3 +106,7 @@ func (f *admissionFixture) ReserveConsumerQuote(string, string, string, int, []u
 	return nil
 }
 func (f *admissionFixture) ReleaseConsumerQuote(string) {}
+
+func (f *admissionFixture) AdmitAttempt(string, string, string, int, bool, []usage.RequestAttempt) (*usage.AttemptPrice, error) {
+	return nil, f.err
+}

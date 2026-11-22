@@ -28,7 +28,6 @@ type SettingsUpdate struct {
 	ClearPassword           *bool             `json:"clear_admin_password"`
 	AutoRefresh             *bool             `json:"auto_refresh"`
 	AllowCreditModels       *bool             `json:"allow_credit_models"`
-	AllowAnonymous          *bool             `json:"allow_anonymous"`
 	RateLimitEnabled        *bool             `json:"rate_limit_enabled"`
 	RateLimitQPS            *int              `json:"rate_limit_qps"`
 	RateLimitBurst          *int              `json:"rate_limit_burst"`

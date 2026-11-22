@@ -30,3 +30,21 @@ func (p ModelPrice) Validate() error {
 	}
 	return nil
 }
+
+// AttemptPrice fixes the actual source and rate (including a missing rate) for one attempt.
+type AttemptPrice struct {
+	Kind  string
+	Model string
+	Price *ModelPrice
+}
+
+func (q AttemptPrice) Estimate(u TokenUsage) *RequestCost {
+	if q.Price == nil {
+		return nil
+	}
+	cost := EstimateCost(u, *q.Price)
+	if cost != nil {
+		cost.PriceKind = q.Kind
+	}
+	return cost
+}

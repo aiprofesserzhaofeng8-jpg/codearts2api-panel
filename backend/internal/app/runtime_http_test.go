@@ -37,7 +37,15 @@ func TestRuntimeDrainsStreamAndPersistsFinalUsage(t *testing.T) {
 	st.UpsertAccount(&accounts.Account{ID: "fixture", Enabled: true, NativeCredential: &codearts.Session{
 		AccessKey: "fixture-ak", SecretKey: "fixture-sk", ExpiresAt: time.Now().Add(time.Hour),
 	}})
-	key := st.AddKey("fixture").Key
+	g, err := st.SaveGroup(storage.AccountGroup{Name: "fixture", AccountIDs: []string{"fixture"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	k, err := st.AddKeyInGroupAndSave("fixture", g.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := k.Key
 	srv, err := Build(st)
 	if err != nil {
 		t.Fatal(err)

@@ -5,7 +5,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import ConsoleLayout from '../../layouts/ConsoleLayout.vue';
 import UserNavigation from './UserNavigation.vue';
 import { userPages, userPageFromHash, type UserPage } from './navigation';
-import { api, isAbortError } from '../../api/client';
+import { api, ApiError, isAbortError } from '../../api/client';
 import type { components, paths } from '../../api/generated/admin';
 import UserEntitlements from './UserEntitlements.vue';
 import UserIdentityPanel from './UserIdentityPanel.vue';
@@ -25,6 +25,7 @@ type Usage = components['schemas']['UserUsagePage'];
 const props=defineProps<{initialUser:User}>();
 const user=ref<User|undefined>(props.initialUser), profile=ref<Profile>(), keys=ref<components['schemas']['UserKey'][]>([]);
 const models=ref<{id:string;name:string}[]>([]), usage=ref<Usage>();
+const groupUnavailable=ref(false);
 const oldPassword=ref(''),newPassword=ref(''),keyName=ref('');
 const error=ref(''),message=ref(''),busy=ref(false),revealed=ref<Record<string,string>>({});
 const tab=ref<UserPage>(userPageFromHash()), range=ref('7');let epoch=0;
@@ -44,8 +45,11 @@ function usagePath(page:number){
 }
 async function refresh(page=1){
   const current=epoch;
-  const [p,k,m,u]=await Promise.all([api('/user/api/profile'),api('/user/api/keys'),api('/user/api/models'),api<Usage>(usagePath(page))]);
-  if(current!==epoch)return;profile.value=p;user.value=p.user;keys.value=k.keys;models.value=m.models;usage.value=u;revealed.value={};
+  const [p,k,m,u]=await Promise.all([api('/user/api/profile'),api('/user/api/keys'),api('/user/api/models').catch(e=>{
+    if(e instanceof ApiError && e.reason==='group_unavailable')return null;
+    throw e;
+  }),api<Usage>(usagePath(page))]);
+  if(current!==epoch)return;profile.value=p;user.value=p.user;keys.value=k.keys;groupUnavailable.value=m===null;models.value=m?.models??[];usage.value=u;revealed.value={};
 }
 async function act(fn:()=>Promise<void>){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();}catch(e){if(!isAbortError(e))error.value=(e as Error).message;}finally{busy.value=false;}}
 function logout(){return act(async()=>{await api('/auth/logout',{method:'POST'});expireSession();});}
@@ -81,8 +85,9 @@ onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);expired();})
       <p v-if="error" id="userConsoleError" class="portal-notice danger" role="alert">{{error}}</p><p v-if="message" class="portal-notice success" role="status">{{message}}</p>
       <UserDashboard v-if="tab==='dashboard'" :usage="usage" @navigate="navigate" />
       <UserBudgetPanel v-if="tab==='dashboard'" :user="user" />
-      <UserKeysPanel v-if="tab==='keys'" v-model:name="keyName" :keys="keys" :busy="busy" :revealed="revealed" :api-base="apiBase" @create="createKey" @reveal="reveal" @copy="copy" @change="change" />
-      <UserModelsPanel v-if="tab==='models'" :models="models" />
+      <UserKeysPanel v-if="tab==='keys'" v-model:name="keyName" :keys="keys" :group-unavailable="groupUnavailable" :busy="busy" :revealed="revealed" :api-base="apiBase" @create="createKey" @reveal="reveal" @copy="copy" @change="change" />
+      <p v-if="groupUnavailable && tab==='models'" class="portal-notice" role="status">{{tr('分组已失效，请联系管理员重新分配')}}</p>
+      <UserModelsPanel v-if="tab==='models' && !groupUnavailable" :models="models" />
       <UserUsagePanel v-if="tab==='usage'" :usage="usage" :busy="busy" @page="page=>act(()=>refresh(page))" />
       <UserEntitlements v-if="tab==='entitlements'" @changed="act(()=>refresh())" />
       <UserIdentityPanel v-if="tab==='identity'" :user="user" @changed="act(()=>refresh())" />

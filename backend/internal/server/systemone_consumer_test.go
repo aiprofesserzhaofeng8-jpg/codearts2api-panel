@@ -82,7 +82,11 @@ func TestSystemOneConsumerWallet(t *testing.T) {
 				t.Fatal("unknown usage charged as known")
 			}
 			w = responseRequest(s, key, "/v1/systemone", decisionBody)
-			if w.Code != 402 || calls.Load() != 1 || s.Store.UserReservedCredits(u.ID) != 0 {
+			wantStatus, wantCalls := 200, int32(2)
+			if known {
+				wantStatus, wantCalls = 402, 1
+			}
+			if w.Code != wantStatus || calls.Load() != wantCalls || s.Store.UserReservedCredits(u.ID) != 0 {
 				t.Fatal(w.Code, w.Body.String(), calls.Load())
 			}
 		})

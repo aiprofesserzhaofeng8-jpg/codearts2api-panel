@@ -17,7 +17,7 @@ import (
 // authentication, retries/leases, SSE decoding, forwarding and the final log.
 // The upstream is controlled: these numbers do not measure provider latency.
 func BenchmarkGatewayStreamTiming(b *testing.B) {
-	st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
+	st, err := openTestState(b, filepath.Join(b.TempDir(), "state.json"), "benchmark")
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -25,11 +25,12 @@ func BenchmarkGatewayStreamTiming(b *testing.B) {
 	st.UpsertAccount(&codearts.Account{ID: "bench", Enabled: true, Status: "ok", NativeCredential: &codearts.Session{AccessKey: "ak", SecretKey: "sk", ExpiresAt: time.Now().Add(time.Hour)}})
 	s := newConfiguredServer(st)
 	s.Reg.Replace([]registry.Model{{ID: "test-model", StreamOnly: true}})
-	key := st.AddKey("benchmark").Key
+	key := st.Keys()[0].Key
 	fixture := strings.Repeat("data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"text\"}}]}\n\n", 100) + "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":4}}\n\ndata: [DONE]\n\n"
 	s.Up.HTTP = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return responseUpstream(r, fixture), nil })}
 	h := s.Handler()
 	b.ReportAllocs()
+	grantFixtureAccounts(b, st)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"test-model","stream":true,"messages":[{"role":"user","content":"hi"}]}`))

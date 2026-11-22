@@ -96,8 +96,18 @@ func TestAccessManagementStrictTransactionsRetainPublishedAccessOnFailure(t *tes
 
 func TestAccessManagementKeySaveFailurePreservesAccess(t *testing.T) {
 	_, st, _ := managementFixture(t)
-	first, _ := st.AddKeyInGroupAndSave("delete", "")
-	second, _ := st.AddKeyInGroupAndSave("toggle", "")
+	g, err := st.SaveGroup(storage.AccountGroup{Name: "fixture"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := st.AddKeyInGroupAndSave("delete", g.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := st.AddKeyInGroupAndSave("toggle", g.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	logged := 0
 	mgr := access.NewManagement(st, access.ModelResolver{}, codearts.Mask, func(string, ...any) { logged++ })
 	for _, ref := range []string{second.Key, access.KeyReference(second.Key), codearts.Mask(second.Key)} {

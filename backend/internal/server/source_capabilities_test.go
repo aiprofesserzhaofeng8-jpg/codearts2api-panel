@@ -40,6 +40,8 @@ func TestReviewedSourceCapabilitiesAgreeInListAndClientProfile(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			catalogFixtureAccount(t, s, platform, scope)
+			grantFixtureAccounts(t, s.Store)
 			w := nativeProfileGET(s, key, "/v1/client-profile?model="+public)
 			var profile map[string]any
 			if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &profile) != nil {

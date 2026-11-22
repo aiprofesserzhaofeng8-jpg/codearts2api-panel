@@ -64,9 +64,13 @@ func Build(st *storage.Store) (*server.Server, error) {
 	credentials.Logf = log.Printf
 	logins := codearts.NewLoginManager(up)
 	models := registry.New()
+	st.RestoreCatalogPartitions(func(platform, scope string, partition []provider.Model, _ time.Time) {
+		models.ReplaceProvider(platform, scope, partition)
+	})
 	modelPolicies := config.NewModelPolicies(st, models, catalog.RecommendClientPolicy)
 	credits := &accounts.Credits{}
 	users := access.NewUsers(st, func() string { return st.Settings().AdminPassword }, func() string { return st.Settings().AdminEmail })
+	catalogRuntime := catalog.NewRuntime(st, models, server.FetchPublicModelReferences)
 	return server.New(st, server.Dependencies{
 		UnifiedModels: catalog.NewManagement(st, models, modelPolicies),
 		Users:         users,
@@ -76,8 +80,8 @@ func Build(st *storage.Store) (*server.Server, error) {
 		Welfare:       jobs.NewWelfare(st),
 		Growth:        jobs.NewGrowth(st.Path()+".growth.json", credits.Invalidate),
 		Credits:       credits, Rewards: jobs.NewRewards(st, credits.Invalidate, log.Printf),
-		Catalog:       catalog.NewRuntime(st, models, server.FetchPublicModelReferences),
-		AccountProbes: accounts.NewProbes(st, models, log.Printf),
+		Catalog:       catalogRuntime,
+		AccountProbes: accounts.NewProbes(st, catalogRuntime, log.Printf),
 		ModelPolicies: modelPolicies,
 		Routing:       catalog.NewRouting(st, models),
 		Configuration: config.NewManagement(st, func(id string) (config.ModelRef, bool) {

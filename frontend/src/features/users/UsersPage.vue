@@ -50,7 +50,7 @@ onUnmounted(()=>{epoch++;window.removeEventListener('users-refresh',load);draft.
     </RecordToolbar>
     <p v-if="loadError" class="err-text" role="alert">{{loadError}}</p>
     <div class="table-wrap"><table class="admin-record-table"><thead><tr><th>{{tr('用户名')}}</th><th>{{tr('分组')}}</th><th>{{tr('状态')}}</th><th>{{tr('当前并发')}}</th><th>{{tr('已用请求')}}</th><th>{{tr('已用 Token')}}</th><th>{{tr('账户余额')}}</th><th>{{tr('操作')}}</th></tr></thead>
-    <tbody id="users"><tr v-for="u in visibleUsers" :key="u.id"><td><strong class="record-name">{{u.username}}</strong><small v-if="u.display_name" class="record-secondary">{{u.display_name}}</small></td><td>{{groups.find(g=>g.id===u.group_id)?.name??tr('分组不存在')}}</td><td><span :class="['record-status',u.enabled?'record-ready':'record-disabled']">{{u.enabled?tr('启用'):tr('停用')}}</span></td><td>{{u.in_flight}}</td><td>{{u.budget_usage.requests.toLocaleString()}}</td><td>{{u.budget_usage.tokens.toLocaleString()}}</td><td>{{u.wallet?.balance == null ? '—' : '$'+credits(u.wallet.balance)}}</td><td><button class="btn xs row-action row-edit" @click="edit(u)">{{tr('编辑')}}</button></td></tr>
+    <tbody id="users"><tr v-for="u in visibleUsers" :key="u.id"><td><strong class="record-name">{{u.username}}</strong><small v-if="u.display_name" class="record-secondary">{{u.display_name}}</small></td><td>{{groups.find(g=>g.id===u.group_id)?.name??tr('分组已失效')}}</td><td><span :class="['record-status',u.enabled?'record-ready':'record-disabled']">{{u.enabled?tr('启用'):tr('停用')}}</span></td><td>{{u.in_flight}}</td><td>{{u.budget_usage.requests.toLocaleString()}}</td><td>{{u.budget_usage.tokens.toLocaleString()}}</td><td>{{u.wallet?.balance == null ? '—' : '$'+credits(u.wallet.balance)}}</td><td><button class="btn xs row-action row-edit" @click="edit(u)">{{tr('编辑')}}</button></td></tr>
     <tr v-if="!visibleUsers.length"><td colspan="8" class="empty">{{tr(users.length?'没有匹配的用户':'暂无用户。创建后，用户通过统一登录页登录。')}}</td></tr></tbody></table></div>
   </div>
   <ConsumerAdmin :users="users" :groups="groups" @changed="load" />
@@ -63,7 +63,7 @@ onUnmounted(()=>{epoch++;window.removeEventListener('users-refresh',load);draft.
       <label class="check"><input id="uEnabled" v-model="draft.enabled" type="checkbox">{{tr('启用用户')}}</label>
       <div class="field"><label for="uConcurrency">{{tr('用户并发上限')}}</label><input id="uConcurrency" v-model.number="draft.max_concurrency" type="number" min="0" max="1024" step="1" required><p class="hint">{{tr('所有密钥共享；0 表示不限。达到上限立即返回 429，现有请求继续执行。')}}</p></div>
       <h3>{{tr('用户共享预算')}}</h3><div class="field-grid cols-2"><div class="field"><label for="uRequests">{{tr('请求次数')}}</label><input id="uRequests" v-model.number="draft.max_requests" type="number" min="0" step="1" required></div><div class="field"><label for="uTokens">{{tr('Token 总量')}}</label><input id="uTokens" v-model.number="draft.max_tokens" type="number" min="0" step="1" required></div><div class="field"><label for="uUSD">{{tr('累计费用上限（USD，0 不限）')}}</label><input id="uUSD" v-model.number="draft.max_usd" type="number" min="0" step="any" required></div></div>
-      <p class="hint">{{tr('Token / USD 按实际用量结算，最多一个在途请求可能超额。缺少用量或价格时停止相应预算的后续请求。')}}</p>
+      <p class="hint">{{tr('Token / USD 按实际用量结算，已准入的并发请求可能共同超额。')}}</p>
       <p class="hint">{{tr('累计费用上限与账户余额同时生效；补充余额不会重置累计费用。仅需余额控制时，可将累计费用上限设为 0。')}}</p>
       <label v-if="draft.id" class="check"><input id="uReset" v-model="draft.reset_budget" type="checkbox">{{tr('重置用户预算累计（历史用量保留）')}}</label>
       <p class="hint">{{tr('保存后该用户需重新登录；停用立即阻止后续调用，已返回的内容无法撤回。')}}</p>

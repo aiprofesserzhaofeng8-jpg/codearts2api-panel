@@ -153,13 +153,18 @@ func TestUnifiedDeliveryRetryRechecksGroupAndBudget(t *testing.T) {
 				if platform != provider.WorkBuddy {
 					t.Error("retry bypassed new permission")
 				}
-				g := srv.Store.CanonicalGroups()[0]
+				g := fixtureGroup(t, srv.Store.CanonicalGroups(), "mapped")
 				if change == "account-removal" {
 					g.AccountIDs = []string{"wb-cn"}
 				} else if change == "grant-revoked" {
 					g.UnifiedModels[0].Callable = false
 				}
-				if change != "budget-exhausted" {
+				if change == "budget-exhausted" {
+					// A concurrent, metered request consumes the last available token.
+					if err := srv.Store.Record(storage.LogEntry{Attempts: 1, Status: 200, Usage: storage.TokenUsage{Known: true, OutputTokens: 1}}, 0, apiKey); err != nil {
+						t.Fatal(err)
+					}
+				} else {
 					if _, err := srv.Store.SaveUnifiedGroup(g, g.Revision); err != nil {
 						t.Error(err)
 					}
@@ -229,10 +234,7 @@ func TestUnifiedPiClient(t *testing.T) {
 	for _, platform := range []string{provider.WorkBuddy, provider.Trae} {
 		s.Reg.ReplaceProvider(platform, "cn", []provider.Model{{ID: "shared", Context: 65536, MaxOutput: 8192, ToolCalling: "supported", ImageInput: "unsupported"}})
 	}
-	key, err := s.Store.AddKeyInGroupAndSave("u6-pi", "")
-	if err != nil {
-		t.Fatal(err)
-	}
+	key := s.Store.Keys()[0]
 	if err := s.Store.UpdateSettings(func(st *storage.Settings) { st.DefaultModel = mappedPublic }); err != nil {
 		t.Fatal(err)
 	}

@@ -153,7 +153,7 @@ func (a externalSearchAdmission) Acquire(ctx context.Context) (*accounts.Account
 	session, _ := ctx.Value(routingSessionKey{}).(string)
 	selected, err := a.server.Admission.Lease(gateway.AdmissionRequest{Session: session, Model: a.model, Key: groupKey(ctx)})
 	if err != nil {
-		return nil, nil, groupDenied()
+		return nil, nil, catalog.ScopeDenied(err)
 	}
 	return selected.Account, selected.Release, nil
 }

@@ -36,8 +36,8 @@ func interruptionServer(t *testing.T, upstream string, handler http.HandlerFunc)
 		addTrae(t, s)
 		model, account = "trae/cn/shared", "trae-acct"
 	default:
-		s = poolServer(t, 1)
-		key, model, account = s.Store.AddKey("interruption").Key, "test-model", "a"
+		s = poolServer(t, 1, "interruption")
+		key, model, account = s.Store.Keys()[0].Key, "test-model", "a"
 		up := httptest.NewServer(handler)
 		t.Cleanup(up.Close)
 		target, _ := url.Parse(up.URL)

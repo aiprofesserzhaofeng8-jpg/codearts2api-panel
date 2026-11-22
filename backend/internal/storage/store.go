@@ -37,6 +37,7 @@ const StateVersion = 11
 
 // State 是全部持久化状态。
 type State struct {
+	catalogPartitions     map[string]*catalogPartition
 	accountModelSnapshots map[string]*accounts.ModelSnapshot
 	UnifiedModels         []config.UnifiedModel `json:"unified_models"`
 	ModelRoutingRevision  uint64                `json:"model_routing_revision"`
@@ -50,6 +51,7 @@ type State struct {
 	ModelPolicies           map[string]ModelPolicy            `json:"model_policies,omitempty"`
 	UsageRecords            []LogEntry                        `json:"usage_records,omitempty"`
 	UsageHistoryInitialized bool                              `json:"usage_history_initialized,omitempty"`
+	DefaultTokenPrice       *ModelPrice                       `json:"default_token_price,omitempty"`
 	Prices                  map[string]ModelPrice             `json:"model_prices,omitempty"`
 	// Version 是 schema 版本（见 StateVersion）。
 	Version  int                 `json:"version"`
@@ -103,6 +105,7 @@ func (s *Store) UpsertAccount(a *accounts.Account) bool {
 }
 
 func (s *Store) upsertAccountLocked(a *accounts.Account) bool {
+	a.Incarnation = new(byte)
 	for i, ex := range s.st.Accounts {
 		if ex.ProviderID() != a.ProviderID() || ex.Scope != a.Scope {
 			continue
@@ -130,15 +133,8 @@ func (s *Store) upsertAccountLocked(a *accounts.Account) bool {
 func (s *Store) RemoveAccount(id string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for i, a := range s.st.Accounts {
-		if a.ID == id {
-			delete(s.st.accountModelSnapshots, id)
-			s.st.Accounts = append(s.st.Accounts[:i], s.st.Accounts[i+1:]...)
-			s.rebuildPublishedLocked()
-			return true
-		}
-	}
-	return false
+	ok, _ := s.removeAccountLocked(id, false)
+	return ok
 }
 
 // NextAccount 以轮询方式挑一个可用账号，返回快照。
@@ -265,21 +261,6 @@ func (s *Store) MarkClaimResult(id, date string, ok bool, msg string) {
 
 // --- 密钥 ---
 
-// AddKey 新增密钥。
-func (s *Store) AddKey(name string) *APIKey {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	k := &APIKey{
-		Key:       "sk-ca-" + codearts.RandomHex(24),
-		Name:      name,
-		Enabled:   true,
-		CreatedAt: time.Now().Unix(),
-	}
-	s.st.Keys = append(s.st.Keys, k)
-	snapshot := *k
-	return &snapshot
-}
-
 // DeleteKey 删除密钥。
 func (s *Store) DeleteKey(key string) bool {
 	s.mu.Lock()
@@ -315,19 +296,24 @@ func (s *Store) ValidKey(key string) bool {
 // AuthenticateKey returns immutable ownership with the original key counter
 // update. Administrator-owned keys do not traverse a user registry.
 func (s *Store) AuthenticateKey(key string) (string, bool) {
+	owner, err := s.AuthenticateKeyForRequest(key)
+	return owner, err == nil
+}
+
+func (s *Store) AuthenticateKeyForRequest(key string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, k := range s.st.Keys {
 		if k.Key == key && k.Enabled {
-			if s.keyOwnerLocked(k) != nil {
-				return "", false
+			if err := s.keyOwnerLocked(k); err != nil {
+				return "", err
 			}
 			k.LastUsed = time.Now().Unix()
 			k.Requests++
-			return k.UserID, true
+			return k.UserID, nil
 		}
 	}
-	return "", false
+	return "", access.ErrUserAuthentication
 }
 
 // HasKeys 报告是否已签发任何密钥。
@@ -335,14 +321,6 @@ func (s *Store) HasKeys() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.st.Keys) > 0
-}
-
-// Once consumers exist, deleting their last key must not reopen local or
-// explicitly anonymous access and thereby bypass user authorization/budgets.
-func (s *Store) RequiresAPIKey() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return len(s.st.Keys) > 0 || len(s.st.Users) > 0
 }
 
 // --- 设置 / 统计 / 日志 ---
@@ -372,7 +350,7 @@ func (s *Store) UpdateSettings(fn func(*Settings)) error {
 // price, never today's model configuration. Caller holds mu.
 func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 	s.initUsageHistoryLocked()
-	if e.Usage.Known {
+	if e.Usage.HasMeasurements() {
 		if e.EstimatedCost != nil {
 			s.st.Stats.PricedRequests++
 			s.st.Stats.EstimatedUSD += e.EstimatedCost.Amount
@@ -382,17 +360,7 @@ func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 	if key != "" && e.Attempts > 0 {
 		for _, k := range s.st.Keys {
 			if k.Key == key {
-				k.BudgetUsage.Requests++
-				k.BudgetUsage.Tokens += e.Usage.InputTokens + e.Usage.OutputTokens
-				if e.EstimatedCost != nil {
-					k.BudgetUsage.USD += e.EstimatedCost.Amount
-				}
-				if e.Usage.Known && (e.EstimatedCost == nil || e.EstimatedCost.Partial) {
-					k.BudgetUsage.Unpriced = true
-				}
-				if e.UsageIncomplete || !e.Usage.Known {
-					k.BudgetUsage.Incomplete = true
-				}
+				addBudgetUsage(&k.BudgetUsage, e)
 				break
 			}
 		}
@@ -424,7 +392,7 @@ func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 	if s.st.Stats.UsageStartedAt == 0 {
 		s.st.Stats.UsageStartedAt = e.Time
 	}
-	if e.Usage.Known {
+	if e.Usage.HasMeasurements() {
 		s.st.Stats.UsageRequests++
 		s.st.Stats.InputTokens += e.Usage.InputTokens
 		s.st.Stats.OutputTokens += e.Usage.OutputTokens

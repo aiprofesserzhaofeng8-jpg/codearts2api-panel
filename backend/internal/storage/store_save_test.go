@@ -22,7 +22,7 @@ func TestConcurrentSaveIsSafe(t *testing.T) {
 	}
 	// 把状态撑大，让单次写入需要多次系统调用，放大交错窗口
 	for i := 0; i < 4000; i++ {
-		st.AddKey("key-name-padding-0123456789")
+		st.seedLegacyKey("key-name-padding-0123456789")
 	}
 
 	var wg sync.WaitGroup

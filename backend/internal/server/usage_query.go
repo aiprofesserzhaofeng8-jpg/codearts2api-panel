@@ -13,9 +13,22 @@ func (s *Server) handleAdminUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := storage.UsageQuery{Page: 1, PageSize: 20, Provider: r.URL.Query().Get("provider")}
+	q.Granularity = r.URL.Query().Get("granularity")
+	if q.Granularity != "" && q.Granularity != "hour" && q.Granularity != "day" {
+		writeErr(w, 400, "granularity must be hour or day", "invalid_request_error")
+		return
+	}
 	q.Model = r.URL.Query().Get("model")
 	q.Protocol = r.URL.Query().Get("protocol")
 	q.Status = r.URL.Query().Get("status")
+	switch r.URL.Query().Get("model_mismatch") {
+	case "", "false":
+	case "true":
+		q.ModelMismatch = true
+	default:
+		writeErr(w, 400, "model_mismatch 必须为 true 或 false", "invalid_request_error")
+		return
+	}
 	if q.Status != "" && q.Status != "success" && q.Status != "error" {
 		writeErr(w, 400, "请求状态无效", "invalid_request_error")
 		return

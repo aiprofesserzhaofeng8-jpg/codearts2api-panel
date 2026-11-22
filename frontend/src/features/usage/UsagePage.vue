@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { t as tr } from '../../i18n';
+import { brands } from '../accounts/brands';
 </script>
 <template>
 <section v-once id="tab-overview" class="on" role="tabpanel" aria-labelledby="nav-overview">
+        <div id="usageNotice" class="card" hidden><div class="card-head"><div><h2 id="usageNoticeTitle" role="status"></h2><p class="hint" id="usageNoticeMessage"></p></div><button id="usageNoticeAction" class="btn primary"></button></div></div>
         <div v-once class="usage-kpis" id="kpis" :aria-label="tr('用量汇总')"></div>
         <div v-once class="usage-range-card">
           <span class="usage-range-label">{{tr('时间范围：')}}</span>
@@ -26,14 +28,15 @@ import { t as tr } from '../../i18n';
           <article class="usage-chart"><div class="usage-chart-head"><h3>{{tr('模型分布')}}</h3><div class="usage-metric-tabs" data-usage-metric="models" role="group" :aria-label="tr('模型分布统计方式')"></div></div><div id="usageModelsChart" class="usage-distribution"></div></article>
           <article class="usage-chart"><div class="usage-chart-head"><h3>{{tr('上游分布')}}</h3><div class="usage-metric-tabs" data-usage-metric="providers" role="group" :aria-label="tr('上游分布统计方式')"></div></div><div id="usageProvidersChart" class="usage-distribution"></div></article>
           <article class="usage-chart"><div class="usage-chart-head"><h3>{{tr('接口分布')}}</h3><div class="usage-metric-tabs" data-usage-metric="protocols" role="group" :aria-label="tr('接口分布统计方式')"></div></div><div id="usageProtocolsChart" class="usage-distribution"></div></article>
-          <article class="usage-chart"><div class="usage-chart-head"><h3>{{tr('Token 使用趋势')}}</h3><span class="usage-chart-period" id="usageTrendPeriod">{{tr('按日统计')}}</span></div><div id="usageTrendChart" class="usage-trend"></div></article>
+          <article class="usage-chart"><div class="usage-chart-head"><h3>{{tr('Token 使用趋势')}}</h3><select id="usageGranularity" :aria-label="tr('时间粒度')"><option value="hour">{{tr('小时')}}</option><option value="day" selected>{{tr('天')}}</option></select></div><div id="usageTrendChart" class="usage-trend"></div></article>
         </div>
         <div v-once class="usage-record-filters" :aria-label="tr('用量筛选')">
           <div v-once class="usage-record-fields">
-            <label>{{tr('上游')}}<select id="usageProvider" :aria-label="tr('按上游筛选用量')"><option value="">{{tr('全部上游')}}</option><option value="codearts">{{tr('华为云码道')}}</option><option value="workbuddy">WorkBuddy</option><option value="trae">Trae CN / SOLO</option><option value="qoder">Qoder</option><option value="kiro">Kiro</option><option value="chatgpt">ChatGPT / Codex</option><option value="claude">Claude</option><option value="teleagent">TeleAgent</option></select></label>
+            <label>{{tr('上游')}}<select id="usageProvider" :aria-label="tr('按上游筛选用量')"><option value="">{{tr('全部上游')}}</option><option v-for="brand in brands" :key="brand.id" :value="brand.id">{{brand.name}}</option></select></label>
             <label>{{tr('模型')}}<select id="usageModel" :aria-label="tr('按模型筛选用量')"><option value="">{{tr('全部模型')}}</option></select></label>
             <label>{{tr('接口')}}<select id="usageProtocol" :aria-label="tr('按接口筛选用量')"><option value="">{{tr('全部接口')}}</option><option value="chat_completions">Chat Completions</option><option value="responses">Responses</option><option value="messages">Messages</option><option value="search">{{tr('联网搜索')}}</option><option value="growth">{{tr('成长任务')}}</option></select></label>
             <label>{{tr('请求状态')}}<select id="usageStatus" :aria-label="tr('按请求状态筛选用量')"><option value="">{{tr('全部状态')}}</option><option value="success">{{tr('成功')}}</option><option value="error">{{tr('失败')}}</option></select></label>
+            <label>{{tr('型号映射')}}<select id="usageMismatch"><option value="">{{tr('全部记录')}}</option><option value="true">{{tr('请求与记录型号不同')}}</option></select></label>
           </div>
           <div v-once class="usage-record-actions"><button class="btn primary" id="reloadUsage"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5"/></svg>{{tr('刷新')}}</button><button class="btn" id="resetUsageFilters"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7"/></svg>{{tr('重置')}}</button></div>
         </div>
@@ -63,3 +66,8 @@ import { t as tr } from '../../i18n';
         </details>
       </section>
 </template>
+<style>
+#tab-overview:is([data-result="empty"],[data-result="filtered"],[data-result="error"]) :is(.usage-charts-grid,.usage-history-card,.usage-insights),
+#tab-overview:is([data-result="empty"],[data-result="error"]) .usage-kpis{display:none}
+#tab-overview[data-result="error"] :is(.usage-range-card,.usage-record-filters){display:none}
+</style>

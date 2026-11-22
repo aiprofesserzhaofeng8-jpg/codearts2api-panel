@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/ratelimit"
@@ -15,10 +16,51 @@ import (
 	"codearts2api/internal/storage"
 )
 
-// newTestServer 构造一个只有内存状态的最小 Server（不触碰网络）。
-func newTestServer(t *testing.T, accounts int, retries int) *Server {
+// Open an isolated store with ordinary, grouped client keys.
+func openTestState(t testing.TB, path string, names ...string) (*storage.Store, error) {
 	t.Helper()
-	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := storage.Open(path)
+	if err != nil || len(names) == 0 {
+		return st, err
+	}
+	group, err := st.SaveGroup(storage.AccountGroup{Name: "fixture clients"})
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range names {
+		if _, err := st.AddKeyInGroupAndSave(name, group.ID); err != nil {
+			return nil, err
+		}
+	}
+	return st, nil
+}
+
+// Give the provider fixture's client group access to its configured test accounts.
+func grantFixtureAccounts(t testing.TB, st *storage.Store) {
+	t.Helper()
+	for _, group := range st.CanonicalGroups() {
+		if group.Name != "fixture clients" {
+			continue
+		}
+		group.AccountIDs = nil
+		for _, a := range st.Accounts() {
+			group.AccountIDs = append(group.AccountIDs, a.ID)
+		}
+		group.UnifiedModels = nil
+		for _, m := range st.UnifiedSnapshot().Models {
+			group.UnifiedModels = append(group.UnifiedModels, access.UnifiedGrant{ModelID: m.ID, Visible: true, Callable: true, SourceMode: "all", SourceIDs: []string{}})
+		}
+		if _, err := st.SaveUnifiedGroup(group, group.Revision); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+}
+
+// newTestServer 构造一个只有内存状态的最小 Server（不触碰网络）。
+func newTestServer(t *testing.T, accounts int, retries int, legacyKeys ...string) *Server {
+	t.Helper()
+	st, err := openTestState(t, filepath.Join(t.TempDir(), "state.json"), legacyKeys...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,6 +84,7 @@ func newTestServer(t *testing.T, accounts int, retries int) *Server {
 			NativeCredential: &codearts.Session{AccessKey: "ak-" + id, SecretKey: "sk-" + id},
 		})
 	}
+	grantFixtureAccounts(t, st)
 	srv := attachChatExecution(&Server{Store: st, Up: codearts.NewClient(), Reg: registry.New(),
 		Limits: ratelimit.New(rateLimitConfig(st.Settings()), nil)})
 	attachAccessManagement(srv)
@@ -146,4 +189,20 @@ func TestWithAccountRetryClientCancelStops(t *testing.T) {
 	if got := atomic.LoadInt32(&attempts); got != 1 {
 		t.Errorf("客户端已断开却继续重试：attempts=%d", got)
 	}
+}
+
+// Add a catalog-only account so a grouped client can see provider metadata.
+func catalogFixtureAccount(t testing.TB, s *Server, platform, scope string) {
+	t.Helper()
+	s.Store.UpsertAccount(&codearts.Account{ID: "catalog-" + platform + "-" + scope, Provider: platform, Scope: scope, Enabled: true, Paused: true})
+}
+func fixtureGroup(t testing.TB, groups []storage.AccountGroup, name string) storage.AccountGroup {
+	t.Helper()
+	for _, g := range groups {
+		if g.Name == name {
+			return g
+		}
+	}
+	t.Fatalf("missing fixture group %s", name)
+	return storage.AccountGroup{}
 }

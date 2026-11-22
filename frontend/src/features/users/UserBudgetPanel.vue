@@ -14,7 +14,7 @@ defineProps<{user:components['schemas']['User']}>();
       <div><span>{{tr('Token 用量')}}</span><strong>{{userNumber(user.budget_usage.tokens)}} <small>/ {{user.budget.max_tokens?userNumber(user.budget.max_tokens):tr('不限')}}</small></strong><progress v-if="user.budget.max_tokens" :value="user.budget_usage.tokens" :max="user.budget.max_tokens" :aria-label="tr('Token 额度已用比例')" /></div>
       <div><span>{{tr('参考费用')}}</span><strong>{{userUSD(user.budget_usage.usd)}} <small>/ {{user.budget.max_usd?'$'+user.budget.max_usd:tr('不限')}}</small></strong><progress v-if="user.budget.max_usd" :value="user.budget_usage.usd" :max="user.budget.max_usd" :aria-label="tr('费用额度已用比例')" /></div>
     </div>
-    <p class="portal-note" id="userConcurrency">{{tr('用户并发：')}}{{user.in_flight}} / {{user.max_concurrency||tr('不限')}}<span v-if="user.budget.max_tokens||user.budget.max_usd">{{tr(' · 当前计量预算最多允许一个在途请求')}}</span></p>
-    <p v-if="user.budget_usage.incomplete || user.budget_usage.unpriced" class="portal-notice">{{tr('存在未报告用量或未配置价格的消耗；相应预算受限时，请联系管理员核查。')}}</p>
+    <p class="portal-note" id="userConcurrency">{{tr('用户并发：')}}{{user.in_flight}} / {{user.max_concurrency||tr('不限')}}</p>
+    <p v-if="user.budget_usage.incomplete || user.budget_usage.unpriced" class="portal-notice">{{tr('存在未报告用量或未定价消耗，仅累计已知用量和费用，不影响后续调用。')}}</p>
   </section>
 </template>

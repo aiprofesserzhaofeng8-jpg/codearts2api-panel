@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
@@ -92,6 +93,10 @@ func (s *Store) RemoveAccountAndSave(id string) (bool, error) {
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.removeAccountLocked(id, true)
+}
+
+func (s *Store) removeAccountLocked(id string, persist bool) (bool, error) {
 	idx := -1
 	for i, a := range s.st.Accounts {
 		if a.ID == id {
@@ -102,16 +107,38 @@ func (s *Store) RemoveAccountAndSave(id string) (bool, error) {
 	if idx < 0 {
 		return false, nil
 	}
-	before := cloneAccounts(s.st.Accounts)
+	before, beforeGroups := s.st.Accounts, s.st.Groups
+	groups := slices.Clone(beforeGroups)
+	for i, g := range groups {
+		if !slices.Contains(g.AccountIDs, id) {
+			continue
+		}
+		revision, err := bumpRevision(g.Revision)
+		if err != nil {
+			return false, err
+		}
+		groups[i].AccountIDs = slices.DeleteFunc(slices.Clone(g.AccountIDs), func(member string) bool { return member == id })
+		groups[i].Revision = revision
+	}
+	s.st.Groups = groups
 	oldSnapshot := s.st.accountModelSnapshots[id]
 	delete(s.st.accountModelSnapshots, id)
-	s.st.Accounts = append(s.st.Accounts[:idx], s.st.Accounts[idx+1:]...)
-	raw, err := json.MarshalIndent(s.st, "", "  ")
-	if err == nil {
-		err = s.writeState(raw)
+	s.st.Accounts = append(before[:idx:idx], before[idx+1:]...)
+	key := catalogKey(before[idx])
+	oldCatalog := s.st.catalogPartitions[key]
+	if !slices.ContainsFunc(s.st.Accounts, func(a *accounts.Account) bool { return catalogKey(a) == key }) {
+		delete(s.st.catalogPartitions, key)
+	}
+	var err error
+	if persist {
+		err = s.saveGroupStateLocked()
 	}
 	if err != nil {
 		s.st.Accounts = before
+		s.st.Groups = beforeGroups
+		if oldCatalog != nil {
+			s.st.catalogPartitions[key] = oldCatalog
+		}
 		if oldSnapshot != nil {
 			s.st.accountModelSnapshots[id] = oldSnapshot
 		}

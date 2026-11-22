@@ -41,7 +41,7 @@ func TestBedrockProtocolsSharedMappingAndPermissions(t *testing.T) {
 	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/messages"} {
 		for _, stream := range []bool{false, true} {
 			t.Run(path+map[bool]string{true: "stream", false: "json"}[stream], func(t *testing.T) {
-				s := newAdminTestServer(t)
+				s := adminTestServerWithKeys(t, []string{"fixture"})
 				c := bedrock.New()
 				calls := 0
 				c.HTTP.Transport = bedrockRoundTrip(func(r *http.Request) (*http.Response, error) {
@@ -64,7 +64,8 @@ func TestBedrockProtocolsSharedMappingAndPermissions(t *testing.T) {
 				if _, err = s.Store.SaveUnifiedModel(config.UnifiedModel{Name: "bedrock-fixture-v1", Enabled: true, Sources: []config.ModelSource{{ID: model, Enabled: true}}}, nil, 0, s.Store.UnifiedSnapshot().Revision, nil); err != nil {
 					t.Fatal(err)
 				}
-				key := s.Store.AddKey("fixture").Key
+				grantFixtureAccounts(t, s.Store)
+				key := s.Store.Keys()[0].Key
 				_ = s.Handler()
 				markModelsFresh(s)
 				w := responseRequest(s, key, path, mappedBody(path, stream, "bedrock-fixture-v1"))

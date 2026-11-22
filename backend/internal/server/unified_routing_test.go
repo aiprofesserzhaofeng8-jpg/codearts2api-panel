@@ -24,10 +24,7 @@ func TestUnifiedUngroupedAllProtocols(t *testing.T) {
 			for _, stream := range []bool{false, true} {
 				t.Run(fmt.Sprintf("%s/%s/%v", platform, path, stream), func(t *testing.T) {
 					s, _, _ := mappedFixture(t, nil)
-					key, err := s.Store.AddKeyInGroupAndSave("ungrouped", "")
-					if err != nil {
-						t.Fatal(err)
-					}
+					key := s.Store.Keys()[0]
 					onlyMappedPlatform(s, platform)
 					w := responseRequest(s, key.Key, path, mappedBody(path, stream, mappedPublic))
 					if w.Code != 200 || !strings.Contains(w.Body.String(), `"model":"`+mappedPublic+`"`) {
@@ -49,7 +46,7 @@ func TestUnifiedUngroupedAllProtocols(t *testing.T) {
 }
 func TestUnifiedHTTPMissingAccountsAndUnknownTools(t *testing.T) {
 	s, _, _ := mappedFixture(t, nil)
-	key, _ := s.Store.AddKeyInGroupAndSave("ungrouped", "")
+	key := s.Store.Keys()[0]
 	for _, a := range s.Store.Accounts() {
 		s.Store.SetAccountPaused(a.ID, true)
 	}
@@ -82,7 +79,7 @@ func unifiedContext(t *testing.T, s *Server, key string) context.Context {
 }
 func TestUnifiedRevisionStopsRetryBeforeSecondUpstream(t *testing.T) {
 	s, _, _ := mappedFixture(t, nil)
-	key, _ := s.Store.AddKeyInGroupAndSave("ungrouped", "")
+	key := s.Store.Keys()[0]
 	ctx := unifiedContext(t, s, key.Key)
 	calls := 0
 	_, err := s.withAccountRetry(ctx, time.Second, func(ctx context.Context, a *accounts.Account) error {
@@ -106,7 +103,7 @@ func TestUnifiedRevisionStopsRetryBeforeSecondUpstream(t *testing.T) {
 }
 func TestUnifiedCancellationReleasesAndNoRetry(t *testing.T) {
 	s, _, _ := mappedFixture(t, nil)
-	key, _ := s.Store.AddKeyInGroupAndSave("ungrouped", "")
+	key := s.Store.Keys()[0]
 	ctx, cancel := context.WithCancel(unifiedContext(t, s, key.Key))
 	defer cancel()
 	calls := 0
@@ -122,7 +119,7 @@ func TestUnifiedCancellationReleasesAndNoRetry(t *testing.T) {
 }
 func TestUnifiedTransportFailureSwitchesWithoutPoisoningAccount(t *testing.T) {
 	s, _, _ := mappedFixture(t, nil)
-	key, _ := s.Store.AddKeyInGroupAndSave("ungrouped", "")
+	key := s.Store.Keys()[0]
 	ctx := unifiedContext(t, s, key.Key)
 	var seen []string
 	_, err := s.withAccountRetry(ctx, 3*time.Second, func(ctx context.Context, a *accounts.Account) error {
@@ -162,7 +159,7 @@ func TestUnifiedCapabilityRoutingPreservesImagesAndToolSchema(t *testing.T) {
 				policySuccess(w, platform, true)
 			})
 			s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "shared", ImageInput: "supported", ToolCalling: "supported", Context: 65536, MaxOutput: 8192}})
-			key, _ := s.Store.AddKeyInGroupAndSave("ungrouped", "")
+			key := s.Store.Keys()[0]
 			var body string
 			switch path {
 			case "/v1/chat/completions":
@@ -184,7 +181,7 @@ func TestUnifiedRetriesBoundedAndAuthFailureStops(t *testing.T) {
 	for _, status := range []int{502, 403} {
 		t.Run(fmt.Sprint(status), func(t *testing.T) {
 			s, _, _ := mappedFixture(t, nil)
-			key, _ := s.Store.AddKeyInGroupAndSave("ungrouped", "")
+			key := s.Store.Keys()[0]
 			s.Store.UpdateSettings(func(c *storage.Settings) { c.MaxRetries = 2 })
 			ctx := unifiedContext(t, s, key.Key)
 			calls := 0

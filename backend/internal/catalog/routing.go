@@ -55,6 +55,14 @@ func ModelProvider(m provider.Model) string {
 func GroupDenied() error {
 	return config.ModelFailure(403, "model_permission_denied", "当前 API Key 的分组不允许调用此模型或没有对应账号")
 }
+
+// ScopeDenied preserves the recovery reason for an orphaned key.
+func ScopeDenied(err error) error {
+	if errors.Is(err, access.ErrGroupUnavailable) {
+		return config.ModelFailure(403, "group_unavailable", access.ErrGroupUnavailable.Error())
+	}
+	return GroupDenied()
+}
 func ScopeAllows(scope access.AccessScope, list []*accounts.Account, model provider.Model) bool {
 	if !scope.Restricted && model.SyncedOwners == nil {
 		return true
@@ -217,7 +225,7 @@ func (s *Routing) ResolveMapped(settings config.Settings, scope access.AccessSco
 func (s *Routing) VisibleModels(key string) ([]provider.Model, error) {
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
-		return nil, GroupDenied()
+		return nil, ScopeDenied(err)
 	}
 	return s.ModelsForScope(scope), nil
 }
@@ -260,7 +268,7 @@ func (s *Routing) ModelsForScope(scope access.AccessScope) []provider.Model {
 func (s *Routing) Resolve(key string, settings config.Settings, requested string) (provider.Model, *ModelPlan, error) {
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
-		return provider.Model{}, nil, GroupDenied()
+		return provider.Model{}, nil, ScopeDenied(err)
 	}
 	if st, ok := s.store.(UnifiedRoutingStore); ok {
 		return s.resolveUnified(st.UnifiedSnapshot(), scope, settings, requested)
@@ -299,7 +307,7 @@ func (s *Routing) Resolve(key string, settings config.Settings, requested string
 func (s *Routing) Check(key, model string, search bool, plan *ModelPlan, fallback func() bool) error {
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
-		return GroupDenied()
+		return ScopeDenied(err)
 	}
 	if plan != nil && plan.Selection.ID != "" && !search {
 		return s.checkUnified(scope, model, plan)
@@ -430,7 +438,7 @@ func (s *Routing) ClientDefault(key string) string {
 func (s *Routing) CheckNative(key, model string) error {
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
-		return GroupDenied()
+		return ScopeDenied(err)
 	}
 	platform, region, _ := provider.ParseModel(model)
 	if !ScopeAllows(scope, s.store.Accounts(), provider.Model{ID: model, Provider: platform, Scope: region}) {

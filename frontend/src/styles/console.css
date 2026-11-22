@@ -515,7 +515,8 @@ table{
   font-size:13px;
 }
 #accounts td:first-child{min-width:120px;white-space:nowrap}
-.key-cell{min-width:330px}
+.key-name{min-width:8rem;font-weight:600;overflow-wrap:anywhere}
+.key-cell{min-width:200px}
 .key-value{width:100%;min-width:300px}
 th,td{
   text-align:left;
@@ -1015,6 +1016,12 @@ code{
 .account-table th,.account-table td{padding:13px 12px}
 .account-table td[data-column="credential"]{min-width:130px}
 .account-table td[data-column="quota"]{min-width:210px}
+.account-summary-toggle{display:none}
+@media(max-width:760px){
+  #accounts .account-summary-toggle{display:inline-flex;float:left}
+  #accounts tr[data-expanded="false"] td:is([data-column="capacity"],[data-column="quota"],[data-column="credential"],[data-column="reward"],[data-column="lastUsed"],[data-column="actions"]){display:none!important}
+  #accounts td[data-column="status"]{grid-column:1/-1}
+}
 .account-table td[data-column="status"]{min-width:145px}
 .account-table td.actions-cell{min-width:160px;white-space:nowrap}
 .account-actions{display:flex;align-items:center;gap:6px;white-space:nowrap}
@@ -1108,7 +1115,7 @@ code{
   #keys td{display:block;padding:4px 0;border:0;min-width:0}
   #keys .key-cell{flex:0 0 100%}
   #keys .key-value{min-width:0;width:100%}
-  #keys td:nth-child(4),#keys td:nth-child(5),#keys td:nth-child(6){display:none}
+  #keys .key-stat{display:none}
   #keys .actions-cell{flex:0 0 100%}
 }
 
@@ -1244,6 +1251,8 @@ main:has(#tab-overview.on){padding-top:24px;max-width:none}
 .usage-pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:16px;margin-top:16px;font-size:12px;color:var(--text-2)}
 .pagination-info,.pagination-buttons,.pagination-jump{display:flex;align-items:center;gap:8px}.pagination-info{flex-wrap:wrap}.pagination-info label,.pagination-jump label{display:flex;align-items:center;gap:6px}.pagination-info select{width:84px}.pagination-jump input{width:64px}.pagination-buttons{gap:4px}.pagination-ellipsis{padding:0 4px}
 #priceEditDialog{width:min(620px,calc(100vw - 32px))}#priceEditError{color:var(--err)}
+#priceEditClear[hidden]{display:none}
+#priceEditClear{margin-right:auto}
 @media(max-width:600px){.usage-pagination{justify-content:center}.pagination-info{width:100%;justify-content:space-between}.pagination-buttons{flex-wrap:wrap;justify-content:center}.pagination-jump{width:100%;justify-content:center}}
 #priceEditDialog{padding:24px}#priceEditDialog .card-head{margin:0 0 18px;padding:0 0 16px}#priceEditDialog .field-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#priceEditDialog .row{justify-content:flex-end;margin-top:18px}
 @media(max-width:600px){#priceEditDialog{padding:18px}#priceEditDialog .field-grid{grid-template-columns:1fr}}
@@ -1536,3 +1545,4 @@ body.admin-locked .app { visibility: hidden; }
 
 @media(max-width:760px){.account-platforms{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:480px){.account-create-body{padding:16px}.account-platforms{grid-template-columns:repeat(2,minmax(0,1fr))}.account-platform{height:64px;padding:10px;font-size:14px;gap:10px}.platform-collapse{height:36px}.account-types{grid-template-columns:1fr}.account-create-steps{gap:8px;font-size:12px}.account-create-steps i{width:12px}.account-create-modal>.modal-head{padding:16px}.account-create-actions{padding:12px 16px}}
+#usageGranularity{width:auto;min-width:5em}

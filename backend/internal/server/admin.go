@@ -98,6 +98,7 @@ func (s *Server) handleAdminState(w http.ResponseWriter, r *http.Request) {
 		"groups":          s.Store.CanonicalGroups(),
 		"providers":       s.providerDescriptors(),
 		"provider_errors": s.providerModelErrors(),
+		"catalog_refresh": s.Catalog.RefreshReport(),
 		"keys":            safeKeys,
 		"models":          s.Reg.List(s.Store.Settings().ModelAliases),
 		"settings":        settings,
@@ -465,6 +466,9 @@ func (s *Server) handleAdminCheckin(w http.ResponseWriter, r *http.Request) {
 	results := make([]map[string]any, 0, len(checked))
 	for _, result := range checked {
 		row := map[string]any{"id": result.ID, "name": result.Name, "ok": result.OK, "err": result.Error}
+		if result.CatalogError != "" {
+			row["catalog_error"] = result.CatalogError
+		}
 		if result.Credentials != nil {
 			row["expires_at"] = result.Credentials.ExpiresAt
 			row["access_key"] = result.Credentials.AccessKey

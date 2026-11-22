@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"codearts2api/internal/access"
-	"codearts2api/internal/catalog"
 	"codearts2api/internal/registry"
 	"codearts2api/internal/storage"
 )
@@ -18,7 +17,6 @@ func groupKey(ctx context.Context) string {
 	key, _ := ctx.Value(groupKeyContext{}).(string)
 	return key
 }
-func groupDenied() error { return catalog.GroupDenied() }
 func (s *Server) visibleModels(ctx context.Context) ([]registry.Model, error) {
 	return s.Routing.VisibleModels(groupKey(ctx))
 }

@@ -21,7 +21,7 @@ func journalStore(t testing.TB) (*Store, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := s.AddKey("journal test").Key
+	key := groupedTestKey(t, s, "journal test").Key
 	if err := s.SetPriceAndSave("journal-model", ModelPrice{Currency: "USD", Input: 1, Output: 2, Cached: .5}); err != nil {
 		t.Fatal(err)
 	}
@@ -342,5 +342,31 @@ func BenchmarkUsageSettlement(b *testing.B) {
 				b.Fatal(err)
 			}
 		})
+	}
+}
+
+func TestPartialUsageReplayKeepsMeasuredCostOnce(t *testing.T) {
+	s, u, k := userFixture(t, KeyBudget{MaxUSD: 5})
+	e := journalEntry("partial-replay")
+	e.Usage = TokenUsage{InputTokens: 120, CachedTokens: 20, Partial: true}
+	e.UsageIncomplete = true
+	e.AttemptDetails = []RequestAttempt{{Model: e.Model, Usage: e.Usage, Number: 1}}
+	if err := s.Record(e, 0, k.Key); err != nil {
+		t.Fatal(err)
+	}
+	for _, st := range []*Store{s, reopenJournal(t, s)} {
+		user, ok := st.User(u.ID)
+		if !ok || user.BudgetUsage.Requests != 1 || user.BudgetUsage.Tokens != 120 {
+			t.Fatal(user.BudgetUsage)
+		}
+		page := st.QueryUserUsage(u.ID, UsageQuery{})
+		if page.Total != 1 {
+			t.Fatal(page.Total)
+		}
+		log := page.Logs[0]
+		c := log.EstimatedCost
+		if !log.UsageIncomplete || !log.Usage.Partial || log.Usage.Known || c == nil || !c.Partial || c.Amount != 0.00011 {
+			t.Fatal(log, c)
+		}
 	}
 }

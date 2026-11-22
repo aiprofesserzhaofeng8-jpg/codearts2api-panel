@@ -13,6 +13,7 @@ import (
 // key/group/model permissions and reserve account capacity in one transaction.
 // Never implement this contract by assembling independently locked snapshots.
 type AdmissionStore interface {
+	AdmitAttempt(string, string, string, int, bool, []usage.RequestAttempt) (*usage.AttemptPrice, error)
 	AcquireAccountForKey(session, model string, exclude map[string]bool, key string) (*accounts.Account, func(), error)
 	AcquireMappedAccount(session, public string, models []string, exclude map[string]bool, key string) (*accounts.Account, string, func(), error)
 	BeginKeyBudget(string) (func(), error)
@@ -104,3 +105,7 @@ func (a *Admission) Quote(key, id, model string, n int, attempts []usage.Request
 	return a.store.ReserveConsumerQuote(key, id, model, n, attempts)
 }
 func (a *Admission) ReleaseQuote(id string) { a.store.ReleaseConsumerQuote(id) }
+
+func (a *Admission) AdmitAttempt(key, id, model string, inputBytes int, metered bool, attempts []usage.RequestAttempt) (*usage.AttemptPrice, error) {
+	return a.store.AdmitAttempt(key, id, model, inputBytes, metered, attempts)
+}

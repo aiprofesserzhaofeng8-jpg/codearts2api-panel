@@ -192,7 +192,7 @@ func TestAcceptanceCatalogContract(t *testing.T) {
 }
 
 func BenchmarkCatalogWarmModels(b *testing.B) {
-	st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
+	st, err := openTestState(b, filepath.Join(b.TempDir(), "state.json"), "fixture")
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -207,8 +207,9 @@ func BenchmarkCatalogWarmModels(b *testing.B) {
 	if err := s.RefreshModels(context.Background()); err != nil {
 		b.Fatal(err)
 	}
-	key, handler := st.AddKey("fixture").Key, s.Handler()
+	key, handler := st.Keys()[0].Key, s.Handler()
 	b.ReportAllocs()
+	grantFixtureAccounts(b, st)
 	b.ResetTimer()
 	for range b.N {
 		r := httptest.NewRequest("GET", "/v1/models", nil)

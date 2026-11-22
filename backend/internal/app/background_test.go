@@ -20,13 +20,13 @@ func TestBackgroundCadenceAndFailureContinuation(t *testing.T) {
 		stop := startBackground(func() error {
 			saves <- time.Since(start)
 			return errors.New("fixture disk error")
-		}, func(ctx context.Context) error {
+		}, func(ctx context.Context) (string, error) {
 			refreshes.Add(1)
 			deadline, ok := ctx.Deadline()
 			if !ok || deadline.Sub(start) != time.Minute {
 				t.Errorf("refresh deadline: %v, %v", deadline, ok)
 			}
-			return nil
+			return "success", nil
 		}, func(context.Context) { claims <- time.Since(start) }, func(format string, args ...any) {
 			logs <- fmt.Sprintf(format, args...)
 		})
@@ -61,33 +61,26 @@ func TestBackgroundCadenceAndFailureContinuation(t *testing.T) {
 	})
 }
 
-func TestBackgroundRefreshDeadlineIndependentOfPollingStop(t *testing.T) {
+func TestBackgroundShutdownCancelsDiscovery(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		start := time.Now()
 		finished := make(chan time.Duration, 1)
 		logMessage := make(chan string, 1)
-		stop := startBackground(func() error { t.Error("unexpected save"); return nil }, func(ctx context.Context) error {
+		stop := startBackground(func() error { t.Error("unexpected save"); return nil }, func(ctx context.Context) (string, error) {
 			<-ctx.Done()
 			finished <- time.Since(start)
-			return ctx.Err()
+			return "", ctx.Err()
 		}, func(context.Context) { t.Error("unexpected claim") }, func(format string, args ...any) {
 			logMessage <- fmt.Sprintf(format, args...)
 		})
 		synctest.Wait()
 		stop()
 		synctest.Wait()
-		time.Sleep(59 * time.Second)
-		synctest.Wait()
-		if len(finished) != 0 {
-			t.Fatal("polling cancellation shortened startup refresh")
+		if elapsed := <-finished; elapsed != 0 {
+			t.Fatal("shutdown did not cancel catalog discovery", elapsed)
 		}
-		time.Sleep(time.Second)
-		synctest.Wait()
-		if len(finished) != 1 || len(logMessage) != 1 {
-			t.Fatal("refresh did not finish at its deadline")
-		}
-		if duration, message := <-finished, <-logMessage; duration != time.Minute || !strings.Contains(message, "刷新上游模型清单失败（将使用内置兜底清单）: context deadline exceeded") {
-			t.Fatal("refresh timeout or log changed", duration, message)
+		if msg := <-logMessage; !strings.Contains(msg, "context canceled") {
+			t.Fatal(msg)
 		}
 	})
 }
@@ -101,7 +94,7 @@ func TestBackgroundSaveRemainsSerialAndStopDoesNotJoin(t *testing.T) {
 			close(entered)
 			<-release
 			return nil
-		}, func(context.Context) error { return nil }, func(context.Context) {}, func(string, ...any) {})
+		}, func(context.Context) (string, error) { return "success", nil }, func(context.Context) {}, func(string, ...any) {})
 		synctest.Wait()
 		time.Sleep(30 * time.Second)
 		<-entered

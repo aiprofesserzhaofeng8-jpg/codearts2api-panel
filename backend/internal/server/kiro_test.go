@@ -23,7 +23,7 @@ import (
 
 func nativeKiroServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *kiro.Client) {
 	t.Helper()
-	st, e := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, e := openTestState(t, filepath.Join(t.TempDir(), "state.json"), "kiro fixture")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -43,7 +43,7 @@ func nativeKiroServer(t *testing.T, handler http.HandlerFunc) (*Server, string, 
 	if e := s.Providers.Register(c); e != nil {
 		t.Fatal(e)
 	}
-	return s, st.AddKey("kiro fixture").Key, c
+	return s, st.Keys()[0].Key, c
 }
 func addKiro(t *testing.T, s *Server, c *kiro.Client, scope string, key bool) {
 	t.Helper()
@@ -60,6 +60,7 @@ func addKiro(t *testing.T, s *Server, c *kiro.Client, scope string, key bool) {
 		t.Fatal(e)
 	}
 	s.Reg.ReplaceProvider(provider.Kiro, scope, []provider.Model{{ID: "kmodel", StreamOnly: true}})
+	grantFixtureAccounts(t, s.Store)
 }
 func kiroFrame(kind, payload string) []byte {
 	var h bytes.Buffer

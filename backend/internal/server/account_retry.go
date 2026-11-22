@@ -9,6 +9,7 @@ import (
 
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/apierr"
+	"codearts2api/internal/catalog"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/config"
 	"codearts2api/internal/gateway"
@@ -58,7 +59,7 @@ func (d *accountRetryDriver) Acquire(ctx context.Context, tried map[string]bool)
 			if errors.As(err, &modelError) {
 				return gateway.RetryAttempt{}, modelError
 			}
-			return gateway.RetryAttempt{}, groupDenied()
+			return gateway.RetryAttempt{}, catalog.ScopeDenied(err)
 		}
 		return gateway.RetryAttempt{}, err
 	}

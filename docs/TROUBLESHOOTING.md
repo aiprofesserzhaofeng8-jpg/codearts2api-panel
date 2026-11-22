@@ -74,9 +74,7 @@ docker compose run -e CODEARTS_ADMIN_PASSWORD='your-strong-password' codearts2ap
 
 ### `/v1/*` 返回 401
 
-已签发 API 密钥时必须带 `Authorization: Bearer sk-ca-...`。
-未签发密钥时 `/v1/*` 仅允许本机直连；要放开用「设置 → 允许匿名调用」
-（`CODEARTS_ALLOW_ANONYMOUS=1`），但这等于把账号额度开放给能访问该端口的任何人。
+所有客户端请求均须携带绑定有效分组的密钥。401 表示缺少密钥、密钥无效或已停用。403 且原因为 `group_unavailable` 时，请在管理员控制台绑定有效分组。
 
 ---
 

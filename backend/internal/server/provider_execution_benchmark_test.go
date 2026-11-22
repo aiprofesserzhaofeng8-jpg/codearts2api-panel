@@ -27,7 +27,7 @@ import (
 func BenchmarkTraeStreamSuccess(b *testing.B) {
 	for _, stream := range []bool{false, true} {
 		b.Run(fmt.Sprintf("stream=%v", stream), func(b *testing.B) {
-			st, err := storage.Open(filepath.Join(b.TempDir(), "state.json"))
+			st, err := openTestState(b, filepath.Join(b.TempDir(), "state.json"), "benchmark")
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -43,9 +43,10 @@ func BenchmarkTraeStreamSuccess(b *testing.B) {
 			if err := s.Providers.Register(client); err != nil {
 				b.Fatal(err)
 			}
-			key, handler := st.AddKey("benchmark").Key, s.Handler()
+			key, handler := st.Keys()[0].Key, s.Handler()
 			body := fmt.Sprintf(`{"model":"trae/cn/shared","stream":%v,"messages":[{"role":"user","content":"hi"}]}`, stream)
 			b.ReportAllocs()
+			grantFixtureAccounts(b, st)
 			b.ResetTimer()
 			for range b.N {
 				r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(body))

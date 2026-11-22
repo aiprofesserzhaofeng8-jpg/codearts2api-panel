@@ -22,90 +22,48 @@ func (s *Runtime) Refresh(ctx context.Context, ops RefreshOperations) (result er
 			if result != nil {
 				s.mu.Lock()
 				s.err = result.Error()
+				s.report.ReconcileError = result.Error()
+				s.report.Status = "partial"
 				s.mu.Unlock()
 			}
 		}
 	}()
-	s.refreshReferences(ctx)
-	failures := s.refreshProviderModels(ctx, ops)
-	err := s.refreshCodeArtsModels(ctx, ops)
-	if err != nil && !errors.Is(err, accounts.ErrNoAccount) {
-		failures[provider.CodeArts] = err.Error()
-	}
+	failures, err, report := s.refreshPartitions(ctx, ops)
 	s.mu.Lock()
 	s.loadedAt = time.Now()
 	s.providerErrors = failures
+	s.report = report
 	s.err = ""
 	if err != nil && (!errors.Is(err, accounts.ErrNoAccount) || len(failures) > 0) {
 		s.err = err.Error()
 	}
 	s.mu.Unlock()
-	if err != nil {
-		for _, a := range s.store.Accounts() {
-			if a.Enabled && a.ProviderID() != provider.CodeArts {
-				if _, failed := failures[a.ProviderID()+"/"+a.Scope]; !failed {
-					return nil
-				}
-			}
-		}
-		return err
+	if report.Status == "success" || report.Status == "partial" {
+		return nil
 	}
-	return nil
-}
-func (s *Runtime) refreshCodeArtsModels(ctx context.Context, ops RefreshOperations) error {
-	acct := s.store.NextAccount()
-	if acct == nil {
-		return accounts.ErrNoAccount
-	}
-	models, err := ops.Native(ctx, acct)
-	if err != nil {
-		return err
-	}
-	if len(models) == 0 {
-		return ErrEmptyModelList
-	}
-	s.directory.ReplaceProvider(provider.CodeArts, "", s.withClientReferences(provider.CodeArts, "", models))
-	return nil
+	return err
 }
 
-// RefreshIfStale retains the synchronous refresh with its independent 30s
-// context. Both successful and failed refreshes retain their original TTL.
-func (s *Runtime) RefreshIfStale(maxAge time.Duration, ops RefreshOperations) {
-	s.mu.RLock()
-	stale := time.Since(s.loadedAt) > maxAge
-	s.mu.RUnlock()
-	if !stale {
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	if err := s.Refresh(ctx, ops); err != nil {
-		s.mu.Lock()
-		s.err = err.Error()
-		s.loadedAt = time.Now()
-		s.mu.Unlock()
-	}
+func (s *Runtime) CommitProbePartition(a *accounts.Account, models []provider.Model) error {
+	s.commitMu.Lock()
+	defer s.commitMu.Unlock()
+	return s.commitPartition(a, a.Scope, models)
 }
 
-func (s *Runtime) refreshProviderModels(ctx context.Context, ops RefreshOperations) map[string]string {
-	errs := map[string]string{}
-	seen := map[string]bool{}
-	for _, a := range s.store.Accounts() {
-		if !a.Enabled || a.ProviderID() == provider.CodeArts {
-			continue
+// Caller holds commitMu across save and publication.
+func (s *Runtime) commitPartition(a *accounts.Account, scope string, models []provider.Model) error {
+	models = s.withClientReferences(a.ProviderID(), scope, models)
+	if store, ok := s.store.(interface {
+		SaveCatalogPartition(*accounts.Account, []provider.Model, time.Time) error
+	}); ok {
+		if err := store.SaveCatalogPartition(a, models, time.Now()); err != nil {
+			return err
 		}
-		key := a.ProviderID() + "/" + a.Scope
-		if seen[key] {
-			continue
-		}
-		models, err := ops.Provider(ctx, a)
-		if err != nil {
-			errs[key] = err.Error()
-			continue
-		}
-		s.directory.ReplaceProvider(a.ProviderID(), a.Scope, s.withClientReferences(a.ProviderID(), a.Scope, models))
-		seen[key] = true
-		delete(errs, key)
 	}
-	return errs
+	s.directory.ReplaceProvider(a.ProviderID(), scope, models)
+	if s.revisions == nil {
+		s.revisions = make(map[string]uint64)
+	}
+	s.revisions[a.ProviderID()+"/"+scope]++
+	return nil
 }

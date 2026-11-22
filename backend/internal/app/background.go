@@ -10,7 +10,7 @@ import (
 // startBackground is the process-owned set of three existing background tasks.
 // Startup model refresh deliberately retains its independent deadline. Cancel
 // stops polling but does not join an in-flight task, as in the original main.
-func startBackground(save func() error, refresh func(context.Context) error, claim func(context.Context), logf func(string, ...any)) context.CancelFunc {
+func startBackground(save func() error, refresh func(context.Context) (string, error), claim func(context.Context), logf func(string, ...any)) context.CancelFunc {
 	ctx, stop := context.WithCancel(context.Background())
 	go jobs.RunDailyLoop(ctx, claim)
 	go func() {
@@ -28,12 +28,12 @@ func startBackground(save func() error, refresh func(context.Context) error, cla
 		}
 	}()
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 		defer cancel()
-		if err := refresh(ctx); err != nil {
-			logf("刷新上游模型清单失败（将使用内置兜底清单）: %v", err)
+		if status, err := refresh(ctx); err != nil {
+			logf("刷新上游模型清单失败: %v", err)
 		} else {
-			logf("已同步上游模型清单")
+			logf("模型目录同步结果 %s", status)
 		}
 	}()
 	return stop

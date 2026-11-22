@@ -15,7 +15,11 @@ import (
 
 func TestAdminKeySaveFailurePreservesAccess(t *testing.T) {
 	s := newAdminTestServer(t, "a")
-	key, err := s.AccessManagement.AddKey("fixture", "")
+	g, err := s.Store.SaveGroup(storage.AccountGroup{Name: "fixture"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := s.AccessManagement.AddKey("fixture", g.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

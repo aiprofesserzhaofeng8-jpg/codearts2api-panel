@@ -18,7 +18,6 @@ services:
       CODEARTS_ADMIN_PASSWORD: ${CODEARTS_ADMIN_PASSWORD:-}
       # 未签发密钥时是否允许非本机匿名调用 /v1/*（默认 false，仅本机直连）。
       # 容器里“本机”是网桥地址，所以想让宿主机客户端免密钥调用才需打开它。
-      CODEARTS_ALLOW_ANONYMOUS: ${CODEARTS_ALLOW_ANONYMOUS:-}
       TZ: Asia/Shanghai
     command:
       - -host

@@ -1,5 +1,5 @@
 import { t as tr } from '../../i18n';
-import { cell, mk } from '../../components/controls';
+import { mk } from '../../components/controls';
 import { serverState } from '../../shared/read-model';
 import { domState } from '../../shared/dom';
 
@@ -18,5 +18,8 @@ export function fillGroupSelect(select,value,first){
  if(value&&!groups.some(g=>g.id===value)){const missing=mk('option','',tr('分组不存在，请重新选择'));missing.value=value;missing.disabled=true;select.appendChild(missing);}
  select.value=value||'';
 }
-export function keyGroupCell(key){const result=cell(key.name),group=serverState.data?.groups?.find(g=>g.id===key.group_id);result.appendChild(mk('div','sub',key.group_id?(group?group.name:tr('分组不存在')):tr('不分组')));return result;}
-export function renderGroups(){fillGroupSelect(domState.$('#keyCreateGroup'),domState.$('#keyCreateGroup').value,tr('不分组（全部账号）'));fillGroupSelect(domState.$('#modelsGroupFilter'),domState.$('#modelsGroupFilter').value,tr('全部分组'));}
+export function fillKeyGroupSelect(select,value){
+ fillGroupSelect(select,value,serverState.data?.groups?.length?tr('选择分组'):tr('请先创建账号分组'));
+ select.options[0].disabled=true;
+}
+export function renderGroups(){fillKeyGroupSelect(domState.$('#keyCreateGroup'),domState.$('#keyCreateGroup').value);fillGroupSelect(domState.$('#modelsGroupFilter'),domState.$('#modelsGroupFilter').value,tr('全部分组'));}

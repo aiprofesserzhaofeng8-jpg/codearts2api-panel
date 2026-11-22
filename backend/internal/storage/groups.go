@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"codearts2api/internal/access"
@@ -62,9 +63,6 @@ func (s *Store) accessScopeLocked(key string) (AccessScope, error) {
 		}
 		if err := s.keyOwnerLocked(k); err != nil {
 			return AccessScope{}, err
-		}
-		if k.GroupID == "" {
-			return AccessScope{}, nil
 		}
 		for _, g := range s.st.Groups {
 			if g.ID != k.GroupID {
@@ -131,6 +129,16 @@ func (s *Store) saveUnifiedGroup(g AccountGroup, strict bool) (AccountGroup, err
 			s.st.UnifiedModels, s.st.ModelRoutingRevision = beforeModels, beforeRoute
 		}
 	}()
+	if strict && g.ID != "" {
+		for _, old := range s.st.Groups {
+			if old.ID == g.ID {
+				if err := checkRevision(g.ExpectedRevision, old.Revision); err != nil {
+					return g, err
+				}
+				break
+			}
+		}
+	}
 	if strict && len(g.ModelMappings) > 0 {
 		return g, config.ModelFailure(400, "legacy_mapping_field", "请使用统一模型授权")
 	}
@@ -143,7 +151,7 @@ func (s *Store) saveUnifiedGroup(g AccountGroup, strict bool) (AccountGroup, err
 			}
 		}
 		if !found {
-			return g, fmt.Errorf("所选账号不存在，请刷新列表")
+			return g, config.ModelFailure(400, "group_account_missing", "所选账号已删除，请移除失效账号后保存")
 		}
 	}
 	if len(g.ModelMappings) > 0 {
@@ -189,11 +197,6 @@ func (s *Store) saveUnifiedGroup(g AccountGroup, strict bool) (AccountGroup, err
 		}
 		if index < 0 {
 			return g, fmt.Errorf("分组不存在")
-		}
-		if strict {
-			if err := checkRevision(g.ExpectedRevision, s.st.Groups[index].Revision); err != nil {
-				return g, err
-			}
 		}
 		if g.UnifiedModels == nil {
 			g.UnifiedModels = access.CloneUnifiedGrants(s.st.Groups[index].UnifiedModels)
@@ -280,16 +283,6 @@ func (s *Store) deleteGroup(id string, expected uint64, strict bool) error {
 	defer s.saveMu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for _, u := range s.st.Users {
-		if u.GroupID == id {
-			return fmt.Errorf("仍有用户绑定此分组，请先修改用户分组")
-		}
-	}
-	for _, k := range s.st.Keys {
-		if k.GroupID == id {
-			return fmt.Errorf("仍有 API Key 绑定此分组，请先修改密钥分组")
-		}
-	}
 	for i, g := range s.st.Groups {
 		if g.ID == id {
 			if strict {
@@ -297,10 +290,34 @@ func (s *Store) deleteGroup(id string, expected uint64, strict bool) error {
 					return err
 				}
 			}
-			before := append([]AccountGroup(nil), s.st.Groups...)
+			before, users, consumer := s.st.Groups, s.st.Users, s.st.Consumer
 			s.st.Groups = append(s.st.Groups[:i:i], s.st.Groups[i+1:]...)
+			s.st.Users = slices.Clone(users)
+			s.st.Consumer.Plans = slices.Clone(consumer.Plans)
+			s.st.Consumer.Redemptions = slices.Clone(consumer.Redemptions)
+			affectedPlans := make(map[string]bool)
+			for i := range s.st.Consumer.Plans {
+				p := &s.st.Consumer.Plans[i]
+				if p.GroupID == id {
+					p.Enabled, p.Delisted = false, false
+					affectedPlans[p.ID] = true
+				}
+			}
+			for i := range s.st.Users {
+				sub := &s.st.Users[i].Subscription
+				if sub.ID != "" && sub.Plan.GroupID == id {
+					sub.Disabled = true
+				}
+			}
+			for i := range s.st.Consumer.Redemptions {
+				r := &s.st.Consumer.Redemptions[i]
+				if r.Kind == "subscription" && r.UsedBy == "" && affectedPlans[r.PlanID] {
+					r.Disabled = true
+				}
+			}
 			if err := s.saveGroupStateLocked(); err != nil {
 				s.st.Groups = before
+				s.st.Users, s.st.Consumer = users, consumer
 				if strict {
 					return config.ModelFailure(500, "model_save_failed", "分组删除失败")
 				}
@@ -313,7 +330,7 @@ func (s *Store) deleteGroup(id string, expected uint64, strict bool) error {
 }
 func (s *Store) groupExistsLocked(id string) bool {
 	if id == "" {
-		return true
+		return false
 	}
 	for _, g := range s.st.Groups {
 		if g.ID == id {

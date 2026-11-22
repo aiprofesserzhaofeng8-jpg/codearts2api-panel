@@ -15,6 +15,7 @@ import (
 // Shared accounts hold only an opaque immutable credential view. Decode the
 // concrete CodeArts value once on load, preserving pointer generation checks.
 type accountJSON struct {
+	Catalog *catalogPartition `json:"catalog_partition,omitempty"`
 	accounts.Account
 	Session       *codearts.Session       `json:"session,omitempty"`
 	ModelSnapshot *accounts.ModelSnapshot `json:"model_snapshot,omitempty"`
@@ -23,17 +24,24 @@ type accountJSON struct {
 // Keep optional observations inside account records for schema-11 readers.
 func (s State) MarshalJSON() ([]byte, error) {
 	type plain State
-	if len(s.accountModelSnapshots) == 0 {
+	if len(s.accountModelSnapshots) == 0 && len(s.catalogPartitions) == 0 {
 		return json.Marshal((*plain)(&s))
 	}
 	type record struct {
+		Catalog *catalogPartition `json:"catalog_partition,omitempty"`
 		*accounts.Account
 		Snapshot *accounts.ModelSnapshot `json:"model_snapshot,omitempty"`
 	}
 	records := make([]*record, len(s.Accounts))
+	written := map[string]bool{}
 	for i, a := range s.Accounts {
 		if a != nil {
-			records[i] = &record{a, s.accountModelSnapshots[a.ID]}
+			key := catalogKey(a)
+			records[i] = &record{Account: a, Snapshot: s.accountModelSnapshots[a.ID]}
+			if !written[key] {
+				records[i].Catalog = s.catalogPartitions[key]
+				written[key] = true
+			}
 		}
 	}
 	return json.Marshal(struct {
@@ -122,6 +130,13 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 			}
 			s.accountModelSnapshots[record.ID] = v
 		}
+		if record.Catalog != nil && record.Catalog.Provider == record.ProviderID() && record.Catalog.Scope == catalogScope(&record.Account) {
+			if s.catalogPartitions == nil {
+				s.catalogPartitions = make(map[string]*catalogPartition)
+			}
+			s.catalogPartitions[catalogKey(&record.Account)] = record.Catalog
+		}
+		record.Account.Incarnation = new(byte)
 		s.Accounts[i] = &record.Account
 	}
 	return nil

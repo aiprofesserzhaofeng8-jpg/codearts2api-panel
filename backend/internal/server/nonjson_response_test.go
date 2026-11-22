@@ -110,6 +110,7 @@ func TestNonJSONResponseUsesExistingFailover(t *testing.T) {
 	})
 	s.Store.UpdateSettings(func(st *storage.Settings) { st.Pool.RateCooldownSec = 60 })
 	s.Store.UpsertAccount(&codearts.Account{ID: "b", Name: "second", Enabled: true, Status: "ok", NativeCredential: &codearts.Session{AccessKey: "ak-b", SecretKey: "sk-b", SecurityToken: "st-b", ExpiresAt: time.Now().Add(time.Hour)}})
+	grantFixtureAccounts(t, s.Store)
 	r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(nonJSONRequest))
 	r.Header.Set("Authorization", "Bearer "+key)
 	s.Handler().ServeHTTP(w, r)

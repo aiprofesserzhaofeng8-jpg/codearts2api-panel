@@ -12,14 +12,14 @@ import (
 // bootstrapAccess is called only for a new state file. Secrets are never printed
 // into logs, embedded in the UI or committed as example configuration.
 func bootstrapAccess(st *storage.Store, password string) (string, error) {
-	if err := st.CheckFreshInstallation(); err != nil {
+	key, err := st.PrepareBootstrapKey()
+	if err != nil {
 		return "", err
 	}
 	if password == "" {
 		password = codearts.RandomHex(24)
 	}
 	st.UpdateSettings(func(s *storage.Settings) { s.AdminPassword = password; s.WriteBackToIDE = false; s.AutoClaim = false })
-	key := st.AddKey("默认调用密钥")
 	path := st.Path() + ".access.json"
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return "", err

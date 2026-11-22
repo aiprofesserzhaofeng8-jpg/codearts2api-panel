@@ -76,13 +76,7 @@ func (s *Server) handleSystemOne(w http.ResponseWriter, r *http.Request) {
 		if err := s.Routing.CheckNative(groupKey(ctx), model); err != nil {
 			return err
 		}
-		if err := s.Admission.CheckProgress(key, model, requestAttemptDetails(ctx)); err != nil {
-			return err
-		}
-		if quote, ok := ctx.Value(consumerRequestKey{}).(*consumerRequest); ok {
-			return s.Admission.Quote(key, quote.id, model, quote.inputBytes, requestAttemptDetails(ctx))
-		}
-		return nil
+		return s.admitAttemptPrice(ctx, key, model)
 	})
 	if err != nil {
 		e := apierr.From(err)

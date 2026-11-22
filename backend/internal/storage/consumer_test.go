@@ -202,7 +202,7 @@ func TestConsumerWalletReservationSettlementAndReplay(t *testing.T) {
 		t.Fatal("abort charged")
 	}
 }
-func TestConsumerMissingUsagePausesWalletAndLegacyUnchanged(t *testing.T) {
+func TestConsumerMissingUsageDoesNotPauseWallet(t *testing.T) {
 	s, u, k := userFixture(t, KeyBudget{})
 	release, metered, err := s.BeginRequestBudget(k.Key)
 	if err != nil || metered {
@@ -217,9 +217,11 @@ func TestConsumerMissingUsagePausesWalletAndLegacyUnchanged(t *testing.T) {
 	if !got.Wallet.ReviewRequired || got.Wallet.Balance != 1000000000 {
 		t.Fatal("unknown usage charged zero silently", got.Wallet)
 	}
-	if _, err = s.BeginKeyBudget(k.Key); err == nil {
-		t.Fatal("unverified wallet continued")
+	resume, err := s.BeginKeyBudget(k.Key)
+	if err != nil {
+		t.Fatal(err)
 	}
+	resume()
 	if err = s.AdjustWallet(u.ID, got.Wallet.Revision, 0, true, true, "manually reconciled"); err != nil {
 		t.Fatal(err)
 	}
@@ -537,5 +539,80 @@ func TestConsumerMalformedSubscriptionNeverBecomesUnlimited(t *testing.T) {
 	}
 	if _, err = Open(s.path); err == nil {
 		t.Fatal("malformed persisted subscription enabled unlimited access")
+	}
+}
+
+func TestRejectedAttemptWalletRetryAndReplay(t *testing.T) {
+	s, u, k := userFixture(t, KeyBudget{MaxTokens: 100})
+	enableTestWallet(t, s, u, "1")
+	if err := s.SetPriceAndSave("priced", ModelPrice{Currency: "USD", Output: 1}); err != nil {
+		t.Fatal(err)
+	}
+	rejected := RequestAttempt{Number: 1, Model: "priced", UpstreamStatus: 429}
+	if err := s.ReserveConsumerQuote(k.Key, "retry", "priced", 0, []RequestAttempt{rejected}); err != nil {
+		t.Fatal(err)
+	}
+	measured := TokenUsage{Known: true, OutputTokens: 50}
+	if err := s.Record(LogEntry{UserID: u.ID, RequestID: "retry", Attempts: 2, Usage: measured, Status: 200, AttemptDetails: []RequestAttempt{rejected, {Number: 2, Model: "priced", Usage: measured}}}, 0, k.Key); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Record(LogEntry{UserID: u.ID, RequestID: "rejected", Attempts: 1, Status: 429, AttemptDetails: []RequestAttempt{rejected}}, 0, k.Key); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		got, _ := s.User(u.ID)
+		if got.BudgetUsage.Tokens != 50 || got.Wallet.Balance != 99995000 || s.UserReservedCredits(u.ID) != 0 {
+			t.Fatalf("pass %d: %+v %+v", i, got.Wallet, got.BudgetUsage)
+		}
+		if i < 2 {
+			s = reopenJournal(t, s)
+		}
+	}
+}
+
+// Legacy incomplete/review flags are informational even after journal replay.
+func TestMissingUsageNeverFreezesAnyBudgetAfterRestart(t *testing.T) {
+	s, u, k := userFixture(t, KeyBudget{MaxTokens: 100})
+	enableTestWallet(t, s, u, "1")
+	if err := s.SetKeyBudgetAndSave(k.Key, KeyBudget{MaxTokens: 100}, false); err != nil {
+		t.Fatal(err)
+	}
+	p, err := s.SavePlan(access.Plan{Name: "metered", GroupID: u.GroupID, Enabled: true, Days: 30, Period: "month", Budget: KeyBudget{MaxTokens: 100}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.ManageSubscription(u.ID, p.ID, "assign", 0); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Unix()
+	for _, status := range []int{429, 502, 200} {
+		if err = s.Record(LogEntry{UserID: u.ID, Attempts: 1, Time: now, Status: status, UsageIncomplete: true}, 0, k.Key); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i := 0; i < 2; i++ {
+		got, _ := s.User(u.ID)
+		if !got.BudgetUsage.Incomplete || !got.Wallet.ReviewRequired {
+			t.Fatal("lost diagnostic evidence")
+		}
+		release, err := s.BeginKeyBudget(k.Key)
+		if err != nil {
+			t.Fatal("historical flags froze user", err)
+		}
+		if err = s.ReserveConsumerQuote(k.Key, "partial", "journal-model", 0, []RequestAttempt{{Status: 502}}); err != nil {
+			t.Fatal("missing receipt blocked retry", err)
+		}
+		s.ReleaseConsumerQuote("partial")
+		release()
+		if i == 0 {
+			s = reopenJournal(t, s)
+		}
+	}
+	if err = s.Record(LogEntry{UserID: u.ID, Attempts: 1, Time: now, Model: "journal-model", Usage: TokenUsage{Known: true, OutputTokens: 100}}, 0, k.Key); err != nil {
+		t.Fatal(err)
+	}
+	if release, err := s.BeginKeyBudget(k.Key); err == nil {
+		release()
+		t.Fatal("actual exhausted quota allowed")
 	}
 }

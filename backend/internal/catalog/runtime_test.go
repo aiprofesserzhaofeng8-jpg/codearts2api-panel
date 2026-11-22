@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"slices"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -40,19 +42,22 @@ func TestRefreshRetainsPartitionsAndPartialSuccess(t *testing.T) {
 		&accounts.Account{ID: "global", Provider: "workbuddy", Scope: "global", Enabled: true},
 	)
 	directory.ReplaceProvider("workbuddy", "global", []provider.Model{{ID: "retained"}})
+	var callsMu sync.Mutex
 	var calls []string
 	fail := errors.New("partition failed")
 	ops := RefreshOperations{Native: func(context.Context, *accounts.Account) ([]provider.Model, error) {
 		t.Fatal("provider-only refresh selected native credentials")
 		return nil, nil
 	}, Provider: func(_ context.Context, a *accounts.Account) ([]provider.Model, error) {
+		callsMu.Lock()
 		calls = append(calls, a.ID)
+		callsMu.Unlock()
 		if a.ID != "second" {
 			return nil, fail
 		}
 		return []provider.Model{{ID: "fresh"}}, nil
 	}}
-	if err := r.Refresh(context.Background(), ops); err != nil || !reflect.DeepEqual(calls, []string{"first", "second", "global"}) {
+	if err := r.Refresh(context.Background(), ops); err != nil || len(calls) != 3 || slices.Index(calls, "global") < 0 || slices.Index(calls, "first") < 0 || slices.Index(calls, "second") <= slices.Index(calls, "first") {
 		t.Fatal("partial success or per-partition fallback changed", err, calls)
 	}
 	if _, ok := directory.ResolveRaw("workbuddy/global/retained"); !ok {
@@ -97,8 +102,12 @@ func TestFailedRefreshTTLAndSerialization(t *testing.T) {
 		}
 		return nil, fail
 	}}
-	r.RefreshIfStale(time.Minute, ops)
-	r.RefreshIfStale(time.Minute, ops)
+	r.BindRefreshContext(t.Context())
+	round := r.beginRound(t.Context(), time.Minute, ops)
+	<-round.done
+	if r.beginRound(t.Context(), time.Minute, ops) != nil {
+		t.Fatal("restarted before TTL")
+	}
 	if calls.Load() != 1 || r.Error() != fail.Error() {
 		t.Fatal("failed refresh was immediately repeated")
 	}

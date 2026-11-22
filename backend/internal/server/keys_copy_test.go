@@ -10,9 +10,9 @@ import (
 )
 
 func TestAdminCanRetrieveExistingKeysForCopy(t *testing.T) {
-	s := poolServer(t, 0)
+	s := poolServer(t, 0, "copy-test")
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin" })
-	key := s.Store.AddKey("copy-test").Key
+	key := s.Store.Keys()[0].Key
 	if err := s.Store.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -55,9 +55,9 @@ func TestAdminCanRetrieveExistingKeysForCopy(t *testing.T) {
 }
 
 func TestExplicitRevealRequiresAdminAndPOST(t *testing.T) {
-	s := poolServer(t, 0)
+	s := poolServer(t, 0, "test")
 	s.Store.UpdateSettings(func(c *storage.Settings) { c.AdminPassword = "admin" })
-	key := s.Store.AddKey("test").Key
+	key := s.Store.Keys()[0].Key
 	for _, tc := range []struct {
 		method, pw string
 		want       int

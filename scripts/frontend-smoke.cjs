@@ -8,6 +8,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   await context.route(base+'/',async route=>{const response=await route.fetch();const body=(await response.text()).replace(/name="local-panel-session" content="[^"]*"/,'name="local-panel-session" content=""');await route.fulfill({response,body});});
   await mock(context,{authenticated:false,onRequest:async(route,url,request)=>{
    requests.push(url.pathname+url.search);
+   if(url.pathname.endsWith('/usage')){await route.fulfill({json:{page:1,pages:1,total:1,retained:1,logs:[{model:'fixture',status:200,time:1,latency_ms:25}],stats:{total_requests:1},analysis:{}}});return true;}
    if(url.pathname.endsWith('/state')&&rejectState){await route.fulfill({status:401,json:{error:{message:'fixture session expired'}}});return true;}
    if(url.pathname.endsWith('/keys/budget')){const body=request.postDataJSON();assert.equal(body.ref,'fixture-ref');assert.equal(body.budget.max_requests,5);await route.fulfill({json:{ok:true}});return true;}
   }});

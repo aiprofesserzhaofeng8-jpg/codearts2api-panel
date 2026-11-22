@@ -141,7 +141,7 @@ type ClientModel struct {
 func (s *Routing) ClientModels(key string, policies *config.ModelPolicies) ([]ClientModel, error) {
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
-		return nil, GroupDenied()
+		return nil, ScopeDenied(err)
 	}
 	var snapshot config.UnifiedSnapshot
 	var models []provider.Model
@@ -200,7 +200,7 @@ func (s *Routing) ClientModels(key string, policies *config.ModelPolicies) ([]Cl
 func (s *Routing) Profile(key, requested string, policies *config.ModelPolicies) (provider.Model, *ModelPlan, config.ModelPolicy, error) {
 	scope, err := s.store.AccessScope(key)
 	if err != nil {
-		return provider.Model{}, nil, config.ModelPolicy{}, GroupDenied()
+		return provider.Model{}, nil, config.ModelPolicy{}, ScopeDenied(err)
 	}
 	if strings.TrimSpace(requested) == "" {
 		requested = scope.ClientDefaultModel

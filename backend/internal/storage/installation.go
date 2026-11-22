@@ -98,8 +98,7 @@ func writeInstallationFile(path string, raw []byte, mode os.FileMode) error {
 }
 
 // InstallInitialAdmin is an all-or-nothing initial state transaction. No
-// plaintext administrator password is written. A default key keeps the normal
-// gateway's legacy no-key local access from becoming active after installation.
+// plaintext administrator password is written. The initial key is bound to the default group.
 func (s *Store) InstallInitialAdmin(email, hash string) error {
 	var err error
 	if email, err = access.NormalizeEmail(email); err != nil {
@@ -115,17 +114,36 @@ func (s *Store) InstallInitialAdmin(email, hash string) error {
 	if err := s.checkFreshInstallationLocked(); err != nil {
 		return err
 	}
-	previousSettings, previousKeys := s.st.Settings, s.st.Keys
+	previousSettings, previousKeys, previousGroups := s.st.Settings, s.st.Keys, s.st.Groups
 	s.st.Settings.AdminPassword = hash
 	s.st.Settings.AdminEmail = email
 	s.st.Settings.AutoClaim, s.st.Settings.WriteBackToIDE = false, false
-	s.st.Keys = []*APIKey{{Key: "sk-ca-" + rand.Text() + rand.Text(), Name: "默认调用密钥", Enabled: true, CreatedAt: time.Now().Unix()}}
+	s.initialGroupKeyLocked()
 	if err := s.saveGroupStateLocked(); err != nil {
-		s.st.Settings, s.st.Keys = previousSettings, previousKeys
+		s.st.Settings, s.st.Keys, s.st.Groups = previousSettings, previousKeys, previousGroups
 		return err
 	}
 	s.usageBaseReady = true
 	return nil
+}
+
+// PrepareBootstrapKey stages the CLI installation until its private access file is durable.
+func (s *Store) PrepareBootstrapKey() (*APIKey, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.checkFreshInstallationLocked(); err != nil {
+		return nil, err
+	}
+	return s.initialGroupKeyLocked(), nil
+}
+
+func (s *Store) initialGroupKeyLocked() *APIKey {
+	id := rand.Text()
+	s.st.Groups = []AccountGroup{{ID: id, Name: "默认分组", Revision: 1, RawModelMode: "qualified_only", RawModelsVisibleDefault: true, UnifiedModels: []access.UnifiedGrant{}}}
+	k := APIKey{GroupID: id, Key: "sk-ca-" + rand.Text() + rand.Text(), Name: "默认调用密钥", Enabled: true, CreatedAt: time.Now().Unix()}
+	s.st.Keys = []*APIKey{&k}
+	copy := k
+	return &copy
 }
 
 // SealInstallation is also applied to upgrades. State credentials are the

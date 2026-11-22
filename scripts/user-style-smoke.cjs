@@ -34,6 +34,8 @@ const fs=require('node:fs');
   page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(new URL(r.url()).pathname.startsWith('/admin/'))adminRequests.push(r.url());});
   page.on('console',m=>{if(m.type()==='error'&&/Content Security|Refused to/.test(m.text()))errors.push(m.text());});
   await page.goto(base+'/user');await page.locator('#userDashboard').waitFor();await page.locator('.portal-welcome').getByText('你好，Alex Chen').waitFor();
+  rights.wallet={...rights.wallet,enabled:false,balance:300000000000};
+  rights.reserved=500000000;
   const pages=['dashboard','keys','models','usage','entitlements','identity','profile','password'];
   const checks=[];
   async function navigate(id){if(await page.locator('#consoleMenuToggle').isVisible())await page.locator('#consoleMenuToggle').click();await page.locator('[data-user-tab="'+id+'"]').click();await page.waitForLoadState('networkidle');if(id==='entitlements'){await page.locator('#userEntitlements .portal-stats').waitFor();await page.getByText('redeem-••••-8f2a',{exact:true}).waitFor();}if(id==='identity')await page.locator('#userIdentity .portal-binding').first().waitFor();}
@@ -43,6 +45,11 @@ const fs=require('node:fs');
     await page.evaluate(value=>document.documentElement.dataset.theme=value,theme);
     for(const id of pages){
      await navigate(id);
+     if(id==='usage') await page.locator('#userUsage').getByText('$2995',{exact:true}).waitFor();
+     if(id==='entitlements') {
+       await page.locator('#userEntitlements').getByText('$3000',{exact:true}).waitFor();
+       await page.locator('#userEntitlements').getByText('未启用余额限制',{exact:true}).waitFor();
+     }
      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,id+' overflow '+width+' '+theme);
      assert.equal(await page.getByText('Console disposed',{exact:true}).count(),0);
      if(id==='profile'&&width===1440){const bounds=await page.locator('.user-main').boundingBox();assert(bounds.width<=950.1,'profile is centered and bounded');}

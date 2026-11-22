@@ -844,10 +844,72 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
+                "required": [
+                  "ref",
+                  "group_id"
+                ],
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "group_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
                 "additionalProperties": true
               }
             }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
+    },
+    "/admin/api/keys/models": {
+      "get": {
+        "operationId": "get__admin_api_keys_models",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visible and callable public model names for this key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "models"
+                  ],
+                  "properties": {
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Key not available to this session."
           }
         },
         "security": [
@@ -942,7 +1004,18 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
+                "required": [
+                  "group_id"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "group_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
                 "additionalProperties": true
               }
             }
@@ -1115,6 +1188,28 @@
     "/admin/api/usage": {
       "get": {
         "operationId": "get__admin_api_usage",
+        "parameters": [
+          {
+            "name": "granularity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "hour",
+                "day"
+              ]
+            },
+            "description": "Group reported trend points by local hour or calendar day within the filtered range."
+          },
+          {
+            "name": "model_mismatch",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only include records with two known, different model names."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
@@ -1154,13 +1249,11 @@
         "operationId": "get__admin_api_pricing",
         "responses": {
           "200": {
-            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "description": "Effective model prices and optional site default in USD per million tokens.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/PricingTable"
                 }
               }
             }
@@ -1189,13 +1282,11 @@
         "operationId": "post__admin_api_pricing",
         "responses": {
           "200": {
-            "description": "Existing successful response. Business results may still be pending, unknown, or failed.",
+            "description": "Effective model prices and optional site default in USD per million tokens.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/PricingTable"
                 }
               }
             }
@@ -1637,7 +1728,76 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {},
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "provider_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "refresh": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "success",
+                            "partial",
+                            "failed",
+                            "empty"
+                          ]
+                        },
+                        "partitions": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "success",
+                                  "failed",
+                                  "timeout",
+                                  "not_started",
+                                  "metadata_failed"
+                                ]
+                              },
+                              "count": {
+                                "type": "integer"
+                              },
+                              "last_success": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "status",
+                              "count"
+                            ]
+                          }
+                        },
+                        "reconcile_error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "partitions"
+                      ]
+                    }
+                  },
                   "additionalProperties": true
                 }
               }
@@ -2767,6 +2927,47 @@
         ]
       }
     },
+    "/user/api/keys/models": {
+      "get": {
+        "operationId": "get__user_api_keys_models",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visible and callable public model names for this key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "models"
+                  ],
+                  "properties": {
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Key not available to this session."
+          }
+        }
+      }
+    },
     "/user/api/keys/reveal": {
       "post": {
         "operationId": "post__user_api_keys_reveal",
@@ -3147,8 +3348,54 @@
     "/admin/api/consumer/plans": {
       "delete": {
         "operationId": "delete__admin_api_consumer_plans",
-        "requestBody": {"required":true,"content":{"application/json":{"schema":{"type":"object","required":["id"],"properties":{"id":{"type":"string"}}}}}},
-        "responses":{"200":{"description":"Unused plan deleted.","content":{"application/json":{"schema":{"type":"object","required":["ok"],"properties":{"ok":{"type":"boolean"}}}}}},"default":{"description":"Authentication, reference, or persistence error.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}}
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unused plan deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Authentication, reference, or persistence error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       },
       "get": {
         "operationId": "get__admin_api_consumer_plans",
@@ -3160,7 +3407,24 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "references":{"type":"object","additionalProperties":{"type":"object","required":["subscriptions","codes"],"properties":{"subscriptions":{"type":"integer"},"codes":{"type":"integer"}}}},
+                    "references": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "subscriptions",
+                          "codes"
+                        ],
+                        "properties": {
+                          "subscriptions": {
+                            "type": "integer"
+                          },
+                          "codes": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
                     "plans": {
                       "type": "array",
                       "items": {
@@ -4577,6 +4841,84 @@
           }
         }
       }
+    },
+    "/admin/api/pricing/default": {
+      "put": {
+        "operationId": "put__admin_api_pricing_default",
+        "responses": {
+          "200": {
+            "description": "Effective model prices and optional site default in USD per million tokens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingTable"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenPrice"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete__admin_api_pricing_default",
+        "responses": {
+          "200": {
+            "description": "Effective model prices and optional site default in USD per million tokens.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingTable"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Existing HTTP/API error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          },
+          {
+            "localPanelSession": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4608,7 +4950,15 @@
               "scope": {
                 "type": "string"
               },
-              "kind": {"type":"string","enum":["live","reference","configured","decision"]},
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "live",
+                  "reference",
+                  "configured",
+                  "decision"
+                ]
+              },
               "observed_at": {
                 "type": "string",
                 "format": "date-time"
@@ -5614,7 +5964,18 @@
               "object",
               "null"
             ],
-            "additionalProperties": true
+            "additionalProperties": true,
+            "properties": {
+              "price_kind": {
+                "type": "string",
+                "enum": [
+                  "model",
+                  "reference",
+                  "default",
+                  "mixed"
+                ]
+              }
+            }
           },
           "err": {
             "type": "string"
@@ -5863,7 +6224,9 @@
       "ConsumerPlan": {
         "type": "object",
         "properties": {
-          "delisted": {"type":"boolean"},
+          "delisted": {
+            "type": "boolean"
+          },
           "id": {
             "type": "string"
           },
@@ -7471,6 +7834,61 @@
           "common",
           "platforms"
         ]
+      },
+      "TokenPrice": {
+        "type": "object",
+        "required": [
+          "currency",
+          "input",
+          "output",
+          "cached"
+        ],
+        "properties": {
+          "currency": {
+            "const": "USD"
+          },
+          "input": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "output": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "cached": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "source": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "PricingTable": {
+        "type": "object",
+        "required": [
+          "prices"
+        ],
+        "properties": {
+          "prices": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TokenPrice"
+            }
+          },
+          "default_price": {
+            "$ref": "#/components/schemas/TokenPrice"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        }
       }
     },
     "securitySchemes": {

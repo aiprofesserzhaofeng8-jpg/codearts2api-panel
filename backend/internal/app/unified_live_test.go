@@ -269,7 +269,11 @@ func TestUnifiedLiveProtocols(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	key, err := st.AddKeyInGroupAndSave("bounded-real-acceptance", "")
+	group, err := st.SaveGroup(storage.AccountGroup{Name: "live fixture", AccountIDs: []string{selected[provider.WorkBuddy].account.ID, selected[provider.Trae].account.ID}, ModelMappings: []storage.ModelMapping{{Name: public, Sources: []string{"workbuddy/cn/" + rawID, "trae/cn/" + rawID}}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := st.AddKeyInGroupAndSave("bounded-real-acceptance", group.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -661,7 +665,11 @@ func TestUnifiedLiveTools(t *testing.T) {
 	if _, err = st.SaveUnifiedModel(config.UnifiedModel{Name: public, Enabled: true, Sources: []config.ModelSource{{ID: "workbuddy/cn/deepseek-v4.1-flash", Enabled: true}, {ID: "trae/cn/deepseek-v4.1-flash", Enabled: true}}}, nil, 0, st.UnifiedSnapshot().Revision, nil); err != nil {
 		t.Fatal(err)
 	}
-	key, err := st.AddKeyInGroupAndSave("bounded-real-tools", "")
+	group, err := st.SaveGroup(storage.AccountGroup{Name: "live fixture", AccountIDs: []string{selected[provider.WorkBuddy].account.ID, selected[provider.Trae].account.ID}, ModelMappings: []storage.ModelMapping{{Name: public, Sources: []string{"workbuddy/cn/deepseek-v4.1-flash", "trae/cn/deepseek-v4.1-flash"}}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := st.AddKeyInGroupAndSave("bounded-real-tools", group.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

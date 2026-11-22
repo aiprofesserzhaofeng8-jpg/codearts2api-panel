@@ -38,8 +38,8 @@ func TestClientSummaryAdaptation(t *testing.T) {
 	}
 }
 func TestClientProfileRequiresKey(t *testing.T) {
-	s := poolServer(t, 0)
-	s.Store.AddKey("client")
+	s := poolServer(t, 0, "client")
+
 	r := httptest.NewRequest("GET", "/v1/client-profile?model=deepseek-v4.1-flash", nil)
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
@@ -49,9 +49,11 @@ func TestClientProfileRequiresKey(t *testing.T) {
 }
 
 func TestWorkBuddyImageCapabilityExposedToClients(t *testing.T) {
-	s := poolServer(t, 0)
+	s := poolServer(t, 0, "images")
+	catalogFixtureAccount(t, s, provider.WorkBuddy, "cn")
+	grantFixtureAccounts(t, s.Store)
 	s.Reg.ReplaceProvider(provider.WorkBuddy, "cn", []provider.Model{{ID: "vision", Context: 65536, MaxOutput: 4096, ImageInput: "supported"}, {ID: "unknown", Context: 65536, MaxOutput: 4096}})
-	key := s.Store.AddKey("images").Key
+	key := s.Store.Keys()[0].Key
 	for _, path := range []string{"/v1/models", "/v1/client-profile?model=workbuddy/cn/vision"} {
 		r := httptest.NewRequest("GET", path, nil)
 		r.Header.Set("Authorization", "Bearer "+key)
@@ -64,10 +66,12 @@ func TestWorkBuddyImageCapabilityExposedToClients(t *testing.T) {
 }
 
 func TestTraeClientProfileAvailableWithoutManualPolicy(t *testing.T) {
-	s := poolServer(t, 0)
+	s := poolServer(t, 0, "profile")
+	catalogFixtureAccount(t, s, provider.Trae, "cn")
+	grantFixtureAccounts(t, s.Store)
 	known, unknown := "trae/cn/deepseek-v4.1-flash", "trae/cn/unknown"
 	s.Reg.Replace([]registry.Model{{ID: known, Provider: provider.Trae, Scope: "cn"}, {ID: unknown, Provider: provider.Trae, Scope: "cn"}})
-	key := s.Store.AddKey("profile").Key
+	key := s.Store.Keys()[0].Key
 	for _, model := range []string{known, unknown} {
 		r := httptest.NewRequest("GET", "/v1/client-profile?model="+model, nil)
 		r.Header.Set("Authorization", "Bearer "+key)

@@ -21,7 +21,7 @@ import (
 
 func nativeQoderServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *qoder.Client) {
 	t.Helper()
-	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := openTestState(t, filepath.Join(t.TempDir(), "state.json"), "qoder fixture")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func nativeQoderServer(t *testing.T, handler http.HandlerFunc) (*Server, string,
 	if err := s.Providers.Register(c); err != nil {
 		t.Fatal(err)
 	}
-	return s, st.AddKey("qoder fixture").Key, c
+	return s, st.Keys()[0].Key, c
 }
 
 func addQoder(t *testing.T, s *Server, scope string) {
@@ -53,6 +53,7 @@ func addQoder(t *testing.T, s *Server, scope string) {
 		t.Fatal(err)
 	}
 	s.Reg.ReplaceProvider(provider.Qoder, scope, []provider.Model{{ID: "qmodel", StreamOnly: true}})
+	grantFixtureAccounts(t, s.Store)
 }
 
 func qoderFrame(inner string) string {

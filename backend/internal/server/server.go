@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"log"
 	"math"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -128,6 +127,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/user/api/password", s.withUserAuth(s.handleUserPassword))
 	mux.HandleFunc("/user/api/keys", s.withUserAuth(s.handleUserKeys))
 	mux.HandleFunc("/user/api/keys/reveal", s.withUserAuth(s.handleUserKeyReveal))
+	mux.HandleFunc("/user/api/keys/models", s.withUserAuth(s.keyUseModels(false)))
 	mux.HandleFunc("/user/api/usage", s.withUserAuth(s.handleUserUsage))
 	mux.HandleFunc("/user/api/models", s.withUserAuth(s.handleUserModels))
 	mux.HandleFunc("/user", serveConsole)
@@ -160,7 +160,7 @@ func (s *Server) Handler() http.Handler {
 	for _, name := range []string{provider.CodeArts, provider.WorkBuddy, provider.Trae} {
 		mux.HandleFunc("/v1/search/"+name+"/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.searchForProvider(name)))))
 	}
-	mux.HandleFunc("/v1/messages", s.withAuth(s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleAnthropicMessages))))
+	mux.HandleFunc("/v1/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleAnthropicMessages))))
 
 	// 控制台 API（统一走管理鉴权 + 同源校验）
 	mux.HandleFunc("/admin/api/model-policies", s.withAdminAuth(s.handleAdminModelPolicies))
@@ -174,10 +174,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/groups", s.withAdminAuth(s.handleAdminGroups))
 	mux.HandleFunc("/admin/api/keys/group", s.withAdminAuth(s.handleKeyGroup))
 	mux.HandleFunc("/admin/api/keys/reveal", s.withAdminAuth(s.handleAdminKeyReveal))
+	mux.HandleFunc("/admin/api/keys/models", s.withAdminAuth(s.keyUseModels(true)))
 	mux.HandleFunc("/admin/api/keys", s.withAdminAuth(s.handleAdminKeys))
 	mux.HandleFunc("/admin/api/logs", s.withAdminAuth(s.handleAdminLogs))
 	mux.HandleFunc("/admin/api/usage", s.withAdminAuth(s.handleAdminUsage))
 	mux.HandleFunc("/admin/api/pricing", s.withAdminAuth(s.handleAdminPricing))
+	mux.HandleFunc("/admin/api/pricing/default", s.withAdminAuth(s.handleAdminDefaultPricing))
 	mux.HandleFunc("/admin/api/stats", s.withAdminAuth(s.handleAdminStats))
 	mux.HandleFunc("/admin/api/version", s.withAdminAuth(s.handleVersion))
 	mux.HandleFunc("/admin/api/prompts", s.withAdminAuth(s.handlePrompts))
@@ -288,12 +290,6 @@ func isLoopbackHost(host string) bool {
 // IsLoopbackHost 供启动时判断监听范围（是否只监听本机）。
 func IsLoopbackHost(host string) bool { return isLoopbackHost(host) }
 
-// withAuth 校验 Bearer 密钥。
-//
-// 未签发任何密钥时，为首次使用的便利允许匿名调用 —— 但**仅限本机直连**。
-// 否则一旦把监听地址设成 0.0.0.0（Dockerfile 的默认 CMD 就是），
-// 任何人都能白嫖账号额度。需要对外匿名开放时，在设置里显式打开
-// 「允许匿名调用」（allow_anonymous）。
 func (s *Server) withAuth(next http.HandlerFunc) http.HandlerFunc {
 	return s.withAuthStyle(errOpenAI, next)
 }
@@ -306,21 +302,21 @@ func (s *Server) withAuthStyle(style errStyle, next http.HandlerFunc) http.Handl
 				writeErr(w, 401, message, "invalid_request_error")
 			}
 		}
-		if !s.Store.RequiresAPIKey() {
-			if s.Store.Settings().AllowAnonymous || s.localDirect(r) {
-				next(w, r)
-				return
-			}
-			reject("尚未签发 API 密钥：请先在控制台创建密钥；若确实需要匿名开放，请在设置里打开「允许匿名调用」。")
-			return
-		}
 		key := extractKey(r)
 		if key == "" {
 			reject("缺少 API 密钥")
 			return
 		}
-		userID, valid := s.Store.AuthenticateKey(key)
-		if !valid {
+		userID, err := s.Store.AuthenticateKeyForRequest(key)
+		if err == access.ErrGroupUnavailable {
+			if style == errAnthropic {
+				writeAnthropicErr(w, 403, "permission_error", err.Error(), "group_unavailable")
+			} else {
+				writeErr(w, 403, err.Error(), "permission_error", "group_unavailable")
+			}
+			return
+		}
+		if err != nil {
 			reject("API 密钥无效或已停用")
 			return
 		}
@@ -468,53 +464,6 @@ func (s *Server) adminSameOrigin(r *http.Request) bool {
 	return false
 }
 
-// forwardingHeaders 是反向代理通常会加上的请求头。
-//
-// 只要出现其中之一，就说明调用方不是本机直连 —— RemoteAddr 是代理的地址。
-var forwardingHeaders = []string{
-	"X-Forwarded-For",
-	"X-Forwarded-Host",
-	"X-Forwarded-Proto",
-	"X-Real-Ip",
-	"X-Client-Ip",
-	"True-Client-Ip",
-	"Forwarded",
-}
-
-// viaProxy 报告请求是否经过反向代理。
-func viaProxy(r *http.Request) bool {
-	for _, h := range forwardingHeaders {
-		if r.Header.Get(h) != "" {
-			return true
-		}
-	}
-	return false
-}
-
-// localDirect 报告请求是否来自「本机直连」。
-//
-// 仅供 /v1 在未签发密钥时使用；管理接口始终需要角色会话。
-// 只看 RemoteAddr 是不够的：同机反向代理（nginx `proxy_pass 127.0.0.1:10087`）
-// 会把**所有**公网请求的 RemoteAddr 变成 127.0.0.1，从而把管理接口
-// （含导出完整登录态）暴露给公网。
-func (s *Server) localDirect(r *http.Request) bool {
-	if viaProxy(r) || !isLoopbackAddr(r.RemoteAddr) {
-		return false
-	}
-	u, err := url.Parse("http://" + r.Host)
-	return err == nil && u.User == nil && u.Path == "" && u.RawQuery == "" && u.Fragment == "" && isLoopbackHost(u.Hostname())
-}
-
-// isLoopbackAddr 判断 TCP 远端地址是否为本机环回。
-func isLoopbackAddr(remoteAddr string) bool {
-	host, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		host = remoteAddr
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
-}
-
 // persist 保存状态文件，失败时记日志。
 //
 // 控制台各操作遍布 Save 调用，逐一处理错误会淹没业务逻辑；但**绝不能静默忽略** ——
@@ -563,7 +512,6 @@ func sanitizedSettings(st storage.Settings) map[string]any {
 		"cors_origin":            st.CORSOrigin,
 		"auto_refresh":           st.AutoRefresh,
 		"allow_credit_models":    st.AllowCreditModels,
-		"allow_anonymous":        st.AllowAnonymous,
 		"rate_limit_enabled":     st.RateLimitEnabled,
 		"rate_limit_qps":         st.RateLimitQPS,
 		"rate_limit_burst":       st.RateLimitBurst,

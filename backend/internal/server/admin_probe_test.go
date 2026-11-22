@@ -42,7 +42,12 @@ func probeFakeResponse(r *http.Request, status int, body string) *http.Response 
 // 不会发起续期网络请求，测试因此只需伪造推理端点。
 func newAdminTestServer(t *testing.T, ids ...string) *Server {
 	t.Helper()
-	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	return adminTestServerWithKeys(t, nil, ids...)
+}
+
+func adminTestServerWithKeys(t *testing.T, keys []string, ids ...string) *Server {
+	t.Helper()
+	st, err := openTestState(t, filepath.Join(t.TempDir(), "state.json"), keys...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,6 +70,7 @@ func newAdminTestServer(t *testing.T, ids ...string) *Server {
 			},
 		})
 	}
+	grantFixtureAccounts(t, st)
 	return s
 }
 

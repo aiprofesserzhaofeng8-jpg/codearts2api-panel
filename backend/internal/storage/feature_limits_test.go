@@ -64,7 +64,7 @@ func TestCredentialCommitRejectsNewLoginAndDeletion(t *testing.T) {
 }
 func TestKeyBudgetReservationsResetAndMissingUsage(t *testing.T) {
 	s := testPool(t, 0)
-	key := s.AddKey("test").Key
+	key := groupedTestKey(t, s, "test").Key
 	if err := s.SetKeyBudgetAndSave(key, KeyBudget{MaxRequests: 1}, false); err != nil {
 		t.Fatal(err)
 	}
@@ -105,9 +105,11 @@ func TestKeyBudgetReservationsResetAndMissingUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.Record(LogEntry{Status: 502, Attempts: 1, UsageIncomplete: true}, 0, key)
-	if _, err := s.BeginKeyBudget(key); err == nil {
-		t.Fatal("unknown token usage treated as free")
+	resume, err := s.BeginKeyBudget(key)
+	if err != nil {
+		t.Fatal(err)
 	}
+	resume()
 	if err := s.SetKeyBudgetAndSave(key, KeyBudget{MaxUSD: 1}, true); err != nil {
 		t.Fatal(err)
 	}
@@ -121,9 +123,11 @@ func TestKeyBudgetReservationsResetAndMissingUsage(t *testing.T) {
 	if err := s.SetKeyBudgetAndSave(key, KeyBudget{MaxUSD: 1}, false); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.BeginKeyBudget(key); err == nil {
-		t.Fatal("unpriced historical consumption treated as zero")
+	resume, err = s.BeginKeyBudget(key)
+	if err != nil {
+		t.Fatal(err)
 	}
+	resume()
 	s.ClearStats()
 	s.ClearLogs()
 	if s.Keys()[0].Budget.MaxUSD != 1 {

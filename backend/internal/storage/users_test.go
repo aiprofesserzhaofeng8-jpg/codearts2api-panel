@@ -36,7 +36,10 @@ func userFixture(t *testing.T, budget KeyBudget) (*Store, access.UserView, APIKe
 }
 func TestUsersIsolationAndAtomicRevocation(t *testing.T) {
 	s, u, k := userFixture(t, KeyBudget{})
-	admin := s.AddKey("legacy admin")
+	admin, err := s.AddKeyInGroupAndSave("administrator", u.GroupID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if owner, ok := s.AuthenticateKey(k.Key); !ok || owner != u.ID {
 		t.Fatal(owner, ok)
 	}
@@ -49,9 +52,6 @@ func TestUsersIsolationAndAtomicRevocation(t *testing.T) {
 	}
 	if err = s.SetKeyGroupAndSave(k.Key, ""); err == nil {
 		t.Fatal("individual key escaped user group")
-	}
-	if err = s.DeleteGroup(u.GroupID); err == nil {
-		t.Fatal("referenced user group deleted")
 	}
 	if _, err = s.SaveUser(access.UserUpdate{ID: u.ID, Username: u.Username, GroupID: ""}, ""); err == nil {
 		t.Fatal("unrestricted user allowed")
@@ -247,9 +247,11 @@ func TestUsersMeteredBudgetAndSearchFailClosed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.BeginKeyBudget(k2.Key); err == nil {
-		t.Fatal("parallel user metered request")
+	releaseSecond, err := s.BeginKeyBudget(k2.Key)
+	if err != nil {
+		t.Fatal(err)
 	}
+	releaseSecond()
 	release()
 	if err = s.CheckSearchBudget(k2.Key); err == nil {
 		t.Fatal("unmetered search bypassed user budget")
@@ -259,9 +261,11 @@ func TestUsersMeteredBudgetAndSearchFailClosed(t *testing.T) {
 	if err = s.Record(entry, 0, k.Key); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.BeginKeyBudget(k2.Key); err == nil {
-		t.Fatal("unknown usage silently counted as zero")
+	resume, err := s.BeginKeyBudget(k2.Key)
+	if err != nil {
+		t.Fatal(err)
 	}
+	resume()
 	if _, err = s.SaveUser(access.UserUpdate{ID: u.ID, Username: u.Username, GroupID: u.GroupID, ResetBudget: true, Budget: &KeyBudget{MaxUSD: 1}}, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -283,7 +287,7 @@ func BenchmarkUserAdmission(b *testing.B) {
 				id += strings.Repeat("x", 26-len(id)) // Production rand.Text identity length.
 				s.st.Users = append(s.st.Users, access.User{ID: id, GroupID: "g", Enabled: true})
 			}
-			key := s.AddKey("bench")
+			key := s.seedLegacyKey("bench")
 			s.st.Keys[0].UserID = s.st.Users[n-1].ID
 			s.st.Keys[0].GroupID = "g"
 			b.ReportAllocs()

@@ -84,7 +84,8 @@ func TestDefaultModelsAllProvidersAtomicIdempotentAndReopen(t *testing.T) {
 		t.Fatal("new public names did not reopen", err)
 	}
 	// Native names remain directly addressable, distinct from the new public route.
-	key, _ := s.Store.AddKeyInGroupAndSave("native-collision", "")
+	grantFixtureAccounts(t, s.Store)
+	key := s.Store.Keys()[0]
 	_, plan, err := s.Routing.Resolve(key.Key, s.Store.Settings(), deep.Name)
 	if err != nil || plan == nil || len(plan.IDs) != 4 {
 		t.Fatal(plan, err)
@@ -136,7 +137,7 @@ func TestDefaultModelsLegacyReuseAndGroupPermissions(t *testing.T) {
 	if len(snap.Models) != 1 || snap.Models[0].ID != old.ID || snap.Models[0].Enabled || snap.Models[0].Sources[0].Enabled {
 		t.Fatal("old config overwritten", snap.Models)
 	}
-	if len(s.Store.CanonicalGroups()[0].UnifiedModels) != 0 {
+	if len(fixtureGroup(t, s.Store.CanonicalGroups(), "default-group").UnifiedModels) != 0 {
 		t.Fatal("disabled model granted")
 	}
 	current := snap.Models[0]
@@ -154,7 +155,7 @@ func TestDefaultModelsLegacyReuseAndGroupPermissions(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
-	grants := s.Store.CanonicalGroups()[0].UnifiedModels
+	grants := fixtureGroup(t, s.Store.CanonicalGroups(), "default-group").UnifiedModels
 	if len(grants) != 1 || !reflect.DeepEqual(grants[0].SourceIDs, []string{"workbuddy/cn/deepseek-v4.1-flash"}) {
 		t.Fatal("grant escaped group ACL", fmt.Sprint(grants))
 	}
@@ -191,6 +192,7 @@ func TestDefaultV2ConsolidatesExistingProviderNamesIntoOnePublicModel(t *testing
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
+	grantFixtureAccounts(t, s.Store)
 	entries, err := s.Routing.ClientModels(key, s.ModelPolicies)
 	if err != nil {
 		t.Fatal(err)
@@ -254,6 +256,7 @@ func TestQoderAliasJoinsCanonicalAndPreservesLegacyCalls(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatal(w.Code, w.Body.String())
 	}
+	grantFixtureAccounts(t, s.Store)
 	_, plan, err := s.Routing.Resolve(key, s.Store.Settings(), "glm-5.3-flash")
 	if err != nil || plan == nil || len(plan.IDs) != 2 {
 		t.Fatal(plan, err)
@@ -262,6 +265,7 @@ func TestQoderAliasJoinsCanonicalAndPreservesLegacyCalls(t *testing.T) {
 	if err != nil || old == nil || old.IDs[0] != "qoder/cn/gfmodel" {
 		t.Fatal(old, err)
 	}
+	grantFixtureAccounts(t, s.Store)
 	entries, err := s.Routing.ClientModels(key, s.ModelPolicies)
 	if err != nil {
 		t.Fatal(err)

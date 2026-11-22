@@ -55,9 +55,8 @@
 | 面 | 措施 | 代码位置 |
 | --- | --- | --- |
 | 默认暴露面 | 只监听 `127.0.0.1` | `main.go` |
-| 本机直连判定 | `RemoteAddr` 是环回 **且** 无任何代理头；带代理头一律按非本机 | `server.go: localDirect/viaProxy` |
 | 管理接口 | 默认必须登录；8 小时会话、改密/退出撤销、密码慢哈希；仅服务器签发的 admin 角色可访问；本机地址和密码请求头不授予权限 | `server.go: withAdminAuth`、`access/authentication.go` |
-| 推理接口 | 已签发密钥则必须携带；没有密钥且没有用户时才允许显式开启的本机匿名调用 | `server.go: withAuth` |
+| 推理接口 | 所有客户端均须携带已启用且绑定有效分组的密钥 | `server.go: withAuth` |
 | CSRF | 统一登录、管理接口和用户接口检查同源；会话 Cookie 使用 SameSite=Strict；拒绝旧密码请求头 | `server/authentication.go: sessionSameOrigin` |
 | CORS | 默认仅同源，不接受通配符 | `server.go: withCORS` |
 | XSS | 控制台全程 `textContent` 渲染；CSP `default-src 'none'` + `script-src 'self'` + `style-src 'self'`（无 `unsafe-inline`） | `web.go`、`web/console.js` |
@@ -87,7 +86,7 @@
 ## 加固清单（对外部署前逐项确认）
 
 - [ ] 设置强管理密码：`-admin-password` 或 `CODEARTS_ADMIN_PASSWORD`；
-- [ ] **不要**开启「允许匿名调用」；改为签发 API 密钥并分发给客户端；
+- [ ] 为客户端签发绑定有效分组的 API 密钥；
 - [ ] 只监听回环（默认），或在前置反向代理终止 TLS 并再加一层鉴权；
 - [ ] 反向代理**必须**透传真实来源头，且不要把管理接口暴露给公网；
 - [ ] 状态文件所在目录仅本人可读；不要把 `codearts2api-data.json` 放进共享目录或版本库；

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import GroupModelPicker from './GroupModelPicker.vue';
 import RecordToolbar from '../../components/RecordToolbar.vue';
 import { computed, ref } from 'vue';
 import { api, isAbortError } from '../../api/client';
@@ -9,6 +10,8 @@ import { canonicalSource, compatibilityAliases, rawSource, editError, reloadUnif
 import { groupModelAllowed } from './controller';
 const dialog = ref<HTMLDialogElement>(), draft = ref<Group>(), busy = ref(false), opening = ref(false), error = ref(''), listError = ref('');
 const groups = computed(() => serverState.data?.groups ?? []), accounts = computed(() => serverState.data?.accounts ?? []);
+const missingAccounts = computed(() => (draft.value?.account_ids ?? []).filter(id => !accounts.value.some(account => account.id === id)));
+const pickerSession = ref(0);
 const query=ref(''), binding=ref('');
 const keyCounts=computed(()=>{const counts=new Map<string,number>();for(const k of serverState.data?.keys??[]){if(k.group_id)counts.set(k.group_id,(counts.get(k.group_id)??0)+1);}return counts;});
 const visibleGroups=computed(()=>groups.value.filter(g=>g.name.toLowerCase().includes(query.value.trim().toLowerCase()) && (!binding.value || (bindingCount(g)>0?'bound':'unbound')===binding.value)));
@@ -40,7 +43,8 @@ async function open(group?: Group) {
             throw new Error(tr('分组已删除，请刷新列表'));
         if (current !== epoch)
             return;
-        draft.value = fresh ? JSON.parse(JSON.stringify(fresh)) : { id: '', name: '', revision: 0, account_ids: [], allowlist_enabled: false, model_ids: [], unified_models: [], raw_model_mode: 'qualified_only', raw_models_visible_default: false, model_rules: [], default_model: '', client_default_model: '' };
+        draft.value = fresh ? JSON.parse(JSON.stringify(fresh)) : { id: '', name: '', revision: 0, account_ids: [], allowlist_enabled: false, model_ids: [], unified_models: [], raw_model_mode: 'qualified_only', raw_models_visible_default: true, model_rules: [], default_model: '', client_default_model: '' };
+        pickerSession.value++;
         error.value = '';
         if (!dialog.value?.open)
             dialog.value?.showModal();
@@ -52,16 +56,6 @@ async function open(group?: Group) {
     finally {
         opening.value = false;
     }
-}
-function grant(id: string): Grant | undefined { return draft.value?.unified_models.find(g => g.model_id === id); }
-function selectModel(id: string, checked: boolean) {
-    const group = draft.value, model = unifiedModels.value.find(m => m.id === id);
-    if (!group || !model)
-        return;
-    if (checked && !grant(id))
-        group.unified_models.push({ model_id: id, visible: true, callable: true, source_mode: 'selected', source_ids: model.sources.map(s => s.id) });
-    if (!checked)
-        group.unified_models = group.unified_models.filter(g => g.model_id !== id);
 }
 function getRule(id: string, key: 'visible' | 'callable'): string { const value = draft.value?.model_rules?.find(r => r.id === id)?.[key]; return value == null ? 'inherit' : String(value); }
 function setRule(id: string, key: 'visible' | 'callable', value: string) {
@@ -124,7 +118,7 @@ async function save() {
         busy.value = false;
     }
 }
-async function remove(g: Group) { if (busy.value || !confirm(tr('确定删除分组「') + g.name + '」？'))
+async function remove(g: Group) { if (busy.value || !confirm(tr('确定删除分组「') + g.name + tr('」？关联密钥将无法调用，相关套餐和订阅将停用。上游账号和历史用量保留。')))
     return; busy.value = true; listError.value = ''; try {
     await api('/admin/api/groups?id=' + encodeURIComponent(g.id) + '&expected_revision=' + g.revision, { method: 'DELETE' });
     await refresh();
@@ -157,7 +151,6 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
             <tr>
               <th>{{tr('名称')}}</th>
               <th>{{tr('账号数')}}</th>
-              <th>{{tr('模型范围')}}</th>
               <th>{{tr('绑定密钥')}}</th>
               <th>{{tr('操作')}}</th>
             </tr>
@@ -166,15 +159,14 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
             <tr v-for="g in visibleGroups" :key="g.id">
               <td><strong class="record-name">{{g.name}}</strong></td>
               <td>{{g.account_ids?.length??0}}</td>
-              <td>{{(g.unified_models??[]).length}} {{tr('个统一模型')}}</td>
               <td>{{bindingCount(g)}}</td>
               <td class="actions-cell">
                 <button class="btn xs row-action row-edit" :disabled="busy||opening" @click="open(g)">{{tr('编辑')}}</button>
-                <button class="btn xs danger row-action row-delete" :disabled="busy||bindingCount(g)>0" @click="remove(g)">{{tr('删除')}}</button>
+                <button class="btn xs danger row-action row-delete" :disabled="busy" @click="remove(g)">{{tr('删除')}}</button>
               </td>
             </tr>
             <tr v-if="!visibleGroups.length">
-              <td colspan="5" class="empty">{{tr(groups.length?'没有匹配的分组':'尚未创建分组')}}</td>
+              <td colspan="4" class="empty">{{tr(groups.length?'没有匹配的分组':'尚未创建分组')}}</td>
             </tr>
           </tbody>
         </table>
@@ -197,44 +189,20 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
           <div id="groupAccounts" class="group-account-options">
             <label v-for="account in accounts" :key="account.id" class="check">
               <input v-model="draft.account_ids" type="checkbox" :value="account.id">{{account.name}} · {{account.provider||'codearts'}}</label>
+            <label v-for="id in missingAccounts" :key="id" class="check">
+              <input v-model="draft.account_ids" type="checkbox" :value="id">{{tr('账号已删除，取消勾选以移除')}} · {{id}}</label>
               <p v-if="!accounts.length" class="hint">{{tr('请先添加账号')}}</p>
             </div>
-            <h3 class="mt-14">{{tr('统一模型授权')}}</h3>
-            <p class="hint">{{tr('只选择已有统一模型；名称与平台对应关系在模型页维护。')}}</p>
-            <div id="groupUnifiedGrants">
-              <div v-for="model in selectableModels" :key="model.id" class="unified-source">
-                <label class="check">
-                  <input type="checkbox" :checked="!!grant(model.id)" :aria-label="tr('授权')+' '+model.name" @change="selectModel(model.id,($event.target as HTMLInputElement).checked)">
-                  <strong>{{model.name}}</strong>
-                  <span v-if="!model.enabled" class="badge warn">{{tr('停用')}}</span>
-                </label>
-                <template v-for="g in draft.unified_models.filter(a=>a.model_id===model.id)" :key="g.model_id">
-                  <div class="actions">
-                    <label class="check">
-                      <input v-model="g.visible" type="checkbox" :aria-label="model.name+' '+tr('显示')">{{tr('显示')}}</label>
-                      <label class="check">
-                        <input v-model="g.callable" type="checkbox" :aria-label="model.name+' '+tr('允许调用')">{{tr('允许调用')}}</label>
-                      </div>
-                      <details>
-                        <summary>{{tr('来源限制')}}</summary>
-                        <div class="field">
-                          <label>{{tr('授权来源模式')}}<select v-model="g.source_mode" :aria-label="model.name+' '+tr('授权来源模式')">
-                            <option value="selected">{{tr('固定选中的来源')}}</option>
-                            <option value="all">{{tr('跟随定义的全部来源（包含以后新增）')}}</option>
-                          </select>
-                        </label>
-                      </div>
-                      <div v-if="g.source_mode==='selected'">
-                        <label v-for="source in model.sources" :key="source.id" class="check">
-                          <input v-model="g.source_ids" type="checkbox" :value="source.id">{{source.id}}<span v-if="!source.enabled" class="badge warn">{{tr('停用')}}</span>
-                        </label>
-                        <p v-if="!g.source_ids.length" class="hint">{{tr('未选择来源：禁止调用，不代表全部来源。')}}</p>
-                      </div>
-                    </details>
-                  </template>
-                </div>
-                <p v-if="!unifiedModels.length" class="hint">{{tr('尚未配置统一模型，请先到模型页创建。')}}</p>
-              </div>
+            <label class="check">
+              <input id="groupRawVisible" v-model="draft.raw_models_visible_default" type="checkbox">{{tr('默认显示原始型号')}}</label>
+            <div class="field">
+              <label for="groupRawMode">{{tr('原始名称兼容模式')}}</label>
+              <select id="groupRawMode" v-model="draft.raw_model_mode">
+                <option value="qualified_only">{{tr('只接受完整平台型号')}}</option>
+                <option value="legacy">{{tr('兼容旧裸名称与别名')}}</option>
+              </select>
+            </div>
+            <GroupModelPicker :key="pickerSession" v-model="draft.unified_models" :models="selectableModels" />
               <div class="field-grid cols-2 mt-14">
                 <div class="field">
                   <label for="groupDefaultModel">{{tr('请求默认模型')}}</label>
@@ -256,15 +224,6 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
               <details id="groupRawAccess">
                 <summary>{{tr('原始型号访问权限')}}</summary>
                 <p class="hint">{{tr('原始白名单和调用规则也约束统一模型来源；原始显示不改变统一模型可见性。')}}</p>
-                <div class="field">
-                  <label for="groupRawMode">{{tr('原始名称兼容模式')}}</label>
-                  <select id="groupRawMode" v-model="draft.raw_model_mode">
-                    <option value="qualified_only">{{tr('只接受完整平台型号')}}</option>
-                    <option value="legacy">{{tr('兼容旧裸名称与别名')}}</option>
-                  </select>
-                </div>
-                <label class="check">
-                  <input id="groupRawVisible" v-model="draft.raw_models_visible_default" type="checkbox">{{tr('默认显示原始型号')}}</label>
                   <label class="check">
                     <input id="groupAllowlist" v-model="draft.allowlist_enabled" type="checkbox">{{tr('仅允许选中的模型')}}</label>
                     <div v-show="draft.allowlist_enabled" id="groupModelsField" class="field">
@@ -297,9 +256,9 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
                       </table>
                     </div>
                   </details>
-                  <p id="groupError" class="err-text" role="alert">{{error}}</p>
                 </div>
                 <div class="modal-actions">
+                  <p v-show="error" id="groupError" class="err-text" role="alert">{{error}}</p>
                   <button type="button" id="groupCancel" class="btn" @click="close">{{tr('取消')}}</button>
                   <button v-if="draft.id" type="button" class="btn" @click="reread">{{tr('重新读取')}}</button>
                   <button id="groupSave" type="submit" class="btn primary">{{busy?tr('保存中…'):tr('保存分组')}}</button>

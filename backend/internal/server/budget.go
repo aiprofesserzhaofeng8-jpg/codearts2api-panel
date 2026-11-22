@@ -26,9 +26,9 @@ func (s *Server) withKeyBudget(style errStyle, next http.HandlerFunc) http.Handl
 		if err != nil {
 			mapped := apierr.From(err)
 			if style == errAnthropic {
-				writeAnthropicErr(w, mapped.Status, mapped.Anthropic, err.Error())
+				writeAnthropicErr(w, mapped.Status, mapped.Anthropic, err.Error(), apierr.Reason(err))
 			} else {
-				writeErr(w, mapped.Status, err.Error(), mapped.OpenAI)
+				writeErr(w, mapped.Status, err.Error(), mapped.OpenAI, apierr.Reason(err))
 			}
 			return
 		}
@@ -49,13 +49,20 @@ func (s *Server) checkRequestBudget(ctx context.Context, model string) error {
 		return err
 	}
 	key, _ := ctx.Value(budgetKeyContext{}).(string)
-	if err := s.Admission.CheckProgress(key, model, requestAttemptDetails(ctx)); err != nil {
-		return err
+	return s.admitAttemptPrice(ctx, key, model)
+}
+func (s *Server) admitAttemptPrice(ctx context.Context, key, model string) error {
+	consumer, metered := ctx.Value(consumerRequestKey{}).(*consumerRequest)
+	var id string
+	var size int
+	if metered {
+		id, size = consumer.id, consumer.inputBytes
 	}
-	if quote, ok := ctx.Value(consumerRequestKey{}).(*consumerRequest); ok {
-		return s.Admission.Quote(key, quote.id, model, quote.inputBytes, requestAttemptDetails(ctx))
+	price, err := s.Admission.AdmitAttempt(key, id, model, size, metered, requestAttemptDetails(ctx))
+	if c, ok := ctx.Value(usageContextKey{}).(*usageCapture); ok {
+		c.pendingPrice = price
 	}
-	return nil
+	return err
 }
 func (s *Server) handleKeyBudget(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {

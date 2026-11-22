@@ -157,7 +157,7 @@ docker compose down
 
 A public deployment can use `Client → HTTPS domain → Nginx/Caddy → Gateway`. With a reverse proxy on the same host, the gateway can keep listening on `127.0.0.1:10087`. Preserve the original Host header, disable response buffering, and allow sufficient read timeouts for streaming responses.
 
-The service does not provide HTTPS itself. Keep administrator authentication and API key checks enabled, and leave local automatic unlock and anonymous access disabled. When TLS terminates at the proxy, configure the trusted proxy to add the Secure attribute to administrator and user session cookies. See [Security](SECURITY.md) and [Management](docs/MANAGEMENT.md) for deployment boundaries.
+The service does not provide HTTPS itself. The console requires administrator sign-in. Model requests require an API key assigned to a valid group. When TLS terminates at the proxy, configure the trusted proxy to add the Secure attribute to administrator and user session cookies. See [Security](SECURITY.md) and [Management](docs/MANAGEMENT.md) for deployment boundaries.
 
 ### Updates and backups
 

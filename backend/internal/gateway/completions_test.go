@@ -211,3 +211,41 @@ func TestCompleteStreamRetains32MiBLimitAndCountsRejectedChunk(t *testing.T) {
 		t.Fatal("size failure changed, replayed or lost accounting", err)
 	}
 }
+
+// Adapters can perform credential preparation before starting inference.
+// Cancellation during that preparation must prevent the later model request.
+func TestStreamPreparationHonorsClientCancellation(t *testing.T) {
+	for _, buffered := range []bool{false, true} {
+		name := "stream"
+		if buffered {
+			name = "buffered"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			started := 0
+			session := fixtureSession{stream: func(up context.Context, _ string, _ []byte, _ func([]byte) error) error {
+				cancel()
+				if err := up.Err(); err != nil {
+					return err
+				}
+				started++
+				return errors.New("inference started after cancellation")
+			}}
+			observer := Observer{
+				Observe: func() { t.Error("unexpected output") },
+				Usage:   func(context.Context, []byte) { t.Error("unexpected usage") },
+			}
+			e := &Completions{}
+			var err error
+			if buffered {
+				_, err = e.CompleteStream(ctx, session, "model", nil, observer)
+			} else {
+				err = e.Stream(ctx, session, "model", nil, observer, func([]byte) error { return nil })
+			}
+			if started != 0 || !errors.Is(err, context.Canceled) {
+				t.Fatalf("inference requests after disconnect: %d; error: %v", started, err)
+			}
+		})
+	}
+}

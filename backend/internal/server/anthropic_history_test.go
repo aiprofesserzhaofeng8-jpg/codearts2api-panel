@@ -115,6 +115,7 @@ func TestMessagesUnsignedThinkingToolRoundTrip(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				grantFixtureAccounts(t, s.Store)
 				markModelsFresh(s)
 				body := fmt.Sprintf(`{"model":"history-v1","max_tokens":128,"stream":%v,"messages":[{"role":"user","content":"lookup"}],"tools":[{"name":"lookup","input_schema":{"type":"object"}}]}`, stream)
 				first := responseRequest(s, key, "/v1/messages", body)
@@ -153,6 +154,7 @@ func TestMessagesSignedHistoryNeverFallsBackToChat(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				grantFixtureAccounts(t, s.Store)
 				markModelsFresh(s)
 				body := fmt.Sprintf(`{"model":%q,"max_tokens":128,"messages":[{"role":"assistant","content":[%s]},{"role":"user","content":"continue"}]}`, model, block)
 				w := responseRequest(s, key, "/v1/messages", body)

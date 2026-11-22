@@ -8,10 +8,12 @@ import (
 const MaxUsageRecords = 100000
 
 type UsageQuery struct {
+	Granularity    string
 	Provider       string
 	Model          string
 	Protocol       string
 	Status         string
+	ModelMismatch  bool
 	Location       *time.Location
 	Start, End     int64
 	Page, PageSize int
@@ -66,6 +68,9 @@ func query(records []LogEntry, q UsageQuery) UsagePage {
 			continue
 		}
 		failed := e.Status >= 400 || e.Err != ""
+		if q.ModelMismatch && (e.RequestedModel == "" || e.Model == "" || e.RequestedModel == e.Model) {
+			continue
+		}
 		if q.Status == "success" && failed || q.Status == "error" && !failed {
 			continue
 		}
@@ -73,7 +78,7 @@ func query(records []LogEntry, q UsageQuery) UsagePage {
 		SumRecord(&result.Stats, e)
 	}
 	sort.SliceStable(matched, func(i, j int) bool { return matched[i].Time > matched[j].Time })
-	result.Analysis = Analyze(matched, q.Location)
+	result.Analysis = analyzeTrend(matched, q.Location, q.Granularity)
 	result.Total = len(matched)
 	result.Pages = max(1, (result.Total+result.PageSize-1)/result.PageSize)
 	result.Page = min(result.Page, result.Pages)
@@ -101,7 +106,7 @@ func SumRecord(s *Stats, e LogEntry) {
 	if e.Status >= 400 || e.Err != "" {
 		s.FailedRequests++
 	}
-	if e.Usage.Known {
+	if e.Usage.HasMeasurements() {
 		s.UsageRequests++
 		s.InputTokens += e.Usage.InputTokens
 		s.OutputTokens += e.Usage.OutputTokens

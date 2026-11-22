@@ -22,8 +22,12 @@
 #keys .key-more:focus-within{outline:2px solid currentColor;outline-offset:1px}
 .row-more{--row-icon:url('../assets/row-actions/more.svg?no-inline')}
 .row-edit{--row-icon:url('../assets/row-actions/edit.svg?no-inline')}
+.row-enable{--row-icon:url('../assets/row-actions/enable.svg?no-inline')}
 .row-disable{--row-icon:url('../assets/row-actions/disable.svg?no-inline')}
 .row-delete{--row-icon:url('../assets/row-actions/delete.svg?no-inline')}
 .row-probe{--row-icon:url('../assets/row-actions/probe.svg?no-inline')}
 .console-layout .btn.row-action:not(:disabled):is(:hover,:focus-visible){background:var(--surface-2);color:var(--text)}
 .console-layout .btn.row-delete:not(:disabled):is(:hover,:focus-visible){background:var(--err-soft);color:var(--err)}
+
+.console-layout .btn.row-action.row-icon-only{width:32px;min-width:32px;height:32px;padding:8px;gap:0}
+.row-terminal{--row-icon:url('../assets/row-actions/terminal.svg?no-inline')}

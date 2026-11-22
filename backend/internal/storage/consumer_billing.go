@@ -18,9 +18,34 @@ type consumerHold struct {
 func (s *Store) ReserveConsumerQuote(key, id, model string, inputBytes int, attempts []RequestAttempt) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.reserveQuoteLocked(key, id, s.priceLocked(model), inputBytes, attempts)
+}
+
+// AdmitAttempt checks limits and reserves wallet funds at the very same rate.
+func (s *Store) AdmitAttempt(key, id, model string, inputBytes int, metered bool, attempts []RequestAttempt) (*usage.AttemptPrice, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	price := s.priceLocked(model)
+	if err := s.checkProgressLocked(key, price, attempts); err != nil {
+		return nil, err
+	}
+	if metered {
+		if err := s.reserveQuoteLocked(key, id, price, inputBytes, attempts); err != nil {
+			return nil, err
+		}
+	}
+	return &price, nil
+}
+func (s *Store) reserveQuoteLocked(key, id string, price usage.AttemptPrice, inputBytes int, attempts []RequestAttempt) error {
 	var u *access.User
 	for _, k := range s.st.Keys {
-		if k.Key == key && k.UserID != "" {
+		if k.Key == key {
+			if err := s.keyOwnerLocked(k); err != nil {
+				return budgetOwnerError(err)
+			}
+			if k.UserID == "" {
+				return nil
+			}
 			u = s.userLocked(k.UserID)
 			break
 		}
@@ -34,16 +59,11 @@ func (s *Store) ReserveConsumerQuote(key, id, model string, inputBytes int, atte
 		b.MaxRequests = 0
 		for _, a := range attempts {
 			total.Tokens += a.Usage.InputTokens + a.Usage.OutputTokens
-			if !a.Usage.Known {
-				total.Incomplete = true
-			}
-			if c := s.estimateModelLocked(a.Model, a.Usage); c != nil {
+			if c := s.attemptCostLocked(a); c != nil {
 				total.USD += c.Amount
-			} else if a.Usage.Known {
-				total.Unpriced = true
 			}
 		}
-		if b.MaxUSD > 0 && s.estimateModelLocked(model, TokenUsage{Known: true}) == nil {
+		if b.MaxUSD > 0 && price.Price == nil {
 			return &BudgetError{Message: "套餐费用预算要求模型具有价格"}
 		}
 		if err := checkUserBudget(b, total); err != nil {
@@ -56,18 +76,15 @@ func (s *Store) ReserveConsumerQuote(key, id, model string, inputBytes int, atte
 	if id == "" {
 		return &BudgetError{Message: "缺少请求结算标识，无法预留额度"}
 	}
-	if u.Wallet.ReviewRequired {
-		return &BudgetError{Message: "存在用量待核对，暂停额度调用"}
-	}
-	quote := s.estimateModelLocked(model, TokenUsage{Known: true, InputTokens: int64(max(0, inputBytes)), OutputTokens: 8192})
+	quote := price.Estimate(TokenUsage{Known: true, InputTokens: int64(max(0, inputBytes)), OutputTokens: 8192})
 	if quote == nil {
 		return &BudgetError{Message: "模型未配置参考价格，无法预留额度"}
 	}
 	cost := quote.Amount
 	for _, a := range attempts {
-		c := s.estimateModelLocked(a.Model, a.Usage)
-		if !a.Usage.Known || c == nil {
-			return &BudgetError{Message: "前次尝试缺少用量或价格，已停止自动重试"}
+		c := s.attemptCostLocked(a)
+		if c == nil {
+			continue
 		}
 		cost += c.Amount
 	}

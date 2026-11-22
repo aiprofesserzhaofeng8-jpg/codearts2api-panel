@@ -7,7 +7,6 @@ import { t as tr } from '../../i18n';
           <div v-once class="card-head">
             <div v-once>
               <h2>{{tr('请求日志')}}</h2>
-              <p class="card-sub">{{tr('只记录元信息（模型、耗时、长度），不落对话内容')}}</p>
             </div>
             <div v-once class="card-actions">
               <select id="logLimit" class="w-auto" :aria-label="tr('日志条数')">

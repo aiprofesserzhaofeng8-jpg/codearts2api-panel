@@ -1,3 +1,4 @@
+import { priceKind } from './price-kind';
 import { t as tr, dateLocale } from '../../i18n';
 import { refresh } from '../../shared/refresh';
 import { btn, cell, emptyRow, mk, on, pill, row } from '../../components/controls';
@@ -185,13 +186,14 @@ export function renderUsageDistribution(kind, holder) {
 export function renderUsageTrend() {
     var holder = domState.$("#usageTrendChart");
     holder.textContent = "";
-    var points = (usageState.usageAnalysis || {}).trend || [], days = (usageState.usageAnalysis || {}).bucket_days || 1;
-    domState.$("#usageTrendPeriod").textContent = days > 1 ? tr("每 ") + days + tr(" 天汇总") : tr("按日统计");
-    if (!points.some(function (p) { return p.stats.usage_requests > 0; })) {
-        holder.appendChild(mk("div", "usage-chart-empty", tr("暂无已报告的 Token 用量")));
+    const analysis = usageState.usageAnalysis || {};
+    const points = (analysis.trend || []).filter(p => p.stats.usage_requests > 0);
+    const hourly = analysis.bucket_days === 0;
+    if (!points.length) {
+        holder.appendChild(mk("div", "usage-chart-empty", tr("暂无趋势数据")));
         return;
     }
-    var series = [{ label: tr("输入"), key: "input", palette: 0 }, { label: tr("输出"), key: "output", palette: 1 }, { label: tr("缓存读取"), key: "cached", palette: 5 }];
+    var series = [{ label: tr("非缓存输入"), key: "input", palette: 0 }, { label: tr("输出"), key: "output", palette: 1 }, { label: tr("缓存读取"), key: "cached", palette: 5 }];
     function amounts(p) { var s = p.stats, input = Number(s.input_tokens || 0), cached = Math.min(input, Number(s.cached_tokens || 0)); return { input: input - cached, output: Number(s.output_tokens || 0), cached: cached }; }
     var values = points.map(amounts), max = 1;
     values.forEach(function (v) { max = Math.max(max, v.input, v.output, v.cached); });
@@ -200,36 +202,30 @@ export function renderUsageTrend() {
     series.forEach(function (s) { var item = mk("span", ""), dot = mk("i", "usage-legend-dot"); dot.classList.add("usage-palette-" + s.palette); item.appendChild(dot); item.appendChild(document.createTextNode(s.label)); legend.appendChild(item); });
     holder.appendChild(legend);
     var svg = usageSVG("svg", { viewBox: "0 0 520 170", role: "img", "aria-label": tr("所选范围的输入、输出与缓存 Token 趋势"), preserveAspectRatio: "none" });
-    var x = function (i) { return points.length === 1 ? 284 : 48 + i * 452 / (points.length - 1); }, y = function (v) { return 135 - v / max * 120; };
+    var x = function (i) { return points.length === 1 ? 284 : 48 + (points[i].time - points[0].time) * 452 / (points[points.length-1].time - points[0].time); }, y = function (v) { return 135 - v / max * 120; };
     for (var tick = 0; tick <= 4; tick++) {
         var yy = 15 + tick * 30;
         svg.appendChild(usageSVG("line", { x1: 48, y1: yy, x2: 500, y2: yy, class: "usage-trend-grid" }));
         svg.appendChild(usageSVG("text", { x: 40, y: yy + 3, "text-anchor": "end", class: "usage-trend-label" }, usageNumber(max * (4 - tick) / 4)));
     }
     series.forEach(function (s) {
-        var segments = [], current = [];
-        points.forEach(function (p, i) { if (p.stats.total_requests > 0 && !p.stats.usage_requests) {
-            if (current.length)
-                segments.push(current);
-            current = [];
-            return;
-        } current.push([x(i), y(values[i][s.key])]); });
-        if (current.length)
-            segments.push(current);
-        segments.forEach(function (segment) { var path = segment.map(function (p, i) { if (!i)
+        const segment = points.map((_, i) => [x(i), y(values[i][s.key])]);
+         var path = segment.map(function (p, i) { if (!i)
             return "M" + p[0] + " " + p[1]; var prev = segment[i - 1], dx = (p[0] - prev[0]) * .3; return "C" + (prev[0] + dx) + " " + prev[1] + " " + (p[0] - dx) + " " + p[1] + " " + p[0] + " " + p[1]; }).join(" "); if (segment.length > 1)
             svg.appendChild(usageSVG("path", { d: path + " L" + segment[segment.length - 1][0] + " 135 L" + segment[0][0] + " 135 Z", class: "usage-trend-area usage-palette-" + s.palette })); svg.appendChild(usageSVG("path", { d: path, class: "usage-trend-line usage-palette-" + s.palette })); if (segment.length === 1)
-            svg.appendChild(usageSVG("circle", { cx: segment[0][0], cy: segment[0][1], r: 3, fill: "currentColor", class: "usage-palette-" + s.palette })); });
+            svg.appendChild(usageSVG("circle", { cx: segment[0][0], cy: segment[0][1], r: 3, fill: "currentColor", class: "usage-palette-" + s.palette }));
     });
-    var caption = mk("div", "usage-trend-caption", tr("悬停或聚焦图表查看每日用量"));
+    var caption = mk("div", "usage-trend-caption", "");
     var indices = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter(function (n, i, a) { return a.indexOf(n) === i; });
     points.forEach(function (p, i) {
-        var date = new Date(p.time * 1000), label = (date.getMonth() + 1) + "/" + date.getDate();
-        if (indices.includes(i))
+        var date = new Date(p.time * 1000), label = hourly ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }) : (date.getMonth() + 1) + "/" + date.getDate();
+        if (indices.includes(i) && (i === 0 || i === points.length - 1 || (x(i) - x(0) > 55 && x(points.length - 1) - x(i) > 55)))
             svg.appendChild(usageSVG("text", { x: x(i), y: 159, "text-anchor": "middle", class: "usage-trend-label" }, label));
-        var width = points.length === 1 ? 452 : 452 / (points.length - 1), left = Math.max(48, x(i) - width / 2), right = Math.min(500, x(i) + width / 2);
+        var left = i ? (x(i-1) + x(i))/2 : 48, right = i+1 < points.length ? (x(i) + x(i+1))/2 : 500;
         var hit = usageSVG("rect", { x: left, y: 12, width: right - left, height: 128, class: "usage-trend-hover", tabindex: 0 });
-        var text = localDate(date) + (days > 1 ? tr("起 ") + days + tr(" 天") : "") + " · " + (p.stats.total_requests > 0 && !p.stats.usage_requests ? tr("用量未报告") : tr("输入 ") + usageNumber(values[i].input) + tr(" / 输出 ") + usageNumber(values[i].output) + tr(" / 缓存 ") + usageNumber(values[i].cached));
+        var text = localDate(date) + (hourly ? " " + label : "") + " · " + tr("非缓存输入") + " " + usageNumber(values[i].input) + " / " + tr("输出") + " " + usageNumber(values[i].output) + " / " + tr("缓存读取") + " " + usageNumber(values[i].cached);
+        if (p.stats.total_requests > 0) text += " · " + tr("已上报请求") + " " + (p.stats.usage_requests || 0) + "/" + p.stats.total_requests;
+        else text += " · " + tr("尚无请求记录");
         hit.setAttribute("aria-label", text);
         hit.appendChild(usageSVG("title", {}, text));
         listen(hit, "mouseenter", function () { caption.textContent = text; });
@@ -293,6 +289,7 @@ export function applyUsageDates() {
         end.setDate(end.getDate() + 1);
     usageState.usageView.start = start ? Math.floor(start.getTime() / 1000) : 0;
     usageState.usageView.end = end ? Math.floor(end.getTime() / 1000) : 0;
+    domState.$("#usageGranularity").value = start && end && (end-start) <= 49*3600000 ? "hour" : "day";
     usageState.usageView.label = a ? a + tr(" 至 ") + b : tr("全部已保存记录");
     usageState.usageView.page = 1;
     usageState.usageView.preset = domState.$("#usagePreset").value;
@@ -340,14 +337,28 @@ export function jumpUsagePage() {
     return refreshUsageLogs();
 }
 
+
+function usageResult(state, message = '') {
+    domState.$('#tab-overview').dataset.result = state;
+    domState.$('#usageNotice').hidden = state === 'records';
+    if (state === 'records') return;
+    const empty = state === 'empty', failed = state === 'error';
+    domState.$('#usageNoticeTitle').textContent = failed ? tr('用量读取失败') : empty ? tr('尚无请求记录') : tr('所选条件下暂无请求记录');
+    const note = domState.$('#usageNoticeMessage');
+    note.textContent = message; note.hidden = !message;
+    const action = domState.$('#usageNoticeAction');
+    action.textContent = failed ? tr('重试') : empty ? tr('前往 API 密钥') : tr('清除筛选');
+    action.onclick = failed ? refreshUsageLogs : empty ? () => { location.hash = 'keys'; } : () => domState.$('#resetUsageFilters').click();
+}
+
 export function refreshUsageLogs() {
     var seq = ++usageState.usageView.seq;
     usageState.usageView.busy = true;
     renderUsagePagination();
     domState.$("#usageLogs").setAttribute("aria-busy", "true");
-    var query = new URLSearchParams({ page: String(usageState.usageView.page), page_size: String(usageState.usageView.pageSize) });
+    var query = new URLSearchParams({ granularity: domState.$("#usageGranularity").value, page: String(usageState.usageView.page), page_size: String(usageState.usageView.pageSize) });
     query.set("time_zone", Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-    [["provider", "#usageProvider"], ["model", "#usageModel"], ["protocol", "#usageProtocol"], ["status", "#usageStatus"]].forEach(function (pair) { if (domState.$(pair[1]).value)
+    [["provider", "#usageProvider"], ["model", "#usageModel"], ["protocol", "#usageProtocol"], ["status", "#usageStatus"], ["model_mismatch", "#usageMismatch"]].forEach(function (pair) { if (domState.$(pair[1]).value)
         query.set(pair[0], domState.$(pair[1]).value); });
     if (usageState.usageView.start)
         query.set("start", String(usageState.usageView.start));
@@ -361,6 +372,11 @@ export function refreshUsageLogs() {
         usageState.usageView.total = d.total;
         renderUsage(d.stats || {});
         renderUsageCharts(d.analysis);
+        const providers = domState.$("#usageProvider");
+        const known = new Set(Array.from(providers.options, option => option.value));
+        for (const id of [...(d.analysis?.providers || []).map(p => p.name), ...(d.logs || []).map(l => l.provider)]) {
+            if (id && !known.has(id)) { providers.add(new Option(id, id)); known.add(id); }
+        }
         var modelFilter = domState.$("#usageModel"), selectedModel = modelFilter.value;
         var modelIDs = new Set(Array.from(modelFilter.options).map(function (o) { return o.value; }).filter(Boolean));
         ((d.analysis || {}).models || []).forEach(function (item) { modelIDs.add(item.name); });
@@ -377,12 +393,13 @@ export function refreshUsageLogs() {
         var tb = domState.$("#usageLogs");
         tb.textContent = "";
         var logs = d.logs || [];
+        usageResult(logs.length ? 'records' : d.retained === 0 ? 'empty' : 'filtered');
         if (!logs.length) {
             tb.appendChild(emptyRow(7, tr("所选条件下暂无请求记录")));
             return;
         }
         logs.forEach(function (l) {
-            var u = l.usage || {}, known = u.known, input = Number(u.input_tokens || 0), output = Number(u.output_tokens || 0), cached = Math.min(input, Number(u.cached_tokens || 0));
+            var u = l.usage || {}, known = u.known || u.partial, input = Number(u.input_tokens || 0), output = Number(u.output_tokens || 0), cached = Math.min(input, Number(u.cached_tokens || 0));
             var number = function (n) { return known ? (l.usage_incomplete ? "≥" : "") + n.toLocaleString(dateLocale) : "—"; };
             var status = cell("");
             status.appendChild(pill(l.status, l.status >= 400 || l.err ? "err" : "ok"));
@@ -400,7 +417,7 @@ export function refreshUsageLogs() {
             model.appendChild(name);
             model.appendChild(mk("span", "usage-log-sub", usageSeriesName(l.provider || "codearts", "providers")));
             var tokens = cell(""), counts = mk("div", "usage-token-values");
-            [{ n: input - cached, label: tr("输入（未缓存）"), tone: "usage-input", path: "M7 2v10m-4-4 4 4 4-4" }, { n: output, label: tr("输出"), tone: "usage-output", path: "M7 12V2m-4 4 4-4 4 4" }].forEach(function (item) { var span = mk("span", ""), icon = usageSVG("svg", { viewBox: "0 0 14 14", class: item.tone, "aria-hidden": "true" }); icon.appendChild(usageSVG("path", { d: item.path })); span.title = item.label; span.appendChild(icon); span.appendChild(document.createTextNode(number(item.n))); counts.appendChild(span); });
+            [{ n: input - cached, label: tr("输入（未缓存）"), tone: "usage-input", path: "M7 2v10m-4-4 4 4 4-4" }, { n: output, label: tr("输出"), tone: "usage-output", path: "M7 12V2m-4 4 4-4 4 4" }].forEach(function (item) { var span = mk("span", ""), icon = usageSVG("svg", { viewBox: "0 0 14 14", class: item.tone, "aria-hidden": "true" }); icon.appendChild(usageSVG("path", { d: item.path })); span.title = item.label; span.appendChild(icon); span.appendChild(document.createTextNode(u.partial && item.tone === "usage-output" && !output ? "—" : number(item.n))); counts.appendChild(span); });
             tokens.appendChild(counts);
             tokens.appendChild(mk("span", "usage-cache-value", tr("缓存 ") + number(cached)));
             tokens.title = tr("总 Token：") + number(input + output) + (l.usage_incomplete ? tr("（用量部分报告）") : "");
@@ -408,19 +425,15 @@ export function refreshUsageLogs() {
             protocol.appendChild(badge);
             if (l.request_kind === "summary")
                 protocol.appendChild(mk("span", "usage-log-sub", tr("摘要 ×") + (l.summary_attempts || 1)));
-            tb.appendChild(row([model, protocol, status, tokens, cell(l.estimated_cost ? money(l.estimated_cost.amount, l.estimated_cost.currency) + (l.estimated_cost.partial ? tr("（部分）") : "") : "—", "usage-money"), cell((l.latency_ms / 1000).toFixed(2) + "s"), date]));
+            const costCell = cell(l.estimated_cost ? money(l.estimated_cost.amount, l.estimated_cost.currency) + (l.estimated_cost.partial ? tr("（部分）") : "") : "—", "usage-money");
+            const source = priceKind(l.estimated_cost?.price_kind);
+            if (source) costCell.appendChild(mk("span", "usage-log-sub", source));
+            tb.appendChild(row([model, protocol, status, tokens, costCell, cell((l.latency_ms / 1000).toFixed(2) + "s"), date]));
         });
     }).catch(function (e) { if (isAbortError(e)) return;
         if (seq !== usageState.usageView.seq)
             return;
-        renderUsage({});
-        renderUsageCharts(null);
-        usageState.usageView.page = 1;
-        usageState.usageView.pages = 1;
-        usageState.usageView.total = 0;
-        domState.$("#usagePeriod").textContent = usageState.usageView.label + tr(" · 加载失败，请重试");
-        domState.$("#usageLogs").textContent = "";
-        domState.$("#usageLogs").appendChild(emptyRow(7, tr("用量加载失败：") + e.message));
+        usageResult('error', e.message);
     }).finally(function () { if (seq === usageState.usageView.seq && domState.$("#usageLogs")) {
         usageState.usageView.busy = false;
         renderUsagePagination();
@@ -429,9 +442,10 @@ export function refreshUsageLogs() {
 }
 
 export function mountUsage() {
-["#usageProvider", "#usageModel", "#usageProtocol", "#usageStatus"].forEach(function (id) { listen(domState.$(id), "change", function () { usageState.usageView.page = 1; refreshUsageLogs(); }); });
+["#usageProvider", "#usageModel", "#usageProtocol", "#usageStatus", "#usageMismatch"].forEach(function (id) { listen(domState.$(id), "change", function () { usageState.usageView.page = 1; refreshUsageLogs(); }); });
 on("#reloadUsage", refreshUsageLogs);
-on("#resetUsageFilters", function () { ["#usageProvider", "#usageModel", "#usageProtocol", "#usageStatus"].forEach(function (id) { domState.$(id).value = ""; }); domState.$("#usagePreset").value = "all"; return setUsagePreset(); });
+on("#resetUsageFilters", function () { ["#usageProvider", "#usageModel", "#usageProtocol", "#usageStatus", "#usageMismatch"].forEach(function (id) { domState.$(id).value = ""; }); domState.$("#usagePreset").value = "all"; return setUsagePreset(); });
+listen(domState.$("#usageGranularity"), "change", refreshUsageLogs);
 on("#usageDateToggle", function () { var open = domState.$("#usageDateToggle").getAttribute("aria-expanded") !== "true"; domState.$("#usageDateToggle").setAttribute("aria-expanded", String(open)); domState.$("#usageDatePopover").classList.toggle("hidden", !open); if (open) {
     domState.$("#usageStart").value = usageState.usageView.start ? localDate(new Date(usageState.usageView.start * 1000)) : "";
     domState.$("#usageEnd").value = usageState.usageView.end ? localDate(new Date(usageState.usageView.end * 1000 - 1)) : "";

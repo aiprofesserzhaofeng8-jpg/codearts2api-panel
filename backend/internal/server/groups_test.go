@@ -6,10 +6,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"codearts2api/internal/access"
 	"codearts2api/internal/apierr"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/provider"
@@ -59,7 +61,8 @@ func TestGroupModelsAndThreeProtocolsShareScope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	k, err := s.Store.AddKeyInGroupAndSave("restricted", g.ID)
+	u := createTestUser(t, s, "alice", g.ID)
+	k, err := s.Store.AddUserKeyAndSave(u.ID, "restricted")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,17 +107,45 @@ func TestGroupModelsAndThreeProtocolsShareScope(t *testing.T) {
 	if w.Code != 403 || calls != 4 {
 		t.Fatal("empty group used another account")
 	}
-	if err = s.Store.SetKeyGroupAndSave(k.Key, ""); err != nil {
+	groupB, err := s.Store.SaveGroup(storage.AccountGroup{Name: "B", AccountIDs: []string{"wb-cn"}, AllowlistEnabled: true, ModelIDs: []string{"workbuddy/cn/blocked"}})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if ids = modelIDsFromResponse(t, scopedModelRequest(s, k.Key)); len(ids) < 3 {
-		t.Fatal("ungrouped catalog compatibility lost", ids)
+	if err = s.Store.DeleteGroup(g.ID); err != nil {
+		t.Fatal(err)
+	}
+	checkModelError(t, scopedModelRequest(s, k.Key), 403, "group_unavailable")
+	for _, path := range []string{"/v1/chat/completions", "/responses", "/v1/messages"} {
+		for _, model := range []string{"workbuddy/cn/shared", "workbuddy/cn/blocked"} {
+			checkModelError(t, responseRequest(s, k.Key, path, mappedBody(path, false, model)), 403, "group_unavailable")
+		}
+	}
+	if calls != 4 {
+		t.Fatal("revoked key reached upstream", calls)
+	}
+	if _, err := s.Store.SaveUser(access.UserUpdate{ID: u.ID, Username: u.Username, GroupID: groupB.ID}, ""); err != nil {
+		t.Fatal(err)
+	}
+	if ids = modelIDsFromResponse(t, scopedModelRequest(s, k.Key)); !slices.Contains(ids, "workbuddy/cn/blocked") || slices.Contains(ids, "workbuddy/cn/shared") {
+		t.Fatal("reassigned key has wrong catalog", ids)
+	}
+	for _, tc := range []struct {
+		model  string
+		status int
+	}{{"workbuddy/cn/blocked", 200}, {"workbuddy/cn/shared", 403}} {
+		w := responseRequest(s, k.Key, "/v1/chat/completions", mappedBody("/v1/chat/completions", false, tc.model))
+		if w.Code != tc.status {
+			t.Fatal(tc.model, w.Code, w.Body.String())
+		}
+	}
+	if calls != 5 {
+		t.Fatal("reassigned key reached wrong upstream", calls)
 	}
 }
 
 func TestGroupAdminBindingAndBoundDeletion(t *testing.T) {
-	s := newAdminTestServer(t, "a")
-	k := s.Store.AddKey("key")
+	s := adminTestServerWithKeys(t, []string{"key"}, "a")
+	k := s.Store.Keys()[0]
 	w := adminProbeRequest(t, s, "POST", "/admin/api/groups", `{"name":"group","account_ids":["a"],"allowlist_enabled":true,"model_ids":[]}`)
 	if w.Code != 200 {
 		t.Fatal(w.Body.String())
@@ -128,8 +159,8 @@ func TestGroupAdminBindingAndBoundDeletion(t *testing.T) {
 		t.Fatal("key group binding failed")
 	}
 	w = adminProbeRequest(t, s, "DELETE", "/admin/api/groups?id="+result.Group.ID+"&expected_revision=1", "")
-	if w.Code != 409 {
-		t.Fatal("bound group deleted")
+	if w.Code != 200 || s.Store.ValidKey(k.Key) {
+		t.Fatal("bound group not deleted or key escaped", w.Code, w.Body.String())
 	}
 	w = adminProbeRequest(t, s, "POST", "/admin/api/keys", `{"name":"invalid","group_id":"missing"}`)
 	if w.Code != 400 || len(s.Store.Keys()) != 1 {

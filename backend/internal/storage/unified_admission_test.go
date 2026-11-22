@@ -10,7 +10,7 @@ import (
 func unifiedSelection(s *Store, m config.UnifiedModel) access.UnifiedSelection {
 	return access.UnifiedSelection{ID: m.ID, Revision: m.Revision, RoutingRevision: s.UnifiedSnapshot().Revision}
 }
-func TestUnifiedAtomicSelectionUngroupedAndBusy(t *testing.T) {
+func TestUnifiedAtomicSelectionAndBusySources(t *testing.T) {
 	s := testPool(t, 0)
 	m := createUnified(t, s)
 	selection := unifiedSelection(s, m)
@@ -18,7 +18,14 @@ func TestUnifiedAtomicSelectionUngroupedAndBusy(t *testing.T) {
 		s.UpsertAccount(&accounts.Account{ID: p, Provider: p, Scope: "cn", Enabled: true, MaxInFlight: 1})
 	}
 	ids := []string{m.Sources[0].ID, m.Sources[1].ID}
-	key, _ := s.AddKeyInGroupAndSave("fixture", "")
+	g, err := s.SaveUnifiedGroup(AccountGroup{Name: "pool", AccountIDs: []string{"workbuddy", "trae"}, UnifiedModels: []access.UnifiedGrant{{ModelID: m.ID, Visible: true, Callable: true, SourceMode: "all", SourceIDs: []string{}}}}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := s.AddKeyInGroupAndSave("fixture", g.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	a, model, release, err := s.AcquireUnifiedAccount("", m.Name, ids, nil, key.Key, selection)
 	if err != nil || a == nil || model != ids[0] {
 		t.Fatal(a, model, err)

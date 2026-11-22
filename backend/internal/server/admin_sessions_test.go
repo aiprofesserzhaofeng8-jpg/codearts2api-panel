@@ -57,13 +57,18 @@ func TestAdminSessionLifecycleAndAudit(t *testing.T) {
 		return c
 	}
 	cookie := login()
+	group, err := s.Store.SaveGroup(storage.AccountGroup{Name: "audit fixture"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	create := string(mustJSON(map[string]string{"name": "never-log-this-body", "group_id": group.ID}))
 	if w := call("GET", "/admin/api/state", "", cookie, ""); w.Code != 200 {
 		t.Fatal("session cannot read state")
 	}
-	if w := call("POST", "/admin/api/keys", `{"name":"never-log-this-body"}`, cookie, "https://evil.example"); w.Code != 403 {
+	if w := call("POST", "/admin/api/keys", create, cookie, "https://evil.example"); w.Code != 403 {
 		t.Fatal("cross-site mutation accepted")
 	}
-	if w := call("POST", "/admin/api/keys", `{"name":"never-log-this-body"}`, cookie, ""); w.Code != 200 {
+	if w := call("POST", "/admin/api/keys", create, cookie, ""); w.Code != 200 {
 		t.Fatal("session cannot mutate")
 	}
 	if w := call("POST", "/auth/logout", "", cookie, ""); w.Code != 200 {

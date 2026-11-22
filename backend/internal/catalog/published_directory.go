@@ -71,6 +71,18 @@ func (d publishedDirectory) List(aliases map[string]string) []provider.Model {
 	for _, m := range d.store.PublishedModels() {
 		if m.ID != "" && !seen[m.ID] {
 			additions = append(additions, m)
+			seen[m.ID] = true
+		}
+	}
+	// The base registry cannot enumerate aliases whose targets exist only
+	// in an account's published catalog. Use the same resolver as requests.
+	for alias := range aliases {
+		if seen[alias] || strings.Contains(alias, "/") {
+			continue
+		}
+		if m, ok := d.Resolve(alias, aliases); ok {
+			m.ID, m.Name, m.Source = alias, alias+" → "+m.Name, "alias"
+			additions = append(additions, m)
 		}
 	}
 	sort.Slice(additions, func(i, j int) bool { return additions[i].ID < additions[j].ID })

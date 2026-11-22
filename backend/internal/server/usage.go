@@ -9,35 +9,37 @@ import (
 	"codearts2api/internal/accounts"
 	"codearts2api/internal/codearts"
 	"codearts2api/internal/storage"
+	"codearts2api/internal/usage"
 )
 
 type usageContextKey struct{}
 type usageCapture struct {
-	requestedModel    string
-	selectedModel     string
-	mapping           *groupModelPlan
-	started           time.Time
-	stream            bool
-	firstTokenMS      *int64
-	attemptStarted    time.Time
-	attemptDurationMS *int64
-	attemptFirstMS    *int64
-	attemptStatus     int
-	upstreamStatus    int
-	attemptErrorKind  string
-	attemptObserved   bool
-	accountID         string
-	details           []storage.RequestAttempt
-	account           string
-	model             string
-	usage             storage.TokenUsage
-	protocol          string
-	id                string
-	finish            string
-	kind              string
-	attempts          int
-	summaryAttempts   int
-	previous          storage.TokenUsage
+	pendingPrice, attemptPrice *usage.AttemptPrice
+	requestedModel             string
+	selectedModel              string
+	mapping                    *groupModelPlan
+	started                    time.Time
+	stream                     bool
+	firstTokenMS               *int64
+	attemptStarted             time.Time
+	attemptDurationMS          *int64
+	attemptFirstMS             *int64
+	attemptStatus              int
+	upstreamStatus             int
+	attemptErrorKind           string
+	attemptObserved            bool
+	accountID                  string
+	details                    []storage.RequestAttempt
+	account                    string
+	model                      string
+	usage                      storage.TokenUsage
+	protocol                   string
+	id                         string
+	finish                     string
+	kind                       string
+	attempts                   int
+	summaryAttempts            int
+	previous                   storage.TokenUsage
 }
 
 func withUsageCapture(ctx context.Context, protocol string) context.Context {
@@ -49,6 +51,7 @@ func resetUsage(ctx context.Context) {
 			finishAttempt(ctx, nil)
 			c.details = append(c.details, c.attemptDetail())
 		}
+		c.attemptPrice, c.pendingPrice = c.pendingPrice, nil
 		addUsage(&c.previous, c.usage)
 		c.usage = storage.TokenUsage{}
 		c.finish = ""
@@ -124,10 +127,11 @@ func requestProtocol(ctx context.Context) string {
 }
 
 func addUsage(total *storage.TokenUsage, u storage.TokenUsage) {
-	if !u.Known {
+	if !u.HasMeasurements() {
 		return
 	}
-	total.Known = true
+	total.Partial = total.Partial || u.Partial
+	total.Known = !total.Partial
 	total.InputTokens += u.InputTokens
 	total.OutputTokens += u.OutputTokens
 	total.CachedTokens += u.CachedTokens

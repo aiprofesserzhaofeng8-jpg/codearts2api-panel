@@ -5,6 +5,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { api, isAbortError } from '../../api/client';
 import { serverState } from '../../shared/read-model';
 import { refresh } from '../../shared/refresh';
+import { copyText } from '../../shared/dom';
 import { t as tr, dateLocale } from '../../i18n';
 import { canonicalSource, compatibilityAliases, editError, parseMigrationReport, reloadUnifiedModels, routingRevision, unifiedModels, type MigrationReport, type ModelPolicy, type UnifiedDetail, type UnifiedModel } from '../../shared/unified-models';
 const dialog = ref<HTMLDialogElement>(), error = ref(''), listError = ref(''), busy = ref(false), loading = ref(false), draft = ref<UnifiedModel>(), detail = ref<UnifiedDetail>();
@@ -173,7 +174,6 @@ function reread() { if (draft.value && confirm(tr('重新读取将丢弃当前�
 const referenceLabels={group_grant:'分组授权',group_default:'分组默认',client_default:'客户端推荐',global_default:'全局默认'} as const;
 </script>
 <template>
-  <DefaultModelsPanel @applied="load" />
   <div class="card unified-panel">
     <div class="card-head">
       <h2>{{tr('统一模型')}}</h2>
@@ -200,8 +200,17 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
         </thead>
         <tbody id="unifiedModels">
           <tr v-for="model in filtered" :key="model.id">
-            <td class="mono">{{model.name}}<small v-if="compatibilityAliases[model.id]" class="hint"> → {{compatibilityAliases[model.id]}}</small></td>
-            <td>{{model.sources.length}}<span v-if="model.sources.some(s=>!available.has(s.id))" class="badge warn">{{tr('目录缺失')}}</span>
+            <td class="mono">{{model.name}} <button class="btn row-action row-icon-only row-copy" :title="tr('复制')" :aria-label="tr('复制')+' '+model.name" @click="copyText(model.name,tr('已复制'))"></button><small v-if="compatibilityAliases[model.id]" class="hint"> → {{compatibilityAliases[model.id]}}</small></td>
+            <td>
+              <button type="button" class="source-toggle" :popovertarget="'source-list-'+model.id">
+                {{tr('已启用来源')}} {{model.sources.filter(s=>s.enabled).length}} / {{model.sources.length}}
+              </button>
+              <div :id="'source-list-'+model.id" popover="auto" class="source-list">
+                <div v-for="source in model.sources" :key="source.id" class="mono">
+                  {{source.id}} <span v-if="!source.enabled" class="badge">{{tr('停用')}}</span>
+                </div>
+              </div>
+              <span v-if="model.sources.some(s=>!available.has(s.id))" class="badge warn">{{tr('目录缺失')}}</span>
             </td>
             <td>
               <span :class="['badge',model.enabled?'ok':'warn']">{{model.enabled?tr('启用'):tr('停用')}}</span>
@@ -233,6 +242,7 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
       </div>
     </details>
   </div>
+  <DefaultModelsPanel @applied="load" />
   <dialog ref="dialog" id="unifiedModelDialog" class="modal unified-modal" aria-labelledby="unifiedModelTitle" @cancel.prevent="close">
     <div class="modal-head">
       <h2 id="unifiedModelTitle">{{draft?tr('编辑统一模型'):tr('创建统一模型')}}</h2>
@@ -300,3 +310,36 @@ const referenceLabels={group_grant:'分组授权',group_default:'分组默认',c
           </form>
         </dialog>
       </template>
+<style scoped>
+.source-toggle {
+  display:inline-flex;align-items:center;gap:6px;padding:3px 0;
+  background:transparent;border:0;color:inherit;font:inherit;cursor:pointer;
+}
+.source-toggle::before {
+  content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;
+  transform:rotate(-45deg);
+}
+.source-toggle:has(+ :popover-open)::before {transform:rotate(45deg)}
+.source-list {
+  box-sizing:border-box;width:max-content;max-width:min(28rem,calc(100vw - 24px));
+  max-height:min(20rem,50dvh);overflow:auto;overflow-wrap:anywhere;white-space:normal;
+  padding:8px 12px;border:1px solid var(--line);border-radius:8px;
+  color:var(--text);background:var(--surface);box-shadow:var(--pop);
+}
+.source-list > .mono {padding:4px 0;white-space:normal}
+@supports(position-area:bottom span-right) {
+  .source-list {
+    position-area:bottom span-right;justify-self:start;inset:auto;margin:4px 0;
+    position-try-fallbacks:flip-inline,flip-block,flip-block flip-inline;
+  }
+}
+@media(max-width:680px){
+  .unified-panel .admin-record-table,.unified-panel tbody{display:block;width:100%;min-width:0}
+  .unified-panel thead{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+  .unified-panel tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;padding:10px 0;border-bottom:1px solid var(--line)}
+  .unified-panel tbody td{display:block;min-width:0;white-space:normal;overflow-wrap:anywhere;padding:5px;border:0}
+  .unified-panel tbody td:first-child{grid-column:1;grid-row:1}
+  .unified-panel tbody td:nth-child(3){grid-column:2;grid-row:1}
+  .unified-panel tbody td:nth-child(2),.unified-panel tbody td:last-child{grid-column:1/-1}
+}
+</style>

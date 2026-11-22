@@ -5,7 +5,7 @@ import { isAbortError } from '../../api/client';
 import { copyText, domState, fmtTime, toast } from '../../shared/dom';
 import { listen } from '../../shared/lifecycle';
 import { api } from '../../api/client';
-import { fillGroupSelect, keyGroupCell } from '../groups/controller';
+import { fillKeyGroupSelect } from '../groups/controller';
 import { refresh } from '../../shared/refresh';
 const keysState = {};
 keysState.editingKeyGroup = "";
@@ -15,7 +15,7 @@ export function renderKeys(d) {
     tb.textContent = "";
     var keys = d.keys || [];
     if (!keys.length) {
-        tb.appendChild(emptyRow(7, tr("暂无密钥（未签发时 /v1 仅允许本机直连）")));
+        tb.appendChild(emptyRow(7, tr("暂无密钥")));
         return;
     }
     keys.forEach(function (k) {
@@ -35,6 +35,21 @@ export function renderKeys(d) {
         var st = cell("");
         st.appendChild(pill(k.enabled ? tr("启用") : tr("停用"), k.enabled ? "ok" : ""));
         var ops = cell("", "actions-cell");
+        const use = btn(tr("使用"), "xs row-action row-terminal", () => ops.dispatchEvent(new CustomEvent("key-guide", {bubbles:true,detail:{ref:k.ref,name:k.name}})));
+        use.setAttribute("aria-label", use.title = tr("使用"));
+        const group = d.groups?.find(item => item.id === k.group_id);
+        const groupCell = cell("");
+        const missingGroupLabel = k.group_id ? tr("分组已失效 · 不可调用") : tr("未分组 · 不可调用");
+        groupCell.appendChild(group ? pill(group.name) : pill(missingGroupLabel, "warn"));
+        use.disabled = !k.enabled || !k.ref || !group;
+        if (!group && k.enabled) {
+            if (k.user_id) {
+                use.title = tr("请在用户管理中重新分配分组");
+            } else {
+                ops.appendChild(btn(tr("绑定分组"), "xs", () => openKeyGroup(k)));
+            }
+        }
+        ops.appendChild(use);
         function fetchKey() { return api("/admin/api/keys/reveal", { method: "POST", body: { key: k.ref || k.key } }).then(function (d) { if (!d.value)
             throw new Error(tr("密钥不存在")); return d.value; }); }
         var copy = btn("", "key-tool row-copy", function () {
@@ -68,15 +83,15 @@ export function renderKeys(d) {
             else if (action === "group" && !k.user_id) openKeyGroup(k);
         };
         more.appendChild(actions);
-        ops.appendChild(btn(k.enabled ? tr("停用") : tr("启用"), k.enabled ? "xs row-action row-disable" : "xs", function () { keyOp("toggle", k.ref || k.key); }));
+        ops.appendChild(btn(k.enabled ? tr("停用") : tr("启用"), k.enabled ? "xs row-action row-disable" : "xs row-action row-enable", function () { keyOp("toggle", k.ref || k.key); }));
         ops.appendChild(btn(tr("删除"), "xs danger row-action row-delete", function () {
             if (confirm(tr("确定删除该密钥？")))
                 keyOp("key", k.ref || k.key);
         }));
         ops.appendChild(more);
         tb.appendChild(row([
-            keyCell, keyGroupCell(k), st, cell(k.requests, "mono"),
-            cell(fmtTime(k.created_at), "muted"), cell(fmtTime(k.last_used), "muted"), ops
+            cell(k.name || tr("未命名密钥"), "key-name"), keyCell, groupCell, st, cell(k.requests, "mono key-stat"),
+            cell(fmtTime(k.created_at), "muted key-stat"), ops
         ]));
     });
 }
@@ -92,7 +107,7 @@ keysState.keyCreating = false;
 export function closeKeyCreate() { if (!keysState.keyCreating)
     domState.$("#keyCreateDialog").close(); }
 
-export function openKeyGroup(key) { keysState.editingKeyGroup = key.ref || key.key; domState.$("#keyGroupName").textContent = key.name || tr("未命名密钥"); fillGroupSelect(domState.$("#keyGroupSelect"), key.group_id, tr("不分组（全部账号）")); domState.$("#keyGroupError").textContent = ""; domState.$("#keyGroupDialog").showModal(); }
+export function openKeyGroup(key) { keysState.editingKeyGroup = key.ref || key.key; domState.$("#keyGroupName").textContent = key.name || tr("未命名密钥"); fillKeyGroupSelect(domState.$("#keyGroupSelect"), key.group_id); domState.$("#keyGroupError").textContent = ""; domState.$("#keyGroupDialog").showModal(); }
 
 export function closeKeyGroup() { if (!keysState.keyGroupSaving)
     domState.$("#keyGroupDialog").close(); }
@@ -107,7 +122,7 @@ export function openKeyBudget(k) {
     domState.$("#budgetRequests").value = b.max_requests || 0;
     domState.$("#budgetTokens").value = b.max_tokens || 0;
     domState.$("#budgetUSD").value = b.max_usd || 0;
-    domState.$("#keyBudgetUsage").textContent = tr("已用：") + (u.requests || 0) + tr(" 次 / ") + (u.tokens || 0) + " Token / $" + Number(u.usd || 0).toFixed(6) + (u.incomplete ? tr(" · 存在未报告用量，需核查后重置预算") : "") + (u.unpriced ? tr(" · 存在未定价消耗，USD 预算需核查后重置") : "");
+    domState.$("#keyBudgetUsage").textContent = tr("已用：") + (u.requests || 0) + tr(" 次 / ") + (u.tokens || 0) + " Token / $" + Number(u.usd || 0).toFixed(6) + (u.incomplete ? tr(" · 存在未报告用量，仅累计已知用量") : "") + (u.unpriced ? tr(" · 存在未定价消耗，仅累计已知费用") : "");
     domState.$("#budgetReset").checked = false;
     domState.$("#keyBudgetError").textContent = "";
     domState.$("#keyBudgetDialog").showModal();
@@ -173,7 +188,7 @@ on("#keyBudgetSave", function () {
 on("#addKey", function () {
     domState.$("#keyName").value = "";
     domState.$("#keyCreateError").textContent = "";
-    fillGroupSelect(domState.$("#keyCreateGroup"), "", tr("不分组（全部账号）"));
+    fillKeyGroupSelect(domState.$("#keyCreateGroup"), "");
     domState.$("#keyCreateDialog").showModal();
     domState.$("#keyName").focus();
 });

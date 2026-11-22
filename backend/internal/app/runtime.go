@@ -40,23 +40,26 @@ type Runtime struct {
 func Start(st *storage.Store, srv *server.Server, options Options) *Runtime {
 	srv.ReleaseInfo = releaseinfo.New(options.Version)
 	srv.ApplyIdentity()
-	stop := startBackground(st.Save, srv.RefreshModels, srv.RunDailyClaim, log.Printf)
+	catalogCtx, stopCatalog := context.WithCancel(context.Background())
+	srv.Catalog.BindRefreshContext(catalogCtx)
+	stop := startBackground(st.Save, func(ctx context.Context) (string, error) {
+		err := srv.RefreshModels(ctx)
+		return srv.Catalog.RefreshReport().Status, err
+	}, srv.RunDailyClaim, log.Printf)
 	addr := net.JoinHostPort(options.Host, fmt.Sprintf("%d", options.Port))
 	runtime := &Runtime{
 		http: &http.Server{
 			Addr: addr, Handler: srv.Handler(), ReadHeaderTimeout: 20 * time.Second,
 			// Streaming can last minutes; retain the absence of WriteTimeout.
 		},
-		save: st.Save, stopBackground: stop, errors: make(chan error, 1), logf: log.Printf,
+		save: st.Save, stopBackground: func() { stopCatalog(); stop() }, errors: make(chan error, 1), logf: log.Printf,
 	}
 	go runtime.serve(func() {
 		log.Printf("CodeArts2API Panel %s 已启动: http://%s/", options.Version, addr)
 		if st.HasKeys() {
 			log.Printf("已签发 API 密钥，调用需携带 Authorization: Bearer sk-ca-...")
-		} else if st.Settings().AllowAnonymous {
-			log.Printf("⚠️  尚未签发 API 密钥，且已允许匿名调用：任何能访问本端口的人都可以使用账号额度")
 		} else {
-			log.Printf("尚未签发 API 密钥：/v1/* 目前仅允许本机直连，请在控制台创建密钥")
+			log.Printf("尚未签发 API 密钥：请在控制台创建绑定有效分组的密钥")
 		}
 		switch {
 		case st.Settings().AdminPassword != "":

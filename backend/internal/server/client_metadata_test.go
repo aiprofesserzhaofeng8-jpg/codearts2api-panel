@@ -27,6 +27,7 @@ func TestClientMetadataListProfileAndAdminShareEvidenceWithoutInference(t *testi
 			Compatibility catalog.ClientCompatibility `json:"client_compatibility"`
 		} `json:"data"`
 	}
+	grantFixtureAccounts(t, s.Store)
 	w := nativeProfileGET(s, key, "/v1/models")
 	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &list) != nil {
 		t.Fatal(w.Code, w.Body.String())
@@ -71,6 +72,7 @@ func TestClientMetadataChangedQoderIdentityDoesNotRaiseSharedLimits(t *testing.T
 		t.Fatal(err)
 	}
 	s.Reg.ReplaceProvider(provider.Qoder, "cn", []provider.Model{{ID: "gfmodel", Name: "An updated different model", Context: 1000000, MaxOutput: 131072, Source: "upstream"}})
+	grantFixtureAccounts(t, s.Store)
 	w := nativeProfileGET(s, key, "/v1/client-profile?model=glm-5.3-flash")
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"client_profile_status":"missing_limits"`) || strings.Contains(w.Body.String(), `"context_window":1000000`) {
 		t.Fatal("changed slot acquired shared numeric recommendation", w.Code, w.Body.String())
@@ -84,6 +86,7 @@ func TestDefaultClientParametersListAndProfileAgreeWithoutInferringCapabilities(
 	if err != nil {
 		t.Fatal(err)
 	}
+	grantFixtureAccounts(t, s.Store)
 	w := nativeProfileGET(s, key, "/v1/client-profile?model=teleagent-chat-pro")
 	var profile map[string]any
 	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &profile) != nil || profile["context_window"] != float64(32768) || profile["max_output_tokens"] != float64(4096) || profile["client_profile_status"] != "ready" {

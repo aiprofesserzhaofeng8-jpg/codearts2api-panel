@@ -85,6 +85,7 @@ func mappedFixture(t *testing.T, respond func(string, http.ResponseWriter, *http
 	if err != nil {
 		t.Fatal(err)
 	}
+	grantFixtureAccounts(t, s.Store)
 	k, err := s.Store.AddKeyInGroupAndSave("mapped", g.ID)
 	if err != nil {
 		t.Fatal(err)

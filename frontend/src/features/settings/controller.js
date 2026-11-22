@@ -51,7 +51,6 @@ export function renderSettings(s) {
     domState.$("#sUserData").value = s.user_data_dir || "";
     domState.$("#sLoginPort").value = s.login_port || 0;
     domState.$("#sAllowCredit").checked = !!s.allow_credit_models;
-    domState.$("#sAllowAnonymous").checked = !!s.allow_anonymous;
     domState.$("#sRateLimit").checked = !!s.rate_limit_enabled;
     domState.$("#sRateQPS").value = s.rate_limit_qps || "";
     domState.$("#sRateBurst").value = s.rate_limit_burst || "";
@@ -126,7 +125,6 @@ on("#saveSettings", function () {
         user_data_dir: domState.$("#sUserData").value.trim(),
         login_port: parseInt(domState.$("#sLoginPort").value, 10) || 0,
         allow_credit_models: domState.$("#sAllowCredit").checked,
-        allow_anonymous: domState.$("#sAllowAnonymous").checked,
         rate_limit_enabled: domState.$("#sRateLimit").checked,
         rate_limit_qps: parseInt(domState.$("#sRateQPS").value, 10) || 0,
         rate_limit_burst: parseInt(domState.$("#sRateBurst").value, 10) || 0,

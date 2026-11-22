@@ -146,6 +146,10 @@ func (s *Server) handleUserKeys(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		k, err := s.Store.AddUserKeyAndSave(id, body.Name)
+		if err == access.ErrGroupUnavailable {
+			writeErr(w, 403, err.Error(), "permission_error", "group_unavailable")
+			return
+		}
 		if err != nil {
 			writeErr(w, 400, err.Error(), "invalid_request_error")
 			return
@@ -195,6 +199,10 @@ func (s *Server) handleUserModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	scope, _, err := s.Store.UserScope(currentUser(r).ID)
+	if err == access.ErrGroupUnavailable {
+		writeErr(w, 403, err.Error(), "permission_error", "group_unavailable")
+		return
+	}
 	if err != nil {
 		writeErr(w, 403, "用户分组权限无效", "permission_error")
 		return

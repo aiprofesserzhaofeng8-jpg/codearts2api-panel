@@ -123,16 +123,6 @@ import { t as tr } from '../../i18n';
           </div>
 
           <div v-once class="settings-group">
-            <h3>{{tr('访问控制')}}</h3>
-            <label class="check" for="sAllowAnonymous">
-              <input type="checkbox" id="sAllowAnonymous">
-              <span>{{tr('未签发密钥时允许匿名调用 ')}}<code>/v1/*</code>
-                <span class="check-hint">{{tr('默认只允许本机直连。若网关监听 0.0.0.0（Docker 默认）或被反向代理，勾选它等于把账号额度开放给任何能访问该端口的人 —— 更好的做法是在「密钥」页签发一个 API 密钥。')}}</span>
-              </span>
-            </label>
-          </div>
-
-          <div v-once class="settings-group">
             <h3>{{tr('活动福利自动领取')}}</h3>
             <label class="check" for="sAutoClaim">
               <input type="checkbox" id="sAutoClaim">

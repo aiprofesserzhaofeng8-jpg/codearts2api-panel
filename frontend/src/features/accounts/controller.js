@@ -17,6 +17,7 @@ import { readPreferences, savePreferences, optionalColumns, pageSizes, paginateA
 export const accountsState = {};
 const preferences = readPreferences();
 const selected = new Set();
+const expandedAccounts = new Set();
 let visibleAccounts = [], bulkBusy = false, bulkPlan = null, mounted = false, lifetime = 0;
 let accountPage = 1, accountFilterSignature = '';
 const rewardQueries = new Map();
@@ -138,6 +139,8 @@ export function renderAccounts(d) {
         scroller.scrollTop = top; scroller.scrollLeft = left;
     };
     var accts = d.accounts || [];
+    const accountIDs = new Set(accts.map(a => a.id));
+    expandedAccounts.forEach(id => { if (!accountIDs.has(id)) expandedAccounts.delete(id); });
     domState.$("#accountGrowth").classList.toggle("hidden", domState.$("#accountProvider").value !== "workbuddy");
     domState.$("#accountGrowth").disabled = !accts.some(function (a) { return a.provider === "workbuddy" && a.growth_tasks_supported; });
     var counts = { ready: 0, cooling: 0, paused: 0, disabled: 0, busy: 0 };
@@ -189,7 +192,9 @@ export function renderAccounts(d) {
     renderAccountPagination(pagination);
     applyColumns();
     if (!accts.length) {
-        tb.appendChild(emptyRow(10, tr("还没有账号。点击「浏览器登录」，复制链接授权后确认添加。")));
+        const empty = emptyRow(10, tr("还没有上游账号"));
+        empty.cells[0].append(" ", btn(tr("添加账号"), "xs", () => domState.$("#addAccount").click()));
+        tb.appendChild(empty);
         commitRows(); return;
     }
     if (!visible.length) {
@@ -297,6 +302,18 @@ export function renderAccounts(d) {
         var r = row([selectionCell, identity, platform, statusCell, capacity, quota, expCell, claimCell, cell(fmtTime(a.last_used), 'muted nowrap'), ops]);
         r.dataset.state = accountState(a);
         r.dataset.accountId = a.id;
+        const toggle = btn('', 'xs account-summary-toggle', () => {
+            if (expandedAccounts.has(a.id)) expandedAccounts.delete(a.id); else expandedAccounts.add(a.id);
+            syncDisclosure();
+        });
+        function syncDisclosure() {
+            const open = expandedAccounts.has(a.id);
+            r.dataset.expanded = String(open);
+            toggle.setAttribute('aria-expanded', String(open));
+            toggle.textContent = open ? tr('收起详情') : tr('展开详情');
+        }
+        syncDisclosure();
+        selectionCell.prepend(toggle);
         const columns = ['select', 'identity', 'platform', 'status', 'capacity', 'quota', 'credential', 'reward', 'lastUsed', 'actions'];
         const labelsForCells = [tr('选择账号'), tr('名称'), tr('平台'), tr('状态'), tr('并发'), tr('额度与用量'), tr('凭据有效期'), tr('奖励'), tr('最近使用'), tr('操作')];
         Array.from(r.children).forEach(function (td, i) { td.dataset.label = labelsForCells[i]; td.dataset.column = columns[i]; });
@@ -387,7 +404,7 @@ export function openModelHealth(a) {
 export function mountAccounts() {
 mountProtocolSettings();
 mounted = true; lifetime++;
-cleanup(() => { mounted = false; lifetime++; selected.clear(); rewardQueries.clear(); bulkPlan = null; bulkBusy = false; accountPage = 1; accountFilterSignature = ''; });
+cleanup(() => { mounted = false; lifetime++; selected.clear(); expandedAccounts.clear(); rewardQueries.clear(); bulkPlan = null; bulkBusy = false; accountPage = 1; accountFilterSignature = ''; });
 domState.$('#accountSort').value = preferences.sort;
 listen(domState.$('#accountSort'), 'change', e => { preferences.sort = e.target.value; saveTablePreferences(); if (serverState.data) renderAccounts(serverState.data); });
 domState.$('#accountPageSize').value = String(preferences.pageSize);

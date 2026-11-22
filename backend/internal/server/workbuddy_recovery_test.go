@@ -174,6 +174,7 @@ func TestWorkBuddyRecoverySharesTotalAttemptLimitWithFailover(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			grantFixtureAccounts(t, s.Store)
 			s.Store.UpdateSettings(func(st *storage.Settings) { st.MaxRetries = limit })
 			w := responseRequest(s, key, "/v1/chat/completions", recoveryBody("/v1/chat/completions", false))
 			if len(auth) != limit || auth[0] != auth[1] || limit == 3 && (auth[1] == auth[2] || w.Code != 200 || !strings.Contains(w.Body.String(), "BACKUP_OK")) || limit == 2 && w.Code != 502 {
@@ -236,6 +237,10 @@ func TestWorkBuddyRecoveryCancellationAndBudget(t *testing.T) {
 				if cause == "cancel" {
 					cancel()
 					return old(ctx, d)
+				}
+				// Exhaust the real quota during the retry wait.
+				if err := s.Store.Record(storage.LogEntry{Attempts: 1, Usage: storage.TokenUsage{Known: true, OutputTokens: 64}}, 0, key); err != nil {
+					t.Fatal(err)
 				}
 				return nil
 			}

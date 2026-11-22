@@ -20,7 +20,7 @@ import (
 
 func nativeTraeServer(t *testing.T, handler http.HandlerFunc) (*Server, string, *trae.Client) {
 	t.Helper()
-	st, err := storage.Open(filepath.Join(t.TempDir(), "state.json"))
+	st, err := openTestState(t, filepath.Join(t.TempDir(), "state.json"), "fixture")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func nativeTraeServer(t *testing.T, handler http.HandlerFunc) (*Server, string, 
 	c.CreditBase = up.URL
 	s.Providers = provider.NewRegistry()
 	_ = s.Providers.Register(c)
-	return s, st.AddKey("fixture").Key, c
+	return s, st.Keys()[0].Key, c
 }
 func addTrae(t *testing.T, s *Server) {
 	t.Helper()
@@ -48,6 +48,7 @@ func addTrae(t *testing.T, s *Server) {
 		t.Fatal(err)
 	}
 	s.Reg.ReplaceProvider("trae", "cn", []provider.Model{{ID: "shared", StreamOnly: true}})
+	grantFixtureAccounts(t, s.Store)
 }
 
 const traeTextFixture = "event: output\ndata: {\"response\":\"TRAE_COMPLETE\",\"reasoning_content\":\"thought\"}\n\nevent: token_usage\ndata: {\"prompt_tokens\":12,\"completion_tokens\":4,\"reasoning_tokens\":2,\"cached_tokens\":3}\n\nevent: done\ndata: {\"finish_reason\":\"stop\"}\n\n"

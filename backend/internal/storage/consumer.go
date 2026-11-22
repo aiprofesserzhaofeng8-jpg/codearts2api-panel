@@ -253,6 +253,9 @@ func (s *Store) ManageSubscription(id, planID, action string, days int) error {
 			if u.Subscription.ID == "" {
 				return fmt.Errorf("用户没有订阅")
 			}
+			if !s.groupExistsLocked(u.Subscription.Plan.GroupID) {
+				return access.ErrGroupUnavailable
+			}
 			u.Subscription.Disabled = false
 		case "remove":
 			u.Subscription = access.Subscription{} // explicit admin action returns to base group policy
@@ -272,8 +275,8 @@ func (s *Store) consumerPermissionLocked(u *access.User, now int64) error {
 			return err
 		}
 	}
-	if u.Wallet.Enabled && (u.Wallet.ReviewRequired || u.Wallet.Balance <= 0) {
-		return &BudgetError{Message: "额度不足或用量待核对，请联系管理员"}
+	if u.Wallet.Enabled && u.Wallet.Balance <= 0 {
+		return &BudgetError{Message: "额度不足，请联系管理员"}
 	}
 	return nil
 }

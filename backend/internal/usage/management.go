@@ -7,6 +7,8 @@ import (
 
 // PricingStore remains the only price transaction and historical snapshot writer.
 type PricingStore interface {
+	DefaultTokenPrice() *ModelPrice
+	SetDefaultPriceAndSave(*ModelPrice) error
 	Prices() map[string]ModelPrice
 	SetPriceAndSave(string, ModelPrice) error
 }
@@ -27,6 +29,19 @@ func (m *Management) SetPrice(model string, price ModelPrice) error {
 		return errors.New("模型 ID 过长")
 	}
 	if err := m.store.SetPriceAndSave(model, price); err != nil {
+		return fmt.Errorf("%w: %w", ErrPriceSave, err)
+	}
+	return nil
+}
+
+func (m *Management) DefaultTokenPrice() *ModelPrice { return m.store.DefaultTokenPrice() }
+func (m *Management) SetDefaultPrice(price *ModelPrice) error {
+	if price != nil {
+		if err := price.Validate(); err != nil {
+			return err
+		}
+	}
+	if err := m.store.SetDefaultPriceAndSave(price); err != nil {
 		return fmt.Errorf("%w: %w", ErrPriceSave, err)
 	}
 	return nil

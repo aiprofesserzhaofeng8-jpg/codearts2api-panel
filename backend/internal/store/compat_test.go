@@ -16,7 +16,14 @@ func TestFacadeRetainsTypeAndTransactionIdentity(t *testing.T) {
 		t.Fatal(err)
 	}
 	var current *storage.Store = legacy
-	key := legacy.AddKey("fixture")
+	g, err := legacy.SaveGroup(storage.AccountGroup{Name: "fixture"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := legacy.AddKeyInGroupAndSave("fixture", g.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := current.SetKeyBudgetAndSave(key.Key, access.KeyBudget{MaxRequests: 1}, false); err != nil {
 		t.Fatal(err)
 	}

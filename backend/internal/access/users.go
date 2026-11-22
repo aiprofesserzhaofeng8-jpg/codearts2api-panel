@@ -95,6 +95,7 @@ type UserStore interface {
 }
 
 var ErrUserAuthentication = errors.New("用户名或密码不正确，或用户已停用")
+var ErrGroupUnavailable = errors.New("请联系管理员绑定有效分组")
 var ErrUserLoginBusy = errors.New("登录请求过多，请稍后再试")
 
 type userSession struct {

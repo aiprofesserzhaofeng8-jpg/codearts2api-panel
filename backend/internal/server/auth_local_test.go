@@ -26,34 +26,6 @@ func adminRequest(remoteAddr string, headers map[string]string) *http.Request {
 	return r
 }
 
-// TestLocalDirectRejectsProxyHeaders 回归：同机反向代理会让所有请求的
-// RemoteAddr 都变成 127.0.0.1，因此只看 RemoteAddr 会把管理接口暴露给公网。
-func TestLocalDirectRejectsProxyHeaders(t *testing.T) {
-	s := newTestServer(t, 0, 1)
-
-	cases := []struct {
-		name    string
-		addr    string
-		headers map[string]string
-		want    bool
-	}{
-		{"本机直连", "127.0.0.1:5555", nil, true},
-		{"IPv6 环回", "[::1]:5555", nil, true},
-		{"远端直连", "203.0.113.7:5555", nil, false},
-		{"代理转发 X-Forwarded-For", "127.0.0.1:5555", map[string]string{"X-Forwarded-For": "203.0.113.7"}, false},
-		{"代理转发 X-Real-Ip", "127.0.0.1:5555", map[string]string{"X-Real-Ip": "203.0.113.7"}, false},
-		{"代理转发 Forwarded", "127.0.0.1:5555", map[string]string{"Forwarded": "for=203.0.113.7"}, false},
-		{"代理转发 X-Forwarded-Proto", "127.0.0.1:5555", map[string]string{"X-Forwarded-Proto": "https"}, false},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			if got := s.localDirect(adminRequest(c.addr, c.headers)); got != c.want {
-				t.Errorf("localDirect = %v, want %v", got, c.want)
-			}
-		})
-	}
-}
-
 // TestAdminAuthBlocksProxiedRequests 未设密码时，经代理转发的请求必须被拒。
 func TestAdminAuthBlocksProxiedRequests(t *testing.T) {
 	s := newTestServer(t, 0, 1)

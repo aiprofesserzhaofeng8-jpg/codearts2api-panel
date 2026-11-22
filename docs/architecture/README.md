@@ -1,5 +1,13 @@
 # 项目结构设计 v1
 
+模型目录同步：[本地目录与分区并行同步计划](MODEL-CATALOG-SYNC-PLAN.md)（待实施：持久化恢复、读取解耦、失败保留与分区结果展示）。
+
+预算并发与用量采集：[对齐 sub2api 的并发与流式用量计划](SUB2API-CONCURRENCY-USAGE-PLAN.md)（含并发准入、部分用量和断流结算的实现与回归入口）。
+
+分组关联修复：[分组、密钥与账号删除联动计划](GROUP-LIFECYCLE-ALIGNMENT-PLAN.md)（待实施：新密钥必须绑定分组、分组级联删除、删除账号同步清理关联）。
+
+上游代码放哪里：[后端 internal 目录与平台迁移设计](INTERNAL-UPSTREAM-LAYOUT.md)（目标布局、导入边界和 OfficeAce 首批范围）。
+
 账号池模型发现：[按账号同步上游模型](ACCOUNT-MODEL-SYNC.md)（Qoder 首批；实施顺序、验证结果与路由边界）。
 
 协议后续改造：[对齐 Sub2API 的协议路由与转发计划](SUB2API-PROTOCOL-ALIGNMENT-PLAN.md)（待实施，保留现有模型融合与准入体系）。

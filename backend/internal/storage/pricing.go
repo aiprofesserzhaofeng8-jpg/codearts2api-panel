@@ -14,14 +14,28 @@ type ModelPrice = usage.ModelPrice
 type RequestCost = usage.RequestCost
 
 func (s *Store) estimateModelLocked(model string, u TokenUsage) *RequestCost {
+	return s.priceLocked(model).Estimate(u)
+}
+func (s *Store) priceLocked(model string) usage.AttemptPrice {
+	kind := "model"
 	p, ok := s.st.Prices[model]
 	if !ok {
-		p, ok = defaultPrices()[model]
+		kind = "reference"
+		p, ok = usage.ReferencePrice(model)
 	}
 	if !ok {
-		return nil
+		if s.st.DefaultTokenPrice == nil {
+			return usage.AttemptPrice{Model: model}
+		}
+		kind, p = "default", *s.st.DefaultTokenPrice
 	}
-	return estimateCost(u, p)
+	return usage.AttemptPrice{Model: model, Kind: kind, Price: &p}
+}
+func (s *Store) attemptCostLocked(a RequestAttempt) *RequestCost {
+	if a.Quote != nil {
+		return a.Quote.Estimate(a.Usage)
+	}
+	return s.estimateModelLocked(a.Model, a.Usage)
 }
 func (s *Store) costForEntryLocked(e *LogEntry) *RequestCost {
 	if len(e.AttemptDetails) == 0 {
@@ -31,15 +45,22 @@ func (s *Store) costForEntryLocked(e *LogEntry) *RequestCost {
 	known := false
 	for i := range e.AttemptDetails {
 		a := &e.AttemptDetails[i]
-		a.EstimatedCost = s.estimateModelLocked(a.Model, a.Usage)
+		a.EstimatedCost = s.attemptCostLocked(*a)
+		a.Quote = nil
 		if a.EstimatedCost == nil {
 			total.Partial = true
 			continue
 		}
+		if !known {
+			total.Price = a.EstimatedCost.Price
+		}
 		known = true
 		total.Amount += a.EstimatedCost.Amount
-		if i == 0 {
-			total.Price = a.EstimatedCost.Price
+		total.Partial = total.Partial || a.EstimatedCost.Partial
+		if total.PriceKind == "" {
+			total.PriceKind = a.EstimatedCost.PriceKind
+		} else if total.PriceKind != a.EstimatedCost.PriceKind {
+			total.PriceKind = "mixed"
 		}
 	}
 	if !known {
@@ -90,6 +111,41 @@ func (s *Store) SetPriceAndSave(model string, price ModelPrice) error {
 	}
 	if err != nil {
 		s.st.Prices = before
+	}
+	return err
+}
+
+func (s *Store) DefaultTokenPrice() *ModelPrice {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.st.DefaultTokenPrice == nil {
+		return nil
+	}
+	p := *s.st.DefaultTokenPrice
+	return &p
+}
+func (s *Store) SetDefaultPriceAndSave(price *ModelPrice) error {
+	if price != nil {
+		p := *price
+		if err := p.Validate(); err != nil {
+			return err
+		}
+		p.Source = "全站默认价"
+		p.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+		price = &p
+	}
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	old := s.st.DefaultTokenPrice
+	s.st.DefaultTokenPrice = price
+	raw, err := json.MarshalIndent(s.st, "", "  ")
+	if err == nil {
+		err = s.writeState(raw)
+	}
+	if err != nil {
+		s.st.DefaultTokenPrice = old
 	}
 	return err
 }

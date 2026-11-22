@@ -11,9 +11,9 @@ import (
 
 // rateLimitedServer 构造一个限流参数被压到最小的服务：桶容量 1、qps 1。
 // 这样第二次请求必定被拒，不需要 sleep。
-func rateLimitedServer(t *testing.T, enabled bool) *Server {
+func rateLimitedServer(t *testing.T, enabled bool, keys ...string) *Server {
 	t.Helper()
-	s := newTestServer(t, 0, 1)
+	s := newTestServer(t, 0, 1, keys...)
 	s.Store.UpdateSettings(func(st *storage.Settings) {
 		st.RateLimitEnabled = enabled
 		st.RateLimitQPS = 1
@@ -35,8 +35,8 @@ func v1Request(path, key string) *http.Request {
 // TestRateLimitReturns429WithRetryAfter 验证超限后返回 429、带 Retry-After，
 // 并且被拦下的请求根本没有进入业务处理器（不消耗账号额度）。
 func TestRateLimitReturns429WithRetryAfter(t *testing.T) {
-	s := rateLimitedServer(t, true)
-	key := s.Store.AddKey("test").Key
+	s := rateLimitedServer(t, true, "test")
+	key := s.Store.Keys()[0].Key
 
 	var reached int
 	h := s.withAuth(s.withRateLimit(errOpenAI, func(w http.ResponseWriter, r *http.Request) {
@@ -84,8 +84,8 @@ func TestRateLimitReturns429WithRetryAfter(t *testing.T) {
 // TestRateLimitAnthropicErrorShape 验证 /v1/messages 上返回的是 Anthropic 错误结构，
 // 而不是 OpenAI 的 {"error":{...}} —— 两套 SDK 的解析器不通用。
 func TestRateLimitAnthropicErrorShape(t *testing.T) {
-	s := rateLimitedServer(t, true)
-	key := s.Store.AddKey("test").Key
+	s := rateLimitedServer(t, true, "test")
+	key := s.Store.Keys()[0].Key
 	h := s.withAuth(s.withRateLimit(errAnthropic, okHandler()))
 
 	// 先用掉唯一的令牌。
@@ -119,8 +119,8 @@ func TestRateLimitAnthropicErrorShape(t *testing.T) {
 
 // TestRateLimitDisabledDoesNotThrottle 验证关掉限流后不再拦截。
 func TestRateLimitDisabledDoesNotThrottle(t *testing.T) {
-	s := rateLimitedServer(t, false)
-	key := s.Store.AddKey("test").Key
+	s := rateLimitedServer(t, false, "test")
+	key := s.Store.Keys()[0].Key
 	h := s.withAuth(s.withRateLimit(errOpenAI, okHandler()))
 
 	for i := 0; i < 20; i++ {
@@ -134,9 +134,9 @@ func TestRateLimitDisabledDoesNotThrottle(t *testing.T) {
 
 // TestRateLimitKeysAreIndependent 验证一个密钥打满不会影响另一个。
 func TestRateLimitKeysAreIndependent(t *testing.T) {
-	s := rateLimitedServer(t, true)
-	keyA := s.Store.AddKey("a").Key
-	keyB := s.Store.AddKey("b").Key
+	s := rateLimitedServer(t, true, "a", "b")
+	keyA := s.Store.Keys()[0].Key
+	keyB := s.Store.Keys()[1].Key
 	h := s.withAuth(s.withRateLimit(errOpenAI, okHandler()))
 
 	h(httptest.NewRecorder(), v1Request("/v1/chat/completions", keyA))
@@ -156,8 +156,8 @@ func TestRateLimitKeysAreIndependent(t *testing.T) {
 
 // TestRateLimitSkipsUnauthenticated 验证鉴权先于限流：无效密钥得到 401 而不是 429。
 func TestRateLimitSkipsUnauthenticated(t *testing.T) {
-	s := rateLimitedServer(t, true)
-	s.Store.AddKey("test") // 已签发密钥 → 必须带有效密钥
+	s := rateLimitedServer(t, true, "test")
+
 	h := s.withAuth(s.withRateLimit(errOpenAI, okHandler()))
 
 	rec := httptest.NewRecorder()

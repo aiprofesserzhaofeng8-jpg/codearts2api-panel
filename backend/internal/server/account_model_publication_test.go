@@ -72,6 +72,54 @@ func TestSyncedCodexModelPublicationAndLease(t *testing.T) {
 		}
 	}
 	syncModels()
+	t.Run("group alias directories", func(t *testing.T) {
+		const alias = "team-chat"
+		if err := s.Store.UpdateSettingsAndSave(func(cfg *storage.Settings) {
+			cfg.ModelAliases = map[string]string{alias: full}
+		}); err != nil {
+			t.Fatal(err)
+		}
+		for _, tc := range []struct {
+			name, account, mode         string
+			visible, wantRaw, wantAlias bool
+		}{
+			{"compat", "chatgpt-fixture", "legacy", true, true, true},
+			{"strict", "chatgpt-fixture", "qualified_only", true, true, false},
+			{"hidden", "chatgpt-fixture", "legacy", false, false, false},
+			{"other", "b", "legacy", true, false, false},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				group, err := s.Store.SaveUnifiedGroup(storage.AccountGroup{
+					Name: tc.name, AccountIDs: []string{tc.account}, AllowlistEnabled: true, ModelIDs: []string{full},
+					RawModelMode: tc.mode, RawModelsVisibleDefault: tc.visible,
+				}, 0)
+				if err != nil {
+					t.Fatal(err)
+				}
+				k, err := s.Store.AddKeyInGroupAndSave(tc.name, group.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+				username := "reader-" + tc.name
+				createTestUser(t, s, username, group.ID)
+				r := userHTTP(s, loginTestUser(t, s, username), "GET", "/user/api/models", "")
+				var body struct{ Models []struct{ ID string } }
+				if r.Code != 200 || json.Unmarshal(r.Body.Bytes(), &body) != nil {
+					t.Fatal(r.Code, r.Body.String())
+				}
+				var userIDs []string
+				for _, m := range body.Models {
+					userIDs = append(userIDs, m.ID)
+				}
+				keyIDs := modelIDsFromResponse(t, scopedModelRequest(s, k.Key))
+				slices.Sort(userIDs)
+				slices.Sort(keyIDs)
+				if !slices.Equal(userIDs, keyIDs) || slices.Contains(keyIDs, full) != tc.wantRaw || slices.Contains(keyIDs, alias) != tc.wantAlias || len(slices.Compact(keyIDs)) != len(keyIDs) {
+					t.Fatalf("user=%v key=%v", userIDs, keyIDs)
+				}
+			})
+		}
+	})
 	if !slices.Contains(modelIDsFromResponse(t, scopedModelRequest(s, key)), full) || slices.Contains(modelIDsFromResponse(t, scopedModelRequest(s, bk.Key)), full) {
 		t.Fatal("wrong listing")
 	}

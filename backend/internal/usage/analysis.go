@@ -26,6 +26,10 @@ type UsageAnalysis struct {
 // days follow the browser's IANA time zone, including daylight-saving changes.
 // Long ranges combine adjacent calendar days into at most 90 trend buckets.
 func Analyze(records []LogEntry, location *time.Location) UsageAnalysis {
+	return analyzeTrend(records, location, "")
+}
+
+func analyzeTrend(records []LogEntry, location *time.Location, granularity string) UsageAnalysis {
 	if location == nil {
 		location = time.UTC
 	}
@@ -62,6 +66,14 @@ func Analyze(records []LogEntry, location *time.Location) UsageAnalysis {
 		add(providers, name, r)
 		add(protocols, r.Protocol, r)
 		bucket := (day(r.Time) - first) / a.BucketDays
+		if granularity != "" {
+			t := time.Unix(r.Time, 0).In(location)
+			if granularity == "hour" {
+				bucket = r.Time - int64(t.Minute()*60+t.Second())
+			} else {
+				bucket = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, location).Unix()
+			}
+		}
 		if trend[bucket] == nil {
 			trend[bucket] = &Stats{}
 		}
@@ -76,6 +88,19 @@ func Analyze(records []LogEntry, location *time.Location) UsageAnalysis {
 		return out
 	}
 	a.Models, a.Providers, a.Protocols = list(models), list(providers), list(protocols)
+	if granularity != "" {
+		a.BucketDays = 1
+		if granularity == "hour" {
+			a.BucketDays = 0
+		}
+		for stamp, stats := range trend {
+			if stats.UsageRequests > 0 {
+				a.Trend = append(a.Trend, UsageTrendPoint{Time: stamp, Stats: *stats})
+			}
+		}
+		sort.Slice(a.Trend, func(i, j int) bool { return a.Trend[i].Time < a.Trend[j].Time })
+		return a
+	}
 	for bucket := int64(0); bucket <= (last-first)/a.BucketDays; bucket++ {
 		d := time.Unix((first+bucket*a.BucketDays)*86400, 0).UTC()
 		point := UsageTrendPoint{Time: time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, location).Unix()}

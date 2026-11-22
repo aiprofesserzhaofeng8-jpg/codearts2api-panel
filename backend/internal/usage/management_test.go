@@ -64,3 +64,6 @@ func TestPriceValidationOrderAndSaveFailure(t *testing.T) {
 		t.Fatal("management cached stale prices")
 	}
 }
+
+func (p *pricingFixture) DefaultTokenPrice() *ModelPrice           { return nil }
+func (p *pricingFixture) SetDefaultPriceAndSave(*ModelPrice) error { return p.err }
