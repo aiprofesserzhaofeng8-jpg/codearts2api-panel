@@ -35,6 +35,7 @@ func DefaultSettings() Settings {
 		Claude:         DefaultProviderSettings("claude"),
 		ChatGPT:        DefaultProviderSettings("chatgpt"),
 		TeleAgent:      DefaultProviderSettings("teleagent"),
+		MobileClaw:     DefaultProviderSettings("mobileclaw"),
 		ModelAliases:   map[string]string{},
 		DefaultModel:   codearts.DefaultModel,
 		RequestTimeout: 300,
@@ -102,6 +103,7 @@ func openState(path string, allowMigration bool) (*Store, error) {
 		// 旧版本或手工拷贝来的文件可能是 0644，这里纠正一次（Windows 上只影响只读属性）。
 		_ = os.Chmod(path, 0o600)
 	case errors.Is(err, os.ErrNotExist):
+		s.st.ExternalSearch.Revision = 1
 		s.st.Version = StateVersion
 		s.st.UnifiedModels = []config.UnifiedModel{}
 		s.st.ModelRoutingRevision = 1
@@ -133,6 +135,12 @@ func (s *Store) migrate() error {
 	}
 	for s.st.Version < StateVersion {
 		switch s.st.Version {
+		case 11:
+			s.st.ExternalSearch = SearchCatalog{Revision: 1}
+			for i := range s.st.Groups {
+				s.st.Groups[i].SearchServiceIDs = nil
+			}
+			s.st.Version = 12
 		case 10:
 			next, report := convertModelState(s.st)
 			if !report.Ready {
@@ -166,6 +174,9 @@ func (s *Store) migrate() error {
 			return fmt.Errorf("状态文件版本 %d 无法迁移", s.st.Version)
 		}
 	}
+	if err := s.st.ExternalSearch.validate(s.st.Groups); err != nil {
+		return err
+	}
 	return validateUnifiedState(s.st)
 }
 
@@ -190,6 +201,9 @@ func (s *Store) applyDefaults() {
 	}
 	if st.ChatGPT.ValidateFor("chatgpt") != nil {
 		st.ChatGPT = def.ChatGPT
+	}
+	if st.MobileClaw.ValidateFor("mobileclaw") != nil {
+		st.MobileClaw = def.MobileClaw
 	}
 	if st.TeleAgent.ValidateFor("teleagent") != nil {
 		st.TeleAgent = def.TeleAgent

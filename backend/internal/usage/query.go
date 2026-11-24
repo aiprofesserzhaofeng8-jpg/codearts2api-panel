@@ -75,10 +75,18 @@ func query(records []LogEntry, q UsageQuery) UsagePage {
 			continue
 		}
 		matched = append(matched, e)
-		SumRecord(&result.Stats, e)
+		if e.SearchServiceID == "" {
+			SumRecord(&result.Stats, e)
+		}
 	}
 	sort.SliceStable(matched, func(i, j int) bool { return matched[i].Time > matched[j].Time })
-	result.Analysis = analyzeTrend(matched, q.Location, q.Granularity)
+	modelRecords := make([]LogEntry, 0, len(matched))
+	for _, e := range matched {
+		if e.SearchServiceID == "" {
+			modelRecords = append(modelRecords, e)
+		}
+	}
+	result.Analysis = analyzeTrend(modelRecords, q.Location, q.Granularity)
 	result.Total = len(matched)
 	result.Pages = max(1, (result.Total+result.PageSize-1)/result.PageSize)
 	result.Page = min(result.Page, result.Pages)

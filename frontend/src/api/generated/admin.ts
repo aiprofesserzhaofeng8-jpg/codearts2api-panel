@@ -1186,6 +1186,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/api/search-services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listSearchServices"];
+        put?: never;
+        post: operations["createSearchService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/api/search-services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteSearchService"];
+        options?: never;
+        head?: never;
+        patch: operations["updateSearchService"];
+        trace?: never;
+    };
+    "/admin/api/search-services/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setDefaultSearchService"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/api/search-services/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["testSearchService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["externalWebSearch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1259,6 +1339,7 @@ export interface components {
             /** @enum {unknown} */
             raw_model_mode: "legacy" | "qualified_only";
             raw_models_visible_default: boolean;
+            search_service_ids?: string[];
         } & {
             [key: string]: unknown;
         };
@@ -1368,6 +1449,7 @@ export interface components {
                 teleagent?: components["schemas"]["ProviderSettings"];
                 /** @description CAS revision captured when the settings editor is populated; do not replace it while a draft is dirty. */
                 model_routing_revision?: number;
+                mobileclaw?: components["schemas"]["ProviderSettings"];
             } & {
                 [key: string]: unknown;
             };
@@ -1989,6 +2071,25 @@ export interface components {
             };
             default_price?: components["schemas"]["TokenPrice"];
             ok?: boolean;
+        };
+        SearchService: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            provider: "deepseek" | "searxng";
+            enabled: boolean;
+            endpoint: string;
+            api_key_set: boolean;
+        };
+        SearchCatalog: {
+            revision: number;
+            default_service_id: string;
+            services: components["schemas"]["SearchService"][];
+        };
+        ExternalSearchResult: {
+            title: string;
+            url: string;
+            snippet?: string;
         };
     };
     responses: never;
@@ -3080,6 +3181,7 @@ export interface operations {
                     claude?: components["schemas"]["ProviderSettings"];
                     teleagent?: components["schemas"]["ProviderSettings"];
                     expected_routing_revision?: number;
+                    mobileclaw?: components["schemas"]["ProviderSettings"];
                 } & {
                     [key: string]: unknown;
                 };
@@ -5460,6 +5562,215 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listSearchServices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchCatalog"];
+                };
+            };
+        };
+    };
+    createSearchService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    provider: string;
+                    enabled?: boolean;
+                    endpoint?: string;
+                    api_key?: string;
+                    clear_api_key?: boolean;
+                    expected_revision: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ok: boolean;
+                        id: string;
+                    };
+                };
+            };
+        };
+    };
+    deleteSearchService: {
+        parameters: {
+            query: {
+                expected_revision: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ok: boolean;
+                        id: string;
+                    };
+                };
+            };
+        };
+    };
+    updateSearchService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    provider?: string;
+                    enabled?: boolean;
+                    endpoint?: string;
+                    api_key?: string;
+                    clear_api_key?: boolean;
+                    expected_revision: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ok: boolean;
+                        id: string;
+                    };
+                };
+            };
+        };
+    };
+    setDefaultSearchService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    service_id: string;
+                    expected_revision: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ok: boolean;
+                        id: string;
+                    };
+                };
+            };
+        };
+    };
+    testSearchService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        latency_ms: number;
+                        result_count: number;
+                        results: components["schemas"]["ExternalSearchResult"][];
+                    };
+                };
+            };
+        };
+    };
+    externalWebSearch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    query: string;
+                    service_id?: string;
+                    /** @default 5 */
+                    max_results?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        request_id: string;
+                        service_id: string;
+                        provider: string;
+                        results: components["schemas"]["ExternalSearchResult"][];
+                    };
                 };
             };
         };

@@ -33,10 +33,11 @@ type Stats = usage.Stats
 // 0 表示「加版本号之前的历史文件」。对 State 结构做不兼容改动时 +1，
 // 并在 migrate 里补一段从旧版本升级的逻辑。Open 会拒绝读取版本高于
 // 本程序的文件 —— 否则新版本写的字段会被旧程序静默丢弃。
-const StateVersion = 11
+const StateVersion = 12
 
 // State 是全部持久化状态。
 type State struct {
+	ExternalSearch        SearchCatalog `json:"external_search"`
 	catalogPartitions     map[string]*catalogPartition
 	accountModelSnapshots map[string]*accounts.ModelSnapshot
 	UnifiedModels         []config.UnifiedModel `json:"unified_models"`
@@ -373,36 +374,38 @@ func (s *Store) recordPreparedLocked(e LogEntry, outChars int, key string) {
 			s.applyConsumerSettlementLocked(u, e)
 		}
 	}
-	if e.RequestKind == "summary" {
-		s.st.Stats.SummaryRequests++
-		s.st.Stats.SummaryRetries += int64(max(0, e.SummaryAttempts-1))
-		if e.Status >= 400 {
-			s.st.Stats.SummaryFailures++
+	if e.SearchServiceID == "" {
+		if e.RequestKind == "summary" {
+			s.st.Stats.SummaryRequests++
+			s.st.Stats.SummaryRetries += int64(max(0, e.SummaryAttempts-1))
+			if e.Status >= 400 {
+				s.st.Stats.SummaryFailures++
+			}
 		}
+		if e.FinishReason == "length" {
+			s.st.Stats.TruncatedRequests++
+		}
+		if e.UsageIncomplete {
+			s.st.Stats.PartialUsageRequests++
+		}
+		s.st.Stats.TotalRequests++
+		s.st.Stats.TotalLatencyMS += max(0, e.LatencyMS)
+		s.st.Stats.LatencySamples++
+		if s.st.Stats.UsageStartedAt == 0 {
+			s.st.Stats.UsageStartedAt = e.Time
+		}
+		if e.Usage.HasMeasurements() {
+			s.st.Stats.UsageRequests++
+			s.st.Stats.InputTokens += e.Usage.InputTokens
+			s.st.Stats.OutputTokens += e.Usage.OutputTokens
+			s.st.Stats.CachedTokens += e.Usage.CachedTokens
+			s.st.Stats.ReasoningTokens += e.Usage.ReasoningTokens
+		}
+		if e.Status >= 400 || e.Err != "" {
+			s.st.Stats.FailedRequests++
+		}
+		s.st.Stats.TotalCharsOut += int64(outChars)
 	}
-	if e.FinishReason == "length" {
-		s.st.Stats.TruncatedRequests++
-	}
-	if e.UsageIncomplete {
-		s.st.Stats.PartialUsageRequests++
-	}
-	s.st.Stats.TotalRequests++
-	s.st.Stats.TotalLatencyMS += max(0, e.LatencyMS)
-	s.st.Stats.LatencySamples++
-	if s.st.Stats.UsageStartedAt == 0 {
-		s.st.Stats.UsageStartedAt = e.Time
-	}
-	if e.Usage.HasMeasurements() {
-		s.st.Stats.UsageRequests++
-		s.st.Stats.InputTokens += e.Usage.InputTokens
-		s.st.Stats.OutputTokens += e.Usage.OutputTokens
-		s.st.Stats.CachedTokens += e.Usage.CachedTokens
-		s.st.Stats.ReasoningTokens += e.Usage.ReasoningTokens
-	}
-	if e.Status >= 400 || e.Err != "" {
-		s.st.Stats.FailedRequests++
-	}
-	s.st.Stats.TotalCharsOut += int64(outChars)
 	s.st.UsageRecords = append(s.st.UsageRecords, e)
 	if len(s.st.UsageRecords) > MaxUsageRecords {
 		s.st.UsageRecords = s.st.UsageRecords[len(s.st.UsageRecords)-MaxUsageRecords:]

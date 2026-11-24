@@ -1,0 +1,34 @@
+{
+  "source": "https://models.dev/api.json",
+  "retrieved_at": "2026-11-24T08:33:13.460365+00:00",
+  "providers": [
+    "opencode",
+    "opencode-go",
+    "openai",
+    "anthropic",
+    "google",
+    "deepseek",
+    "zhipuai",
+    "zai",
+    "moonshotai",
+    "moonshotai-cn",
+    "alibaba-cn",
+    "alibaba",
+    "minimax",
+    "minimax-cn",
+    "xai",
+    "huawei-maas",
+    "volcengine",
+    "tencent-tokenhub"
+  ],
+  "model_entries": 523,
+  "fields": [
+    "id",
+    "name",
+    "limit.context",
+    "limit.output"
+  ],
+  "license": "MIT",
+  "source_revision": "d43f0a24289c13545a2f71ecd47d39027d5f6e30",
+  "acquisition": "local generated API JSON"
+}

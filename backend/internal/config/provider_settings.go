@@ -24,6 +24,9 @@ type ProviderSettings struct {
 
 func DefaultProviderSettings(name string) ProviderSettings {
 	w := ProviderSettings{PromptMode: "passthrough", SearchScope: "cn", SearchBackend: "searxng"}
+	if name == provider.TeleAgent || name == provider.MobileClaw {
+		w.SearchBackend = "native"
+	}
 	if name == provider.WorkBuddy {
 		w.SearchEnabled, w.SearchBackend = true, "native"
 	}
@@ -46,8 +49,18 @@ func (w ProviderSettings) ValidateFor(name string) error {
 	if w.SearchScope != "cn" && !(name == provider.WorkBuddy && w.SearchScope == "global") {
 		return fmt.Errorf("%s 搜索地区无效", name)
 	}
-	if (name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.TeleAgent || name == provider.MobileClaw || name == provider.OfficeAce || name == provider.DeepSeek || name == provider.Zhipu || name == provider.Kimi || name == provider.MiniMax || name == provider.Gemini || name == provider.Antigravity || name == provider.Grok || name == provider.OpenCode || name == provider.CommandCode || name == provider.Cline || name == provider.Bedrock || name == provider.Vertex) && (w.SearchEnabled || w.SearchURL != "") {
+	if (name == provider.Qoder || name == provider.Kiro || name == provider.ChatGPT || name == provider.Claude || name == provider.OfficeAce || name == provider.DeepSeek || name == provider.Zhipu || name == provider.Kimi || name == provider.MiniMax || name == provider.Gemini || name == provider.Antigravity || name == provider.Grok || name == provider.OpenCode || name == provider.CommandCode || name == provider.Cline || name == provider.Bedrock || name == provider.Vertex) && (w.SearchEnabled || w.SearchURL != "") {
 		return fmt.Errorf("%s 尚未接入独立联网搜索", name)
+	}
+	if name == provider.TeleAgent || name == provider.MobileClaw {
+		// Historical settings used the disabled SearXNG placeholder.
+		if !w.SearchEnabled && w.SearchURL == "" && w.SearchBackend == "searxng" {
+			return nil
+		}
+		if w.SearchBackend != "native" || w.SearchURL != "" {
+			return fmt.Errorf("%s 使用原生搜索，不接受外部搜索地址", name)
+		}
+		return nil
 	}
 	if name == provider.WorkBuddy {
 		if w.SearchBackend != "" && w.SearchBackend != "native" || w.SearchURL != "" {

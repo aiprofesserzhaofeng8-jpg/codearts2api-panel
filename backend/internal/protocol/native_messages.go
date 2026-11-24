@@ -68,6 +68,15 @@ func (c *MessagesCollector) Consume(raw []byte) error {
 			c.args[e.Index].WriteString(text)
 			break
 		}
+		if typ == "citations_delta" {
+			citation := e.Delta["citation"]
+			var citations []json.RawMessage
+			if len(citation) == 0 || (len(block["citations"]) > 0 && json.Unmarshal(block["citations"], &citations) != nil) {
+				return fmt.Errorf("invalid citation delta")
+			}
+			block["citations"], _ = json.Marshal(append(citations, citation))
+			break
+		}
 		field := ""
 		switch typ {
 		case "text_delta":

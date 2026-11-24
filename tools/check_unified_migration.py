@@ -42,7 +42,7 @@ def main():
         target = root / 'converted'
         invoke('-migrate-state-dir', source, '-migration-output-dir', target)
         converted = json.loads((target / 'state.json').read_text())
-        assert converted['version'] == 11 and len(converted['unified_models']) == 1
+        assert converted['version'] == 12 and len(converted['unified_models']) == 1
         assert converted['groups'][0]['unified_models'][0]['source_mode'] == 'selected'
         assert 'model_mappings' not in converted['groups'][0]
         assert (target / 'state.json.growth.json').read_text() == 'synthetic-sidecar'
@@ -50,8 +50,8 @@ def main():
         assert (target / 'state.json').stat().st_mode & 0o777 == 0o600
         checks.append('offline_copy_permissions_and_schema')
         again = json.loads(invoke('-check-state-migration', target / 'state.json').stdout)
-        assert again['ready'] and again['from_schema'] == 11
-        checks.append('schema11_precheck_idempotent')
+        assert again['ready'] and again['from_schema'] == 12
+        checks.append('schema12_precheck_idempotent')
         invoke('-migrate-state-dir', source, '-migration-output-dir', target, expected=1)
         checks.append('existing_output_rejected')
         conflict = json.loads(json.dumps(value))
@@ -76,8 +76,8 @@ def main():
         if args.old_binary:
             result = subprocess.run([str(args.old_binary.resolve()), '-data', str(target / 'state.json'), '-no-import'],
                                     capture_output=True, text=True, timeout=10)
-            assert result.returncode != 0 and '11' in result.stderr and '10' in result.stderr
-            checks.append('old_binary_rejects_schema11')
+            assert result.returncode != 0 and '12' in result.stderr and ('10' in result.stderr or '11' in result.stderr)
+            checks.append('old_binary_rejects_schema12')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps({'status': 'passed', 'checks': checks,
         'binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),

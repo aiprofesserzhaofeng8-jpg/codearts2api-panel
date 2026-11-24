@@ -7,6 +7,7 @@ import getpass
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -43,6 +44,18 @@ def private_json(file, value):
     os.chmod(temp, 0o600)
     os.replace(temp, file)
 
+def apply_pi_model_settings(model):
+    """Apply operator client preferences; never shrink an existing window."""
+    path = Path(__file__).with_name('pi') / 'model-settings.json'
+    if not path.exists():
+        return model  # Standalone launcher keeps gateway-provided behavior.
+    settings = json.loads(path.read_text())
+    model['contextWindow'] = max(model.get('contextWindow', 0),
+                                 settings['minimumContextWindow'],
+                                 settings['contextWindows'].get(model['id'], 0))
+    model['maxTokens'] = settings.get('maxOutputTokens', {}).get(model['id'], settings['maxTokens'])
+    return model
+
 def build_launch(client, base, profile, config_dir, env):
     compatibility = profile.get('client_compatibility') or {}
     if compatibility.get('exportable') is False:
@@ -54,6 +67,8 @@ def build_launch(client, base, profile, config_dir, env):
     modalities = profile.get('input_modalities')
     model_input = ['text', 'image'] if isinstance(modalities, list) and 'image' in modalities else ['text']
     if client == 'pi':
+        configured = apply_pi_model_settings({'id': model, 'contextWindow': context, 'maxTokens': output})
+        context, output = configured['contextWindow'], configured['maxTokens']
         agent_dir = config_dir / 'pi'
         private_json(agent_dir / 'models.json', {'providers': {'codearts': {
             'name': 'CodeArts gateway', 'api': 'openai-completions',
@@ -72,8 +87,8 @@ def build_launch(client, base, profile, config_dir, env):
             adapter_target.unlink()
         settings_file = agent_dir / 'settings.json'
         settings = json.loads(settings_file.read_text()) if settings_file.exists() else {}
-        settings.setdefault('compaction', {}).setdefault('modelOverrides', {})['codearts/' + model] = {
-            'reserveTokens': compact['reserve_tokens'], 'keepRecentTokens': compact['keep_recent_tokens']}
+        settings.setdefault('compaction', {}).setdefault('modelOverrides', {}).setdefault('codearts/' + model, {
+            'reserveTokens': compact['reserve_tokens'], 'keepRecentTokens': compact['keep_recent_tokens']})
         private_json(settings_file, settings)
         env['PI_CODING_AGENT_DIR'] = str(agent_dir)
         return ['pi', '--provider', 'codearts', '--model', model]
@@ -188,7 +203,7 @@ def sync_pi_models(base, model_file, key_override=None):
             model = {'id': model_id}
         model['name'] = model_id if row.get('provider') == 'unified' else model.get('name', model_id)
         if limits:
-            model['contextWindow'] = profile['context_window']
+            model['contextWindow'] = max(model.get('contextWindow', 0), profile['context_window'])
             model['maxTokens'] = profile['max_output_tokens']
             compact = profile.get('compaction') or {}
             reserve, keep = compact.get('reserve_tokens'), compact.get('keep_recent_tokens')
@@ -204,7 +219,7 @@ def sync_pi_models(base, model_file, key_override=None):
             unknown.append(model_id)
             # Unknown is not an affirmative image guarantee. Report it explicitly.
             model.setdefault('input', ['text'])
-        existing[model_id] = model
+        existing[model_id] = apply_pi_model_settings(model)
     provider['models'] = list(existing.values())
     settings_file = model_file.with_name('settings.json')
     settings_original = settings_file.read_bytes() if settings_file.exists() else None
@@ -219,7 +234,8 @@ def sync_pi_models(base, model_file, key_override=None):
             override = overrides.setdefault(model_id, {})
             if not isinstance(override, dict):
                 raise ValueError('Invalid Pi model override; configuration was preserved')
-            override.update(values)
+            for field, value in values.items():
+                override.setdefault(field, value)
     if model_file.read_bytes() != original or (settings_file.read_bytes() if settings_file.exists() else None) != settings_original:
         raise ValueError('Pi configuration changed during sync; retry without overwriting it')
     backup = model_file.with_name(model_file.name + '.before-sync-' + str(time.time_ns()) + '.bak')
@@ -253,6 +269,32 @@ def sync_pi_models(base, model_file, key_override=None):
             'compaction_updated': sorted(compaction_updates),
             'settings_backup': str(settings_backup) if settings_backup else None}
 
+def configure_pi_search(model_file, install):
+    """Install only the opt-in extension. Provider keys stay in Pi's registry."""
+    source = Path(__file__).with_name('pi') / 'codearts-web-search.ts'
+    extensions = model_file.expanduser().parent / 'extensions'
+    target = extensions / source.name
+    shipped = source.read_bytes()
+    if target.is_symlink():
+        raise ValueError(f'Extension path is a symbolic link: {target}')
+    if target.exists() and target.read_bytes() != shipped:
+        raise ValueError(f'Existing extension differs from project source: {target}')
+    if not install:
+        if target.exists():
+            target.unlink()
+        return f'Removed project web_search extension: {target}'
+    # Pi also detects dynamically registered tools when the session starts.
+    for file in extensions.rglob('*'):
+        if file == target or file.suffix not in ('.ts', '.js', '.mjs') or 'node_modules' in file.parts:
+            continue
+        if re.search(r"""\bname\s*:\s*['"]web_search['"]""", file.read_text()):
+            raise ValueError(f'web_search is already registered in {file}')
+    if not target.exists():
+        extensions.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with target.open('xb') as out:
+            out.write(shipped)
+    return f'Installed web_search: {target} (restart Pi or /reload)'
+
 def main():
     argv = sys.argv[1:]
     split = argv.index('--') if '--' in argv else len(argv)
@@ -263,11 +305,18 @@ def main():
     parser.add_argument('--model', default='', help='Explicit model; otherwise use the group client preference or request default')
     parser.add_argument('--list-models', action='store_true', help='List models visible to this API key without launching the client')
     parser.add_argument('--config-dir', type=Path)
+    search = parser.add_mutually_exclusive_group()
+    search.add_argument('--install-web-search', action='store_true')
+    search.add_argument('--remove-web-search', action='store_true')
     parser.add_argument('--sync-models', action='store_true', help='Pi: back up and sync the active catalog and per-model compaction without launching')
     parser.add_argument('--pi-models-file', type=Path, default=Path.home()/'.pi/agent/models.json')
     parser.add_argument('--check-sandbox', action='store_true', help='Also validate the native Codex sandbox without a model request')
     parser.add_argument('--check', action='store_true', help='Validate connectivity and write client profile without launching a model request')
     args = parser.parse_args(argv[:split])
+    if args.install_web_search or args.remove_web_search:
+        if args.client != 'pi': raise ValueError('Web search extension requires Pi')
+        print(configure_pi_search(args.pi_models_file, args.install_web_search))
+        return 0
     base = normalize_url(args.url)
     env = os.environ.copy()
     if args.sync_models:

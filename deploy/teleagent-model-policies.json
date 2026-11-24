@@ -1,0 +1,62 @@
+{
+  "teleagent/cn/chat-flagship": {
+    "context_window": 825737,
+    "max_output_tokens": 32768,
+    "reserve_tokens": 36864,
+    "keep_recent_tokens": 12000,
+    "trigger_tokens": 45000,
+    "summary_max_tokens": 8192,
+    "summary_enabled": false,
+    "summary_retry": false,
+    "disable_summary_thinking": false,
+    "source": "TeleAgent CN 客户端工作建议"
+  },
+  "teleagent/cn/chat-flash": {
+    "context_window": 510173,
+    "max_output_tokens": 8192,
+    "reserve_tokens": 16384,
+    "keep_recent_tokens": 12000,
+    "trigger_tokens": 45000,
+    "summary_max_tokens": 8192,
+    "summary_enabled": false,
+    "summary_retry": false,
+    "disable_summary_thinking": false,
+    "source": "TeleAgent CN 客户端工作建议"
+  },
+  "teleagent/cn/chat-lite": {
+    "context_window": 761525,
+    "max_output_tokens": 8192,
+    "reserve_tokens": 16384,
+    "keep_recent_tokens": 12000,
+    "trigger_tokens": 45000,
+    "summary_max_tokens": 8192,
+    "summary_enabled": false,
+    "summary_retry": false,
+    "disable_summary_thinking": false,
+    "source": "TeleAgent CN 客户端工作建议；8192 输出为人工建议"
+  },
+  "teleagent/cn/chat-nano": {
+    "context_window": 262144,
+    "max_output_tokens": 32768,
+    "reserve_tokens": 36864,
+    "keep_recent_tokens": 12000,
+    "trigger_tokens": 45000,
+    "summary_max_tokens": 8192,
+    "summary_enabled": false,
+    "summary_retry": false,
+    "disable_summary_thinking": false,
+    "source": "TeleAgent CN 客户端工作建议"
+  },
+  "teleagent/cn/chat-pro": {
+    "context_window": 510167,
+    "max_output_tokens": 8192,
+    "reserve_tokens": 16384,
+    "keep_recent_tokens": 12000,
+    "trigger_tokens": 45000,
+    "summary_max_tokens": 8192,
+    "summary_enabled": false,
+    "summary_retry": false,
+    "disable_summary_thinking": false,
+    "source": "TeleAgent CN 客户端工作建议"
+  }
+}

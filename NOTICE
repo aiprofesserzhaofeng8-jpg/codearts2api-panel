@@ -34,7 +34,7 @@ Model metadata merge and public-registry conversion helpers:
 Derived from Wei-Shaw/sub2api, revision
 6b4b37db43443b5e88e424fe3c69602cc3810dfb.
 Copyright Wei-Shaw and Sub2API contributors.
-The files under backend/internal/catalog/modelmeta are licensed under LGPL-3.0.
+The Go metadata helpers under backend/internal/catalog/modelmeta are licensed under LGPL-3.0.
 License texts, extraction hashes and local adaptations are recorded there in
 LICENSE, COPYING, upstream.json and UPSTREAM.md. This source tree and build.sh
 support rebuilding with a modified metadata library.
@@ -91,3 +91,7 @@ license and attribution notices are included in the same directory and packages.
 Vertex AI service-account authentication and regional endpoint rules are adapted
 from Wei-Shaw/sub2api (LGPL-3.0-only). See backend/internal/vertex/UPSTREAM.md,
 upstream.json and accompanying LICENSE/COPYING for provenance and local changes.
+
+Bundled numeric model reference data:
+Derived from anomalyco/models.dev (MIT), copyright (c) 2025 models.dev.
+See backend/internal/catalog/modelmeta/data/LICENSE and snapshot.json.

@@ -100,10 +100,6 @@ func recommendClientPolicy(model provider.Model) (config.ModelPolicy, bool, stri
 	}
 	fallback := modelmeta.UpstreamModelMetadata{ContextWindow: 32768, MaxOutputTokens: 4096}
 	basis, reference, verified := "compatibility_default", "docs/CLIENTS.md", ""
-	if ref := model.ClientReference; ref != nil && (ref.ContextWindow > 0 || ref.MaxOutputTokens > 0) {
-		fallback = modelmeta.Merge(modelmeta.UpstreamModelMetadata{ContextWindow: int64(ref.ContextWindow), MaxOutputTokens: int64(ref.MaxOutputTokens)}, fallback)
-		basis, reference = "public_registry", ref.Reference
-	}
 	if entry, ok := clientMetadata(model); ok && entry.ContextWindow > 0 && entry.MaxOutputTokens > 0 {
 		fallback = modelmeta.Merge(modelmeta.UpstreamModelMetadata{ContextWindow: int64(entry.ContextWindow), MaxOutputTokens: int64(entry.MaxOutputTokens)}, fallback)
 		basis, reference, verified = entry.Basis, entry.Reference, entry.VerifiedAt
@@ -115,6 +111,10 @@ func recommendClientPolicy(model provider.Model) (config.ModelPolicy, bool, stri
 		return config.ModelPolicy{}, false, "unknown", "", ""
 	}
 	merged := modelmeta.Merge(modelmeta.UpstreamModelMetadata{ContextWindow: int64(model.Context), MaxOutputTokens: int64(model.MaxOutput)}, fallback)
+	if ref := model.ClientReference; ref != nil && (ref.ContextWindow > 0 || ref.MaxOutputTokens > 0) {
+		merged = modelmeta.Merge(modelmeta.UpstreamModelMetadata{ContextWindow: int64(ref.ContextWindow), MaxOutputTokens: int64(ref.MaxOutputTokens)}, merged)
+		basis, reference, verified = "public_registry", ref.Reference, ""
+	}
 	p, ok := config.RecommendModelPolicy(provider.Model{Provider: "client_template", Context: int(min(merged.ContextWindow, 2097152)), MaxOutput: int(min(merged.MaxOutputTokens, 2097152))})
 	switch basis {
 	case "provider_catalog":
@@ -122,7 +122,7 @@ func recommendClientPolicy(model provider.Model) (config.ModelPolicy, bool, stri
 	case "tested_recommendation":
 		p.Source = "精确来源的已验证客户端建议，非上游最大值；" + reference + " · " + verified
 	case "public_registry":
-		p.Source = "缺失参数参考 models.dev 公开资料，非平台实测上限"
+		p.Source = "按 models.dev 的模型规格推荐"
 	default:
 		p.Source = "兼容默认客户端参数，非平台实测上限；可在模型页调整"
 	}

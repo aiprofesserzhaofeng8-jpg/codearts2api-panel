@@ -156,8 +156,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/systemone", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleSystemOne))))
 	mux.HandleFunc("/v1/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
 	mux.HandleFunc("/responses", s.withAuth(s.withRateLimit(errOpenAI, s.withKeyBudget(errOpenAI, s.handleResponses))))
+	mux.HandleFunc("/v1/search", s.withAuth(s.withRateLimit(errOpenAI, s.handleExternalSearch)))
 	mux.HandleFunc("/v1/search/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleSearchMessages))))
-	for _, name := range []string{provider.CodeArts, provider.WorkBuddy, provider.Trae} {
+	for _, name := range []string{provider.CodeArts, provider.WorkBuddy, provider.Trae, provider.TeleAgent, provider.MobileClaw} {
 		mux.HandleFunc("/v1/search/"+name+"/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.searchForProvider(name)))))
 	}
 	mux.HandleFunc("/v1/messages", s.withAuthStyle(errAnthropic, s.withRateLimit(errAnthropic, s.withKeyBudget(errAnthropic, s.handleAnthropicMessages))))
@@ -171,6 +172,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/admin/api/accounts", s.withAdminAuth(s.handleAdminAccounts))
 	mux.HandleFunc("/admin/api/keys/budget", s.withAdminAuth(s.handleKeyBudget))
 	mux.HandleFunc("/admin/api/groups/presets", s.withAdminAuth(s.handleMappingPresets))
+	mux.HandleFunc(searchServicesPath, s.withAdminAuth(s.handleSearchServices))
+	mux.HandleFunc(searchServicesPath+"/", s.withAdminAuth(s.handleSearchServices))
 	mux.HandleFunc("/admin/api/groups", s.withAdminAuth(s.handleAdminGroups))
 	mux.HandleFunc("/admin/api/keys/group", s.withAdminAuth(s.handleKeyGroup))
 	mux.HandleFunc("/admin/api/keys/reveal", s.withAdminAuth(s.handleAdminKeyReveal))
@@ -503,6 +506,7 @@ func sanitizedSettings(st storage.Settings) map[string]any {
 		"chatgpt":                st.ChatGPT,
 		"claude":                 st.Claude,
 		"teleagent":              st.TeleAgent,
+		"mobileclaw":             st.MobileClaw,
 		"model_aliases":          st.ModelAliases,
 		"default_model":          st.DefaultModel,
 		"force_model":            st.ForceModel,

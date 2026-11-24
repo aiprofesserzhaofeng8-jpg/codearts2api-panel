@@ -56,7 +56,7 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 	if err := json.Unmarshal(raw, &header); err != nil {
 		return err
 	}
-	if header.Version == 10 || header.Version == 11 {
+	if header.Version >= 10 && header.Version <= StateVersion {
 		var fields map[string]json.RawMessage
 		if err := json.Unmarshal(raw, &fields); err != nil {
 			return err
@@ -89,7 +89,7 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 			}
 		}
 	}
-	if header.Version == 11 {
+	if header.Version >= 11 && header.Version <= StateVersion {
 		if err := decodeNewRouting(raw); err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ import time
 import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ("vertex-smoke", "bedrock-smoke", "typesafe-smoke", "cline-smoke", "commandcode-smoke", "opencode-smoke", "grok-smoke", "antigravity-smoke", "official-api-smoke", "gemini-cli-smoke", "mobileclaw-login-smoke", "providers-smoke", "qoder-smoke", "kiro-smoke", "subscriptions-smoke", "teleagent-smoke", "teleagent-rewards-smoke", "teleagent-login-smoke", "teleagent-connector-smoke", "teleagent-helper-cdp-smoke", "teleagent-helper-process-smoke", "quota-smoke", "accounts-table-smoke", "trae-smoke", "trae-device-smoke", "groups-smoke", "account-create-smoke", "growth-multi-smoke", "growth-tasks-smoke", "growth-actions-smoke", "growth-buddy-smoke", "frontend-smoke", "product-settings-smoke", "users-smoke", "consumer-entitlements-smoke", "unified-console-smoke", "user-style-smoke", "i18n-smoke")
-CASES += ("console-first-call-smoke",)
+CASES += ("console-first-call-smoke", "external-search-smoke")
 
 def run(binary, output, cases=CASES):
     output.mkdir(parents=True, exist_ok=True)

@@ -42,7 +42,7 @@ func TestModelRecommendationsUseCurrentBoundsAndConfiguredOverride(t *testing.T)
 		if ok != (bounds[0] >= 8192 && bounds[1] >= 256) {
 			t.Fatal("changed recommendation threshold", bounds, p, ok)
 		}
-		if ok && (p.Validate() != nil || p.ContextWindow > 2097152 || p.MaxOutputTokens > 8192 || p.SummaryEnabled || p.SummaryRetry) {
+		if ok && (p.Validate() != nil || p.ContextWindow > 2097152 || p.MaxOutputTokens > m.MaxOutput || p.SummaryMaxTokens > 8192 || p.SummaryEnabled || p.SummaryRetry) {
 			t.Fatal("unsafe recommendation", p)
 		}
 	}

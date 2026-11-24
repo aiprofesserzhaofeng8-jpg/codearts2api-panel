@@ -102,7 +102,9 @@ func (s Settings) ConfiguredProvider(name string) ProviderSettings {
 		return s.Claude
 	case "chatgpt":
 		return s.ChatGPT
-	case "mobileclaw", "officeace", "deepseek", "zhipu", "kimi", "minimax", "gemini", "antigravity", "grok", "opencode", "commandcode", "cline", "bedrock", "vertex":
+	case "mobileclaw":
+		return s.MobileClaw
+	case "officeace", "deepseek", "zhipu", "kimi", "minimax", "gemini", "antigravity", "grok", "opencode", "commandcode", "cline", "bedrock", "vertex":
 		return DefaultProviderSettings(name)
 	case "teleagent":
 		return s.TeleAgent

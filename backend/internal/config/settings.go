@@ -11,6 +11,7 @@ type Settings struct {
 	Kiro           ProviderSettings  `json:"kiro"`
 	Claude         ProviderSettings  `json:"claude"`
 	ChatGPT        ProviderSettings  `json:"chatgpt"`
+	MobileClaw     ProviderSettings  `json:"mobileclaw"`
 	TeleAgent      ProviderSettings  `json:"teleagent"`
 	WorkBuddy      WorkBuddySettings `json:"workbuddy"`
 	Pool           PoolSettings      `json:"pool"`

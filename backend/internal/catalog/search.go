@@ -29,9 +29,9 @@ func ResolveSearchTarget(settings config.Settings, requested string) (provider.M
 			if id != "web-search" {
 				return provider.Model{}, config.ProviderSettings{}, fmt.Errorf("CodeArts 搜索标识须为 codearts/web-search")
 			}
-		case provider.Trae:
+		case provider.Trae, provider.TeleAgent, provider.MobileClaw:
 			if scope != "cn" || id != "web-search" {
-				return provider.Model{}, config.ProviderSettings{}, fmt.Errorf("Trae 搜索标识须为 trae/cn/web-search")
+				return provider.Model{}, config.ProviderSettings{}, fmt.Errorf("%s 搜索标识须为 %s/cn/web-search", name, name)
 			}
 		case provider.WorkBuddy:
 			if (scope != "cn" && scope != "global") || id == "" {

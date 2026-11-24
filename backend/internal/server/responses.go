@@ -85,6 +85,19 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		reject(400, err.Error(), "invalid_request_error")
 		return
 	}
+	hostedSearch := false
+	for _, tool := range tools {
+		if tool.Type == "web_search" || tool.Type == "web_search_preview" {
+			hostedSearch = true
+			break
+		}
+	}
+	if hostedSearch && model.Source == "mapping" {
+		if err := mappedPlan(r.Context()).FilterResponsesSearch(); err != nil {
+			reject(400, err.Error(), "invalid_request_error", apierr.Reason(err))
+			return
+		}
+	}
 	custom := apicompat.CustomToolNames(tools)
 	functions := apicompat.FunctionToolNames(tools)
 	namespaces := apicompat.NamespaceToolNames(tools)
@@ -163,7 +176,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		nativeFinal = nil
 		outLen = 0
 		totalBytes := 0
-		if handled, err := s.tryNative(ctx, acct, model, upBody, provider.ResponsesProtocol, func(raw []byte) error {
+		emitNative := func(raw []byte) error {
 			totalBytes += len(raw)
 			if totalBytes > 32<<20 {
 				return fmt.Errorf("upstream response exceeds 32 MiB")
@@ -200,8 +213,15 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 			}
 			flusher.Flush()
 			return nil
-		}); handled {
-			return stopAfterOutput(err, started)
+		}
+		// Grok's ordinary completions also accept terminal-only streams via its Chat bridge.
+		if acct.ProviderID() != provider.Grok || hostedSearch {
+			if handled, err := s.tryNative(ctx, acct, model, upBody, provider.ResponsesProtocol, emitNative); handled {
+				return stopAfterOutput(err, started)
+			}
+		}
+		if hostedSearch {
+			return &provider.Error{Status: 400, Message: "此上游没有原生 Responses 网页搜索入口"}
 		}
 		chat, err := apicompat.ResponsesToChatCompletionsRequestWithOptions(&req, &apicompat.ResponsesToChatOptions{ReasoningContentByID: func(id string) string { return s.responsesReasoning.get(scope, id, time.Now()) }})
 		if err != nil {
@@ -317,7 +337,7 @@ func validateResponsesRequest(body []byte, req *apicompat.ResponsesRequest) erro
 	}
 	for _, tool := range tools {
 		switch tool.Type {
-		case "function", "custom", "namespace", "tool_search":
+		case "function", "custom", "namespace", "tool_search", "web_search", "web_search_preview":
 		default:
 			return fmt.Errorf("tool type %q is not supported by CodeArts; use client-executed function/custom tools", tool.Type)
 		}

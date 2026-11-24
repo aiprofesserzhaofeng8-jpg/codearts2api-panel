@@ -14,23 +14,27 @@ class UnifiedSchemaUpgradeTest(unittest.TestCase):
     make_archive = base.OperationsTest.make_archive
     upgrade_fixture = base.UpgradeTest.upgrade_fixture
 
-    def fixture(self):
-        root, args, service = self.upgrade_fixture(schema=11)
+    def fixture(self, target=11):
+        root, args, service = self.upgrade_fixture(schema=target)
+        if target == 12:
+            old_manifest = root / 'current/manifest.json'
+            old_manifest.write_text(json.dumps({'version': 'v1.0.0', 'schema': 11}))
+            (root / 'data/state.json').write_text(json.dumps({'version': 11, 'groups': []}))
         args.migrate_schema = True
         return root, args, service
 
     @staticmethod
     def metadata(path):
         meta = json.loads((path / 'manifest.json').read_text())
-        if meta['schema'] == 11:
-            meta['state_migrations'] = [{'from': 10, 'to': 11}]
+        if meta['schema'] in (11, 12):
+            meta['state_migrations'] = [{'from': meta['schema'] - 1, 'to': meta['schema']}]
         return meta
 
     @staticmethod
-    def convert(binary, source, target):
+    def convert(binary, source, target, target_schema=11):
         target.mkdir(mode=0o700)
         original = json.loads((source / 'state.json').read_text())
-        (target / 'state.json').write_text(json.dumps({**original, 'version': 11}))
+        (target / 'state.json').write_text(json.dumps({**original, 'version': target_schema}))
 
     def test_conflict_does_not_stop_service(self):
         root, args, service = self.fixture()
@@ -52,6 +56,17 @@ class UnifiedSchemaUpgradeTest(unittest.TestCase):
         self.assertEqual((original / 'state.json').read_bytes(), before)
         self.assertFalse((root / 'schema-migration.json').exists())
         self.assertEqual(len(list(root.glob('schema-migration-complete-*.json'))), 1)
+
+    def test_search_schema_copy_failure_restarts_original(self):
+        root, args, service = self.fixture(target=12)
+        original = (root / 'data/state.json').read_bytes()
+        with patch.object(ops, 'Service', return_value=service), patch.object(ops, 'check_release', side_effect=self.metadata), patch.object(ops, 'model_migration_precheck', return_value={}), patch.object(ops, 'model_migration_copy', side_effect=OSError('disk full')):
+            with self.assertRaisesRegex(OSError, 'disk full'):
+                ops.upgrade(args)
+        self.assertEqual(service.calls, ['stop', 'start'])
+        self.assertEqual((root / 'data/state.json').read_bytes(), original)
+        self.assertEqual((root / 'current').resolve().name, 'v1.0.0')
+        self.assertFalse((root / 'schema-migration.json').exists())
 
     def test_failed_post_start_never_restores_old_credentials(self):
         root, args, service = self.fixture()

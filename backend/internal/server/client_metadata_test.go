@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 
@@ -79,40 +80,77 @@ func TestClientMetadataChangedQoderIdentityDoesNotRaiseSharedLimits(t *testing.T
 	}
 }
 
-func TestDefaultClientParametersListAndProfileAgreeWithoutInferringCapabilities(t *testing.T) {
-	s, key := unifiedAPIFixture(t)
-	s.Reg.ReplaceProvider(provider.TeleAgent, "cn", []provider.Model{{ID: "chat-pro", Name: "Chat Pro", Source: "upstream"}})
-	_, err := s.Store.SaveUnifiedModel(config.UnifiedModel{Name: "teleagent-chat-pro", Enabled: true, Sources: []config.ModelSource{{ID: "teleagent/cn/chat-pro", Enabled: true}}}, nil, 0, s.Store.UnifiedSnapshot().Revision, nil)
+func TestClientProfileDefaultsAndConfiguredTeleAgentListAgreeWithoutInferringCapabilities(t *testing.T) {
+	data, err := os.ReadFile("../../../deploy/teleagent-model-policies.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	grantFixtureAccounts(t, s.Store)
-	w := nativeProfileGET(s, key, "/v1/client-profile?model=teleagent-chat-pro")
-	var profile map[string]any
-	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &profile) != nil || profile["context_window"] != float64(32768) || profile["max_output_tokens"] != float64(4096) || profile["client_profile_status"] != "ready" {
-		t.Fatal("missing directory limits blocked client setup", w.Code, w.Body.String())
+	var presets map[string]config.ModelPolicy
+	if err := json.Unmarshal(data, &presets); err != nil {
+		t.Fatal(err)
 	}
-	if _, present := profile["supports_images"]; present {
-		t.Fatal("numeric default manufactured vision support", profile)
+	for _, tc := range []struct {
+		id              string
+		context, output int
+	}{
+		{"chat-unlisted", 32768, 4096},
+		{"chat-flagship", 825737, 32768},
+		{"chat-flash", 510173, 8192},
+		{"chat-lite", 761525, 8192},
+		{"chat-nano", 262144, 32768},
+		{"chat-pro", 510167, 8192},
+	} {
+		t.Run(tc.id, func(t *testing.T) {
+			s, key := unifiedAPIFixture(t)
+			model := provider.Model{ID: tc.id, Name: tc.id, Source: "upstream"}
+			if tc.id != "chat-unlisted" {
+				// Keep numeric recommendations independent from the catalog's
+				// existing reviewed tool/image observations for these IDs.
+				model.ImageInput, model.ToolCalling = "unsupported", "unsupported"
+			}
+			s.Reg.ReplaceProvider(provider.TeleAgent, "cn", []provider.Model{model})
+			if tc.id != "chat-unlisted" {
+				id := "teleagent/cn/" + tc.id
+				w := adminProbeRequest(t, s, "POST", "/admin/api/model-policies", string(mustJSON(map[string]any{
+					"model": id, "policy": presets[id], "expected_routing_revision": s.Store.UnifiedSnapshot().Revision,
+				})))
+				if w.Code != 200 {
+					t.Fatal(w.Code, w.Body.String())
+				}
+			}
+			_, err := s.Store.SaveUnifiedModel(config.UnifiedModel{Name: "teleagent-" + tc.id, Enabled: true, Sources: []config.ModelSource{{ID: "teleagent/cn/" + tc.id, Enabled: true}}}, nil, 0, s.Store.UnifiedSnapshot().Revision, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			grantFixtureAccounts(t, s.Store)
+			w := nativeProfileGET(s, key, "/v1/client-profile?model=teleagent-"+tc.id)
+			var profile map[string]any
+			if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &profile) != nil || profile["context_window"] != float64(tc.context) || profile["max_output_tokens"] != float64(tc.output) || profile["client_profile_status"] != "ready" {
+				t.Fatal("missing directory limits blocked client setup", w.Code, w.Body.String())
+			}
+			if value, present := profile["supports_images"]; value == true || (tc.id == "chat-unlisted" && present) {
+				t.Fatal("numeric default manufactured vision support", profile)
+			}
+			if value, present := profile["supports_tools"]; value == true || (tc.id == "chat-unlisted" && present) {
+				t.Fatal("numeric default manufactured tool support", profile)
+			}
+			var listing struct{ Data []map[string]any }
+			w = nativeProfileGET(s, key, "/v1/models")
+			if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &listing) != nil {
+				t.Fatal(w.Code, w.Body.String())
+			}
+			for _, row := range listing.Data {
+				if row["id"] != "teleagent-"+tc.id {
+					continue
+				}
+				fromList, _ := json.Marshal(row["client_profile"])
+				fromProfile, _ := json.Marshal(profile)
+				if string(fromList) != string(fromProfile) || strings.Contains(string(fromProfile), "teleagent/cn/") || len(s.Store.Logs(10)) != 0 {
+					t.Fatal("list/profile disagreed, leaked sources or caused inference", string(fromList), string(fromProfile))
+				}
+				return
+			}
+			t.Fatal("shared name disappeared")
+		})
 	}
-	if _, present := profile["supports_tools"]; present {
-		t.Fatal("numeric default manufactured tool support", profile)
-	}
-	var listing struct{ Data []map[string]any }
-	w = nativeProfileGET(s, key, "/v1/models")
-	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &listing) != nil {
-		t.Fatal(w.Code, w.Body.String())
-	}
-	for _, row := range listing.Data {
-		if row["id"] != "teleagent-chat-pro" {
-			continue
-		}
-		fromList, _ := json.Marshal(row["client_profile"])
-		fromProfile, _ := json.Marshal(profile)
-		if string(fromList) != string(fromProfile) || strings.Contains(string(fromProfile), "teleagent/cn/") || len(s.Store.Logs(10)) != 0 {
-			t.Fatal("list/profile disagreed, leaked sources or caused inference", string(fromList), string(fromProfile))
-		}
-		return
-	}
-	t.Fatal("shared name disappeared")
 }

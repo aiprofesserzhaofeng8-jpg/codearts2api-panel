@@ -17,6 +17,7 @@ type AccountGroup = access.AccountGroup
 type AccessScope = access.AccessScope
 
 func cloneGroup(g AccountGroup) AccountGroup {
+	g.SearchServiceIDs = slices.Clone(g.SearchServiceIDs)
 	g.UnifiedModels = access.CloneUnifiedGrants(g.UnifiedModels)
 	g.ModelMappings = cloneMappings(g.ModelMappings)
 	g.ModelRules = access.CloneModelRules(g.ModelRules)
@@ -198,6 +199,9 @@ func (s *Store) saveUnifiedGroup(g AccountGroup, strict bool) (AccountGroup, err
 		if index < 0 {
 			return g, fmt.Errorf("分组不存在")
 		}
+		if g.SearchServiceIDs == nil {
+			g.SearchServiceIDs = slices.Clone(s.st.Groups[index].SearchServiceIDs)
+		}
 		if g.UnifiedModels == nil {
 			g.UnifiedModels = access.CloneUnifiedGrants(s.st.Groups[index].UnifiedModels)
 		}
@@ -235,6 +239,9 @@ func (s *Store) saveUnifiedGroup(g AccountGroup, strict bool) (AccountGroup, err
 		g.UnifiedModels = []access.UnifiedGrant{}
 	}
 	if err := validateUnifiedGroup(g, s.st.UnifiedModels); err != nil {
+		return g, err
+	}
+	if err := validateSearchGrants(s.st.ExternalSearch, g.SearchServiceIDs); err != nil {
 		return g, err
 	}
 	g.ExpectedRevision = 0

@@ -73,6 +73,7 @@ func (s *Store) Settings() Settings {
 	cp.Claude = cp.Claude.Clone()
 	cp.ChatGPT = cp.ChatGPT.Clone()
 	cp.TeleAgent = cp.TeleAgent.Clone()
+	cp.MobileClaw = cp.MobileClaw.Clone()
 	cp.WorkBuddy = cp.WorkBuddy.Clone()
 	cp.ModelAliases = map[string]string{}
 	for k, v := range s.st.Settings.ModelAliases {

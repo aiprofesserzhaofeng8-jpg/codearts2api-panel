@@ -107,7 +107,7 @@ class PiSyncTests(unittest.TestCase):
                 opener.return_value.open.return_value=response
                 result=connect.sync_pi_models('http://127.0.0.1:10087',path)
             saved=json.loads(path.read_text());model=saved['providers']['codearts-local']['models'][0]
-            self.assertEqual(model['input'],['text','image']);self.assertEqual(model['contextWindow'],32768)
+            self.assertEqual(model['input'],['text','image']);self.assertEqual(model['contextWindow'],131072)
             self.assertEqual(saved['providers']['other'],original['providers']['other'])
             self.assertEqual(saved['providers']['codearts-local']['apiKey'],'local-canary')
             self.assertEqual(Path(result['backup']).read_bytes(),before)
@@ -183,7 +183,7 @@ class PiPurposeAndLimitsTests(unittest.TestCase):
             self.assertEqual(models['old-jump']['contextWindow'],32768)
             self.assertNotIn('new-image',models);self.assertNotIn('unknown-chat',models)
             self.assertEqual(models['glm-5.3-flash']['input'],['text','image'])
-            self.assertEqual(models['glm-5.3-flash']['maxTokens'],4096)
+            self.assertEqual(models['glm-5.3-flash']['maxTokens'],131072)
             self.assertEqual(saved['providers']['other'],document['providers']['other'])
             self.assertEqual(settings.read_bytes(),before_settings)
             self.assertEqual(Path(report['backup']).read_bytes(),before)
@@ -209,5 +209,37 @@ class PiPurposeAndLimitsTests(unittest.TestCase):
                 report=connect.sync_pi_models('http://127.0.0.1:10087',path)
             self.assertEqual(json.loads(path.read_text())['providers']['codearts-local']['models'],[])
             self.assertEqual(report['skipped_missing_limits'],['bool','inverted'])
+
+class PiProjectSettingsTests(unittest.TestCase):
+    def test_known_windows_and_floor_keep_larger_values(self):
+        for ident, original, expected in [
+            ('deepseek-v4.1-flash',65536,1000000),
+            ('deepseek-v4-pro',131072,1000000),
+            ('teleagent/cn/chat-nano',32768,262144),
+            ('unknown',32768,131072),
+            ('unknown',1048576,1048576),
+        ]:
+            model=connect.apply_pi_model_settings({'id':ident,'contextWindow':original,'maxTokens':4096})
+            self.assertEqual(model['contextWindow'],expected)
+            self.assertEqual(model['maxTokens'],65536)
+
+    def test_glm_official_limits(self):
+        model=connect.apply_pi_model_settings({'id':'glm-5.3','contextWindow':180000,'maxTokens':65536})
+        self.assertEqual(model['contextWindow'],1000000)
+        self.assertEqual(model['maxTokens'],131072)
+
+    def test_old_gateway_does_not_shrink_window_or_replace_compaction(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'models.json'
+            path.write_text(json.dumps({'providers':{'codearts-local':{'baseUrl':'http://127.0.0.1:10087/v1','apiKey':'fixture','models':[{'id':'shared-v1','contextWindow':1000000,'maxTokens':65536}]}}}))
+            settings=path.with_name('settings.json')
+            settings.write_text(json.dumps({'compaction':{'modelOverrides':{'codearts-local/shared-v1':{'reserveTokens':16384,'keepRecentTokens':12000}}}}))
+            rows={'data':[{'id':'shared-v1','client_profile':{'context_window':131072,'max_output_tokens':65536,'compaction':{'reserve_tokens':69632,'keep_recent_tokens':20000}}}]}
+            response=mock.MagicMock();response.__enter__.return_value.read.return_value=json.dumps(rows).encode()
+            with mock.patch.object(connect.urllib.request,'build_opener') as opener:
+                opener.return_value.open.return_value=response
+                connect.sync_pi_models('http://127.0.0.1:10087',path)
+            self.assertEqual(json.loads(path.read_text())['providers']['codearts-local']['models'][0]['contextWindow'],1000000)
+            self.assertEqual(json.loads(settings.read_text())['compaction']['modelOverrides']['codearts-local/shared-v1'],{'reserveTokens':16384,'keepRecentTokens':12000})
 
 if __name__=='__main__': unittest.main()

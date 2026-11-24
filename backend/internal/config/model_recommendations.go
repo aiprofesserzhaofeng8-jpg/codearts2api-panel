@@ -41,11 +41,11 @@ func RecommendModelPolicy(m provider.Model) (ModelPolicy, bool) {
 		return ModelPolicy{}, false
 	}
 	window := min(m.Context, 2097152)
-	output := min(m.MaxOutput, 8192, window/4)
-	reserve := min(max(16384, output+4096), window-2048)
+	output := min(m.MaxOutput, window-4096-1024)
+	reserve := min(max(16384, output+4096), window-1024)
 	trigger := min(45000, window-reserve)
 	keep := min(12000, trigger/2)
-	p := ModelPolicy{ContextWindow: window, MaxOutputTokens: output, ReserveTokens: reserve, KeepRecentTokens: keep, TriggerTokens: trigger, SummaryMaxTokens: output, Source: "基于上游目录的保守建议；此上游未启用服务端摘要适配"}
+	p := ModelPolicy{ContextWindow: window, MaxOutputTokens: output, ReserveTokens: reserve, KeepRecentTokens: keep, TriggerTokens: trigger, SummaryMaxTokens: min(output, 8192), Source: "基于上游目录的保守建议；此上游未启用服务端摘要适配"}
 	return p, p.Validate() == nil
 }
 
@@ -84,7 +84,7 @@ func CommonModelPolicy(ids []string, lookup func(string) (ModelPolicy, bool)) (M
 	combined.ReserveTokens = min(combined.ReserveTokens, combined.ContextWindow-combined.TriggerTokens)
 	combined.SummaryEnabled, combined.SummaryRetry = false, false
 	combined.SummaryFallbackModel = ""
-	combined.SummaryMaxTokens = combined.MaxOutputTokens
+	combined.SummaryMaxTokens = min(combined.MaxOutputTokens, 8192)
 	combined.Source = "分组内各来源的保守公共建议；实际能力以所选上游为准"
 	return combined, combined.Validate() == nil
 }

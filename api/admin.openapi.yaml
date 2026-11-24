@@ -1508,6 +1508,9 @@
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 9007199254740991
+                  },
+                  "mobileclaw": {
+                    "$ref": "#/components/schemas/ProviderSettings"
                   }
                 },
                 "additionalProperties": true
@@ -4919,6 +4922,409 @@
           }
         ]
       }
+    },
+    "/admin/api/search-services": {
+      "get": {
+        "operationId": "listSearchServices",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchCatalog"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSearchService",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "id"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "endpoint": {
+                    "type": "string"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "clear_api_key": {
+                    "type": "boolean"
+                  },
+                  "expected_revision": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "expected_revision",
+                  "name",
+                  "provider"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/search-services/{id}": {
+      "patch": {
+        "operationId": "updateSearchService",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "id"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "endpoint": {
+                    "type": "string"
+                  },
+                  "api_key": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "clear_api_key": {
+                    "type": "boolean"
+                  },
+                  "expected_revision": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "expected_revision"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteSearchService",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "id"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/api/search-services/default": {
+      "put": {
+        "operationId": "setDefaultSearchService",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "id"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "service_id": {
+                    "type": "string"
+                  },
+                  "expected_revision": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "service_id",
+                  "expected_revision"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/search-services/{id}/test": {
+      "post": {
+        "operationId": "testSearchService",
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "latency_ms": {
+                      "type": "integer"
+                    },
+                    "result_count": {
+                      "type": "integer"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExternalSearchResult"
+                      }
+                    }
+                  },
+                  "required": [
+                    "latency_ms",
+                    "result_count",
+                    "results"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/search": {
+      "post": {
+        "operationId": "externalWebSearch",
+        "security": [
+          {
+            "gatewayBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "service_id": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExternalSearchResult"
+                      }
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "service_id",
+                    "provider",
+                    "results"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  },
+                  "service_id": {
+                    "type": "string"
+                  },
+                  "max_results": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "default": 5
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5179,6 +5585,12 @@
           },
           "raw_models_visible_default": {
             "type": "boolean"
+          },
+          "search_service_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -5537,6 +5949,9 @@
                 "minimum": 1,
                 "maximum": 9007199254740991,
                 "description": "CAS revision captured when the settings editor is populated; do not replace it while a draft is dirty."
+              },
+              "mobileclaw": {
+                "$ref": "#/components/schemas/ProviderSettings"
               }
             },
             "additionalProperties": true
@@ -7889,6 +8304,81 @@
             "type": "boolean"
           }
         }
+      },
+      "SearchService": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "deepseek",
+              "searxng"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "api_key_set": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "enabled",
+          "endpoint",
+          "api_key_set"
+        ]
+      },
+      "SearchCatalog": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer"
+          },
+          "default_service_id": {
+            "type": "string"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchService"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "default_service_id",
+          "services"
+        ]
+      },
+      "ExternalSearchResult": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "snippet": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url"
+        ]
       }
     },
     "securitySchemes": {
@@ -7905,6 +8395,10 @@
         "type": "apiKey",
         "in": "header",
         "name": "x-api-key"
+      },
+      "gatewayBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },

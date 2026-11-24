@@ -40,6 +40,7 @@ it('preserves a model draft on CAS failure and serializes a complete source repl
 it('keeps selected empty grants denied and separates raw rules from unified permissions',async()=>{
  const bodies:unknown[]=[];
  vi.stubGlobal('fetch',vi.fn((path:string,options:RequestInit)=>{
+  if(path==='/admin/api/search-services')return json({services:[],revision:1});
   if(options?.method==='POST'){bodies.push(JSON.parse(options.body as string));return json({ok:true,group:{...bodies[0] as object,id:'g1',revision:1}});}
   return json({models:[model],routing_revision:1,next_after:''});
  }));

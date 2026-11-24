@@ -24,6 +24,7 @@ type ModelRule struct {
 }
 
 type AccountGroup struct {
+	SearchServiceIDs        []string       `json:"search_service_ids,omitempty"`
 	Revision                uint64         `json:"revision"`
 	ExpectedRevision        uint64         `json:"-"`
 	UnifiedModels           []UnifiedGrant `json:"unified_models"`

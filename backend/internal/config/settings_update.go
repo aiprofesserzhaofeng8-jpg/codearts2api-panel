@@ -11,6 +11,7 @@ type SettingsUpdate struct {
 	Kiro                    json.RawMessage   `json:"kiro"`
 	Claude                  json.RawMessage   `json:"claude"`
 	ChatGPT                 json.RawMessage   `json:"chatgpt"`
+	MobileClaw              json.RawMessage   `json:"mobileclaw"`
 	TeleAgent               json.RawMessage   `json:"teleagent"`
 	WorkBuddy               json.RawMessage   `json:"workbuddy"`
 	ModelAliases            map[string]string `json:"model_aliases"`

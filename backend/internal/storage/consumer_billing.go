@@ -126,7 +126,7 @@ func (s *Store) ReleaseConsumerQuote(id string) {
 	s.mu.Unlock()
 }
 func (s *Store) prepareConsumerSettlementLocked(e *LogEntry) {
-	if e.UserID == "" || e.Attempts == 0 {
+	if e.SearchServiceID != "" || e.UserID == "" || e.Attempts == 0 {
 		return
 	}
 	u := s.userLocked(e.UserID)

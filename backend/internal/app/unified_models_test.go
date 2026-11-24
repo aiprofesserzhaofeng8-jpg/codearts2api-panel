@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"codearts2api/internal/access"
+	"codearts2api/internal/storage"
 	"encoding/json"
 	"errors"
 	"os"
@@ -54,8 +55,8 @@ func TestUnifiedManagementResolvesOnlyRealSources(t *testing.T) {
 	}
 	raw, _ := os.ReadFile(st.Path())
 	var doc map[string]any
-	if json.Unmarshal(raw, &doc) != nil || doc["version"] != float64(11) {
-		t.Fatal("not schema 11")
+	if json.Unmarshal(raw, &doc) != nil || doc["version"] != float64(storage.StateVersion) {
+		t.Fatal("unexpected schema version")
 	}
 	if updated.Revision != 2 {
 		t.Fatal(updated.Revision)

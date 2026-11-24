@@ -38,6 +38,9 @@ func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 	if s.journalErr != nil {
 		return nil, ErrUsagePersistence
 	}
+	return s.reserveBudgetLocked(key, metered, false)
+}
+func (s *Store) reserveBudgetLocked(key string, metered *bool, search bool) (func(), error) {
 	for _, k := range s.st.Keys {
 		if k.Key == key {
 			if !k.Enabled {
@@ -46,7 +49,7 @@ func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 			if err := s.keyOwnerLocked(k); err != nil {
 				return nil, budgetOwnerError(err)
 			}
-			if err := budgetCheck(k.Budget, k.BudgetUsage); err != nil {
+			if err := budgetCheck(k.Budget, k.BudgetUsage); !search && err != nil {
 				return nil, err
 			}
 			active := s.budgetActive[key]
@@ -64,13 +67,24 @@ func (s *Store) beginKeyBudget(key string, metered *bool) (func(), error) {
 					*metered = u.Wallet.Enabled || u.Subscription.ID != ""
 				}
 				owner = userBudgetID(u.ID)
-				if err := s.consumerPermissionLocked(u, time.Now().Unix()); err != nil {
+				if search {
+					sub := u.Subscription
+					if sub.ID != "" {
+						if err := checkUserReservation(KeyBudget{MaxRequests: sub.Plan.Budget.MaxRequests}, subscriptionUsage(sub, time.Now().Unix()), s.budgetActive[owner]); err != nil {
+							return nil, err
+						}
+					}
+				} else if err := s.consumerPermissionLocked(u, time.Now().Unix()); err != nil {
 					return nil, err
 				}
 				if effectiveConcurrency(u) > 0 && s.budgetActive[owner] >= effectiveConcurrency(u) {
 					return nil, &access.UserConcurrencyError{}
 				}
-				if err := checkUserReservation(u.Budget, u.BudgetUsage, s.budgetActive[owner]); err != nil {
+				budget := u.Budget
+				if search {
+					budget = KeyBudget{MaxRequests: budget.MaxRequests}
+				}
+				if err := checkUserReservation(budget, u.BudgetUsage, s.budgetActive[owner]); err != nil {
 					return nil, err
 				}
 				s.budgetActive[owner]++
@@ -224,6 +238,9 @@ func checkUserReservation(b KeyBudget, u BudgetUsage, active int) error {
 }
 func addBudgetUsage(u *BudgetUsage, e LogEntry) {
 	u.Requests++
+	if e.SearchServiceID != "" {
+		return
+	}
 	u.Tokens += e.Usage.InputTokens + e.Usage.OutputTokens
 	if e.EstimatedCost != nil {
 		u.USD += e.EstimatedCost.Amount

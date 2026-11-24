@@ -55,7 +55,7 @@ func (s *Server) handleAdminGroups(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, 400, "旧模型映射写入已移除，请使用统一模型授权", "invalid_request_error", "legacy_mapping_field")
 			return
 		}
-		for _, field := range []string{"unified_models", "raw_model_mode", "raw_models_visible_default", "expected_revision"} {
+		for _, field := range []string{"search_service_ids", "unified_models", "raw_model_mode", "raw_models_visible_default", "expected_revision"} {
 			if value, present := fields[field]; present && string(value) == "null" {
 				writeErr(w, 400, "分组授权字段不能为 null", "invalid_request_error", "invalid_model_definition")
 				return

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import SearchServices from './SearchServices.vue';
 import { t as tr } from '../../i18n';
 </script>
 <template>
-<section v-once id="tab-settings" role="tabpanel" aria-labelledby="nav-settings">
+<section id="tab-settings" role="tabpanel" aria-labelledby="nav-settings">
+        <SearchServices />
         <div v-once class="card">
           <div class="card-head"><div><h2>{{tr('版本与更新')}}</h2><p class="card-sub">{{tr('当前运行版本 ')}}<strong id="runningVersion">{{tr('读取中')}}</strong></p></div><button class="btn" id="checkVersion">{{tr('检查更新')}}</button></div>
           <div class="card-body"><p id="versionMessage" role="status" aria-live="polite"></p><a id="releaseLink" href="https://github.com/aiprofesserzhaofeng8-jpg/codearts2api-panel/releases" target="_blank" rel="noopener noreferrer">{{tr('查看发布说明')}}</a><p class="hint">{{tr('更新检查缓存一分钟。升级请使用服务器上的安装工具；现有账号和配置由部署工具备份保留。')}}</p></div>
@@ -202,6 +204,14 @@ import { t as tr } from '../../i18n';
             <label class="check"><input id="sTRSearch" type="checkbox">{{tr('启用此平台的联网搜索')}}</label>
           </div>
 
+          <div v-once class="settings-group">
+            <h3>TeleAgent</h3>
+            <label class="check"><input id="sTASearch" type="checkbox">{{tr('启用联网搜索')}}</label>
+          </div>
+          <div v-once class="settings-group">
+            <h3>MobileClaw</h3>
+            <label class="check"><input id="sMCSearch" type="checkbox">{{tr('启用联网搜索')}}</label>
+          </div>
           <div v-once class="settings-group">
             <h3>{{tr('模型别名')}}</h3>
             <p class="group-hint">{{tr('JSON 对象，例如 ')}}<code>{"my-model":"glm-5.3"}</code>{{tr('。别名只改变名称，不改变实际调用的模型。')}}</p>

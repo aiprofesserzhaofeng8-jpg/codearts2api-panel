@@ -8,16 +8,29 @@ import (
 	"codearts2api/internal/responsewire"
 	"context"
 	"encoding/json"
+	"io"
 	"mime"
+	"net/http"
 )
 
-func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Request, emit func([]byte) error) error {
-	b, _, err := c.Normalize(raw)
+func (*Client) ResolveProtocol(_ json.RawMessage, _ provider.Model, _ provider.Protocol) (provider.Protocol, error) {
+	return provider.ResponsesProtocol, nil
+}
+
+func (c *Client) StreamNative(ctx context.Context, raw json.RawMessage, r provider.Request, emit func([]byte) error) error {
+	if r.Protocol != provider.ResponsesProtocol || !providerhttp.ModelID(r.Model) {
+		return providerhttp.Invalid("Grok", "协议或型号无效")
+	}
+	body, err := providerhttp.NativeBody(r, false)
 	if err != nil {
 		return err
 	}
-	var a credentials
-	_ = json.Unmarshal(b, &a)
+	return c.sendResponses(ctx, raw, body, func(reader io.Reader) error {
+		return providerhttp.NativeSSE(ctx, reader, r.Protocol, "Grok", emit)
+	})
+}
+
+func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Request, emit func([]byte) error) error {
 	if !providerhttp.ModelID(r.Model) {
 		return providerhttp.Invalid("Grok", "型号无效")
 	}
@@ -34,7 +47,19 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	if err != nil {
 		return err
 	}
-	resp, err := providerhttp.Do(ctx, c.HTTP, "Grok", "POST", c.BaseURL+"/responses", cliHeaders(a.Access), body)
+	return c.sendResponses(ctx, raw, body, func(reader io.Reader) error {
+		return responsewire.Decode(ctx, reader, r.Model, "Grok", emit)
+	})
+}
+
+func (c *Client) sendResponses(ctx context.Context, raw json.RawMessage, body any, consume func(io.Reader) error) error {
+	b, _, err := c.Normalize(raw)
+	if err != nil {
+		return err
+	}
+	var a credentials
+	_ = json.Unmarshal(b, &a)
+	resp, err := providerhttp.Do(ctx, c.HTTP, "Grok", http.MethodPost, c.BaseURL+"/responses", cliHeaders(a.Access), body)
 	if err != nil {
 		return err
 	}
@@ -46,7 +71,7 @@ func (c *Client) Stream(ctx context.Context, raw json.RawMessage, r provider.Req
 	if typ != "text/event-stream" {
 		return providerhttp.Broken("Grok")
 	}
-	return responsewire.Decode(ctx, resp.Body, r.Model, "Grok", emit)
+	return consume(resp.Body)
 }
 
 func (c *Client) Describe() provider.Descriptor {

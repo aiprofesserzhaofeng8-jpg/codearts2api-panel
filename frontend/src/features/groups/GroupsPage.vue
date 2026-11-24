@@ -11,6 +11,7 @@ import { groupModelAllowed } from './controller';
 const dialog = ref<HTMLDialogElement>(), draft = ref<Group>(), busy = ref(false), opening = ref(false), error = ref(''), listError = ref('');
 const groups = computed(() => serverState.data?.groups ?? []), accounts = computed(() => serverState.data?.accounts ?? []);
 const missingAccounts = computed(() => (draft.value?.account_ids ?? []).filter(id => !accounts.value.some(account => account.id === id)));
+const searchServices = ref<{id:string;name:string;enabled:boolean}[]>([]);
 const pickerSession = ref(0);
 const query=ref(''), binding=ref('');
 const keyCounts=computed(()=>{const counts=new Map<string,number>();for(const k of serverState.data?.keys??[]){if(k.group_id)counts.set(k.group_id,(counts.get(k.group_id)??0)+1);}return counts;});
@@ -21,7 +22,7 @@ const rawChoices = computed(() => {
     const group = draft.value;
     if (!group)
         return [];
-    const virtual = [{ id: 'codearts/web-search', provider: 'codearts', scope: '' }, { id: 'trae/cn/web-search', provider: 'trae', scope: 'cn' }, { id: 'workbuddy/cn/web-search', provider: 'workbuddy', scope: 'cn' }, { id: 'workbuddy/global/web-search', provider: 'workbuddy', scope: 'global' }];
+    const virtual = [{ id: 'teleagent/cn/web-search', provider: 'teleagent', scope: 'cn' }, { id: 'mobileclaw/cn/web-search', provider: 'mobileclaw', scope: 'cn' }, { id: 'codearts/web-search', provider: 'codearts', scope: '' }, { id: 'trae/cn/web-search', provider: 'trae', scope: 'cn' }, { id: 'workbuddy/cn/web-search', provider: 'workbuddy', scope: 'cn' }, { id: 'workbuddy/global/web-search', provider: 'workbuddy', scope: 'global' }];
     return [...new Set([...rawModels.value, ...virtual].filter(m => groupModelAllowed(m, { account_ids: group.account_ids, allowlist_enabled: false }, serverState.data || {})).map(m => m.id).concat(group.model_ids || []))];
 });
 const rules = computed(() => [...new Set([...rawModels.value.map(m => m.id), ...(draft.value?.model_rules ?? []).map(r => r.id)])]);
@@ -38,12 +39,14 @@ async function open(group?: Group) {
     const current = ++epoch;
     try {
         await reloadUnifiedModels();
+        searchServices.value = (await api('/admin/api/search-services')).services;
         const fresh = group ? (await api('/admin/api/groups')).groups?.find(g => g.id === group.id) : undefined;
         if (group && !fresh)
             throw new Error(tr('分组已删除，请刷新列表'));
         if (current !== epoch)
             return;
         draft.value = fresh ? JSON.parse(JSON.stringify(fresh)) : { id: '', name: '', revision: 0, account_ids: [], allowlist_enabled: false, model_ids: [], unified_models: [], raw_model_mode: 'qualified_only', raw_models_visible_default: true, model_rules: [], default_model: '', client_default_model: '' };
+        if (draft.value) draft.value.search_service_ids ??= [];
         pickerSession.value++;
         error.value = '';
         if (!dialog.value?.open)
@@ -103,7 +106,7 @@ async function save() {
     busy.value = true;
     error.value = '';
     const g = draft.value;
-    const body = { name: g.name, account_ids: g.account_ids, allowlist_enabled: g.allowlist_enabled, model_ids: g.model_ids, unified_models: g.unified_models.map(a => ({ ...a, source_ids: a.source_mode === 'all' ? [] : a.source_ids })), raw_model_mode: g.raw_model_mode, raw_models_visible_default: g.raw_models_visible_default, model_rules: g.model_rules, default_model: g.default_model || '', client_default_model: g.client_default_model || '', ...(g.id ? { id: g.id, expected_revision: g.revision } : {}) };
+    const body = { name: g.name, search_service_ids:g.search_service_ids, account_ids: g.account_ids, allowlist_enabled: g.allowlist_enabled, model_ids: g.model_ids, unified_models: g.unified_models.map(a => ({ ...a, source_ids: a.source_mode === 'all' ? [] : a.source_ids })), raw_model_mode: g.raw_model_mode, raw_models_visible_default: g.raw_models_visible_default, model_rules: g.model_rules, default_model: g.default_model || '', client_default_model: g.client_default_model || '', ...(g.id ? { id: g.id, expected_revision: g.revision } : {}) };
     try {
         const saved=await api<{ok:boolean;group:Group}>('/admin/api/groups', { method: 'POST', body });
         if(saved?.ok!==true||!saved.group?.id||!saved.group.revision)throw new Error(tr('保存结果未确认，请重新读取核对。'));
@@ -202,6 +205,11 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
                 <option value="legacy">{{tr('兼容旧裸名称与别名')}}</option>
               </select>
             </div>
+            <div v-if="searchServices.length" class="group-search" role="group" aria-labelledby="groupSearchTitle">
+              <strong id="groupSearchTitle">{{tr('外部搜索')}}</strong>
+              <label class="check" v-for="s in searchServices" :key="s.id"><input type="checkbox" v-model="draft.search_service_ids" :value="s.id">{{s.name}} {{s.enabled?'':tr('已停用')}}</label>
+              <span class="group-search-cost">{{tr('搜索费用由管理员承担')}}</span>
+            </div>
             <GroupModelPicker :key="pickerSession" v-model="draft.unified_models" :models="selectableModels" />
               <div class="field-grid cols-2 mt-14">
                 <div class="field">
@@ -267,3 +275,9 @@ async function reread() { if (draft.value && confirm(tr('重新读取将丢弃�
             </form>
           </dialog>
         </template>
+
+<style scoped>
+.group-search { display:flex; align-items:center; flex-wrap:wrap; gap:6px 16px; margin:14px 0; }
+.group-search .check { margin:0; overflow-wrap:anywhere; }
+.group-search-cost { color:var(--text-3); font-size:12px; margin-inline-start:auto; }
+</style>

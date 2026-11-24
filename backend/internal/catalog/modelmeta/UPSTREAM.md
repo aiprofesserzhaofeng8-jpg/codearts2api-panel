@@ -20,7 +20,9 @@ Codex manifest cache, or protocol conversion was imported into this package.
 The optional public registry URL, 8 MiB bound and 6-hour success cache follow
 Sub2API. HTTP belongs to `server/model_references.go`; the existing serialized
 catalog refresh owns the reference cache, with local 5-second timeout and
-30-minute failure backoff. There are no background tasks or persistent files.
+30-minute failure backoff. There are no additional background tasks. The catalog persists selected references
+in its existing directory snapshots. A bundled numeric fallback is maintained in
+`data/models.dev.json` under its own MIT license; see `data/README.md`.
 
 Sub2API's generic Codex descriptor uses a 272,000-token fallback. This project
 uses a local 32,768-context / 4,096-output compatibility template because its

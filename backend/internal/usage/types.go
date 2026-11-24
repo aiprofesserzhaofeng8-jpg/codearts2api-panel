@@ -39,6 +39,7 @@ type ConsumerCharge struct {
 }
 
 type LogEntry struct {
+	SearchServiceID string           `json:"search_service_id,omitempty"`
 	ConsumerCharge  *ConsumerCharge  `json:"consumer_charge,omitempty"`
 	UserID          string           `json:"user_id,omitempty"`
 	PublicModel     string           `json:"public_model,omitempty"`

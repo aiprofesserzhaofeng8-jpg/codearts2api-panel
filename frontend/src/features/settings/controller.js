@@ -11,11 +11,11 @@ import { refresh } from '../../shared/refresh';
 const settingsState = {};
 settingsState.settingsDirty = false;
 
-settingsState.providerPolicyFields = [{ key: "codearts", prefix: "sCA" }, { key: "workbuddy", prefix: "sWB" }, { key: "trae", prefix: "sTR" }, { key: "qoder", prefix: "sQD" }, { key: "kiro", prefix: "sKI" }, { key: "chatgpt", prefix: "sCG" }, { key: "claude", prefix: "sCL" }, { key: "teleagent", prefix: "sTA" }];
+settingsState.providerPolicyFields = [{ key: "codearts", prefix: "sCA" }, { key: "workbuddy", prefix: "sWB" }, { key: "trae", prefix: "sTR" }, { key: "qoder", prefix: "sQD" }, { key: "kiro", prefix: "sKI" }, { key: "chatgpt", prefix: "sCG" }, { key: "claude", prefix: "sCL" }, { key: "teleagent", prefix: "sTA" }, { key: "mobileclaw", prefix: "sMC" }];
 
 function readSearchPolicy(key) {
  const def=settingsState.providerPolicyFields.find(item=>item.key===key), field=name=>document.getElementById(def.prefix+name);
- return {search_enabled:field('Search').checked,search_scope:key==='workbuddy'?field('SearchScope').value:'cn',search_backend:key==='workbuddy'?'native':'searxng',search_url:key==='workbuddy'?'':field('SearchURL').value.trim()};
+ return {search_enabled:field('Search').checked,search_scope:key==='workbuddy'?field('SearchScope').value:'cn',search_backend:['workbuddy','teleagent','mobileclaw'].includes(key)?'native':'searxng',search_url:['workbuddy','teleagent','mobileclaw'].includes(key)?'':field('SearchURL').value.trim()};
 }
 
 export function renderSettings(s) {
@@ -26,12 +26,12 @@ export function renderSettings(s) {
         return;
     settingsState.routingRevision = s.model_routing_revision;
     settingsState.providerPolicyFields.forEach(function (def) {
-        if (!["codearts", "workbuddy", "trae"].includes(def.key)) return;
+        if (!["codearts", "workbuddy", "trae", "teleagent", "mobileclaw"].includes(def.key)) return;
         var config = s[def.key] || {}, field = function (name) { return document.getElementById(def.prefix + name); };
         field("Search").checked = def.key === "workbuddy" ? config.search_enabled !== false : !!config.search_enabled;
         if (def.key === "workbuddy")
             field("SearchScope").value = config.search_scope || "cn";
-        else
+        else if (["codearts", "trae"].includes(def.key))
             field("SearchURL").value = config.search_url || "";
     });
     var p = s.pool || {};
@@ -105,7 +105,7 @@ on("#saveSettings", function () {
     }
     var body = {
         expected_routing_revision: settingsState.routingRevision,
-        codearts: readSearchPolicy("codearts"), workbuddy: readSearchPolicy("workbuddy"), trae: readSearchPolicy("trae"),
+        codearts: readSearchPolicy("codearts"), workbuddy: readSearchPolicy("workbuddy"), trae: readSearchPolicy("trae"), teleagent: readSearchPolicy("teleagent"), mobileclaw: readSearchPolicy("mobileclaw"),
         pool: {
             strategy: domState.$("#sPoolStrategy").value,
             max_in_flight: Number(domState.$("#sPoolConcurrency").value),

@@ -367,6 +367,24 @@ func (p *ModelPlan) FilterMessages(thinking bool) error {
 	return nil
 }
 
+func (p *ModelPlan) FilterResponsesSearch() error {
+	if p == nil {
+		return nil
+	}
+	ids := p.IDs[:0]
+	for _, id := range p.IDs {
+		switch ModelProvider(p.Models[id]) {
+		case provider.ChatGPT, provider.Grok:
+			ids = append(ids, id)
+		}
+	}
+	p.IDs = ids
+	if len(ids) == 0 {
+		return config.ModelFailure(400, "model_capability_unavailable", "此统一模型没有原生 Responses 网页搜索来源")
+	}
+	return nil
+}
+
 // FilterProvider narrows this request's authorized candidates when a native
 // protocol feature cannot be represented by the other providers. Admission
 // still rechecks the selected raw model and account under the Store lock.

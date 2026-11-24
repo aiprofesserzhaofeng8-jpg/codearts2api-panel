@@ -25,6 +25,18 @@ func New() *Client {
 	return &Client{HTTP: &http.Client{Timeout: 20 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
 }
 
+// External dispatches one request to the administrator-selected service.
+func (c *Client) External(ctx context.Context, kind, endpoint, apiKey string, input provider.SearchRequest) (*provider.SearchOutcome, error) {
+	switch kind {
+	case "deepseek":
+		return c.DeepSeek(ctx, apiKey, input)
+	case "searxng":
+		return c.Search(ctx, endpoint, input)
+	default:
+		return nil, failed(503, "未知搜索服务商")
+	}
+}
+
 // endpoint is administrator configuration, not a client-supplied URL. Loopback
 // and private addresses are intentional for self-hosted SearXNG installations.
 func (c *Client) Search(ctx context.Context, endpoint string, input provider.SearchRequest) (*provider.SearchOutcome, error) {

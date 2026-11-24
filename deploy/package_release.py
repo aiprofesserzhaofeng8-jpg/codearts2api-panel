@@ -97,8 +97,8 @@ def build(version, arch, output, go):
         files = inventory(staging)
         meta = {'format': 1, 'kind': 'release', 'version': version, 'os': 'linux', 'arch': arch,
                 'schema': schema, 'files': files, 'source': build_source}
-        if schema == 11:
-            meta['state_migrations'] = [{'from': 10, 'to': 11}]
+        if schema in (11, 12):
+            meta['state_migrations'] = [{'from': schema - 1, 'to': schema}]
         packed, summed = Path(temp) / 'package.tar.gz', Path(temp) / 'package.sha256'
         with packed.open('xb') as stream:
             with tarfile.open(fileobj=stream, mode='w:gz') as tar:

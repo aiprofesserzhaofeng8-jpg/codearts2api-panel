@@ -82,11 +82,11 @@ def run(args):
     args.output.mkdir(parents=True,exist_ok=True)
     evidence={'kind':'U6_isolated_package_acceptance','real_systemd':False,'real_process':True,'real_upstream':False,'checks':[]}
     with tempfile.TemporaryDirectory(prefix='codearts-u6-package-') as folder:
-        temp=Path(folder);root=temp/'managed';(root/'releases/v0.3.18').mkdir(parents=True)
-        old=root/'releases/v0.3.18'
+        temp=Path(folder);root=temp/'managed';(root/'releases/v0.4.23').mkdir(parents=True)
+        old=root/'releases/v0.4.23'
         shutil.copy2(old_binary,old/'codearts2api-panel')
-        (old/'manifest.json').write_text(json.dumps({'version':'v0.3.18','schema':10,'os':'linux','arch':'amd64'}))
-        (root/'current').symlink_to('releases/v0.3.18');(root/'data').mkdir();(root/'backups').mkdir()
+        (old/'manifest.json').write_text(json.dumps({'version':'v0.4.23','schema':11,'os':'linux','arch':'amd64'}))
+        (root/'current').symlink_to('releases/v0.4.23');(root/'data').mkdir();(root/'backups').mkdir()
         (root/'installation.json').write_text(json.dumps({'unit':'u6-isolated.service','port':free_port(),'scope':'user'}))
         key='sk-u6-'+secrets.token_hex(20);password=secrets.token_urlsafe(24)
         legacy={'version':10,'accounts':[],'keys':[{'key':key,'enabled':True,'name':'synthetic','budget':{'max_requests':100},'budget_usage':{'requests':2,'tokens':74}}],
@@ -95,20 +95,24 @@ def run(args):
                     'model_mappings':[{'name':'shared-model-1','sources':['workbuddy/cn/shared-v1','trae/cn/shared-v1']}]}],
                 'settings':{'auto_refresh':False,'auto_claim':False,'rate_limit_enabled':False},'stats':{},'logs':[]}
         (root/'data/state.json').write_text(json.dumps(legacy));os.chmod(root/'data/state.json',0o600)
+        # Build a representative schema-11 baseline from the old mapping fixture.
+        converted=temp/'schema11'
+        ops.model_migration_copy(old_binary,root/'data',converted,11)
+        (converted/'state.json').replace(root/'data/state.json')
         service=ProcessService(root,password)
         try:
             service.start();ready(service);service.stop()
             old_state=(root/'data/state.json').read_bytes()
             # Real read-only CLI report and conflict diagnostics must not write input.
             staging=temp/'package';ops.unpack(archive,staging,'release',args.sha256)
-            meta=ops.check_release(staging);assert meta['schema']==11
+            meta=ops.check_release(staging);assert meta['schema']==12
             assert (staging/'panelctl.py').read_bytes()==(ROOT/'deploy/panelctl.py').read_bytes(), 'package deployment tool differs from tested source'
             assert (staging/'UNIFIED-MODELS.md').is_file()
             binary=staging/'codearts2api-panel'
-            report=ops.model_migration_precheck(binary,root/'data/state.json')
+            report=ops.model_migration_precheck(binary,root/'data/state.json',11,12)
             assert report['ready'] and report['definitions']==1
             assert (root/'data/state.json').read_bytes()==old_state
-            conflict=json.loads(old_state);other={**conflict['groups'][0],'id':'g-conflict','model_mappings':[{'name':'shared-model-1','sources':['workbuddy/cn/other-v1']}]}
+            conflict=json.loads(json.dumps(legacy));other={**conflict['groups'][0],'id':'g-conflict','model_mappings':[{'name':'shared-model-1','sources':['workbuddy/cn/other-v1']}]}
             conflict['groups'].append(other);conflict_path=temp/'conflict.json';conflict_path.write_text(json.dumps(conflict))
             result=subprocess.run([str(binary),'-check-state-migration',str(conflict_path)],capture_output=True,text=True,timeout=10)
             assert result.returncode==2 and not json.loads(result.stdout)['ready']
@@ -124,30 +128,31 @@ def run(args):
             assert len(definitions['models'])==1
             model=definitions['models'][0];assert model['name']=='shared-model-1' and len(model['sources'])==2
             state=json.loads((root/'data/state.json').read_text())
-            assert state['version']==11 and state['keys'][0]['budget_usage']['tokens']==74
+            assert state['version']==12 and state['keys'][0]['budget_usage']['tokens']==74
+            assert not state['external_search'].get('services') and not state['groups'][0].get('search_service_ids')
             assert len(state['groups'][0]['unified_models'])==1
-            evidence['checks']+=['actual schema 10 to 11 managed upgrade','key budget preserved','fixed group grants preserved','real process identity and schema 11 health']
+            evidence['checks']+=['actual schema 11 to 12 managed upgrade','key budget preserved','fixed group grants preserved','real process identity and schema 12 health']
             service.stop();service.start();ready(service)
             again=request(service,'/admin/api/unified-models',password=password)
             assert again['models'][0]['id']==model['id']
             service.stop()
             migrated=(root/'data/state.json').read_bytes()
-            # Baseline schema-10 executable rejects schema 11 and does not write.
+            # Baseline schema-11 executable rejects schema 12 and does not write.
             rejected=subprocess.run([str(old_binary),'-data',str(root/'data/state.json'),'-no-import','-no-refresh','-host','127.0.0.1','-port',str(free_port())],env={'PATH':os.environ['PATH']},capture_output=True,timeout=10)
             assert rejected.returncode!=0 and (root/'data/state.json').read_bytes()==migrated
-            evidence['checks']+=['restart retains definition identity','actual old binary rejects schema 11 unchanged']
+            evidence['checks']+=['restart retains definition identity','actual old binary rejects schema 12 unchanged']
             # Rehearse every data/release switch boundary with the real candidate.
             for phase in range(7):
                 case=temp/f'crash-{phase}';(case/'releases').mkdir(parents=True)
-                shutil.copytree(old,case/'releases/v0.3.18')
+                shutil.copytree(old,case/'releases/v0.4.23')
                 dest=case/'releases'/meta['version']
                 if phase>0: shutil.copytree(staging,dest)
-                (case/'current').symlink_to('releases/v0.3.18')
+                (case/'current').symlink_to('releases/v0.4.23')
                 (case/'installation.json').write_text(json.dumps({'unit':'u6-isolated.service','port':free_port(),'scope':'user'}))
-                data=case/'data';original=case/'data-before-schema11-1';candidate=case/'data-schema11-2'
+                data=case/'data';original=case/'data-before-schema12-1';candidate=case/'data-schema12-2'
                 data.mkdir();(data/'state.json').write_bytes(old_state)
-                ops.model_migration_copy(binary,data,candidate)
-                record={'from':10,'to':11,'phase':'prepared','old_release':str(case/'releases/v0.3.18'),'new_release':str(dest),'original_data':str(original),'candidate_data':str(candidate)}
+                ops.model_migration_copy(binary,data,candidate,12)
+                record={'from':11,'to':12,'phase':'prepared','old_release':str(case/'releases/v0.4.23'),'new_release':str(dest),'original_data':str(original),'candidate_data':str(candidate)}
                 if phase>=2:(case/'current.next').symlink_to(dest.relative_to(case))
                 if phase>=3:data.rename(original)
                 if phase>=4:candidate.rename(data)
@@ -166,9 +171,9 @@ def run(args):
             evidence['checks']+=['7 crash boundaries recovered forward using real binary','repeated recovery is a no-op','pre-upgrade snapshot preserved']
             # Explicit offline restore only into a new isolated directory.
             backup=next((root/'backups').glob('before-*.tar.gz'));restored=temp/'restored'
-            ops.unpack(backup,restored,'backup');assert ops.state_schema(restored/'state.json')==10
+            ops.unpack(backup,restored,'backup');assert ops.state_schema(restored/'state.json')==11
             evidence['checks'].append('offline backup restore to new directory')
-            evidence.update(passed=True,package_version=meta['version'],schema=11,package_sha256=ops.sha256(archive),old_binary_sha256=ops.sha256(old_binary),
+            evidence.update(passed=True,package_version=meta['version'],schema=12,package_sha256=ops.sha256(archive),old_binary_sha256=ops.sha256(old_binary),
                 process_flags=['loopback','temporary state','no-import','no-refresh'],deployed_to_existing_service=False)
         finally:service.stop()
     (args.output/'package-results.json').write_text(json.dumps(evidence,indent=2)+'\n')

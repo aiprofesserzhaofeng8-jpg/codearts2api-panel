@@ -7,7 +7,6 @@
   "模型定价": "Model rate",
   "参考定价": "Reference rate",
   "多种定价": "Mixed rates",
-
   "上游模型": "Upstream models",
   "同步上游模型": "Sync upstream models",
   "同步并保存": "Sync and save",
@@ -361,7 +360,6 @@
   "远程部署与回调地址": "Remote deployment and callback URL",
   "本次回调地址：": "Callback URL: ",
   "可选 SSH 转发命令": "Optional SSH forwarding command",
-  "复制命令": "Copy command",
   "先生成链接，再到另一浏览器完成授权。": "Generate a link first, then authorize in another browser.",
   "确认将要保存的账号": "Verify the account to save",
   "此账号已存在，确认更新它的登录凭据": "This account already exists. Confirm updating its credentials.",
@@ -1800,5 +1798,20 @@
   "参考信息更新失败": "Reference update failed",
   "上次成功": "Last success",
   "尚无成功记录": "No successful sync yet",
-  "统一模型更新失败": "Unified model update failed"
+  "统一模型更新失败": "Unified model update failed",
+  "搜索费用由管理员承担": "Search costs are paid by the administrator",
+  "外部搜索": "External search",
+  "添加搜索服务": "Add search service",
+  "编辑搜索服务": "Edit search service",
+  "服务商": "Provider",
+  "清除密钥并停用": "Clear key and disable",
+  "搜索地址": "Search endpoint",
+  "设为默认": "Set as default",
+  "取消默认": "Clear default",
+  "尚未添加搜索服务": "No search services yet",
+  "执行一次搜索，可能消耗服务商额度。继续？": "Run one search using the provider account quota?",
+  "条结果": "results",
+  "删除此搜索服务并解除分组授权？": "Delete this search service and remove its group grants?",
+  "默认": "Default",
+  "测试": "Test"
 }

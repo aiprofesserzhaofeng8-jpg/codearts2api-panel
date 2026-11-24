@@ -184,7 +184,21 @@ func CheckStateMigration(path string) (ModelMigrationReport, error) {
 	if err = json.Unmarshal(raw, &st); err != nil {
 		return ModelMigrationReport{}, fmt.Errorf("状态 JSON 或必需权限字段无效")
 	}
-	_, r := convertModelState(&st)
+	var r ModelMigrationReport
+	if st.Version == StateVersion {
+		r = ModelMigrationReport{FromSchema: StateVersion, ToSchema: StateVersion, Definitions: len(st.UnifiedModels), Conflicts: []MigrationIssue{}, Warnings: []MigrationIssue{}}
+		err = validateUnifiedState(&st)
+		if err == nil {
+			err = st.ExternalSearch.validate(st.Groups)
+		}
+		if err != nil {
+			r.Conflicts = append(r.Conflicts, MigrationIssue{Reason: "invalid_state", Message: err.Error()})
+		}
+		r.Ready = err == nil
+	} else {
+		_, r = convertModelState(&st)
+		r.ToSchema = StateVersion
+	}
 	return r, nil
 }
 

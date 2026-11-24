@@ -115,3 +115,29 @@ func TestBuildStreamFailureAndCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestNativeWebSearch(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Tools []struct{ Type string } }
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || len(body.Tools) != 1 || body.Tools[0].Type != "web_search" {
+			t.Error("missing native search tool")
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		io.WriteString(w, event("response.created", map[string]any{"response": map[string]string{"status": "in_progress"}}))
+		io.WriteString(w, event("response.output_item.done", map[string]any{"item": map[string]string{"type": "web_search_call"}}))
+		io.WriteString(w, completed())
+	}))
+	defer s.Close()
+	c := New()
+	c.BaseURL = s.URL
+	search := false
+	err := c.StreamNative(context.Background(), fixture(t), provider.Request{Model: "grok-test", Protocol: provider.ResponsesProtocol, Body: json.RawMessage(`{"input":"query","tools":[{"type":"web_search"}]}`)}, func(raw []byte) error {
+		if strings.Contains(string(raw), "web_search_call") {
+			search = true
+		}
+		return nil
+	})
+	if err != nil || !search {
+		t.Fatalf("search event=%v err=%v", search, err)
+	}
+}
