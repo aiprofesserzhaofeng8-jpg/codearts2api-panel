@@ -30,6 +30,6 @@ jobs:
             --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' \
             | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -1)
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
-          digest=$(docker buildx imagetools inspect "$image:$version" | awk '$1=="Digest:" {print $2; exit}')
+          digest=$(docker buildx imagetools inspect "$image:$version" | awk '$1=="Digest:" && !found {print $2; found=1}')
           [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
           docker buildx imagetools create --tag "$image:latest" "$image@$digest"
