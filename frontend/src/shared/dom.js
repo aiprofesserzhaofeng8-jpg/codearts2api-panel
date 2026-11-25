@@ -102,3 +102,9 @@ listen(domState.$("#toast"), "click", function () { this.className = "toast"; })
 }
 
 export function disposeToast() { clearTimeout(domState.toastTimer); }
+
+export function downloadText(name, text, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const link = document.createElement("a"); link.href = url; link.download = name; link.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}

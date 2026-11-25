@@ -28,25 +28,6 @@ import CredentialImport from './providers/CredentialImport.vue';
             </div>
           </div>
 
-          <div v-once class="card hidden subpanel" id="exportPanel">
-            <div v-once class="card-head">
-              <div v-once>
-                <h2>{{tr('导出 session JSON')}}</h2>
-                <p class="card-sub" id="exportMeta"></p>
-              </div>
-              <div v-once class="card-actions">
-                <button class="btn primary" id="copyExport">{{tr('复制')}}</button>
-                <button class="btn danger" id="closeExport">{{tr('关闭')}}</button>
-              </div>
-            </div>
-            <textarea class="w-full tall" id="exportJSON" readonly data-select-on-click="1"
-                      :aria-label="tr('导出的 session JSON')"></textarea>
-            <div v-once class="callout">
-              <span class="callout-title">{{tr('注意')}}</span>
-              <span>{{tr('该内容等同于账号登录态：包含上游访问令牌和续期凭据。 不要外传、不要提交到版本库、不要贴到聊天里。')}}</span>
-            </div>
-          </div>
-
           <div v-once class="account-toolbar">
             <label class="account-search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="accountSearch" :placeholder="tr('搜索账号名称或来源')" :aria-label="tr('搜索账号')"></label>
             <label><select id="accountProvider" :aria-label="tr('按上游筛选账号')"><option value="">{{tr('全部上游')}}</option><option v-for="brand in brands" :key="brand.id" :value="brand.id">{{brand.name}}</option></select></label>

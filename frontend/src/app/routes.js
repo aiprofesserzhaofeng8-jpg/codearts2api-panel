@@ -82,8 +82,10 @@ export function activateTab(name, updateHash, warm) {
     if (name === "accounts")
         loadCredits(false);
     if (name === "prompts") window.dispatchEvent(new Event("prompts-refresh"));
-    if (name === "settings")
+    if (name === "settings") {
         loadSettings();
+        window.dispatchEvent(new Event("settings-refresh"));
+    }
 }
 
 routesState.initialTab = location.hash.slice(1);

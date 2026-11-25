@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
-import { api } from '../../api/client';
+import { api, isAbortError } from '../../api/client';
 import { t } from '../../i18n';
 import type { components } from '../../api/generated/admin';
 type Service = components['schemas']['SearchService'];
@@ -12,10 +12,10 @@ const busy = ref(false), error = ref(''), notice = ref('');
 const sample = ref<components['schemas']['ExternalSearchResult'][]>([]);
 async function load() { catalog.value = await api(path); }
 function visit() {
-  if (location.hash === '#settings') load().catch(e => error.value = e.message);
+  if (location.hash === '#settings') load().then(() => error.value = '').catch(e => { if (!isAbortError(e)) error.value = e.message; });
 }
-onMounted(() => { visit(); window.addEventListener('hashchange', visit); });
-onUnmounted(() => window.removeEventListener('hashchange', visit));
+onMounted(() => window.addEventListener('settings-refresh', visit));
+onUnmounted(() => window.removeEventListener('settings-refresh', visit));
 function edit(service?: Service) {
   form.value = { id: service?.id ?? '', name: service?.name ?? '', provider: service?.provider ?? 'deepseek', endpoint: service?.endpoint ?? '', key: '', clear: false, keySet: service?.api_key_set ?? false };
   error.value = ''; dialog.value?.showModal();

@@ -6,7 +6,7 @@ import { serverState } from '../../../shared/read-model';
 import { isAbortError } from '../../../api/client';
 // Native DOM controller: this feature exclusively owns its static Vue subtree.
 import { codeartsState, drawLogin, openLogin, stopLogin } from './codearts';
-import { copyText, domState, toast } from '../../../shared/dom';
+import { copyText, downloadText, domState, toast } from '../../../shared/dom';
 import { sessionState, showAdminLogin } from '../../../app/session';
 import { api } from '../../../api/client';
 import { listen, cleanup } from '../../../shared/lifecycle';
@@ -401,11 +401,6 @@ function clearTeleagentTask() {
     ["#teleagentTaskDownload", "#teleagentCommandCopy", "#teleagentResultFile"].forEach(function (id) { domState.$(id).disabled = true; });
 }
 
-function downloadText(name, text, type) {
-    const url = URL.createObjectURL(new Blob([text], { type }));
-    const link = document.createElement("a"); link.href = url; link.download = name; link.click();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-}
 
 function teleagentTaskName() { return "teleagent-login-task-" + providersState.teleagentTask.challenge.slice(0, 8) + ".json"; }
 

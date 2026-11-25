@@ -1,7 +1,7 @@
 import { mountProtocolSettings, openProtocolSettings } from "./protocol-settings";
 import { brandName } from './brands';
 import { t as tr } from '../../i18n';
-import { copyText } from '../../shared/dom';
+import { copyText, downloadText } from '../../shared/dom';
 import { btn, busyable, cell, emptyRow, mk, on, pill, row } from '../../components/controls';
 import { serverState } from '../../shared/read-model';
 import { isAbortError } from '../../api/client';
@@ -348,11 +348,8 @@ export function accountOp(action, extra) {
 export function exportSession(id) {
     toast(tr("导出中…"));
     return api("/admin/api/accounts", { method: "POST", body: { action: "export", id: id } }).then(function (r) {
-        domState.$("#exportJSON").value = r.session_json || "";
-        domState.$("#exportMeta").textContent = tr("账号 ") + (r.name || "") +
-            tr(" · 凭据有效期至 ") + fmtTime(r.expires_at) +
-            tr(" · 可续期 ") + (r.has_refresh === true ? tr("是") : r.has_refresh === false ? tr("否") : tr("未知"));
-        domState.$("#exportPanel").classList.remove("hidden");
+        const name = (r.name || id).replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").slice(0, 80);
+        downloadText("account-" + name + ".json", r.session_json, "application/json;charset=utf-8");
         toast(tr("已导出登录凭据，请勿外传"), "ok");
     }).catch(function (e) { if (isAbortError(e)) return; toast(tr("导出失败：") + e.message, "err"); });
 }
@@ -541,13 +538,6 @@ on("#accountConcurrencySave", function () {
 on("#modelHealthClose", function () { domState.$("#modelHealthDialog").close(); });
 on("#copyBaseURL", function () { return copyText(location.origin + "/v1", tr("API 地址已复制")); });
 domState.$("#apiBaseURL").textContent = location.origin + "/v1";
-on("#copyExport", function () {
-    return copyText(domState.$("#exportJSON").value, tr("已复制到剪贴板（注意不要外传）"));
-});
-on("#closeExport", function () {
-    domState.$("#exportJSON").value = "";
-    domState.$("#exportPanel").classList.add("hidden");
-});
 }
 
 async function queryRewards(a) {

@@ -171,7 +171,8 @@ func TestCreditParsingAndWindows(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nowMs := time.Now().UnixMilli()
+	// Keep the fixture clock before its fixed bonus expiry.
+	nowMs := time.Date(2026, time.November, 24, 12, 0, 0, 0, time.UTC).UnixMilli()
 	info := summarizeSubscriptionDoc(subDoc, nowMs)
 	if !info.Available || info.Total != 1050 || info.Remaining != 850 || info.Used != 200 {
 		t.Fatalf("credit info mismatch: %+v", info)
@@ -502,14 +503,15 @@ func TestClaimParsesStringPoints(t *testing.T) {
 func TestCreditUsesPublishedPlanNameAndBonusOnly(t *testing.T) {
 	// Measured personal-trial shape: the SKU carries feature counters only, and
 	// every point comes from bonus buckets. The card must still add up.
+	expires := time.Now().Add(24 * time.Hour).UTC().Format(time.RFC3339)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == SubscriptionPath {
-			w.Write([]byte(`{"domain_id":"acct","subscribe_status":"SUBSCRIBED",
-				"skus":[{"sku_code":"officeace.personal.package.trial","sku_name":"个人体验版","effective_time":"2026-11-20T08:14:05.800Z","expired_time":"2026-12-20T08:14:05.800Z",
+			fmt.Fprintf(w, `{"domain_id":"acct","subscribe_status":"SUBSCRIBED",
+				"skus":[{"sku_code":"officeace.personal.package.trial","sku_name":"个人体验版","effective_time":"2026-11-20T08:14:05.800Z","expired_time":"%s",
 					"quotas":[{"sku_attr_code":"online_search_count","sku_value":"200","current_value":"0"}]}],
 				"bonus_skus":[
-					{"activity_name":"新用户专属福利","cbc_resource_id":"bonus:bonus-new-user-2026:x:once","points":"300","current_value":"0","effective_time":"2026-11-20T08:18:00.592Z","expired_time":"2026-12-20T08:18:00.592Z"},
-					{"activity_name":"每日签到有礼","cbc_resource_id":"bonus:bonus-daily-checkin-2026:x:daily","points":"50","current_value":"1.3474979423868314","effective_time":"2026-11-20T08:18:00.775Z","expired_time":"2026-12-20T15:59:59.000Z"}]}`))
+					{"activity_name":"新用户专属福利","cbc_resource_id":"bonus:bonus-new-user-2026:x:once","points":"300","current_value":"0","effective_time":"2026-11-20T08:18:00.592Z","expired_time":"%s"},
+					{"activity_name":"每日签到有礼","cbc_resource_id":"bonus:bonus-daily-checkin-2026:x:daily","points":"50","current_value":"1.3474979423868314","effective_time":"2026-11-20T08:18:00.775Z","expired_time":"%s"}]}`, expires, expires, expires)
 			return
 		}
 		w.WriteHeader(404)
@@ -594,7 +596,8 @@ func TestTokenRatesWrapperAndBonusCurrentValue(t *testing.T) {
 	if err := json.Unmarshal(bonusJSON, &doc); err != nil {
 		t.Fatal(err)
 	}
-	nowMs := time.Now().UnixMilli()
+	// Keep the fixture clock before its fixed bonus expiry.
+	nowMs := time.Date(2026, time.November, 24, 12, 0, 0, 0, time.UTC).UnixMilli()
 	info := summarizeSubscriptionDoc(doc, nowMs)
 	if info.Total != 100.0 || info.Used != 30.0 || info.Remaining != 70.0 {
 		t.Fatalf("bonus current_value used math failed: total=%v used=%v remaining=%v", info.Total, info.Used, info.Remaining)
