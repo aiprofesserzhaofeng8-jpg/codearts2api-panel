@@ -22,6 +22,7 @@ const assert=require('node:assert/strict');
    if(u.pathname.endsWith('/state'))out=data;
    if(u.pathname.endsWith('/unified-models'))out={models:[],next_after:'',routing_revision:1};
    if(u.pathname.endsWith('/credits'))out={accounts:[]};
+   if(u.pathname.endsWith('/search-services'))out={services:[],revision:1,default_service_id:''};
    if(u.pathname.endsWith('/models/refresh')){modelRefreshes++;data.catalog_refresh={status:"partial",partitions:{"workbuddy/cn":{status:"success",count:2,last_success:"2026-11-22T08:00:00Z"},"trae/cn":{status:"timeout",count:1,error:"fixture timeout",last_success:"2026-11-21T08:00:00Z"}}};out={models:data.models,refresh:data.catalog_refresh};}
    if(u.pathname.endsWith('/models/probe')){
     const body=req.postDataJSON();assert.ok(Array.isArray(body.models)&&body.models.length);
